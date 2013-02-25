@@ -1,0 +1,17 @@
+*.o
+\#*#
+*#
+.#*
+.*~
+*~
+.DS_Store
+tags
+TAGS
+GTAGS
+GRTAGS
+GPATH
+GTAGSROOT
+.svn
+*.log
+*.elc
+.zshrc.local
