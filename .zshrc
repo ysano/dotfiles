@@ -165,6 +165,13 @@ fi
 # use ls_colors on completion
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
+# tcsh color key are few.
+case "${OSTYPE}" in
+freebsd*|darwin*)
+        unset LS_COLORS
+        ;;
+esac
+
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
     xterm-color|xterm-256color) color_prompt=yes;;
