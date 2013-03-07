@@ -165,6 +165,13 @@ fi
 # use ls_colors on completion
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
+# tcsh color key are few.
+case "${OSTYPE}" in
+freebsd*|darwin*)
+        unset LS_COLORS
+        ;;
+esac
+
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
     xterm-color|xterm-256color) color_prompt=yes;;
@@ -331,7 +338,6 @@ zstyle ':completion:*' use-cache true
 path=($path /usr/libexec /usr/local/libexec)
 path=($path /usr/local/sysutil)
 path=($path /usr/ucb /usr/etc)  # for SunOS
-path=($HOME/lib/ruby/gem/bin $path)  # for local rubygem
 path=($path $HOME/lib/android-sdk/tools)  # for android
 # qmail path
 if [ -d /var/qmail/bin ]; then
@@ -346,8 +352,6 @@ export CVSROOT=$HOME/cvs
 export SVNROOT=$HOME/svn
 export ACK_COLOR_MATCH='underline white'
 export GZIP='-v9N'
-export RUBYLIB=$HOME/lib
-export GEM_HOME=$HOME/lib/ruby/gem
 export LESS=-cex3M
 export LANG=ja_JP.UTF-8
 export LC_CTYPE=ja_JP.UTF-8
