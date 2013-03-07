@@ -349,6 +349,8 @@ export GZIP='-v9N'
 export RUBYLIB=$HOME/lib
 export GEM_HOME=$HOME/lib/ruby/gem
 export LESS=-cex3M
+export LANG=ja_JP.UTF-8
+export LC_CTYPE=ja_JP.UTF-8
 
 # editor
 if [ -x /usr/local/bin/ee ]; then
