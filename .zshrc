@@ -360,19 +360,23 @@ export GZIP='-v9N'
 export LESS=-cex3M
 
 # editor
-if [ -x /usr/local/bin/ee ]; then
-    export EDITOR=ee
-elif which emacs > /dev/null 2>&1; then
+if which emacs > /dev/null 2>&1; then
     export EDITOR=emacs
-else
+elif which vi > /dev/null 2>&1; then
     export EDITOR=vi
+else
+    export EDITOR=ee
 fi
 
 # pager
 export LESSCHARSET=
-if [ -x /usr/local/bin/lv ]; then
-    export PAGER=lv
-elif [ -x /usr/local/bin/jless ]; then
+if which lv > /dev/null 2>&1; then
+	if [ `tput colors` -gt 0 ]; then
+		export PAGER='lv -c'
+	else
+		export PAGER=lv
+	fi
+elif which jless > /dev/null 2>&1; then
     export PAGER=jless
 else
     export PAGER=less
