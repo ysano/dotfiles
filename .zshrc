@@ -165,6 +165,13 @@ fi
 # use ls_colors on completion
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
+# tcsh color key are few.
+case "${OSTYPE}" in
+freebsd*|darwin*)
+        unset LS_COLORS
+        ;;
+esac
+
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
     xterm-color|xterm-256color) color_prompt=yes;;
@@ -226,7 +233,7 @@ setopt share_history            # ksh only
 # initialisation
 
 # input / output
-setopt correct                  # command spelling correction
+#setopt correct                  # command spelling correction
 setopt correct_all              # arguments spelling correction
 setopt print_eight_bit          # japanese fix
 setopt mail_warning
@@ -331,7 +338,6 @@ zstyle ':completion:*' use-cache true
 path=($path /usr/libexec /usr/local/libexec)
 path=($path /usr/local/sysutil)
 path=($path /usr/ucb /usr/etc)  # for SunOS
-path=($HOME/lib/ruby/gem/bin $path)  # for local rubygem
 path=($path $HOME/lib/android-sdk/tools)  # for android
 # qmail path
 if [ -d /var/qmail/bin ]; then
@@ -351,24 +357,26 @@ export CVSROOT=$HOME/cvs
 export SVNROOT=$HOME/svn
 export ACK_COLOR_MATCH='underline white'
 export GZIP='-v9N'
-export RUBYLIB=$HOME/lib
-export GEM_HOME=$HOME/lib/ruby/gem
 export LESS=-cex3M
 
 # editor
-if [ -x /usr/local/bin/ee ]; then
-    export EDITOR=ee
-elif which emacs > /dev/null 2>&1; then
+if which emacs > /dev/null 2>&1; then
     export EDITOR=emacs
-else
+elif which vi > /dev/null 2>&1; then
     export EDITOR=vi
+else
+    export EDITOR=ee
 fi
 
 # pager
 export LESSCHARSET=
-if [ -x /usr/local/bin/lv ]; then
-    export PAGER=lv
-elif [ -x /usr/local/bin/jless ]; then
+if which lv > /dev/null 2>&1; then
+	if [ `tput colors` -gt 0 ]; then
+		export PAGER='lv -c'
+	else
+		export PAGER=lv
+	fi
+elif which jless > /dev/null 2>&1; then
     export PAGER=jless
 else
     export PAGER=less
