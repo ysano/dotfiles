@@ -337,6 +337,11 @@ path=($path $HOME/lib/android-sdk/tools)  # for android
 if [ -d /var/qmail/bin ]; then
     path=($path /var/qmail/bin)
 fi
+# rbenv
+if [ -d $HOME/.rbenv ]; then
+    path=($HOME/.rbenv/bin $path)
+	eval "$(rbenv init -)"
+fi
 path=($HOME/bin $path)
 
 ################################
