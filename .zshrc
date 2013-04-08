@@ -371,11 +371,11 @@ fi
 # pager
 export LESSCHARSET=
 if which lv > /dev/null 2>&1; then
-	if [ `tput colors` -gt 0 ]; then
-		export PAGER='lv -c'
-	else
-		export PAGER=lv
-	fi
+    if [ `tput colors` -gt 0 ]; then
+        export PAGER='lv -c'
+    else
+        export PAGER=lv
+    fi
 elif which jless > /dev/null 2>&1; then
     export PAGER=jless
 else
