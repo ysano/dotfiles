@@ -45,6 +45,7 @@
 ;; visible
 ;;-----------------------------------------------------------------
 (load "init-visible")
+(load "init-encode")
 
 ;;-----------------------------------------------------------------
 ;; elpa package
@@ -119,3 +120,7 @@
 (setq epa-file-cache-passphrase-for-symmetric-encryption t)  ; saving password
 (setenv "GPG_AGENT_INFO" nil)                                ; non-GUI password dialog.
 (setq idm-database-file "~/secret/idm-db.gpg")
+
+;; environmental diag
+(if run-w32
+    (load "init-w32"))
