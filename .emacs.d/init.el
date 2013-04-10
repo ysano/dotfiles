@@ -108,9 +108,13 @@
 ;; text-adjust
 (require 'text-adjust)
 (defun text-adjust-space-before-save-if-needed ()
-  (when (memq major-mode
-              '(org-mode text-mode))
-    (text-adjust-space-buffer)))
+  (when (memq major-mode '(org-mode text-mode))
+    (progn
+      ;; 括弧は対象外
+      (setq text-adjust-rule-space
+            '((("\\cj" "" "[[0-9a-zA-Z+]")   " ")
+              (("[]/!?0-9a-zA-Z+]" "" "\\cj") " ")))
+      (text-adjust-space-buffer))))
 (defalias 'spacer 'text-adjust-space-buffer)
 (add-hook 'before-save-hook 'text-adjust-space-before-save-if-needed)
 
