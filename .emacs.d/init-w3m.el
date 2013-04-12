@@ -12,5 +12,4 @@
 
 ; Fix the CYGWIN environment variable
 (when (or run-cygwin run-w32)
-  (setcdr (assoc "CYGWIN" w3m-command-environment)
-          "nodosfilewarning noenvcache strip_title title binmode"))
+  (cons "CYGWIN" "nodosfilewarning noenvcache strip_title title binmode"))
