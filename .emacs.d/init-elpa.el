@@ -49,10 +49,14 @@
         yaml-mode
         zencoding-mode
 
+        ess
+        ess-R-object-popup
+
         ;; -- init-*.el
         org-plus-contrib
         w3m
         yasnippet
+        dropdown-list                   ;work with yasnippet
         ))
 (package-initialize)
 
@@ -86,6 +90,13 @@
                             (length not-installed)))
           (progn (dolist (package not-installed)
                    (auto-install-batch package))))))
+(setq my-from-emacswiki '("anything-R"))
+(let ((not-installed (remove-if 'my-auto-installed-file-exists-p my-from-emacswiki)))
+  (if not-installed
+      (if (y-or-n-p (format "there are %d packages to be installed. install them? "
+                            (length not-installed)))
+          (progn (dolist (package not-installed)
+                   (auto-install-from-emacswiki (concat package ".el")))))))
 
 ;;-----------------------------------------------------------------
 ;; .emacs.d/auto-install/*
@@ -243,3 +254,6 @@
 (require 'zencoding-mode)
 (add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
 
+;; ess
+(require 'ess-site)
+(require 'ess-R-object-popup)
