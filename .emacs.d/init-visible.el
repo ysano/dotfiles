@@ -109,6 +109,6 @@
 
 (setq x-stretch-cursor t)
 (setq visible-cursor t)
-(global-hl-line-mode 0)                 ;行の強調
+(global-hl-line-mode t)                 ;行の強調
 (show-paren-mode t)                     ;対応する括弧を強調
 (setq-default tab-width 4 indent-tabs-mode nil) ;Tabは使わない
