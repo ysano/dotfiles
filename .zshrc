@@ -332,6 +332,13 @@ setopt listpacked
 # some function create caches in ~/.zcompcache/
 zstyle ':completion:*' use-cache true
 
+# load gibo-completion.zsh
+if [ -f $ZUSERDIR/gibo-completion.zsh ]; then
+  echo "Loading $ZUSERDIR/gibo-completion.zsh"
+  source $ZUSERDIR/gibo-completion.zsh
+fi
+
+
 ################################
 ## path setting
 ################################
