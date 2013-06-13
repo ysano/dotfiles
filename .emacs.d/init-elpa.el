@@ -52,6 +52,10 @@
         ess
         ess-R-object-popup
 
+        e2wm
+        e2wm-R
+        e2wm-bookmark
+
         ;; -- init-*.el
         org-plus-contrib
         w3m
@@ -255,5 +259,68 @@
 (add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
 
 ;; ess
+(if run-w32 (progn
+              (setq inferior-R-program-name "C:\\Program Files\\R\\R-3.0.1\\bin\\R.exe")
+              ))
 (require 'ess-site)
 (require 'ess-R-object-popup)
+(setq ess-ask-for-ess-directory nil)
+
+;; e2wm
+(require 'e2wm)
+(require 'e2wm-bookmark)
+(require 'e2wm-R)
+(global-set-key (kbd "M-+") 'e2wm:start-management)
+(global-set-key (kbd "C-c R") 'e2wm:start-R-code)
+
+(e2wm:add-keymap
+ e2wm:pst-minor-mode-keymap
+ '(("C-S-p"    . e2wm:pst-history-forward-command) ; 履歴を進む
+   ("C-S-n"    . e2wm:pst-history-back-command) ; 履歴をもどる
+   ("M-m"      . e2wm:pst-window-select-main-command) ; メイン選択
+   ("prefix q" . e2wm:stop-management)
+   ("prefix l" . e2wm:pst-update-windows-command)
+   ("prefix 1" . e2wm:dp-code)
+   ("prefix 2" . e2wm:dp-two)
+   ("prefix 3" . e2wm:dp-htwo)
+   ("prefix 4" . e2wm:dp-doc)
+   ("prefix 5" . e2wm:dp-array)
+   ("prefix 6" . e2wm:dp-R-code)
+   ("prefix 7" . e2wm:dp-R-view)
+   ("prefix v" . e2wm:dp-vcs)
+   ("C-M-s"    . e2wm:my-toggle-sub) ; subの表示をトグルする
+   ) e2wm:prefix-key)
+
+(e2wm:add-keymap
+ e2wm:dp-code-minor-mode-map
+ '(("prefix I" . e2wm:dp-code-imenu-toggle-command)
+   ("prefix S" . e2wm:dp-code-sub-toggle-command)
+   ("prefix C" . e2wm:dp-code-toggle-clock-command)
+   ("prefix c" . e2wm:dp-code-toggle-svg-clock-command)
+   ("prefix M" . e2wm:dp-code-main-maximize-toggle-command)
+   ("prefix h" . e2wm:dp-code-navi-history-command)
+   ("prefix f" . e2wm:dp-code-navi-files-command)
+   ("prefix i" . e2wm:dp-code-navi-imenu-command)
+   ("prefix s" . e2wm:dp-code-navi-sub-command)
+   ("C-c m"    . e2wm:dp-code-popup-messages)
+   ("prefix b" . e2wm:dp-code-navi-bookmarks-command)
+   ) e2wm:prefix-key)
+
+(e2wm:add-keymap
+ e2wm:dp-two-minor-mode-map
+ '(("C-S-n"     . e2wm:dp-two-right-history-down-command)
+   ("C-S-p"     . e2wm:dp-two-right-history-up-command)
+   ("prefix h"  . e2wm:dp-two-navi-history-command)
+   ("prefix l"  . e2wm:pst-update-windows-command)
+   ("prefix j"  . e2wm:dp-two-navi-left-command)
+   ("prefix k"  . e2wm:dp-two-navi-right-command)
+   ("prefix d"  . e2wm:dp-two-double-column-command)
+   ("prefix S"  . e2wm:dp-two-sub-toggle-command)
+   ("prefix -"  . e2wm:dp-two-swap-buffers-command)
+   ("prefix H"  . e2wm:dp-two-history-toggle-command)
+   ("prefix M"  . e2wm:dp-two-main-maximize-toggle-command)
+   ) e2wm:prefix-key)
+
+(defun e2wm:my-toggle-sub () ; Subをトグルする関数
+  (interactive)
+  (e2wm:pst-window-toggle 'sub t 'main))
