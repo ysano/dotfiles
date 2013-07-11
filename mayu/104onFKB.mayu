@@ -5,6 +5,7 @@
 # "109.mayu"‚Æ‘g‚İ‡‚í‚¹‚Äg‚¤
 
 define KBD104onFKB
+define KBD104on109
 
 # 123 line
 def subst ~S-*”¼Šp/‘SŠp		= $GRAVE_ACCENT
