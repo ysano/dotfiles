@@ -56,9 +56,10 @@
 ;;------------------------------------------------------------
 
 (setq org-agenda-files (cons (concat org-directory "/gtd.org")
-                              (file-expand-wildcards
-                                 (concat org-directory "/sch/*.org"))
-                               ))
+                             (car (mapcar (lambda (w)
+                                       (file-expand-wildcards
+                                        (concat org-directory w)))
+                                     '("/sch/*.org" "/project/sch/*.org")))))
 ;; アジェンダ表示で下線を用いる
 (add-hook 'org-agenda-mode-hook '(lambda () (hl-line-mode 1)))
 (setq hl-line-face 'underline)

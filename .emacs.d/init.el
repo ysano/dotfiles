@@ -128,3 +128,4 @@
 ;; environmental diag
 (if run-w32
     (load "init-w32"))
+(setq temporary-file-directory "~/tmp/")

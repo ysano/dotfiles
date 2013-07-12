@@ -275,8 +275,8 @@
 
 (e2wm:add-keymap
  e2wm:pst-minor-mode-keymap
- '(("C-S-p"    . e2wm:pst-history-forward-command) ; 履歴を進む
-   ("C-S-n"    . e2wm:pst-history-back-command) ; 履歴をもどる
+ '(("C-,"      . e2wm:pst-history-forward-command) ; 履歴を進む
+   ("C-."      . e2wm:pst-history-back-command) ; 履歴をもどる
    ("M-m"      . e2wm:pst-window-select-main-command) ; メイン選択
    ("prefix q" . e2wm:stop-management)
    ("prefix l" . e2wm:pst-update-windows-command)
@@ -308,8 +308,8 @@
 
 (e2wm:add-keymap
  e2wm:dp-two-minor-mode-map
- '(("C-S-n"     . e2wm:dp-two-right-history-down-command)
-   ("C-S-p"     . e2wm:dp-two-right-history-up-command)
+ '(("C-,"       . e2wm:dp-two-right-history-down-command)
+   ("C-."       . e2wm:dp-two-right-history-up-command)
    ("prefix h"  . e2wm:dp-two-navi-history-command)
    ("prefix l"  . e2wm:pst-update-windows-command)
    ("prefix j"  . e2wm:dp-two-navi-left-command)
