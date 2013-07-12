@@ -15,6 +15,8 @@
         auto-install
 
         auto-complete
+        ac-math
+
         ace-jump-mode
         color-theme
         color-theme-solarized
@@ -55,6 +57,9 @@
         e2wm
         e2wm-R
         e2wm-bookmark
+
+        auctex
+        cdlatex
 
         ;; -- init-*.el
         org-plus-contrib
@@ -126,6 +131,14 @@
 (setq ac-quick-help-delay 0.3)
 (setq ac-menu-height 20)
 (setq ac-ignore-case 'smart)
+(define-key global-map [f2] 'auto-complete-mode)
+
+;; ac-math
+(require 'ac-math)
+(defun ac-latex-mode-setup ()         ; add ac-sources to default ac-sources
+  (setq ac-sources
+     (append '(ac-source-math-unicode ac-source-math-latex ac-source-latex-commands)
+               ac-sources)))
 
 ;; ace-jump-mode
 (autoload
@@ -324,3 +337,4 @@
 (defun e2wm:my-toggle-sub () ; Subをトグルする関数
   (interactive)
   (e2wm:pst-window-toggle 'sub t 'main))
+

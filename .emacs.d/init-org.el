@@ -20,6 +20,19 @@
 ;; 見出しの余分な*を消す
 (setq org-hide-leading-stars t)
 
+;; inline latex format
+(add-hook 'org-mode-hook
+          (lambda ()
+            (setq org-format-latex-options
+                  (plist-put org-format-latex-options :scale 1.4))))
+
+;; cdlatex
+(add-hook 'org-mode-hook 'turn-on-org-cdlatex)
+
+;; ac-math
+(add-to-list 'ac-modes 'org-mode)
+(add-hook 'org-mode-hook 'ac-latex-mode-setup)
+
 ;; ロケール修正
 (add-hook 'org-mode-hook
           (lambda ()
