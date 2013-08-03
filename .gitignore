@@ -15,3 +15,6 @@ GTAGSROOT
 *.log
 *.elc
 .zshrc.local
+
+# Org-mode
+.org-id-locations

@@ -233,7 +233,7 @@ setopt share_history            # ksh only
 # initialisation
 
 # input / output
-setopt correct                  # command spelling correction
+#setopt correct                  # command spelling correction
 setopt correct_all              # arguments spelling correction
 setopt print_eight_bit          # japanese fix
 setopt mail_warning
@@ -332,6 +332,13 @@ setopt listpacked
 # some function create caches in ~/.zcompcache/
 zstyle ':completion:*' use-cache true
 
+# load gibo-completion.zsh
+if [ -f $ZUSERDIR/gibo-completion.zsh ]; then
+  echo "Loading $ZUSERDIR/gibo-completion.zsh"
+  source $ZUSERDIR/gibo-completion.zsh
+fi
+
+
 ################################
 ## path setting
 ################################
@@ -342,6 +349,11 @@ path=($path $HOME/lib/android-sdk/tools)  # for android
 # qmail path
 if [ -d /var/qmail/bin ]; then
     path=($path /var/qmail/bin)
+fi
+# rbenv
+if [ -d $HOME/.rbenv ]; then
+    path=($HOME/.rbenv/bin $path)
+	eval "$(rbenv init -)"
 fi
 path=($HOME/bin $path)
 
@@ -357,19 +369,23 @@ export LANG=ja_JP.UTF-8
 export LC_CTYPE=ja_JP.UTF-8
 
 # editor
-if [ -x /usr/local/bin/ee ]; then
-    export EDITOR=ee
-elif which emacs > /dev/null 2>&1; then
+if which emacs > /dev/null 2>&1; then
     export EDITOR=emacs
-else
+elif which vi > /dev/null 2>&1; then
     export EDITOR=vi
+else
+    export EDITOR=ee
 fi
 
 # pager
 export LESSCHARSET=
-if [ -x /usr/local/bin/lv ]; then
-    export PAGER=lv
-elif [ -x /usr/local/bin/jless ]; then
+if which lv > /dev/null 2>&1; then
+    if [ `tput colors` -gt 0 ]; then
+        export PAGER='lv -c'
+    else
+        export PAGER=lv
+    fi
+elif which jless > /dev/null 2>&1; then
     export PAGER=jless
 else
     export PAGER=less

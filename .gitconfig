@@ -1,0 +1,11 @@
+[user]
+	name = ysano
+	email = ysano@ysnet.org
+[color]
+	ui = true
+[core]
+        pager = lv -c
+[alias]
+	co = checkout
+	ci = commit
+	st = status
