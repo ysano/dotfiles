@@ -45,6 +45,8 @@
         ruby-block
         ruby-end
         flymake-ruby
+        inf-ruby
+        ruby-compilation
 
         python-mode
         jade-mode
@@ -237,18 +239,17 @@
 
 ;; python-mode
 (require 'python-mode)
-(require 'flymake-python-pyflakes)
+(eval-after-load 'python-mode
+  '(progn
+     (add-hook 'python-mode-hook
+               '(lambda()
+                  (setq indent-tabs-mode nil)
+                  (setq truncate-lines t)
+                  (setq tab-width 4)))
+     ))
 ; fix ruby-calculate-indent error
 (setq ruby-indent-level 2)
 (setq nxml-child-indent 2)
-(add-hook 'python-mode-hook
-          (function
-           (lambda()
-             (setq truncate-lines t)
-             (setq indent-tabs-mode nil)
-             (setq tab-width 4)
-             (flymake-python-pyflakes-load)
-             )))
 
 ;; ruby-mode
 (autoload 'ruby-mode "ruby-mode" nil t nil)
@@ -273,6 +274,21 @@
 (setq ruby-block-highlight-toggle 'minibuffer)
 ;; display to minibuffer and do overlay
 (setq ruby-block-highlight-toggle t)
+
+;; inf-ruby
+(defconst inf-ruby-implementations
+  '(("ruby"     . "bash -c irb --prompt default -r irb/completion"))
+  "An alist of ruby implementations to irb executable names.")
+(autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
+;(autoload 'inf-ruby-setup-keybindings "inf-ruby" "" t)
+(eval-after-load 'ruby-mode
+  '(add-hook 'ruby-mode-hook 'inf-ruby-minor-mode))
+(inf-ruby-switch-setup)
+
+;; ruby-complition
+(eval-after-load 'ruby-mode
+  '(progn (define-key ruby-mode-map (kbd "C-x t") 'ruby-compilation-this-buffer)
+          (define-key ruby-mode-map (kbd "C-x T") 'ruby-compilation-this-test)))
 
 ;; yaml-mode
 (require 'yaml-mode)

@@ -234,7 +234,7 @@ setopt share_history            # ksh only
 
 # input / output
 #setopt correct                  # command spelling correction
-setopt correct_all              # arguments spelling correction
+#setopt correct_all              # arguments spelling correction
 setopt print_eight_bit          # japanese fix
 setopt mail_warning
 setopt rc_quotes
