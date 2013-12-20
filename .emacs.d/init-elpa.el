@@ -237,9 +237,18 @@
 
 ;; python-mode
 (require 'python-mode)
+(require 'flymake-python-pyflakes)
 ; fix ruby-calculate-indent error
 (setq ruby-indent-level 2)
 (setq nxml-child-indent 2)
+(add-hook 'python-mode-hook
+          (function
+           (lambda()
+             (setq truncate-lines t)
+             (setq indent-tabs-mode nil)
+             (setq tab-width 4)
+             (flymake-python-pyflakes-load)
+             )))
 
 ;; ruby-mode
 (autoload 'ruby-mode "ruby-mode" nil t nil)
@@ -249,6 +258,8 @@
      (add-hook 'ruby-mode-hook
                '(lambda ()
                   ;; (abbrev-mode 1)
+                  (make-local-variable 'ac-ignores)
+                  (add-to-list 'ac-ignores "end")
                   (electric-pair-mode t)
                   (electric-indent-mode t)
                   (electric-layout-mode t)))

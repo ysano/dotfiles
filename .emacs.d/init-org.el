@@ -23,6 +23,8 @@
 ;; inline latex format
 (add-hook 'org-mode-hook
           (lambda ()
+            (make-local-variable 'ac-ignores)
+            (add-to-list 'ac-ignores "|-") ; ignore for table
             (setq org-format-latex-options
                   (plist-put org-format-latex-options :scale 1.4))))
 
