@@ -51,6 +51,15 @@
             (set (make-local-variable 'system-time-locale) "C")))
 
 ;;------------------------------------------------------------
+;; Hyperlinks Setup
+;;------------------------------------------------------------
+(setq org-link-abbrev-alist
+      '(
+        ("google"    . "http://www.google.com/search?q=%s")
+        ("gmap"      . "http://maps.google.com/maps?q=%s")
+        ))
+
+;;------------------------------------------------------------
 ;; Capture Setup
 ;;------------------------------------------------------------
 (setq org-capture-templates

@@ -9,6 +9,7 @@
 ;; (global-set-key "\C-xm" 'browse-url-at-point)
 (setq w3m-use-cookies t)
 (setq browse-url-browser-function 'w3m-browse-url)
+(setq w3m-default-display-inline-images t)
 
 ; Fix the CYGWIN environment variable
 (when (or run-cygwin run-w32)
