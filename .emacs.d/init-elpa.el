@@ -38,7 +38,6 @@
         php-extras
         flymake-php
 
-        ;; js2-mode
         js3-mode
 
         ruby-mode
@@ -51,7 +50,8 @@
         python-mode
         jade-mode
         yaml-mode
-        zencoding-mode
+        emmet-mode
+        web-mode
 
         ess
         ess-R-object-popup
@@ -203,6 +203,20 @@
 (add-to-list 'auto-mode-alist '("access\\.conf\\'" . apache-mode))
 (add-to-list 'auto-mode-alist '("sites-\\(available\\|enabled\\)/" . apache-mode))
 
+;; web-mode
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.phtml$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl\\.php$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.jsp$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.as[cp]x$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.erb$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.mustache$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.djhtml$" . web-mode))
+(setq web-mode-engines-alist
+      '(("php"    . "\\.phtml$")
+        ("blade"  . "\\.blade\\.php$"))
+)
+
 ;; php-mode and php-extras
 (require 'php-mode)
 (require 'php-extras)
@@ -218,6 +232,7 @@
              (setq php-manual-path "share/php_manual_ja.tar.gz")
              (setq indent-tabs-mode nil)
              ;; (c-set-offset 'basic-offset 2)
+             (setq php-mode-force-pear t)
              (c-set-offset 'case-label '+)
              (c-set-offset 'substatement-open 0)
              (c-set-offset 'block-close 0)
@@ -294,9 +309,11 @@
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
-;; zencoding-mode
-(require 'zencoding-mode)
-(add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
+;; emmet-mode
+(require 'emmet-mode)
+(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+(add-hook 'html-mode-hook 'emmet-mode)
+(add-hook 'css-mode-hook  'emmet-mode)
 
 ;; ess
 (if run-w32 (progn
