@@ -118,8 +118,9 @@
 
 ;; ------------------------------------------------------------------------
 ;; @ menu-tree
-(setq menu-tree-coding-system 'utf-8)
-(require 'menu-tree)
+;; (setq menu-tree-coding-system 'utf-8)
+;; (require 'menu-tree)
+;; "error: Attempt to modify read-only object" on emacs-24.3.x
 
 ;; ------------------------------------------------------------------------
 ;; @ migemo/cmigemo
