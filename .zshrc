@@ -346,6 +346,8 @@ path=($path /usr/libexec /usr/local/libexec)
 path=($path /usr/local/sysutil)
 path=($path /usr/ucb /usr/etc)  # for SunOS
 path=($path $HOME/lib/android-sdk/tools)  # for android
+path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
+
 # qmail path
 if [ -d /var/qmail/bin ]; then
     path=($path /var/qmail/bin)
@@ -365,6 +367,7 @@ export SVNROOT=$HOME/svn
 export ACK_COLOR_MATCH='underline white'
 export GZIP='-v9N'
 export LESS=-cex3M
+export JAVA_HOME=${JAVA_HOME:-/usr/local/openjdk6}
 
 # editor
 if which emacs > /dev/null 2>&1; then
