@@ -57,7 +57,7 @@
         ess-R-object-popup
 
         e2wm
-        e2wm-R
+;        e2wm-R
         e2wm-bookmark
 
         auctex
@@ -290,9 +290,9 @@
 ;; e2wm
 (require 'e2wm)
 (require 'e2wm-bookmark)
-(require 'e2wm-R)
+;(require 'e2wm-R)
 (global-set-key (kbd "M-+") 'e2wm:start-management)
-(global-set-key (kbd "C-c R") 'e2wm:start-R-code)
+;(global-set-key (kbd "C-c R") 'e2wm:start-R-code)
 
 (e2wm:add-keymap
  e2wm:pst-minor-mode-keymap
@@ -306,8 +306,8 @@
    ("prefix 3" . e2wm:dp-htwo)
    ("prefix 4" . e2wm:dp-doc)
    ("prefix 5" . e2wm:dp-array)
-   ("prefix 6" . e2wm:dp-R-code)
-   ("prefix 7" . e2wm:dp-R-view)
+;   ("prefix 6" . e2wm:dp-R-code)
+;   ("prefix 7" . e2wm:dp-R-view)
    ("prefix v" . e2wm:dp-vcs)
    ("C-M-s"    . e2wm:my-toggle-sub) ; subの表示をトグルする
    ) e2wm:prefix-key)
