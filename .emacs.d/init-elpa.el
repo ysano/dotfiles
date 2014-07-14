@@ -12,7 +12,7 @@
 
 (setq my-packages
       '(
-        auto-install
+        helm
 
         auto-complete
         ac-math
@@ -83,48 +83,12 @@
                    (package-install package))))))
 
 ;;-----------------------------------------------------------------
-;; auto-install
-;;-----------------------------------------------------------------
-
-(require 'auto-install)
-(setq auto-install-directory "~/.emacs.d/auto-install/")
-(auto-install-update-emacswiki-package-name nil)
-(add-to-load-path auto-install-directory)
-(setq auto-install-use-wget nil)
-(setq my-batches '("anything"))
-(defun my-auto-installed-file-exists-p (name)
-  "check auto-install directory"
-  (file-exists-p (concat auto-install-directory name ".el")))
-(let ((not-installed (remove-if 'my-auto-installed-file-exists-p my-batches)))
-  (if not-installed
-      (if (y-or-n-p (format "there are %d packages to be installed. install them? "
-                            (length not-installed)))
-          (progn (dolist (package not-installed)
-                   (auto-install-batch package))))))
-(setq my-from-emacswiki '("anything-R"))
-(let ((not-installed (remove-if 'my-auto-installed-file-exists-p my-from-emacswiki)))
-  (if not-installed
-      (if (y-or-n-p (format "there are %d packages to be installed. install them? "
-                            (length not-installed)))
-          (progn (dolist (package not-installed)
-                   (auto-install-from-emacswiki (concat package ".el")))))))
-
-;;-----------------------------------------------------------------
-;; .emacs.d/auto-install/*
-;;-----------------------------------------------------------------
-
-;; anything
-(require 'anything-startup)
-;; anything-config rewrite
-(eval-after-load 'anything-config
-  '(progn
-     (setq w3m-command "w3m")
-     (setq anything-c-home-url "http://www.google.co.jp")
-     ))
-
-;;-----------------------------------------------------------------
 ;; .emacs.d/epla/*
 ;;-----------------------------------------------------------------
+
+;; helm
+(require 'helm-config)
+(helm-mode 1)
 
 ;; auto-complete
 (require 'auto-complete-config)
