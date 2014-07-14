@@ -9,3 +9,5 @@
 	co = checkout
 	ci = commit
 	st = status
+[merge]
+	tool = emerge
