@@ -26,6 +26,12 @@
 (setq max-lisp-eval-depth 5000)
 (setq max-specpdl-size 6000)
 
+;; Symbol's value as Variable is void: last-command-char in 24.3.1
+(define-obsolete-variable-alias 'last-input-char
+  'last-input-event "at least 19.34")
+(define-obsolete-variable-alias 'last-command-char
+  'last-command-event "at least 19.34")
+
 ;;-----------------------------------------------------------------
 ;; lang
 ;;-----------------------------------------------------------------
