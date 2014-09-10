@@ -234,7 +234,7 @@ setopt share_history            # ksh only
 
 # input / output
 #setopt correct                  # command spelling correction
-setopt correct_all              # arguments spelling correction
+#setopt correct_all              # arguments spelling correction
 setopt print_eight_bit          # japanese fix
 setopt mail_warning
 setopt rc_quotes
@@ -346,6 +346,8 @@ path=($path /usr/libexec /usr/local/libexec)
 path=($path /usr/local/sysutil)
 path=($path /usr/ucb /usr/etc)  # for SunOS
 path=($path $HOME/lib/android-sdk/tools)  # for android
+path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
+
 # qmail path
 if [ -d /var/qmail/bin ]; then
     path=($path /var/qmail/bin)
@@ -367,6 +369,7 @@ export GZIP='-v9N'
 export LESS=-cex3M
 export LANG=ja_JP.UTF-8
 export LC_CTYPE=ja_JP.UTF-8
+export JAVA_HOME=${JAVA_HOME:-/usr/local/openjdk6}
 
 # editor
 if which emacs > /dev/null 2>&1; then

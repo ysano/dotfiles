@@ -12,7 +12,7 @@
 
 (setq my-packages
       '(
-        auto-install
+        helm
 
         auto-complete
         ac-math
@@ -38,24 +38,26 @@
         php-extras
         flymake-php
 
-        ;; js2-mode
         js3-mode
 
         ruby-mode
         ruby-block
         ruby-end
         flymake-ruby
+        inf-ruby
+        ruby-compilation
 
         python-mode
         jade-mode
         yaml-mode
-        zencoding-mode
+        emmet-mode
+        web-mode
 
         ess
         ess-R-object-popup
 
         e2wm
-        e2wm-R
+;        e2wm-R
         e2wm-bookmark
 
         auctex
@@ -81,48 +83,12 @@
                    (package-install package))))))
 
 ;;-----------------------------------------------------------------
-;; auto-install
-;;-----------------------------------------------------------------
-
-(require 'auto-install)
-(setq auto-install-directory "~/.emacs.d/auto-install/")
-(auto-install-update-emacswiki-package-name nil)
-(add-to-load-path auto-install-directory)
-(setq auto-install-use-wget nil)
-(setq my-batches '("anything"))
-(defun my-auto-installed-file-exists-p (name)
-  "check auto-install directory"
-  (file-exists-p (concat auto-install-directory name ".el")))
-(let ((not-installed (remove-if 'my-auto-installed-file-exists-p my-batches)))
-  (if not-installed
-      (if (y-or-n-p (format "there are %d packages to be installed. install them? "
-                            (length not-installed)))
-          (progn (dolist (package not-installed)
-                   (auto-install-batch package))))))
-(setq my-from-emacswiki '("anything-R"))
-(let ((not-installed (remove-if 'my-auto-installed-file-exists-p my-from-emacswiki)))
-  (if not-installed
-      (if (y-or-n-p (format "there are %d packages to be installed. install them? "
-                            (length not-installed)))
-          (progn (dolist (package not-installed)
-                   (auto-install-from-emacswiki (concat package ".el")))))))
-
-;;-----------------------------------------------------------------
-;; .emacs.d/auto-install/*
-;;-----------------------------------------------------------------
-
-;; anything
-(require 'anything-startup)
-;; anything-config rewrite
-(eval-after-load 'anything-config
-  '(progn
-     (setq w3m-command "w3m")
-     (setq anything-c-home-url "http://www.google.co.jp")
-     ))
-
-;;-----------------------------------------------------------------
 ;; .emacs.d/epla/*
 ;;-----------------------------------------------------------------
+
+;; helm
+(require 'helm-config)
+(helm-mode 1)
 
 ;; auto-complete
 (require 'auto-complete-config)
@@ -201,6 +167,20 @@
 (add-to-list 'auto-mode-alist '("access\\.conf\\'" . apache-mode))
 (add-to-list 'auto-mode-alist '("sites-\\(available\\|enabled\\)/" . apache-mode))
 
+;; web-mode
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.phtml$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl\\.php$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.jsp$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.as[cp]x$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.erb$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.mustache$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.djhtml$" . web-mode))
+(setq web-mode-engines-alist
+      '(("php"    . "\\.phtml$")
+        ("blade"  . "\\.blade\\.php$"))
+)
+
 ;; php-mode and php-extras
 (require 'php-mode)
 (require 'php-extras)
@@ -216,6 +196,7 @@
              (setq php-manual-path "share/php_manual_ja.tar.gz")
              (setq indent-tabs-mode nil)
              ;; (c-set-offset 'basic-offset 2)
+             (setq php-mode-force-pear t)
              (c-set-offset 'case-label '+)
              (c-set-offset 'substatement-open 0)
              (c-set-offset 'block-close 0)
@@ -237,6 +218,14 @@
 
 ;; python-mode
 (require 'python-mode)
+(eval-after-load 'python-mode
+  '(progn
+     (add-hook 'python-mode-hook
+               '(lambda()
+                  (setq indent-tabs-mode nil)
+                  (setq truncate-lines t)
+                  (setq tab-width 4)))
+     ))
 ; fix ruby-calculate-indent error
 (setq ruby-indent-level 2)
 (setq nxml-child-indent 2)
@@ -249,6 +238,8 @@
      (add-hook 'ruby-mode-hook
                '(lambda ()
                   ;; (abbrev-mode 1)
+                  (make-local-variable 'ac-ignores)
+                  (add-to-list 'ac-ignores "end")
                   (electric-pair-mode t)
                   (electric-indent-mode t)
                   (electric-layout-mode t)))
@@ -263,13 +254,30 @@
 ;; display to minibuffer and do overlay
 (setq ruby-block-highlight-toggle t)
 
+;; inf-ruby
+(defconst inf-ruby-implementations
+  '(("ruby"     . "bash -c irb --prompt default -r irb/completion"))
+  "An alist of ruby implementations to irb executable names.")
+(autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
+;(autoload 'inf-ruby-setup-keybindings "inf-ruby" "" t)
+(eval-after-load 'ruby-mode
+  '(add-hook 'ruby-mode-hook 'inf-ruby-minor-mode))
+(inf-ruby-switch-setup)
+
+;; ruby-complition
+(eval-after-load 'ruby-mode
+  '(progn (define-key ruby-mode-map (kbd "C-x t") 'ruby-compilation-this-buffer)
+          (define-key ruby-mode-map (kbd "C-x T") 'ruby-compilation-this-test)))
+
 ;; yaml-mode
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
-;; zencoding-mode
-(require 'zencoding-mode)
-(add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
+;; emmet-mode
+(require 'emmet-mode)
+(add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+(add-hook 'html-mode-hook 'emmet-mode)
+(add-hook 'css-mode-hook  'emmet-mode)
 
 ;; ess
 (if run-w32 (progn
@@ -282,9 +290,9 @@
 ;; e2wm
 (require 'e2wm)
 (require 'e2wm-bookmark)
-(require 'e2wm-R)
+;(require 'e2wm-R)
 (global-set-key (kbd "M-+") 'e2wm:start-management)
-(global-set-key (kbd "C-c R") 'e2wm:start-R-code)
+;(global-set-key (kbd "C-c R") 'e2wm:start-R-code)
 
 (e2wm:add-keymap
  e2wm:pst-minor-mode-keymap
@@ -298,8 +306,8 @@
    ("prefix 3" . e2wm:dp-htwo)
    ("prefix 4" . e2wm:dp-doc)
    ("prefix 5" . e2wm:dp-array)
-   ("prefix 6" . e2wm:dp-R-code)
-   ("prefix 7" . e2wm:dp-R-view)
+;   ("prefix 6" . e2wm:dp-R-code)
+;   ("prefix 7" . e2wm:dp-R-view)
    ("prefix v" . e2wm:dp-vcs)
    ("C-M-s"    . e2wm:my-toggle-sub) ; subの表示をトグルする
    ) e2wm:prefix-key)

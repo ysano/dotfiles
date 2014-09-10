@@ -23,6 +23,8 @@
 ;; inline latex format
 (add-hook 'org-mode-hook
           (lambda ()
+            (make-local-variable 'ac-ignores)
+            (add-to-list 'ac-ignores "|-") ; ignore for table
             (setq org-format-latex-options
                   (plist-put org-format-latex-options :scale 1.4))))
 
@@ -49,6 +51,15 @@
 (add-hook 'org-src-mode-hook
           (lambda ()
             (set (make-local-variable 'system-time-locale) "C")))
+
+;;------------------------------------------------------------
+;; Hyperlinks Setup
+;;------------------------------------------------------------
+(setq org-link-abbrev-alist
+      '(
+        ("google"    . "http://www.google.com/search?q=%s")
+        ("gmap"      . "http://maps.google.com/maps?q=%s")
+        ))
 
 ;;------------------------------------------------------------
 ;; Capture Setup
