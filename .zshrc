@@ -157,10 +157,23 @@ stty pass8
 ## color
 ################################
 
-# load colored ls setting
+# load default colored ls setting
 if [ -f $ZUSERDIR/lscolors ]; then
   source $ZUSERDIR/lscolors
 fi
+
+# 256dark
+if [ -f ~/.zsh/dircolors.256dark ]; then
+    echo "Loading dircolors.256dark"
+    if type dircolors > /dev/null 2>&1; then
+        eval $(dircolors ~/.zsh/dircolors.256dark)
+    elif type gdircolors > /dev/null 2>&1; then
+        eval $(gdircolors ~/.zsh/dircolors.256dark)
+    fi
+else
+    eval "`dircolors -b`"
+fi
+
 
 # use ls_colors on completion
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
@@ -179,7 +192,6 @@ esac
 
 # enable color support of ls and also add handy aliases
 if [ "$TERM" != "dumb" ] && [ -x /usr/bin/dircolors ]; then
-    eval "`dircolors -b`"
     alias ls='ls --color=auto'
     alias dir='ls --color=auto --format=vertical'
     alias vdir='ls --color=auto --format=long'
@@ -391,5 +403,9 @@ if which lv > /dev/null 2>&1; then
 elif which jless > /dev/null 2>&1; then
     export PAGER=jless
 else
-    export PAGER=less
+    if [ `tput colors` -gt 0 ]; then
+        export PAGER='less -R'
+    else
+        export PAGER=less
+    fi
 fi

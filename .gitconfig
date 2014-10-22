@@ -4,7 +4,7 @@
 [color]
 	ui = true
 [core]
-        pager = lv -c
+
 [alias]
 	co = checkout
 	ci = commit
