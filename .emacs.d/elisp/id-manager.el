@@ -1,7 +1,7 @@
-;;; id-manager.el --- id-password management 
+;;; id-manager.el --- id-password management
 
-;; Copyright (C) 2009, 2010, 2011  SAKURAI Masashi
-;; Time-stamp: <2011-02-21 21:32:13 sakurai>
+;; Copyright (C) 2009, 2010, 2011, 2013  SAKURAI Masashi
+;; Time-stamp: <2013-12-17 10:22:03 sakurai>
 
 ;; Author: SAKURAI Masashi <m.sakurai atmark kiwanami.net>
 ;; Keywords: password, convenience
@@ -30,12 +30,12 @@
 ;;   (name)^t(ID)^t(password)^t(Update date "YYYY/MM/DD")[^t(memo)]
 ;; . One can prepare an initial data or modify the data by hand or
 ;; the Excel.
-;; 
+;;
 ;; Implicitly, this elisp program expects that the DB file is
 ;; encrypted by the some GPG encryption elisp, such as EasyPG or
 ;; alpaca.
 ;;
-;; Excuting the command `idm-open-list-command', you can open the 
+;; Excuting the command `idm-open-list-command', you can open the
 ;; ID-password list buffer. Check the function `describe-bindings'.
 
 ;;; Installation:
@@ -45,22 +45,22 @@
 ;; ------------------------------
 ;; (require 'id-manager)
 ;; ------------------------------
-;; If you have anything.el, bind `id-manager' to key,
+;; If you have helm.el, bind `id-manager' to key,
 ;; like (global-set-key (kbd "M-7") 'id-manager).
 
 ;;; Setting example:
 
 ;; For EasyPG users:
-;; 
+;;
 ;; (autoload 'id-manager "id-manager" nil t)
-;; (global-set-key (kbd "M-7") 'id-manager)                     ; anything UI
+;; (global-set-key (kbd "M-7") 'id-manager)                     ; helm UI
 ;; (setq epa-file-cache-passphrase-for-symmetric-encryption t)  ; saving password
 ;; (setenv "GPG_AGENT_INFO" nil)                                ; non-GUI password dialog.
 
 ;; For alpaca users:
-;; 
+;;
 ;; (autoload 'id-manager "id-manager" nil t)
-;; (global-set-key (kbd "M-7") 'id-manager) ; anything UI
+;; (global-set-key (kbd "M-7") 'id-manager) ; helm UI
 ;; (setq idm-db-buffer-save-function ; adjustment for alpaca.el
 ;;       (lambda (file)
 ;;         (set-visited-file-name file)
@@ -73,7 +73,7 @@
 ;; This program generates passwords by using external command:
 ;; `idm-gen-password-cmd'. If you have some better idea, please let me
 ;; know.
-;; 
+;;
 ;; I think that this program makes lazy password management more
 ;; securely.  But I'm not sure that this program is secure enough.
 ;; I'd like many people to check and advice me.
@@ -108,7 +108,7 @@
   like `find-file-noselect'. Some decryption should work at this
   function.")
 
-(defvar idm-db-buffer-save-function 
+(defvar idm-db-buffer-save-function
   'write-file
   "File saving function. This function has one arguments FILENAME,
   like `write-file'. Some encryption should work at this
@@ -117,12 +117,15 @@
 (defvar idm-db-buffer-password-var nil
   "Password variable. See the text of settings for alpaca.el. ")
 
+(defvar idm-clipboard-expire-time-sec 5
+  "Expire time for the clipboard content.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Macros
 
 (defmacro idm--aif (test-form then-form &rest else-forms)
   `(let ((it ,test-form))
-     (if it ,then-form ,@else-forms))) 
+     (if it ,then-form ,@else-forms)))
 (put 'idm--aif 'lisp-indent-function 2)
 
 
@@ -132,7 +135,7 @@
 (defun idm-gen-password ()
   "Generate a password."
   (let ((buf (get-buffer-create " *idm-work*")) ret)
-    (call-process-shell-command 
+    (call-process-shell-command
      idm-gen-password-cmd
      nil buf nil)
     (with-current-buffer buf
@@ -140,30 +143,30 @@
     (kill-buffer buf)
     ret))
 
-;; record struct 
-(defstruct (idm-record 
-            (:constructor make-idm-record-bylist 
-                          (name account-id password update-time 
+;; record struct
+(defstruct (idm-record
+            (:constructor make-idm-record-bylist
+                          (name account-id password update-time
                                 &optional memo)))
   name account-id password update-time memo)
 
 (defun idm-load-db ()
   "Load the DB file `idm-database-file' and make a DB object."
   (let* ((coding-system-for-read 'utf-8)
-         (tmpbuf 
+         (tmpbuf
           (funcall idm-db-buffer-load-function
                    (expand-file-name idm-database-file)))
          db-object)
     (unwind-protect
         (let ((db (idm--make-db tmpbuf)))
           (when idm-db-buffer-password-var
-            (with-current-buffer tmpbuf 
-              (funcall db 'file-password 
+            (with-current-buffer tmpbuf
+              (funcall db 'file-password
                        (symbol-value idm-db-buffer-password-var))))
           db)
       (kill-buffer tmpbuf))))
 
-(defun idm--save-db (records &optional password)
+(defun idm--save-db (records file-vars &optional password)
   "Save RECORDS into the DB file `idm-database-file'. This
 function is called by a DB object."
   (let ((coding-system-for-write 'utf-8)
@@ -171,11 +174,17 @@ function is called by a DB object."
     (with-current-buffer tmpbuf
       (erase-buffer)
       (goto-char (point-min))
+      (loop for (sym . v) in file-vars do
+            (set (make-local-variable sym) v))
+      (insert (format
+               ";; -*- %s -*-"
+               (loop for (n . v) in file-vars concat
+                     (format "%s: %S; " n v))) "\n")
       (dolist (i records)
         (insert (concat (idm-record-name i) "\t"
                         (idm-record-account-id i) "\t"
                         (idm-record-password i) "\t"
-                        (idm-record-update-time i) 
+                        (idm-record-update-time i)
                         (idm--aif (idm-record-memo i)
                             (concat "\t" it))
                         "\n")))
@@ -188,28 +197,36 @@ function is called by a DB object."
   "Build a database management object from the given buffer text.
 The object is a dispatch function. One can access the methods
 `funcall' with the method name symbol and some method arguments."
-  (lexical-let (records (db-modified nil) file-password)
-    (idm--each-line 
-     tmpbuf 
+  (lexical-let (records
+                (db-modified nil)
+                file-vars               ; file variables
+                file-password)          ; password for alpaca
+    (setq file-vars (buffer-local-value 'file-local-variables-alist tmpbuf))
+    (idm--each-line
+     tmpbuf
      (lambda (line)
-       (let ((cols (split-string line "\t")))
-         (if (or (= 4 (length cols))
-                 (= 5 (length cols)))
-             (push (apply 'make-idm-record-bylist cols)
-                   records)))))
+       (cond
+        ((string-match "^;; " line) ; file variables
+         ) ; ignore
+        (t ; entry lines
+         (let ((cols (split-string line "\t")))
+           (if (or (= 4 (length cols))
+                   (= 5 (length cols)))
+               (push (apply 'make-idm-record-bylist cols)
+                     records)))))))
     (lambda (method &rest args)
       (cond
        ((eq method 'get)                      ; get record object by name
         (lexical-let ((name (car args)) ret)
-          (mapc (lambda (i) 
+          (mapc (lambda (i)
                   (if (equal name (idm-record-name i))
                       (setq ret i)))
                 records)
           ret))
        ((eq method 'get-all-records) records) ; get-all-records
        ((eq method 'add-record)               ; add-record
-        (progn 
-          (lexical-let* ((record (car args)) 
+        (progn
+          (lexical-let* ((record (car args))
                          (name (idm-record-name record)))
             (setf records (loop for i in records
                                 unless (equal (idm-record-name i) name)
@@ -225,8 +242,8 @@ The object is a dispatch function. One can access the methods
        ((eq method 'set-modified)             ; set-modified
         (setq db-modified t))
        ((eq method 'save)                     ; save
-        (when db-modified 
-          (idm--save-db records file-password)
+        (when db-modified
+          (idm--save-db records file-vars file-password)
           (setq db-modified nil)))
        ((eq method 'file-password)            ; file-password
         (setq file-password (car args)) nil)
@@ -238,8 +255,8 @@ The object is a dispatch function. One can access the methods
   (with-current-buffer buf
     (goto-char (point-min))
     (unless (eobp)
-      (while 
-          (let ((line 
+      (while
+          (let ((line
                  (buffer-substring-no-properties
                   (line-beginning-position)
                   (line-end-position))))
@@ -254,7 +271,7 @@ The object is a dispatch function. One can access the methods
 (defun idm--parsetime (str)
   "Translate formatted string to emacs time."
   (when (string-match "\\([0-9]+\\)\\/\\([0-9]+\\)\\/\\([0-9]+\\)" str)
-    (apply 'encode-time 
+    (apply 'encode-time
            (let (ret)
              (dotimes (i 6)
                (push (string-to-number (match-string (+ i 1) str)) ret))
@@ -282,9 +299,9 @@ recording."
 (defun idm-add-record-dialog (db on-ok-func)
   "Make an account record interactively and register it with DB."
   (lexical-let ((db db) (on-ok-func on-ok-func))
-    (idm-edit-record-dialog 
-     (make-idm-record) 
-     (lambda (r) 
+    (idm-edit-record-dialog
+     (make-idm-record)
+     (lambda (r)
        (cond
         ((funcall db 'get (idm-record-name r))
          (idm-edit-record-dialog r on-ok-func nil "Record [%s] exists!"))
@@ -318,7 +335,7 @@ If the user pushes the `ok' button, the function
            (put-text-property 0 (length text) 'face 'font-lock-warning-face text)
            text))
         (widget-insert "\n\n"))
-      (lexical-let 
+      (lexical-let
           ((record record) (on-ok-func on-ok-func) (error-msg error-msg)
            fname fid fpassword fmemo cbshow bgenerate fields)
         ;; create dialog fields
@@ -352,7 +369,7 @@ If the user pushes the `ok' button, the function
 
         ;; OK / Cancel
         (widget-insert "\n")
-        (widget-create 
+        (widget-create
          'push-button
          :notify (lambda (&rest ignore)
                    (idm-edit-record-dialog-commit record fields on-ok-func))
@@ -369,7 +386,7 @@ If the user pushes the `ok' button, the function
         (widget-put cbshow
                     :notify
                     (lambda (&rest ignore)
-                      (let ((current-record 
+                      (let ((current-record
                              (make-idm-record
                               :name (widget-value fname)
                               :account-id (widget-value fid)
@@ -383,7 +400,7 @@ If the user pushes the `ok' button, the function
                         (widget-forward 3))))
         (widget-put bgenerate
                     :notify
-                    (lambda (&rest ignore) 
+                    (lambda (&rest ignore)
                       (widget-value-set fpassword (idm-gen-password))
                       (widget-setup)))
 
@@ -407,11 +424,11 @@ If the user pushes the `ok' button, the function
        "Should not be empty!"))
      (t
       (setf (idm-record-name record) name-value
-            (idm-record-account-id record) 
+            (idm-record-account-id record)
             (widget-value (plist-get fields 'id))
-            (idm-record-password record) 
+            (idm-record-password record)
             (widget-value (plist-get fields 'password))
-            (idm-record-memo record) 
+            (idm-record-memo record)
             (widget-value (plist-get fields 'memo))
             (idm-record-update-time record) (idm--strtime (current-time)))
       (idm-edit-record-kill-buffer)
@@ -447,7 +464,7 @@ If the user pushes the `ok' button, the function
   "Put a text property on the whole text."
   (put-text-property 0 (length text) attr val text) text)
 
-(defun idm--put-record-id (text id) 
+(defun idm--put-record-id (text id)
   "Put the record id with the text property `idm-record-id'."
   (idm--put-text-property text 'idm-record-id id))
 
@@ -460,16 +477,16 @@ If the user pushes the `ok' button, the function
 lines. ORDER is sort key, which can be `time', `name' and `id'."
   (unless order
     (setq order 'name))
-  (let* ((name-max (length "Account Name")) 
+  (let* ((name-max (length "Account Name"))
          (id-max (length "ID"))
          (pw-max (length "Password"))
          (pw-mask "********")
-         (pw-getter (lambda (record) 
+         (pw-getter (lambda (record)
                       (if idm-show-password
                           (idm-record-password record)
                         pw-mask)))
         (cut (lambda (str) (substring str 0 (min (length str) 20))))
-        numcolm (count 1) 
+        numcolm (count 1)
         (line-format "%%-%ds|%%-10s |  %%-%ds | %%-%ds  :  %%-%ds   : %%s\n")
         (records (funcall db 'get-all-records)))
     (when records
@@ -486,9 +503,9 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
                         " " "Time" "Name" "ID" "Password" "Memo"))
         (insert (make-string (- (window-width) 1) ?-) "\n")
         (dolist (i (idm--sort-records records order))
-          (insert 
+          (insert
            (idm--put-record-id
-            (format line-format 
+            (format line-format
                     count
                     (idm-record-update-time i)
                     (funcall cut (idm-record-name i))
@@ -505,27 +522,27 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
 (defun idm--sort-records (records order)
   "Sort records by the key ORDER, which can be `time', `name',
 `memo' and `id'."
-  (let* 
+  (let*
       ((comparator
         (lambda (ref)
           (lexical-let ((ref ref))
-            (lambda (i j) 
+            (lambda (i j)
               (let ((ii (funcall ref i))
                     (jj (funcall ref j)))
-                (cond 
+                (cond
                  ((string= ii jj) 0)
                  ((string< ii jj) -1)
                  (t 1)))))))
-       (to-bool 
+       (to-bool
         (lambda (f)
           (lexical-let ((f f))
-            (lambda (i j) 
+            (lambda (i j)
               (< (funcall f i j) 0)))))
        (cmp-id (funcall comparator 'idm-record-account-id))
        (cmp-name (funcall comparator 'idm-record-name))
        (cmp-time (funcall comparator 'idm-record-update-time))
        (cmp-memo (funcall comparator 'idm-record-memo))
-       (chain 
+       (chain
         (lambda (a b)
           (lexical-let ((a a) (b b))
             (lambda (i j)
@@ -533,7 +550,7 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
                 (if (= 0 v)
                     (funcall b i j)
                   v)))))))
-  (sort 
+  (sort
    (loop for i in records collect i) ; copy-list
    (cond
     ((eq order 'id)   ; id -> id, name
@@ -587,9 +604,20 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
   (idm--aif (idm--get-record-id)
       (let ((record (funcall idm-db 'get it)))
         (when record
-          (message (concat "Copied the password for the account ID: "
-                           (idm-record-account-id record)))
-          (funcall idm-copy-action (idm-record-password record))))))
+          (idm--copy-action record)))))
+
+(defun idm--copy-action (record)
+  (interactive)
+  (message (concat "Copied the password for the account ID: "
+                   (idm-record-account-id record)))
+  (funcall idm-copy-action (idm-record-password record))
+  (when idm-clipboard-expire-time-sec
+    (run-at-time idm-clipboard-expire-time-sec nil 'idm-expire-password)))
+
+(defun idm-expire-password ()
+  "expire-password"
+  (funcall idm-copy-action "")
+  (idm--message "ID Manager: expired."))
 
 (defun idm-list-mode-sortby-id ()
   (interactive)
@@ -625,7 +653,7 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
   (idm--aif (idm--get-record-id)
       (let ((record (funcall idm-db 'get it)))
         (if record
-            (idm--message 
+            (idm--message
              (concat
               "ID: " (idm-record-account-id record)
               " / PW: "(idm-record-password record)))))))
@@ -635,7 +663,7 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
   (kill-all-local-variables)
   (make-local-variable 'idm-db)
   (setq idm-db db)
-  
+
   (setq truncate-lines t)
   (use-local-map idm-list-mode-map)
   (setq major-mode 'idm-list-mode
@@ -669,7 +697,7 @@ the list buffer."
   (lexical-let ((db idm-db)
                 (curbuf (current-buffer)))
     (idm-add-record-dialog db
-     (lambda (r) 
+     (lambda (r)
        (with-current-buffer curbuf
          (funcall db 'add-record r)
          (idm--layout-list db))))))
@@ -683,9 +711,9 @@ buffer."
         (if record
             (lexical-let ((db idm-db) (prev record)
                           (curbuf (current-buffer)))
-              (idm-edit-record-dialog 
+              (idm-edit-record-dialog
                record
-               (lambda (r) 
+               (lambda (r)
                  (with-current-buffer curbuf
                    (funcall db 'delete-record-by-name (idm-record-name prev))
                    (funcall db 'add-record r)
@@ -700,10 +728,10 @@ buffer."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Anything UI
+;; Helm UI
 
-(defun idm--anything-add-dialog (db)
-  "Add a new record by the anything interface."
+(defun idm--helm-add-dialog (db)
+  "Add a new record by the helm interface."
   (interactive)
   (lexical-let ((db db))
     (idm-add-record-dialog db
@@ -713,11 +741,11 @@ buffer."
        (when (eq major-mode 'idm-list-mode)
          (idm--layout-list db))))))
 
-(defun idm--anything-edit-dialog (db record)
-  "Edit a record selected by the anything interface."
+(defun idm--helm-edit-dialog (db record)
+  "Edit a record selected by the helm interface."
   (interactive)
   (lexical-let ((db db) (prev record))
-    (idm-edit-record-dialog 
+    (idm-edit-record-dialog
      record
      (lambda (r)
        (funcall db 'delete-record-by-name (idm-record-name prev))
@@ -726,57 +754,55 @@ buffer."
        (when (eq major-mode 'idm-list-mode)
          (idm--layout-list db))))))
 
-(defun idm-anything-command ()
-  "Anything interface for id-manager."
+(defun idm-helm-command ()
+  "Helm interface for id-manager."
   (interactive)
   (let* ((db (idm-load-db))
-         (source-commands 
+         (source-commands
           `((name . "Global Command : ")
-            (candidates 
+            (candidates
              . (("Add a record" .
                  (lambda ()
-                   (idm--anything-add-dialog db)))
+                   (idm--helm-add-dialog db)))
                 ("Show all records" .
                  (lambda ()
                    (idm-open-list-command db)))))
             (action . (("Execute" . (lambda (i) (funcall i)))))))
-         (source-records 
+         (source-records
           '((name . "Accounts : ")
-            (candidates 
+            (candidates
              . (lambda ()
                  (mapcar
                   (lambda (record)
-                    (cons (concat 
-                           (idm-record-name record) 
+                    (cons (concat
+                           (idm-record-name record)
                            " (" (idm-record-account-id record) ") "
                            "   " (idm-record-memo record))
                           record))
                   (funcall db 'get-all-records))))
-            (action 
-             . (("Copy password" 
-                 . (lambda (record) 
-                     (message (concat "Copied the password for the account ID: "
-                                      (idm-record-account-id record)))
-                     (funcall idm-copy-action (idm-record-password record))))
-                ("Show ID / Password" 
-                 . (lambda (record) 
-                     (idm--message 
-                      (concat 
+            (action
+             . (("Copy password"
+                 . (lambda (record)
+                     (idm--copy-action record)))
+                ("Show ID / Password"
+                 . (lambda (record)
+                     (idm--message
+                      (concat
                        "ID: " (idm-record-account-id record)
                        " / PW: "(idm-record-password record)))))
-                ("Edit fields" 
+                ("Edit fields"
                  . (lambda (record)
-                     (idm--anything-edit-dialog db record)))
+                     (idm--helm-edit-dialog db record)))
                 )))
           ))
-    (anything 
+    (helm
      '(source-commands source-records)
      nil "ID-Password Management : " nil nil)))
 
 (defalias 'id-manager 'idm-open-list-command)
 
-(eval-after-load "anything"
-  '(defalias 'id-manager 'idm-anything-command))
+(eval-after-load "helm"
+  '(defalias 'id-manager 'idm-helm-command))
 
 (provide 'id-manager)
 ;;; id-manager.el ends here
