@@ -5,8 +5,8 @@
   (mapc '(lambda (path)
            (add-to-list 'load-path path))
         (mapcar 'expand-file-name paths)))
-;; elisp path
-(add-to-load-path "~/.emacs.d")
+;; inits elisp path
+(add-to-load-path "~/.emacs.d/inits")
 ;; .emacs.d/lisp/*
 (let ((default-directory (expand-file-name "~/.emacs.d/elisp")))
   (add-to-list 'load-path default-directory)
