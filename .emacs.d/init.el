@@ -1,6 +1,7 @@
 ;;-----------------------------------------------------------------
 ;; utils
 ;;-----------------------------------------------------------------
+
 (defun add-to-load-path (&rest paths)
   (mapc '(lambda (path)
            (add-to-list 'load-path path))
@@ -134,4 +135,6 @@
 ;; environmental diag
 (if run-w32
     (load "init-w32"))
+(if run-cygwin
+    (load "init-cygwin"))
 (setq temporary-file-directory "~/tmp/")
