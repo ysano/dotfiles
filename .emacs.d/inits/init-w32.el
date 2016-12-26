@@ -21,7 +21,7 @@
 (setq w32-ime-mode-line-state-indicator-list '("[Aa]" "[あ]" "[Aa]"))
 
 ;; IMEの初期化
-(w32-ime-initialize)
+;(w32-ime-initialize)
 
 ;; IME OFF時の初期カーソルカラー
 (set-cursor-color "red")

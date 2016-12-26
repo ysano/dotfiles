@@ -1,7 +1,6 @@
 ;;-----------------------------------------------------------------
 ;; elpa packages
 ;;-----------------------------------------------------------------
-(require 'package)
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives
@@ -143,11 +142,11 @@
 ;C-x u
 
 ;; magit
+(setq magit-last-seen-setup-instructions "1.4.0")
 
 ;; eldoc-extension
 
 ;; apache-mode
-(autoload 'apache-mode "apache-mode" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.htaccess\\'"   . apache-mode))
 (add-to-list 'auto-mode-alist '("httpd\\.conf\\'"  . apache-mode))
 (add-to-list 'auto-mode-alist '("srm\\.conf\\'"    . apache-mode))
@@ -197,7 +196,6 @@
 
 ;; jade-mode
 (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
-(autoload 'sws-mode "sws-mode" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.styl$" . sws-mode))
 
 ;; python-mode
@@ -214,7 +212,6 @@
 (setq nxml-child-indent 2)
 
 ;; ruby-mode
-(autoload 'ruby-mode "ruby-mode" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.rb$" . ruby-mode))
 (eval-after-load 'ruby-mode
   '(progn
@@ -227,6 +224,12 @@
                   (electric-indent-mode t)
                   (electric-layout-mode t)))
      ))
+
+(eval-after-load 'ruby-block
+  '(progn
+     (ruby-block-mode t)
+     ))
+
 ;; do overlay
 (setq ruby-block-highlight-toggle 'overlay)
 ;; display to minibuffer
@@ -239,7 +242,7 @@
   '(("ruby"     . "bash -c irb --prompt default -r irb/completion"))
   "An alist of ruby implementations to irb executable names.")
 (autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
-;(autoload 'inf-ruby-setup-keybindings "inf-ruby" "" t)
+
 (eval-after-load 'ruby-mode
   '(add-hook 'ruby-mode-hook 'inf-ruby-minor-mode))
 (inf-ruby-switch-setup)
