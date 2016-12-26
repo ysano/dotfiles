@@ -3,16 +3,15 @@
 ;;-----------------------------------------------------------------
 (require 'package)
 (add-to-list 'package-archives
-             '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(add-to-list 'package-archives
-             '("marmalade" . "http://marmalade-repo.org/packages/") t)
+             '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives
              '("org" . "http://orgmode.org/elpa/") t)
-(package-initialize)
 
 (setq my-packages
       '(
         helm
+
+        wgrep
 
         auto-complete
         ac-math
@@ -52,26 +51,25 @@
         yaml-mode
         emmet-mode
         web-mode
+        edts
 
-        ess
-        ess-R-object-popup
-
-        e2wm
-;        e2wm-R
-        e2wm-bookmark
+        scss-mode
+        sass-mode
+        flymake-sass
 
         auctex
         cdlatex
 
         ;; -- init-*.el
         org-plus-contrib
+        ox-reveal
         w3m
         yasnippet
         dropdown-list                   ;work with yasnippet
         ))
-(package-initialize)
 
 (require 'cl)                           ;built-in
+;(require 'cl-lib)
 
 ;;; install missing packages
 (let ((not-installed (remove-if 'package-installed-p my-packages)))
@@ -87,11 +85,12 @@
 ;;-----------------------------------------------------------------
 
 ;; helm
-(require 'helm-config)
+(global-set-key (kbd "M-x") #'helm-M-x)
+(global-set-key (kbd "C-x r b") #'helm-filtered-bookmarks)
+(global-set-key (kbd "C-x C-f") #'helm-find-files)
 (helm-mode 1)
 
 ;; auto-complete
-(require 'auto-complete-config)
 (ac-config-default)
 (setq ac-use-menu-map t)
 (setq ac-quick-help-delay 0.3)
@@ -100,7 +99,6 @@
 (define-key global-map [f2] 'auto-complete-mode)
 
 ;; ac-math
-(require 'ac-math)
 (defun ac-latex-mode-setup ()         ; add ac-sources to default ac-sources
   (setq ac-sources
      (append '(ac-source-math-unicode ac-source-math-latex ac-source-latex-commands)
@@ -123,41 +121,30 @@
 (define-key global-map (kbd "C-x SPC") 'ace-jump-mode-pop-mark)
 
 ;; color-theme-solarized
-(require 'color-theme)
-(require 'color-theme-solarized)
-(eval-after-load "color-theme-solarized"
-  (color-theme-solarized-dark))
+(load-theme 'solarized t)
 
 ;; expand-region
-(require 'expand-region)
 (global-set-key (kbd "C-=") 'er/expand-region)
 (setq alphabet-start "abc def")
 
 ;; fill-column-indicator
-(require 'fill-column-indicator)
 ; M-x fci-mode
 
 ;; enhancements for displaying flymake errors
-(require 'flymake-cursor)
 
 ;; rainbow-mode
-(require 'rainbow-mode)
 
 ;; rainbow-delimiters
-(require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 ;(global-rainbow-delimiters-mode)
 
 ;; undo-tree
-(require 'undo-tree)
 (global-undo-tree-mode)
 ;C-x u
 
 ;; magit
-(require 'magit)
 
 ;; eldoc-extension
-(require 'eldoc-extension)
 
 ;; apache-mode
 (autoload 'apache-mode "apache-mode" nil t nil)
@@ -168,7 +155,6 @@
 (add-to-list 'auto-mode-alist '("sites-\\(available\\|enabled\\)/" . apache-mode))
 
 ;; web-mode
-(require 'web-mode)
 (add-to-list 'auto-mode-alist '("\\.phtml$" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.tpl\\.php$" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.jsp$" . web-mode))
@@ -182,14 +168,11 @@
 )
 
 ;; php-mode and php-extras
-(require 'php-mode)
-(require 'php-extras)
 (setq php-executable
       (executable-find "php"))
 (add-hook 'php-mode-hook
           '(lambda ()
              (abbrev-mode 0)
-             (require 'flymake-php)
              (flymake-php-load)
              (setq php-manual-url "http://jp.php.net/manual/ja/")
              (setq php-search-url "http://jp.php.net/")
@@ -207,20 +190,17 @@
 (add-to-list 'auto-mode-alist '("\\.phtml$" . php-mode))
 
 ;; js3-mode
-(autoload 'js3-mode "js3" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.js$" . js3-mode))
 (setq js3-auto-indent-p t         ; it's nice for commas to right themselves.
       js3-enter-indents-newline t ; don't need to push tab before typing
       js3-indent-on-enter-key t)   ; fix indenting before moving on
 
 ;; jade-mode
-(autoload 'jade-mode "jade-mode" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
 (autoload 'sws-mode "sws-mode" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.styl$" . sws-mode))
 
 ;; python-mode
-(require 'python-mode)
 (eval-after-load 'python-mode
   '(progn
      (add-hook 'python-mode-hook
@@ -247,9 +227,6 @@
                   (electric-indent-mode t)
                   (electric-layout-mode t)))
      ))
-(require 'ruby-end)
-(require 'ruby-block)
-(ruby-block-mode t)
 ;; do overlay
 (setq ruby-block-highlight-toggle 'overlay)
 ;; display to minibuffer
@@ -273,79 +250,9 @@
           (define-key ruby-mode-map (kbd "C-x T") 'ruby-compilation-this-test)))
 
 ;; yaml-mode
-(require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 
 ;; emmet-mode
-(require 'emmet-mode)
 (add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
 (add-hook 'html-mode-hook 'emmet-mode)
 (add-hook 'css-mode-hook  'emmet-mode)
-
-;; ess
-(if run-w32 (progn
-              (setq inferior-R-program-name "C:\\Program Files\\R\\R-3.0.1\\bin\\R.exe")
-              ))
-(require 'ess-site)
-(require 'ess-R-object-popup)
-(setq ess-ask-for-ess-directory nil)
-
-;; e2wm
-(require 'e2wm)
-(require 'e2wm-bookmark)
-;(require 'e2wm-R)
-(global-set-key (kbd "M-+") 'e2wm:start-management)
-;(global-set-key (kbd "C-c R") 'e2wm:start-R-code)
-
-(e2wm:add-keymap
- e2wm:pst-minor-mode-keymap
- '(("C-,"      . e2wm:pst-history-forward-command) ; 履歴を進む
-   ("C-."      . e2wm:pst-history-back-command) ; 履歴をもどる
-   ("M-m"      . e2wm:pst-window-select-main-command) ; メイン選択
-   ("prefix q" . e2wm:stop-management)
-   ("prefix l" . e2wm:pst-update-windows-command)
-   ("prefix 1" . e2wm:dp-code)
-   ("prefix 2" . e2wm:dp-two)
-   ("prefix 3" . e2wm:dp-htwo)
-   ("prefix 4" . e2wm:dp-doc)
-   ("prefix 5" . e2wm:dp-array)
-;   ("prefix 6" . e2wm:dp-R-code)
-;   ("prefix 7" . e2wm:dp-R-view)
-   ("prefix v" . e2wm:dp-vcs)
-   ("C-M-s"    . e2wm:my-toggle-sub) ; subの表示をトグルする
-   ) e2wm:prefix-key)
-
-(e2wm:add-keymap
- e2wm:dp-code-minor-mode-map
- '(("prefix I" . e2wm:dp-code-imenu-toggle-command)
-   ("prefix S" . e2wm:dp-code-sub-toggle-command)
-   ("prefix C" . e2wm:dp-code-toggle-clock-command)
-   ("prefix c" . e2wm:dp-code-toggle-svg-clock-command)
-   ("prefix M" . e2wm:dp-code-main-maximize-toggle-command)
-   ("prefix h" . e2wm:dp-code-navi-history-command)
-   ("prefix f" . e2wm:dp-code-navi-files-command)
-   ("prefix i" . e2wm:dp-code-navi-imenu-command)
-   ("prefix s" . e2wm:dp-code-navi-sub-command)
-   ("C-c m"    . e2wm:dp-code-popup-messages)
-   ("prefix b" . e2wm:dp-code-navi-bookmarks-command)
-   ) e2wm:prefix-key)
-
-(e2wm:add-keymap
- e2wm:dp-two-minor-mode-map
- '(("C-,"       . e2wm:dp-two-right-history-down-command)
-   ("C-."       . e2wm:dp-two-right-history-up-command)
-   ("prefix h"  . e2wm:dp-two-navi-history-command)
-   ("prefix l"  . e2wm:pst-update-windows-command)
-   ("prefix j"  . e2wm:dp-two-navi-left-command)
-   ("prefix k"  . e2wm:dp-two-navi-right-command)
-   ("prefix d"  . e2wm:dp-two-double-column-command)
-   ("prefix S"  . e2wm:dp-two-sub-toggle-command)
-   ("prefix -"  . e2wm:dp-two-swap-buffers-command)
-   ("prefix H"  . e2wm:dp-two-history-toggle-command)
-   ("prefix M"  . e2wm:dp-two-main-maximize-toggle-command)
-   ) e2wm:prefix-key)
-
-(defun e2wm:my-toggle-sub () ; Subをトグルする関数
-  (interactive)
-  (e2wm:pst-window-toggle 'sub t 'main))
-
