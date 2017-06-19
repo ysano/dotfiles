@@ -52,6 +52,9 @@
         yaml-mode
         emmet-mode
         web-mode
+        vue-mode
+        scss-mode
+        flymake-sass
 
         ess
         ess-R-object-popup
@@ -89,6 +92,22 @@
 ;; helm
 (require 'helm-config)
 (helm-mode 1)
+
+;; Enable helm-gtags-mode
+(add-hook 'c-mode-hook 'helm-gtags-mode)
+(add-hook 'c++-mode-hook 'helm-gtags-mode)
+(add-hook 'asm-mode-hook 'helm-gtags-mode)
+(add-hook 'js3-mode-hook 'helm-gtags-mode)
+;; Set key bindings
+(eval-after-load "helm-gtags"
+  '(progn
+     (define-key helm-gtags-mode-map (kbd "M-t") 'helm-gtags-find-tag)
+     (define-key helm-gtags-mode-map (kbd "M-r") 'helm-gtags-find-rtag)
+     (define-key helm-gtags-mode-map (kbd "M-s") 'helm-gtags-find-symbol)
+     (define-key helm-gtags-mode-map (kbd "M-g M-p") 'helm-gtags-parse-file)
+     (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
+     (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
+     (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)))
 
 ;; auto-complete
 (require 'auto-complete-config)
@@ -176,6 +195,7 @@
 (add-to-list 'auto-mode-alist '("\\.erb$" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.mustache$" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.djhtml$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.blade\\.php$" . web-mode))
 (setq web-mode-engines-alist
       '(("php"    . "\\.phtml$")
         ("blade"  . "\\.blade\\.php$"))
@@ -209,9 +229,11 @@
 ;; js3-mode
 (autoload 'js3-mode "js3" nil t nil)
 (add-to-list 'auto-mode-alist '("\\.js$" . js3-mode))
+(add-to-list 'auto-mode-alist '("\\.json$" . js3-mode))
 (setq js3-auto-indent-p t         ; it's nice for commas to right themselves.
       js3-enter-indents-newline t ; don't need to push tab before typing
-      js3-indent-on-enter-key t)   ; fix indenting before moving on
+      js3-indent-on-enter-key t   ; fix indenting before moving on
+      js3-indent-level 2)
 
 ;; jade-mode
 (autoload 'jade-mode "jade-mode" nil t nil)
@@ -281,6 +303,15 @@
 (add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
 (add-hook 'html-mode-hook 'emmet-mode)
 (add-hook 'css-mode-hook  'emmet-mode)
+(add-hook 'web-mode-hook  'emmet-mode)
+
+;; scss
+(add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))
+(add-hook 'scss-mode-hook
+          '(lambda ()
+             (require 'flymake-sass)
+             (flymake-sass-load)
+             ))
 
 ;; ess
 (if run-w32 (progn
