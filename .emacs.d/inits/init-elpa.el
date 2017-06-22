@@ -16,8 +16,6 @@
         ac-math
 
         ace-jump-mode
-        ;; color-theme
-        ;; color-theme-solarized
         solarized-theme
         expand-region
         fill-column-indicator
@@ -26,7 +24,7 @@
         rainbow-mode
         undo-tree
 
-        magit
+        ;; magit
 
         cl-lib
         eldoc-extension
@@ -163,7 +161,7 @@
 ;C-x u
 
 ;; magit
-(setq magit-last-seen-setup-instructions "1.4.0")
+;(setq magit-last-seen-setup-instructions "1.4.0")
 
 ;; eldoc-extension
 
