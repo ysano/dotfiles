@@ -21,16 +21,16 @@
 (setq w32-ime-mode-line-state-indicator-list '("[Aa]" "[あ]" "[Aa]"))
 
 ;; IMEの初期化
-(w32-ime-initialize)
+;(w32-ime-initialize)
 
 ;; IME OFF時の初期カーソルカラー
-;; (set-cursor-color "red")
+(set-cursor-color "red")
 
 ;; IME ON/OFF時のカーソルカラー
-;; (add-hook 'input-method-activate-hook
-;;           (lambda() (set-cursor-color "green")))
-;; (add-hook 'input-method-inactivate-hook
-;;           (lambda() (set-cursor-color "red")))
+(add-hook 'input-method-activate-hook
+          (lambda() (set-cursor-color "green")))
+(add-hook 'input-method-inactivate-hook
+          (lambda() (set-cursor-color "red")))
 
 ;; バッファ切り替え時にIME状態を引き継ぐ
 (setq w32-ime-buffer-switch-p nil)

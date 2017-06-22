@@ -20,6 +20,9 @@
 ;; 見出しの余分な*を消す
 (setq org-hide-leading-stars t)
 
+;; latexmk
+(setq org-latex-pdf-process '("latexmk %f"))
+
 ;; inline latex format
 (add-hook 'org-mode-hook
           (lambda ()
@@ -269,6 +272,30 @@
 ;; Targets complete directly with IDO
 (setq org-outline-path-complete-in-steps nil)
 ;; (setq org-refile-allow-creating-parent-nodes 'confirm)
+
+
+;;------------------------------------------------------------
+;; Export Setup
+;;------------------------------------------------------------
+;; iCal の説明文
+(setq org-icalendar-combined-description "orgmode schedule")
+;; カレンダーに適切なタイムゾーンを設定する（google 用には nil が必要）
+(setq org-icalendar-timezone nil)
+;; DONE になった TODO は出力対象から除外する
+(setq org-icalendar-include-todo t)
+;; （通常は，<>--<> で区間付き予定をつくる．非改行入力で日付がNoteに入らない）
+(setq org-icalendar-use-scheduled '(event-if-todo))
+;; DL 付きで終日予定にする：締め切り日（スタンプで時間を指定しないこと）
+(setq org-icalendar-use-deadline '(event-if-todo))
+
+(defun my-org-export-icalendar ()
+  (interactive)
+            (require 'org-agenda)
+            (require 'ox-icalendar)
+  (org-icalendar-export-current-agenda "~/public_ical/org-ical.ics"))
+(add-hook 'org-mode-hook
+          (lambda ()
+            (define-key org-mode-map (kbd "C-c 1") 'my-org-export-icalendar)))
 
 ;;------------------------------------------------------------
 ;; Shortcut
