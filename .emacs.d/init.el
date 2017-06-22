@@ -95,6 +95,13 @@
 (define-key global-map
   "\C-cS" 'scheme-other-window)
 
+;; grep
+(eval-after-load "grep"
+  '(progn
+    (add-to-list 'grep-find-ignored-files "*~")
+    (add-to-list 'grep-find-ignored-directories ".git")
+    ))
+
 ;;-----------------------------------------------------------------
 ;; .emacs.d/elisp/*
 ;;-----------------------------------------------------------------

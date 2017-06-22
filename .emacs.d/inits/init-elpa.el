@@ -9,6 +9,8 @@
 (setq my-packages
       '(
         helm
+        helm-descbinds
+        helm-gtags
 
         wgrep
 
@@ -16,8 +18,7 @@
         ac-math
 
         ace-jump-mode
-        color-theme
-        color-theme-solarized
+        solarized-theme
         expand-region
         fill-column-indicator
         flymake-cursor
@@ -25,7 +26,7 @@
         rainbow-mode
         undo-tree
 
-        magit
+        ;; magit
 
         cl-lib
         eldoc-extension
@@ -50,6 +51,9 @@
         yaml-mode
         emmet-mode
         web-mode
+        vue-mode
+        scss-mode
+        flymake-sass
         edts
 
         scss-mode
@@ -84,10 +88,28 @@
 ;;-----------------------------------------------------------------
 
 ;; helm
-(global-set-key (kbd "M-x") #'helm-M-x)
-(global-set-key (kbd "C-x r b") #'helm-filtered-bookmarks)
-(global-set-key (kbd "C-x C-f") #'helm-find-files)
+(require 'helm-config)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x b") 'helm-buffers-list)
+(global-set-key (kbd "C-x r b") 'helm-filtered-bookmarks)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
 (helm-mode 1)
+
+;; Enable helm-gtags-mode
+(add-hook 'c-mode-hook 'helm-gtags-mode)
+(add-hook 'c++-mode-hook 'helm-gtags-mode)
+(add-hook 'asm-mode-hook 'helm-gtags-mode)
+(add-hook 'js3-mode-hook 'helm-gtags-mode)
+;; Set key bindings
+(eval-after-load "helm-gtags"
+  '(progn
+     (define-key helm-gtags-mode-map (kbd "M-t") 'helm-gtags-find-tag)
+     (define-key helm-gtags-mode-map (kbd "M-r") 'helm-gtags-find-rtag)
+     (define-key helm-gtags-mode-map (kbd "M-s") 'helm-gtags-find-symbol)
+     (define-key helm-gtags-mode-map (kbd "M-g M-p") 'helm-gtags-parse-file)
+     (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
+     (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
+     (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)))
 
 ;; auto-complete
 (ac-config-default)
@@ -120,7 +142,8 @@
 (define-key global-map (kbd "C-x SPC") 'ace-jump-mode-pop-mark)
 
 ;; color-theme-solarized
-(load-theme 'solarized t)
+(load-theme 'solarized-light t)
+;(load-theme 'solarized-dark t)
 
 ;; expand-region
 (global-set-key (kbd "C-=") 'er/expand-region)
@@ -142,7 +165,7 @@
 ;C-x u
 
 ;; magit
-(setq magit-last-seen-setup-instructions "1.4.0")
+;(setq magit-last-seen-setup-instructions "1.4.0")
 
 ;; eldoc-extension
 
@@ -161,6 +184,7 @@
 (add-to-list 'auto-mode-alist '("\\.erb$" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.mustache$" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.djhtml$" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.blade\\.php$" . web-mode))
 (setq web-mode-engines-alist
       '(("php"    . "\\.phtml$")
         ("blade"  . "\\.blade\\.php$"))
@@ -190,9 +214,11 @@
 
 ;; js3-mode
 (add-to-list 'auto-mode-alist '("\\.js$" . js3-mode))
+(add-to-list 'auto-mode-alist '("\\.json$" . js3-mode))
 (setq js3-auto-indent-p t         ; it's nice for commas to right themselves.
       js3-enter-indents-newline t ; don't need to push tab before typing
-      js3-indent-on-enter-key t)   ; fix indenting before moving on
+      js3-indent-on-enter-key t   ; fix indenting before moving on
+      js3-indent-level 2)
 
 ;; jade-mode
 (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
@@ -259,3 +285,12 @@
 (add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
 (add-hook 'html-mode-hook 'emmet-mode)
 (add-hook 'css-mode-hook  'emmet-mode)
+(add-hook 'web-mode-hook  'emmet-mode)
+
+;; scss
+(add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))
+(add-hook 'scss-mode-hook
+          '(lambda ()
+             (require 'flymake-sass)
+             (flymake-sass-load)
+             ))

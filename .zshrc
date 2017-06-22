@@ -361,6 +361,7 @@ path=($path /usr/local/sysutil)
 path=($path /usr/ucb /usr/etc)  # for SunOS
 path=($path $HOME/my/android/sdk/platform-tools)  # for android
 path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
+path=($path $HOME/.composer/vendor/bin)  # for composer
 
 # qmail path
 if [ -d /var/qmail/bin ]; then
@@ -384,6 +385,10 @@ export LESS=-cex3M
 export LANG=ja_JP.UTF-8
 export LC_CTYPE=ja_JP.UTF-8
 export JAVA_HOME=${JAVA_HOME:-/usr/local/openjdk6}
+
+# gnu global + exuberant ctags + pygments in local
+export GTAGSCONF=$HOME/share/gtags/gtags.conf
+export GTAGSLABEL=pygments
 
 # editor
 if which emacs > /dev/null 2>&1; then
