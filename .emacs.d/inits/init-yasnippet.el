@@ -11,6 +11,8 @@
 ;; snippet-mode
 (add-to-list 'auto-mode-alist '("\\.yasnippet$" . snippet-mode))
 
+(add-to-list 'yas-snippet-dirs "~/yasnippet-snippets")
+
 ;; yasnippet anything interface
 ;; via https://github.com/sugyan/dotfiles/blob/master/.emacs.d/conf/04-yasnippet.el
 ;; (eval-after-load "anything-config"
