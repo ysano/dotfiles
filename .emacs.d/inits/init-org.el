@@ -297,6 +297,10 @@
           (lambda ()
             (define-key org-mode-map (kbd "C-c 1") 'my-org-export-icalendar)))
 
+;; ox-reveal
+(require 'ox-reveal)
+(setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/")
+
 ;;------------------------------------------------------------
 ;; Shortcut
 ;;------------------------------------------------------------
