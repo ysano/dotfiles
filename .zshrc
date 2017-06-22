@@ -55,6 +55,8 @@ alias mketags="jexctags --langmap=html:+.rhtml,ruby:+.yml,php:+.thtml -e -R --ap
 alias wget-domain="wget -r -L -l 10"
 alias wget-subdir="wget -r -np"
 alias irb='irb -r irb/completion'
+alias wget-site-save="wget -m -np -p -k -K -E -nv --random-wait -U 'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko'"
+alias wget-page-save="wget -m -np -p -k -K -E -nv --random-wait -U 'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko' -H -D 'stat.ameba.jp,livedoor.blogimg.jp'"
 
 ########################################
 # Shell functions
@@ -357,7 +359,7 @@ fi
 path=($path /usr/libexec /usr/local/libexec)
 path=($path /usr/local/sysutil)
 path=($path /usr/ucb /usr/etc)  # for SunOS
-path=($path $HOME/lib/android-sdk/tools)  # for android
+path=($path $HOME/my/android/sdk/platform-tools)  # for android
 path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
 
 # qmail path
