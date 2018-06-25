@@ -70,7 +70,7 @@
         ;; -- init-*.el
         org-plus-contrib
         ox-reveal
-        w3m
+        ;; w3m
         yasnippet
         ;; dropdown-list                   ;work with yasnippet
         ))
