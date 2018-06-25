@@ -11,3 +11,5 @@
 	st = status
 [merge]
 	tool = emerge
+[push]
+	default = simple
