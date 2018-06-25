@@ -8,9 +8,12 @@
 
 (setq my-packages
       '(
-        helm
-        helm-descbinds
-        helm-gtags
+        ;; helm
+        ;; helm-descbinds
+        ;; helm-gtags
+
+        counsel
+        counsel-gtags
 
         wgrep
 
@@ -18,7 +21,10 @@
         ac-math
 
         ace-jump-mode
+
+        color-theme
         solarized-theme
+
         expand-region
         fill-column-indicator
         flymake-cursor
@@ -29,19 +35,17 @@
         ;; magit
 
         cl-lib
-        eldoc-extension
+        ;; eldoc-extension
 
         apache-mode
 
         php-mode
-        php-extras
         flymake-php
 
-        js3-mode
+        js2-mode
+        vue-mode
 
         ruby-mode
-        ruby-block
-        ruby-end
         flymake-ruby
         inf-ruby
         ruby-compilation
@@ -68,7 +72,7 @@
         ox-reveal
         w3m
         yasnippet
-        dropdown-list                   ;work with yasnippet
+        ;; dropdown-list                   ;work with yasnippet
         ))
 
 (require 'cl)                           ;built-in
@@ -88,12 +92,52 @@
 ;;-----------------------------------------------------------------
 
 ;; helm
-(require 'helm-config)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x b") 'helm-buffers-list)
-(global-set-key (kbd "C-x r b") 'helm-filtered-bookmarks)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(helm-mode 1)
+;; (require 'helm-config)
+;; (global-set-key (kbd "M-x") 'helm-M-x)
+;; (global-set-key (kbd "C-x b") 'helm-buffers-list)
+;; (global-set-key (kbd "C-x r b") 'helm-filtered-bookmarks)
+;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
+;; (helm-mode 1)
+
+;; counsel
+(ivy-mode 1)
+(counsel-mode 1)
+;;; 下記は任意で有効化
+(global-set-key "\C-s" 'swiper)
+(global-set-key (kbd "C-c C-r") 'ivy-resume)
+(global-set-key (kbd "<f6>") 'ivy-resume)
+;; (global-set-key (kbd "M-x") 'counsel-M-x)
+;; (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+;; (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+;; (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+;; (global-set-key (kbd "<f1> l") 'counsel-load-library)
+;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+(global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+(global-set-key (kbd "C-c g") 'counsel-git)
+(global-set-key (kbd "C-c j") 'counsel-git-grep)
+(global-set-key (kbd "C-c k") 'counsel-ag)
+(global-set-key (kbd "C-x l") 'counsel-locate)
+(global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+;; (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+
+(add-hook 'c-mode-hook 'counsel-gtags-mode)
+(add-hook 'c++-mode-hook 'counsel-gtags-mode)
+(add-hook 'php-mode 'counsel-gtags-mode)
+
+(eval-after-load 'counsel-gtags
+  '(progn
+     (define-key counsel-gtags-mode-map (kbd "M-t") 'counsel-gtags-find-definition)
+     (define-key counsel-gtags-mode-map (kbd "M-r") 'counsel-gtags-find-reference)
+     (define-key counsel-gtags-mode-map (kbd "M-s") 'counsel-gtags-find-symbol)
+     (define-key counsel-gtags-mode-map (kbd "M-,") 'counsel-gtags-go-backward)))
+
+;; wgrep
+;;; eでwgrepモードにする
+(setf wgrep-enable-key "e")
+;;; wgrep終了時にバッファを保存
+(setq wgrep-auto-save-buffer t)
+;;; read-only bufferにも変更を適用する
+(setq wgrep-change-readonly-file t)
 
 ;; Enable helm-gtags-mode
 (add-hook 'c-mode-hook 'helm-gtags-mode)
@@ -191,8 +235,8 @@
 )
 
 ;; php-mode and php-extras
-(setq php-executable
-      (executable-find "php"))
+;; (setq php-executable
+;;       (executable-find "php"))
 (add-hook 'php-mode-hook
           '(lambda ()
              (abbrev-mode 0)
@@ -212,13 +256,10 @@
 (add-to-list 'auto-mode-alist '("\\.php[s345t]$" . php-mode))
 (add-to-list 'auto-mode-alist '("\\.phtml$" . php-mode))
 
-;; js3-mode
-(add-to-list 'auto-mode-alist '("\\.js$" . js3-mode))
-(add-to-list 'auto-mode-alist '("\\.json$" . js3-mode))
-(setq js3-auto-indent-p t         ; it's nice for commas to right themselves.
-      js3-enter-indents-newline t ; don't need to push tab before typing
-      js3-indent-on-enter-key t   ; fix indenting before moving on
-      js3-indent-level 2)
+;; js2-mode
+(add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+(add-hook 'js-mode-hook 'js2-minor-mode)
+(add-to-list 'interpreter-mode-alist '("node" . js2-mode))
 
 ;; jade-mode
 (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))

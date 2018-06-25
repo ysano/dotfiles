@@ -1,7 +1,7 @@
 ;;-----------------------------------------------------------------
 ;; org
 ;;-----------------------------------------------------------------
-(require 'org-loaddefs)
+;; (require 'org-loaddefs)
 (setq org-directory "~/org")                    ; org directory
 (setq org-mobile-directory "~/MobileOrg")       ; MobileOrg directory
 ;; Set to the name of the file where new notes will be stored

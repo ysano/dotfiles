@@ -34,10 +34,10 @@
           (nth n choices))
       (signal 'quit "user quit!"))))
 
-(require 'dropdown-list)
-(setq yas-prompt-functions '(
-                             my-yas/prompt
-                             yas-dropdown-prompt
-                             yas-ido-prompt
-                             yas-completing-prompt))
+;; (require 'dropdown-list)
+;; (setq yas-prompt-functions '(
+;;                              my-yas/prompt
+;;                              yas-dropdown-prompt
+;;                              yas-ido-prompt
+;;                              yas-completing-prompt))
 

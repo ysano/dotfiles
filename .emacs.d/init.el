@@ -101,6 +101,8 @@
     (add-to-list 'grep-find-ignored-files "*~")
     (add-to-list 'grep-find-ignored-directories ".git")
     ))
+(grep-compute-defaults)
+(grep-apply-setting 'grep-find-command '("find . -type f ! -name '*~' -exec grep -nH -e  {} +" . 47))
 
 ;;-----------------------------------------------------------------
 ;; .emacs.d/elisp/*
@@ -121,9 +123,6 @@
              (setq hl-line-face 'underline)
              (hl-line-mode 1)
              ))
-
-;; grep-edit
-(require 'grep-edit)
 
 ;; text-adjust
 (require 'text-adjust)
