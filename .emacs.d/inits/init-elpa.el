@@ -170,11 +170,6 @@
                ac-sources)))
 
 ;; ace-jump-mode
-(autoload
-  'ace-jump-mode
-  "ace-jump-mode"
-  "Emacs quick move minor mode"
-  t)
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
 (autoload
   'ace-jump-mode-pop-mark
@@ -202,7 +197,6 @@
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-;(global-rainbow-delimiters-mode)
 
 ;; undo-tree
 (global-undo-tree-mode)
@@ -234,6 +228,22 @@
         ("blade"  . "\\.blade\\.php$"))
 )
 
+(setq web-mode-ac-sources-alist
+  '(("php" . (ac-source-yasnippet ac-source-php-auto-yasnippets))
+    ("html" . (ac-source-emmet-html-aliases ac-source-emmet-html-snippets))
+    ("css" . (ac-source-css-property ac-source-emmet-css-snippets))))
+
+(add-hook 'web-mode-before-auto-complete-hooks
+          '(lambda ()
+             (let ((web-mode-cur-language
+                    (web-mode-language-at-pos)))
+               (if (string= web-mode-cur-language "php")
+                   (yas-activate-extra-mode 'php-mode)
+                 (yas-deactivate-extra-mode 'php-mode))
+               (if (string= web-mode-cur-language "css")
+                   (setq emmet-use-css-transform t)
+                 (setq emmet-use-css-transform nil)))))
+
 ;; php-mode and php-extras
 ;; (setq php-executable
 ;;       (executable-find "php"))
@@ -241,9 +251,17 @@
           '(lambda ()
              (abbrev-mode 0)
              (flymake-php-load)
+
              (setq php-manual-url "http://jp.php.net/manual/ja/")
              (setq php-search-url "http://jp.php.net/")
-             (setq php-manual-path "share/php_manual_ja.tar.gz")
+             (setq php-manual-path "~/share/php-chunked-xhtml")
+
+             (define-key php-mode-map "\M-i" 'php-complete-function)
+             (define-key php-mode-map "\M-a" 'php-beginning-of-defun)
+             (define-key php-mode-map "\M-e" 'php-end-of-defun)
+
+             (require 'php-extras)
+
              (setq indent-tabs-mode nil)
              ;; (c-set-offset 'basic-offset 2)
              (setq php-mode-force-pear t)
