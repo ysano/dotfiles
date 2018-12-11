@@ -20,8 +20,12 @@
 (setq-default w32-ime-mode-line-state-indicator "[Aa]")
 (setq w32-ime-mode-line-state-indicator-list '("[Aa]" "[あ]" "[Aa]"))
 
+;; 漢字/変換キー入力時のエラーメッセージ抑止
+(global-set-key (kbd "<M-kanji>") 'ignore)
+(global-set-key (kbd "<kanji>") 'ignore)
+
 ;; IMEの初期化
-;(w32-ime-initialize)
+(w32-ime-initialize)
 
 ;; IME OFF時の初期カーソルカラー
 (set-cursor-color "red")
@@ -40,7 +44,8 @@
 
 ;; 標準フォントの設定
 ;; (set-default-font "M+2VM+IPAG circle-12")
-(set-default-font "Migu 1M")
+;; (set-default-font "Migu 1M")
+(set-default-font "Inziu Iosevka J")
 
 ;; IME変換時フォントの設定（テストバージョンのみ）
 ;; (setq w32-ime-font-face "MigMix 1M")
@@ -83,6 +88,9 @@
 ;; @ setup-cygwin
 (setq cygwin-mount-cygwin-bin-directory
       (concat (getenv "CYGWIN_DIR") "\\bin"))
+(setq cygwin-root-directory
+      (concat (getenv "CYGWIN_DIR"))
+      )
 (require 'setup-cygwin)
 (file-name-shadow-mode -1)
 
@@ -124,11 +132,11 @@
 
 ;; ------------------------------------------------------------------------
 ;; @ migemo/cmigemo
-(setq migemo-command (concat (getenv "INST_DIR")
-                             "\\app\\cmigemo\\cmigemo"))
+(setq migemo-command (concat (getenv "ROOT_DIR")
+                             "\\app\\cygwin\\local\\bin\\cmigemo"))
 (setq migemo-options '("-q" "--emacs"))
-(setq migemo-dictionary (concat (getenv "INST_DIR")
-                                "\\app\\cmigemo\\dict\\utf-8\\migemo-dict"))
+(setq migemo-dictionary (concat (getenv "ROOT_DIR")
+                                "\\app\\cygwin\\local\\share\\cmigemo\\utf-8\\migemo-dict"))
 (setq migemo-user-dictionary nil)
 (setq migemo-regex-dictionary nil)
 (setq migemo-use-pattern-alist t)
