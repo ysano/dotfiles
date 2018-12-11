@@ -131,8 +131,8 @@
     (progn
       ;; 括弧は対象外
       (setq text-adjust-rule-space
-            '((("\\cj" "" "[[0-9a-zA-Z+]")   " ")
-              (("[]/!?0-9a-zA-Z+]" "" "\\cj") " ")))
+            '((("\\cj" "" "[[0-9a-zA-Z]")   " ")
+              (("[]/!?0-9a-zA-Z]" "" "\\cj") " ")))
       (text-adjust-space-buffer))))
 (defalias 'spacer 'text-adjust-space-buffer)
 (add-hook 'before-save-hook 'text-adjust-space-before-save-if-needed)
