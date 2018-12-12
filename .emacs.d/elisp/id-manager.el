@@ -1,7 +1,7 @@
 ;;; id-manager.el --- id-password management
 
 ;; Copyright (C) 2009, 2010, 2011, 2013  SAKURAI Masashi
-;; Time-stamp: <2013-12-17 10:22:03 sakurai>
+;; Time-stamp: <2015-06-06 12:38:31 sakurai>
 
 ;; Author: SAKURAI Masashi <m.sakurai atmark kiwanami.net>
 ;; Keywords: password, convenience
@@ -78,6 +78,16 @@
 ;; securely.  But I'm not sure that this program is secure enough.
 ;; I'd like many people to check and advice me.
 
+;;; Integrating with OS launchers (Alfred, QuickSilver, Launchbar, etc.)
+
+;; Invoke id-manager with an input string.
+
+;; An example script to use for Alfred:
+
+;; INPUT="{query}"
+;; osascript -e 'tell app "Emacs" to activate'
+;; emacsclient -e "(id-manager \"$INPUT\"))"
+
 ;;; Code:
 
 (eval-when-compile (require 'cl))
@@ -94,7 +104,10 @@
   end with '.gpg' for encryption by the GnuPG.")
 
 (defvar idm-gen-password-cmd
-  "head -c 10 < /dev/random | uuencode -m - | tail -n 2 |head -n 1 | head -c10")
+  "head -c 10 < /dev/random | uuencode -m - | tail -n 2 |head -n 1 | head -c10"
+  "[String] Password generation command. If a function symbol or
+  lambda whose receive no parameter is set to this variable,
+  id-manager calls the function to generate the password.")
 ;;  "openssl rand 32 | uuencode -m - | tail -n 2 |head -n 1 | head -c10"
 ;;  ...any other password generation ?
 
@@ -120,6 +133,9 @@
 (defvar idm-clipboard-expire-time-sec 5
   "Expire time for the clipboard content.")
 
+(defvar idm-clipboard-expire-timer nil
+  "The timer object that will expire the clipboard content.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Macros
 
@@ -134,14 +150,20 @@
 
 (defun idm-gen-password ()
   "Generate a password."
-  (let ((buf (get-buffer-create " *idm-work*")) ret)
-    (call-process-shell-command
-     idm-gen-password-cmd
-     nil buf nil)
-    (with-current-buffer buf
-      (setq ret (buffer-string)))
-    (kill-buffer buf)
-    ret))
+  (cond
+   ((functionp idm-gen-password-cmd)
+    (funcall idm-gen-password-cmd))
+   ((stringp idm-gen-password-cmd)
+    (let ((buf (get-buffer-create " *idm-work*")) ret)
+      (call-process-shell-command
+       idm-gen-password-cmd
+       nil buf nil)
+      (with-current-buffer buf
+        (setq ret (buffer-string)))
+      (kill-buffer buf)
+      ret))
+   (t (error "idm-gen-password-cmd is set to wrong value. [%S]"
+             idm-gen-password-cmd))))
 
 ;; record struct
 (defstruct (idm-record
@@ -176,10 +198,11 @@ function is called by a DB object."
       (goto-char (point-min))
       (loop for (sym . v) in file-vars do
             (set (make-local-variable sym) v))
-      (insert (format
-               ";; -*- %s -*-"
-               (loop for (n . v) in file-vars concat
-                     (format "%s: %S; " n v))) "\n")
+      (when file-vars
+        (insert (format
+                 ";; -*- %s -*-"
+                 (loop for (n . v) in file-vars concat
+                       (format "%s: %S; " n v))) "\n"))
       (dolist (i records)
         (insert (concat (idm-record-name i) "\t"
                         (idm-record-account-id i) "\t"
@@ -604,18 +627,31 @@ lines. ORDER is sort key, which can be `time', `name' and `id'."
   (idm--aif (idm--get-record-id)
       (let ((record (funcall idm-db 'get it)))
         (when record
-          (idm--copy-action record)))))
+          (idm--copy-password-action record)))))
 
-(defun idm--copy-action (record)
+(defun idm--copy-password-action (record)
   (interactive)
   (message (concat "Copied the password for the account ID: "
                    (idm-record-account-id record)))
   (funcall idm-copy-action (idm-record-password record))
-  (when idm-clipboard-expire-time-sec
-    (run-at-time idm-clipboard-expire-time-sec nil 'idm-expire-password)))
+  (idm-set-clipboard-expiry))
 
-(defun idm-expire-password ()
-  "expire-password"
+(defun idm--copy-id-action (record)
+  (interactive)
+  (message (concat "Copied account ID: "
+                   (idm-record-account-id record)))
+  (funcall idm-copy-action (idm-record-account-id record))
+  (idm-set-clipboard-expiry))
+
+(defun idm-set-clipboard-expiry ()
+  (when idm-clipboard-expire-timer
+    (cancel-timer idm-clipboard-expire-timer))
+  (when idm-clipboard-expire-time-sec
+    (setq idm-clipboard-expire-timer
+          (run-at-time idm-clipboard-expire-time-sec nil 'idm-expire-clipboard))))
+
+(defun idm-expire-clipboard ()
+  "Clear clipboard"
   (funcall idm-copy-action "")
   (idm--message "ID Manager: expired."))
 
@@ -719,6 +755,7 @@ buffer."
                    (funcall db 'add-record r)
                    (idm--layout-list db)))))))))
 
+;;;###autoload
 (defun idm-open-list-command (&optional db)
   "Load the id-password DB and open a list buffer."
   (interactive)
@@ -754,50 +791,49 @@ buffer."
        (when (eq major-mode 'idm-list-mode)
          (idm--layout-list db))))))
 
-(defun idm-helm-command ()
-  "Helm interface for id-manager."
+;;;###autoload
+(defun idm-helm-command (&optional input-string)
+  "Helm interface for id-manager.
+
+INPUT-STRING is an optional input to start Helm with.  Useful for scripting interactions with OS launchers."
   (interactive)
   (let* ((db (idm-load-db))
          (source-commands
-          `((name . "Global Command : ")
-            (candidates
-             . (("Add a record" .
-                 (lambda ()
-                   (idm--helm-add-dialog db)))
-                ("Show all records" .
-                 (lambda ()
-                   (idm-open-list-command db)))))
-            (action . (("Execute" . (lambda (i) (funcall i)))))))
+          (helm-build-sync-source "id-manager-global-command"
+            :name "Global Command : "
+            :candidates '(("Add a record" . (lambda ()
+                                              (idm--helm-add-dialog db)))
+                          ("Show all records" . (lambda ()
+                                                  (idm-open-list-command db))))
+            :action (helm-make-actions "Execute" (lambda (i) (funcall i)))))
          (source-records
-          '((name . "Accounts : ")
-            (candidates
-             . (lambda ()
-                 (mapcar
-                  (lambda (record)
-                    (cons (concat
-                           (idm-record-name record)
-                           " (" (idm-record-account-id record) ") "
-                           "   " (idm-record-memo record))
-                          record))
-                  (funcall db 'get-all-records))))
-            (action
-             . (("Copy password"
-                 . (lambda (record)
-                     (idm--copy-action record)))
-                ("Show ID / Password"
-                 . (lambda (record)
-                     (idm--message
-                      (concat
-                       "ID: " (idm-record-account-id record)
-                       " / PW: "(idm-record-password record)))))
-                ("Edit fields"
-                 . (lambda (record)
-                     (idm--helm-edit-dialog db record)))
-                )))
-          ))
-    (helm
-     '(source-commands source-records)
-     nil "ID-Password Management : " nil nil)))
+          (helm-build-sync-source "id-manager-source-commands"
+            :name "Accounts : "
+            :candidates (lambda ()
+                          (mapcar
+                           (lambda (record)
+                             (cons (concat
+                                    (idm-record-name record)
+                                    " (" (idm-record-account-id record) ") "
+                                    "   " (idm-record-memo record))
+                                   record))
+                           (funcall db 'get-all-records)))
+            :action (helm-make-actions "Copy password" (lambda (record)
+                                                         (idm--copy-password-action record))
+                                       "Copy id" (lambda (record)
+                                                   (idm--copy-id-action record))
+                                       "Show ID / Password" (lambda (record)
+                                                              (idm--message
+                                                               (concat
+                                                                "ID: " (idm-record-account-id record)
+                                                                " / PW: "(idm-record-password record))))
+                                       "Edit fields" (lambda (record)
+                                                       (idm--helm-edit-dialog db record)))
+            :migemo t)))
+         (helm
+          :sources '(source-commands source-records)
+          :input input-string
+          :buffer "ID-Password Management : ")))
 
 (defalias 'id-manager 'idm-open-list-command)
 
