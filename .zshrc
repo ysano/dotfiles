@@ -6,6 +6,7 @@ cdpath=(.. ~ ~/src)
 
 case "${OSTYPE}" in
 cygwin*)
+    export TERM=cygwin
     ;;
 freebsd*|darwin*)
     unlimit
