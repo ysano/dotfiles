@@ -38,6 +38,12 @@
 (defvar run-emacs24
   (and (equal emacs-major-version 24)
        (null (featurep 'xemacs))))
+(defvar run-emacs25
+  (and (equal emacs-major-version 25)
+       (null (featurep 'xemacs))))
+(defvar run-emacs26
+  (and (equal emacs-major-version 26)
+       (null (featurep 'xemacs))))
 (defvar run-meadow (featurep 'meadow))
 (defvar run-meadow1 (and run-meadow run-emacs20))
 (defvar run-meadow2 (and run-meadow run-emacs21))
