@@ -70,13 +70,13 @@
 (setq org-capture-templates
       '(
         ("i" "Inbox (GTD)" entry
-          (file+headline (concat org-directory "/gtd.org") "Inbox")
-           "* TODO %?\n  %i\n  %a")
+         (file+headline "~/org/gtd/gtd.org" "Inbox")
+         "* TODO %?\n  %i\n  %a")
         ("j" "Journal (Resume memory)" entry
-          (file+datetree (concat org-directory "/journal.org"))
-           "* %?\n     %i\n     %a")
+         (file+olp+datetree "~/org/journal.org")
+         "* %?\n     %i\n     %a")
         )
-        )
+      )
 
 ;;------------------------------------------------------------
 ;; Agenda Setup
@@ -312,10 +312,10 @@
     (find-file (concat org-directory "/journal.org")))
 (defun someday ()
     (interactive)
-    (find-file (concat org-directory "/someday.org")))
+    (find-file (concat org-directory "/gtd/someday.org")))
 (defun gtd ()
     (interactive)
-    (find-file (concat org-directory "/gtd.org")))
+    (find-file (concat org-directory "/gtd/gtd.org")))
 (global-set-key (kbd "C-c g") 'gtd)
 (define-key global-map [f5] 'note)
 (define-key global-map [f6] 'journal)
