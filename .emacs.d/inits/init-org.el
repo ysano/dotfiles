@@ -82,7 +82,7 @@
 ;; Agenda Setup
 ;;------------------------------------------------------------
 
-(setq org-agenda-files (cons (concat org-directory "/gtd.org")
+(setq org-agenda-files (cons (concat org-directory "/gtd/gtd.org")
                              (car (mapcar (lambda (w)
                                        (file-expand-wildcards
                                         (concat org-directory w)))
