@@ -30,7 +30,7 @@
 ;; --------------------------------
 
 ;; Memory allocation
-(setq gc-cons-threshold (* 2 gc-cons-threshold)
+(setq gc-cons-threshold (expt 10 8)
       garbage-collection-messages t)
 
 ;; Buffer
@@ -195,10 +195,9 @@
 (defvar use-package-verbose t)
 
 (require 'use-package)
-;; (use-package auto-compile
-;;   :ensure t
-;;   :config (auto-compile-on-load-mode))
-;; (setq load-prefer-newer t)
+(use-package auto-compile :ensure t
+  :config (auto-compile-on-load-mode))
+(setq load-prefer-newer t)
 
 ;; --------------------------------
 ;; Emacs standard lisp
@@ -221,7 +220,7 @@
 
 ;; Dimmer
 ;; Visually highlight the selected buffer.
-(use-package dimmer :ensure t
+(use-package dimmer :ensure t :disabled
   :config
   (dimmer-mode))
 
@@ -232,7 +231,7 @@
 (tool-bar-mode 0)
 
 ;; XTerm mouse mode
-(use-package xt-mouse
+(use-package xt-mouse :disabled
   :if (eq window-system nil) :ensure t
   :config
   (xterm-mouse-mode t))
@@ -248,7 +247,7 @@
     (setq w32-ime-mode-line-state-indicator-list '("[Aa]" "[あ]" "[Aa]"))
 
     ;; IME初期化
-    (w32-ime-initialize)
+    ;(w32-ime-initialize)
 
     ;; デフォルトIME
     (setq default-input-method "W32-IME")
@@ -305,9 +304,9 @@
 ;; background color to strings that match color
 (use-package rainbow-mode :ensure t
   :hook (sh-mode c-mode c++mode
-		 html-mode css-mode php-mode nxml-mode xml-mode
-		 latex-mode ess-mode
-		 emacs-lisp-mode lisp-interaction-mode c-mode c++-mode java-mode))
+                 html-mode css-mode php-mode nxml-mode xml-mode
+                 latex-mode ess-mode
+                 emacs-lisp-mode lisp-interaction-mode c-mode c++-mode java-mode))
 
 (use-package rainbow-delimiters :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -321,8 +320,7 @@
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t))
 
-(use-package yasnippet :ensure t
-  :disabled
+(use-package yasnippet :ensure nil
   :custom
   (yas-indent-line 'fixed)
   :bind (:map yas-minor-mode-map
@@ -332,12 +330,8 @@
               ("C-c y l" . yas-describe-tables)
               ("C-c y g" . yas-reload-all))
   :config
-  (use-package yasnippet-snippets :ensure t
-    :disabled
-    )
-  (use-package yatemplate :ensure t
-    :disabled
-    )
+  (use-package yasnippet-snippets :ensure t)
+  (use-package yatemplate :ensure t)
   (yas-global-mode 1))
 
 ;; TODO LSP
@@ -354,15 +348,15 @@
 ;; ace-jump
 (use-package ace-jump-mode :ensure t
   :bind (("C-c SPC" . ace-jump-mode)
-	 ("C-x SPC" . ace-jump-mode-pop-mark))
+         ("C-x SPC" . ace-jump-mode-pop-mark))
   :config
   (ace-jump-mode-enable-mark-sync)
   )
 
 ;; Winner mode - undo and redo window configuration
-(use-package winner :ensure t
+(use-package winner :ensure t :disabled
   :bind (("M-p" . 'previous-buffer)
-	 ("M-n" . 'next-buffer)))
+         ("M-n" . 'next-buffer)))
 
 ;;--------------------------------
 ;; Eazy interface
@@ -377,7 +371,7 @@
   :config
   (ivy-mode 1)
   :bind (("C-c C-r" . 'ivy-resume)
-	 ([f6] . 'ivy-resume)))
+         ([f6] . 'ivy-resume)))
 (use-package swiper :ensure t
   :after ivy
   :init
@@ -388,34 +382,34 @@
   :config
   (counsel-mode 1)
   :bind (("<f2> u" . 'counsel-unicode-char)
-	 ("C-c g" . 'counsel-git)
-	 ("C-c j" . 'counsel-git-grep)
-	 ("C-c k" . 'counsel-ag)
-	 ("C-x l" . 'counsel-locate)
-	 ("C-S-o" . 'counsel-rhythmbox)
-	 :map minibuffer-local-map
-	 ("C-r" . 'counsel-minibuffer-history)))
+         ("C-c g" . 'counsel-git)
+         ("C-c j" . 'counsel-git-grep)
+         ("C-c k" . 'counsel-ag)
+         ("C-x l" . 'counsel-locate)
+         ("C-S-o" . 'counsel-rhythmbox)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history)))
 
 (use-package counsel-gtags :ensure t
   :after counsel
   :bind (
-	 :map counsel-gtags-mode-map
-	 ("M-t" . counsel-gtags-find-definition)
-	 ("M-r" . counsel-gtags-find-reference)
-	 ("M-s" . counsel-gtags-find-symbol)
-	 ("M-," . counsel-gtags-go-backward))
-)
+         :map counsel-gtags-mode-map
+              ("M-t" . counsel-gtags-find-definition)
+              ("M-r" . counsel-gtags-find-reference)
+              ("M-s" . counsel-gtags-find-symbol)
+              ("M-," . counsel-gtags-go-backward))
+  )
 
 ;; Help - guide-key
 (use-package guide-key :ensure t
   :init
   (setq guide-key/idle-delay 1.5)
   (setq guide-key/guide-key-sequence
-	'("C-x r" "C-x 4" "C-c"
-	  (org-mode "C-c C-x")
-	  (outline-minor-mode "C-c @")))
+        '("C-x r" "C-x 4" "C-c"
+          (org-mode "C-c C-x")
+          (outline-minor-mode "C-c @")))
   (setq guide-key/highlight-command-regexp
-	'("rectangle"
+        '("rectangle"
           ("register" . font-lock-type-face)
           ("bookmark" . "hot pink")))
   :config
@@ -456,8 +450,8 @@
   :config
   (add-to-list 'ac-modes 'latex-mode)
   (setq ac-sources
-	(append '(ac-source-math-unicode ac-source-math-latex ac-source-latex-commands)
-		ac-sources)) )
+        (append '(ac-source-math-unicode ac-source-math-latex ac-source-latex-commands)
+                ac-sources)) )
 
 ;;--------------------------------
 ;; org-mode
@@ -477,12 +471,12 @@
   :mode ("\\.rb\\'" "Rakefile")
   :interpreter "ruby"
 )
-  
+
 (use-package ruby-compilation :ensure nil
   :bind (
-	 :map ruby-mode-map
-	 ("C-x t" . ruby-compilation-this-buffer)
-	 ("C-x T" . ruby-compilation-this-test)))
+         :map ruby-mode-map
+              ("C-x t" . ruby-compilation-this-buffer)
+              ("C-x T" . ruby-compilation-this-test)))
 
 (use-package python :ensure nil
   :mode ("\\.py\\'" . python-mode)
@@ -507,20 +501,20 @@
   "\\.blade\\.php\\'"
   :init
   (setq web-mode-engines-alist
-	'(("php"    . "\\.phtml\\'")
+        '(("php"    . "\\.phtml\\'")
           ("blade"  . "\\.blade\\.php\\'")))
   (setq web-mode-ac-sources-alist
-	'(("php" . (ac-source-yasnippet ac-source-php-auto-yasnippets))
-	  ("html" . (ac-source-emmet-html-aliases ac-source-emmet-html-snippets))
-	  ("css" . (ac-source-css-property ac-source-emmet-css-snippets))))
+        '(("php" . (ac-source-yasnippet ac-source-php-auto-yasnippets))
+          ("html" . (ac-source-emmet-html-aliases ac-source-emmet-html-snippets))
+          ("css" . (ac-source-css-property ac-source-emmet-css-snippets))))
   (add-hook 'web-mode-before-auto-complete-hooks
             '(lambda ()
                (let ((web-mode-cur-language
                       (web-mode-language-at-pos)))
-		 (if (string= web-mode-cur-language "php")
+                 (if (string= web-mode-cur-language "php")
                      (yas-activate-extra-mode 'php-mode)
                    (yas-deactivate-extra-mode 'php-mode))
-		 (if (string= web-mode-cur-language "css")
+                 (if (string= web-mode-cur-language "css")
                      (setq emmet-use-css-transform t)
                    (setq emmet-use-css-transform nil))))))
 
