@@ -35,8 +35,8 @@
 (add-hook 'org-mode-hook 'turn-on-org-cdlatex)
 
 ;; ac-math
-(add-to-list 'ac-modes 'org-mode)
-(add-hook 'org-mode-hook 'ac-latex-mode-setup)
+;; (add-to-list 'ac-modes 'org-mode)
+;; (add-hook 'org-mode-hook 'ac-latex-mode-setup)
 
 ;; ロケール修正
 (add-hook 'org-mode-hook
