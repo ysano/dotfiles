@@ -79,14 +79,53 @@
 ;; Font
 (when (memq window-system '(x w32 ns))
   (progn
-    (set-face-font 'default "Sarasa Term J Emoji-11:antialias=standard")
-    (set-face-font 'variable-pitch "Sarasa Term J-11:antialias=standard")
-    (set-face-font 'fixed-pitch "Sarasa Term J-11:antialias=standard")
-    (set-face-font 'tooltip "Sarasa Term J-9:antialias=standard"))
+    (defun my-set-face-font (face fontstring-alist)
+      "Evaluate font in order from top while noerror."
+      (while (and fontstring-alist
+                 (eq nil (ignore-errors (set-face-font face (car fontstring-alist)) t))
+                 (setq fontstring-alist (cdr fontstring-alist)))))
+    (my-set-face-font 'default
+                      '(
+                        "Cica-13:antialias=standard"
+                        "Sarasa Term J Emoji-12:antialias=standard" ; original
+                        "Migu 1M Symbola-13:antialias=standard"     ; original
+                        "Sarasa Term J-12:antialias=standard"
+                        "Inziu Iosevka J-12:antialias=standard"
+                        "Migu 1M-13:antialias=standard"
+                        "MS Gothic-13:antialias=standard"
+                        "MS Mincho-13:antialias=standard"
+                        ))
+    (my-set-face-font 'variable-pitch
+                      '(
+                        "Migu 1C-13:antialias=standard"
+                        "MigMix 1P-13:antialias=standard"
+                        "MS PGothic-13:antialias=standard"
+                        "MS PMincho-13:antialias=standard"
+                        ))
+    (my-set-face-font 'fixed-pitch
+                      '(
+                        "Cica-13:antialias=standard"
+                        "Sarasa Term J Emoji-12:antialias=standard" ; original
+                        "Migu 1M Symbola-13:antialias=standard"     ; original
+                        "Sarasa Term J-12:antialias=standard"
+                        "Inziu Iosevka J-12:antialias=standard"
+                        "Migu 1M-13:antialias=standard"
+                        "MigMix 1M-13:antialias=standard"
+                        "MS Gothic-13:antialias=standard"
+                        "MS Mincho-13:antialias=standard"
+                        ))
+    (my-set-face-font 'tooltip
+                      '(
+                        "Cica-11:antialias=standard"
+                        "Migu 1M-11:antialias=standard"
+                        "MigMix 1M-11:antialias=standard"
+                        "MS Gothic-11:antialias=standard"
+                        "MS PMincho-11:antialias=standard"
+                        )))
   ;; 012345,6789.
   ;; abcdef,ghijKL;
   ;; ABCDEF,GHIJKL:
-  ;; !@#$%^&*()_+\<>?"'
+  ;; !@#$%^&*()_+\<>?"'|liL
   ;; 漢字日本語あいうえお
   ;; 😁💢🀄🃏🐰🐵🐔😁💢
   ;; ↑↑↓↓←→←→BA
