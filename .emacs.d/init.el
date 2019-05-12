@@ -56,11 +56,12 @@
 (set-buffer-file-coding-system 'utf-8-unix)
 
 ;; Cygwin
-(when (memq system-type '(cygwin))
+(when (memq system-type '(cygwin windows-nt))
   (progn
     ;; Cygwin coding tweak
     (set-keyboard-coding-system 'cp932)
     (set-file-name-coding-system 'cp932)
+    (set-terminal-coding-system 'cp932)
     (setq default-process-coding-system '(undecided-dos . utf-8-unix))
     (set-charset-priority 'ascii 'japanese-jisx0208 'latin-jisx0201
                           'katakana-jisx0201 'iso-8859-1 'cp1252 'unicode)
@@ -93,16 +94,19 @@
                         "Inziu Iosevka J-12:antialias=standard"
                         "Migu 1M-13:antialias=standard"
                         "MS Gothic-13:antialias=standard"
-                        "MS Mincho-13:antialias=standard"
                         ))
     (my-set-face-font 'variable-pitch
                       '(
+                        "IPAexMincho-13:antialias=standard" ; jp-fixed-pich
+                        "IPAexGothic-13:antialias=standard" ; jp-fixed-pich
+                        "IPAPMincho-13:antialias=standard"
+                        "IPAPGothic-13:antialias=standard"
                         "Migu 1C-13:antialias=standard"
                         "MigMix 1P-13:antialias=standard"
                         "MS PGothic-13:antialias=standard"
                         "MS PMincho-13:antialias=standard"
                         ))
-    (my-set-face-font 'fixed-pitch
+    (my-set-face-font 'fixed-pitch      ;sans only
                       '(
                         "Cica-13:antialias=standard"
                         "Sarasa Term J Emoji-12:antialias=standard" ; original
@@ -111,7 +115,12 @@
                         "Inziu Iosevka J-12:antialias=standard"
                         "Migu 1M-13:antialias=standard"
                         "MigMix 1M-13:antialias=standard"
+                        "IPAGothic-13:antialias=standard"
                         "MS Gothic-13:antialias=standard"
+                        ))
+    (my-set-face-font 'fixed-pitch-serif
+                      '(
+                        "IPAMincho-13:antialias=standard"
                         "MS Mincho-13:antialias=standard"
                         ))
     (my-set-face-font 'tooltip
@@ -190,10 +199,13 @@
 
 ;; Add my elisp directory and other files
 (add-to-list 'load-path "~/.emacs.d/elisp")
+
+;; use-package
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 (defvar use-package-verbose t)
-
+(eval-when-compile
+  (require 'use-package))
 (require 'use-package)
 (use-package auto-compile :ensure t
   :config (auto-compile-on-load-mode))
@@ -208,15 +220,47 @@
   :config
   (dash-enable-font-lock))
 
-;; Auto Revert like tail
-(global-auto-revert-mode 1)
+;; Auto Revert
 (defvar auto-revert-interval 10)
 (defvar auto-revert-check-vc-info t)
+(add-hook 'text-mode-hook 'auto-revert-mode)
+(add-hook 'prog-mode-hook 'auto-revert-mode)
 
 ;; Color theme
-(use-package solarized-theme :ensure t
+(use-package doom-themes :ensure t
   :config
-  (load-theme 'solarized-dark))
+  (load-theme 'doom-dracula t)
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config)
+  )
+
+(use-package hide-mode-line :ensure t
+  :hook
+  ((neotree-mode imenu-list-minor-mode minimap-mode) . hide-mode-line-mode))
+
+(use-package doom-modeline :ensure t
+  :custom
+  (doom-modeline-buffer-file-name-style 'truncate-with-project)
+  :init
+  (message "Download latest icons: M-x all-the-icons-install-fonts")
+  :hook
+  (after-init . doom-modeline-mode)
+  :config
+  ;; How tall the mode-line should be (only respected in GUI Emacs).
+  (setq doom-modeline-height 25)
+  ;; How wide the mode-line bar should be (only respected in GUI Emacs).
+  (setq doom-modeline-bar-width 6)
+  ;; Whether display minor modes in mode-line or not.
+  (setq doom-modeline-minor-modes t)
+  (line-number-mode 1)
+  (column-number-mode 0)
+  )
 
 ;; Dimmer
 ;; Visually highlight the selected buffer.
@@ -244,7 +288,7 @@
   (progn
     ;; モードラインの表示文字列
     (setq-default w32-ime-mode-line-state-indicator "[Aa] ")
-    (setq w32-ime-mode-line-state-indicator-list '("[Aa]" "[あ]" "[Aa]"))
+    (defvar w32-ime-mode-line-state-indicator-list '("[Aa]" "[あ]" "[Aa]"))
 
     ;; IME初期化
     ;(w32-ime-initialize)
@@ -262,6 +306,7 @@
 
 ;; Flymake
 (use-package flycheck :ensure t
+  :defer t
   :config
   (setq flycheck-display-errors-delay 0.1)
   (setq eldoc-idle-delay 1.5)
@@ -271,31 +316,17 @@
 (show-paren-mode 1)
 (defvar show-paren-style 'expression)
 
-;; Mode line format
-(line-number-mode t)
-(column-number-mode t)
-
 ;; Time in the mode line
 (defvar display-time-24hr-format 1)
 (defvar display-time-string-forms '(month "/" day " " dayname " " 24-hours ":" minutes))
 (display-time-mode 1)
 
 ;; P is cp932 in mode line
-(coding-system-put 'cp932 :mnemonic ?P)
-(coding-system-put 'cp932-dos :mnemonic ?P)
-(coding-system-put 'cp932-unix :mnemonic ?P)
-(coding-system-put 'cp932-mac :mnemonic ?P)
+;; (coding-system-put 'cp932 :mnemonic ?P)
+;; (coding-system-put 'cp932-dos :mnemonic ?P)
+;; (coding-system-put 'cp932-unix :mnemonic ?P)
+;; (coding-system-put 'cp932-mac :mnemonic ?P)
 
-;; region infomation in mode line
-(defun count-lines-and-chars ()
-  "Count lines and chars in current region."
-  (if mark-active
-      (format "[%3d:%4d]"
-              (count-lines (region-beginning) (region-end))
-              (- (region-end) (region-beginning)))
-    ""))
-(add-to-list 'mode-line-format
-             '(:eval (count-lines-and-chars)))
 
 ;; --------------------------------
 ;; Editor configuration
@@ -315,6 +346,7 @@
   :bind ("C-=" . er/expand-region))
 
 (use-package undo-tree :ensure t
+  :defer t
   :config
   (global-undo-tree-mode)
   (setq undo-tree-visualizer-timestamps t)
@@ -330,9 +362,11 @@
               ("C-c y l" . yas-describe-tables)
               ("C-c y g" . yas-reload-all))
   :config
-  (use-package yasnippet-snippets :ensure t)
-  (use-package yatemplate :ensure t)
   (yas-global-mode 1))
+(use-package yasnippet-snippets :ensure nil
+  :after yasnippet)
+(use-package yatemplate :ensure nil
+  :after yasnippet)
 
 ;; TODO LSP
 
@@ -364,6 +398,8 @@
 
 ;; ivy, swiper, counsel - interactive completion
 (use-package ivy :ensure t
+  :custom
+  (ivy-format-function 'ivy-format-function-arrow)
   :init
   (setq ivy-use-virtual-buffers t)
   (setq enable-recursive-minibuffers t)
@@ -372,6 +408,48 @@
   (ivy-mode 1)
   :bind (("C-c C-r" . 'ivy-resume)
          ([f6] . 'ivy-resume)))
+(use-package ivy-rich :ensure nil
+  :after ivy
+  :defer t
+  :preface
+  (defun ivy-rich-switch-buffer-icon (candidate)
+    (with-current-buffer
+        (get-buffer candidate)
+      (let ((icon (all-the-icons-icon-for-mode major-mode)))
+        (if (symbolp icon)
+            (all-the-icons-icon-for-mode 'fundamental-mode)
+          icon))))
+  :config
+  (setq ivy-format-function #'ivy-format-function-line)
+  (setq ivy-rich-display-transformers-list
+        '(ivy-switch-buffer
+          (:columns
+           ((ivy-rich-switch-buffer-icon :width 2)
+            (ivy-rich-candidate (:width 30))  ; return the candidate itself
+            (ivy-rich-switch-buffer-size (:width 7))  ; return the buffer size
+            (ivy-rich-switch-buffer-indicators (:width 4 :face error :align right)); return the buffer indicators
+            (ivy-rich-switch-buffer-major-mode (:width 12 :face warning))          ; return the major mode info
+            (ivy-rich-switch-buffer-project (:width 15 :face success))             ; return project name using `projectile'
+            (ivy-rich-switch-buffer-path (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path x (ivy-rich-minibuffer-width 0.3))))))  ; return file path relative to project root or `default-directory' if project is nil
+           :predicate
+           (lambda (cand) (get-buffer cand)))
+          counsel-M-x
+          (:columns
+           ((counsel-M-x-transformer (:width 40))  ; thr original transfomer
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face))))  ; return the docstring of the command
+          counsel-describe-function
+          (:columns
+           ((counsel-describe-function-transformer (:width 40))  ; the original transformer
+            (ivy-rich-counsel-function-docstring (:face font-lock-doc-face))))  ; return the docstring of the function
+          counsel-describe-variable
+          (:columns
+           ((counsel-describe-variable-transformer (:width 40))  ; the original transformer
+            (ivy-rich-counsel-variable-docstring (:face font-lock-doc-face))))  ; return the docstring of the variable
+          counsel-recentf
+          (:columns
+           ((ivy-rich-candidate (:width 0.8)) ; return the candidate itself
+            (ivy-rich-file-last-modified-time (:face font-lock-comment-face)))))) ; return the last modified time of the file
+  (ivy-rich-mode 1))
 (use-package swiper :ensure t
   :after ivy
   :init
@@ -388,7 +466,10 @@
          ("C-x l" . 'counsel-locate)
          ("C-S-o" . 'counsel-rhythmbox)
          :map minibuffer-local-map
-         ("C-r" . 'counsel-minibuffer-history)))
+         ("C-r" . 'counsel-minibuffer-history)
+         :map counsel-find-file-map
+         ("C-l" . 'counsel-up-directory)
+         ))
 
 (use-package counsel-gtags :ensure t
   :after counsel
@@ -402,6 +483,7 @@
 
 ;; Help - guide-key
 (use-package guide-key :ensure t
+  :defer t
   :init
   (setq guide-key/idle-delay 1.5)
   (setq guide-key/guide-key-sequence
@@ -419,10 +501,25 @@
 ;; Utility
 ;; --------------------------------
 
+;; Dashboard
+(use-package dashboard :ensure t
+  :config
+  (dashboard-setup-startup-hook))
+
+;; Recentf
+(use-package recentf-ext :ensure t
+  :init
+  (setq recentf-max-saved-items 50)
+  (setq recentf-auto-save-timer (run-with-idle-timer 180 t 'recentf-save-list))
+  :config
+  (recentf-mode 1)
+  )
+
 ;; TODO Magit
 
 ;; Grep
 (use-package wgrep :ensure t
+  :defer t
   :init
   (setf wgrep-enable-key "e")           ; eでwgrepモードにする
   (setq wgrep-auto-save-buffer t)       ; wgrep終了時にバッファを保存
@@ -437,6 +534,7 @@
 ;;--------------------------------
 
 (use-package auto-complete :ensure t
+  :defer t
   :config
   (ac-config-default)
   (setq ac-use-menu-map t)
@@ -458,11 +556,12 @@
 ;;--------------------------------
 
 (use-package org
-  :pin "org"
-  :ensure org-plus-contrib
+  :defer t
+  :ensure (org-plus-contrib :pin "org")
   :ensure (ox-reveal :pin "melpa")
   :config
-  (load "init-org"))
+  (if (file-directory-p "~/org")
+      (load "init-org")))
 
 ;;--------------------------------
 ;; prog-mode children
@@ -519,3 +618,7 @@
                    (setq emmet-use-css-transform nil))))))
 
 (use-package yaml-mode :ensure nil)
+
+;; Local Variables:
+;; coding: utf-8-unix
+;; End:
