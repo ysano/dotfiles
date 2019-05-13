@@ -10,7 +10,6 @@
 ;; enable debug
 ;; (setq debug-on-error  t
 ;;       init-file-debug t)
-(package-initialize)
 
 (add-to-list 'load-path "~/.emacs.d/inits")
 ;; custom-file
@@ -190,6 +189,7 @@
 ;; --------------------------------
 ;; Package initialization
 ;; --------------------------------
+(package-initialize)
 
 ;; Add package sources
 (unless (assoc-default "melpa" package-archives)
@@ -275,13 +275,17 @@
 (tool-bar-mode 0)
 
 ;; XTerm mouse mode
-(use-package xt-mouse :disabled
+(use-package xt-mouse
   :if (eq window-system nil) :ensure t
   :config
   (xterm-mouse-mode t))
 
 ;; Save cursor place
-(save-place-mode 1)
+(if (>= (string-to-number emacs-version) 25.1)
+    (save-place-mode 1)
+  (progn
+    (require 'saveplace)
+    (setq-default save-place t)))
 
 ;; Input Method
 (when (featurep 'w32-ime)
