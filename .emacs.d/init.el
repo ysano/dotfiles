@@ -202,11 +202,12 @@
 
 ;; use-package
 (unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+  (progn
+    (package-refresh-contents)
+    (package-install 'use-package)))
 (defvar use-package-verbose t)
 (eval-when-compile
   (require 'use-package))
-(require 'use-package)
 (use-package auto-compile :ensure t
   :config (auto-compile-on-load-mode))
 (setq load-prefer-newer t)
