@@ -548,13 +548,20 @@
 ;;--------------------------------
 
 (use-package auto-complete :ensure t
-  :defer t
+  :defer nil
+  :bind (("<f2>" . auto-complete-mode)
+         :map ac-menu-map
+         ("M-n" . ac-next)
+         ("M-p" . ac-previous)
+         )
   :config
+  (require 'auto-complete-config)
+  (add-to-list 'ac-user-dictionary user-full-name)
+  (add-to-list 'ac-user-dictionary user-mail-address)
   (ac-config-default)
   (setq ac-use-menu-map t)
-  (setq ac-quick-help-delay 0.3)
-  (setq ac-menu-height 20)
   (setq ac-ignore-case 'smart)
+  (global-auto-complete-mode t)
   )
 (use-package ac-math :ensure t
   :after auto-complete
