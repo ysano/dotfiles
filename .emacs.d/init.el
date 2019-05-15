@@ -533,6 +533,15 @@
 
 ;; TODO Google Translate
 
+;; id-manager
+(use-package id-manager :ensure t
+  :bind ("M-7" . id-manager)
+  :init
+  (setq epa-file-cache-passphrase-for-symmetric-encryption t)  ; saving password
+  (setenv "GPG_AGENT_INFO" nil)                                ; non-GUI password dialog.
+  (setq idm-database-file "~/secret/idm-db.gpg")
+  )
+
 ;;--------------------------------
 ;; auto-complete
 ;;--------------------------------
