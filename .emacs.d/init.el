@@ -557,7 +557,7 @@
   )
 (use-package ac-math :ensure t
   :after auto-complete
-  :hook (TeX-mode org-mode)
+  :hook (TeX-mode LaTeX-mode laTeX-mode org-mode)
   :config
   (add-to-list 'ac-modes 'latex-mode)
   (setq ac-sources
@@ -575,6 +575,11 @@
   :config
   (if (file-directory-p "~/org")
       (load "init-org")))
+(use-package auctex :ensure nil :disabled)
+(use-package cdlatex :ensure nil :disabled
+  :after auctex
+  :hook ((LaTeX-mode . turn-on-cdlatex)   ; with AUCTeX LaTeX mode
+         (laTeX-mode . turn-on-cdlatex))) ; with Emacs latex mode
 
 ;;--------------------------------
 ;; prog-mode children
