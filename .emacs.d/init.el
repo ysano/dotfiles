@@ -573,7 +573,7 @@
   (setq ac-ignore-case 'smart)
   (global-auto-complete-mode t)
   )
-(use-package ac-math :ensure t
+(use-package ac-math :ensure t :disabled
   :after auto-complete
   :hook (TeX-mode LaTeX-mode laTeX-mode org-mode)
   :config
