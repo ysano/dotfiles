@@ -310,10 +310,10 @@
 ;; Flymake
 (use-package flycheck :ensure t
   :defer t
+  :bind ("S-<f2>" . flycheck-mode)
   :config
   (setq flycheck-display-errors-delay 0.1)
-  (setq eldoc-idle-delay 1.5)
-  (global-flycheck-mode))
+  (setq eldoc-idle-delay 1.5))
 
 ;; Paren
 (show-paren-mode 1)
