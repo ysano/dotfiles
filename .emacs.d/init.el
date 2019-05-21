@@ -653,7 +653,8 @@
                      (setq emmet-use-css-transform t)
                    (setq emmet-use-css-transform nil))))))
 
-(use-package yaml-mode :ensure nil)
+(use-package yaml-mode :ensure nil
+  :mode "\\.ya?ml\\'")
 
 ;; Local Variables:
 ;; coding: utf-8-unix
