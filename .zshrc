@@ -211,6 +211,10 @@ if which toe > /dev/null 2>&1; then
     fi
 fi
 
+if [[ `uname -a` =~ 'Microsoft' ]]; then
+	export DISPLAY=localhost:0.0
+	export LANG=ja_JP.utf-8
+fi
 
 ################################
 ## functions
