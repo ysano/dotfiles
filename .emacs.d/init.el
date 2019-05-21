@@ -245,7 +245,7 @@
   :hook
   ((neotree-mode imenu-list-minor-mode minimap-mode) . hide-mode-line-mode))
 
-(use-package doom-modeline :ensure t
+(use-package doom-modeline :ensure t :disabled
   :custom
   (doom-modeline-buffer-file-name-style 'truncate-with-project)
   :init
@@ -259,8 +259,6 @@
   (setq doom-modeline-bar-width 6)
   ;; Whether display minor modes in mode-line or not.
   (setq doom-modeline-minor-modes t)
-  (line-number-mode 1)
-  (column-number-mode 0)
   )
 
 ;; Dimmer
@@ -327,11 +325,23 @@
 (display-time-mode 1)
 
 ;; P is cp932 in mode line
-;; (coding-system-put 'cp932 :mnemonic ?P)
-;; (coding-system-put 'cp932-dos :mnemonic ?P)
-;; (coding-system-put 'cp932-unix :mnemonic ?P)
-;; (coding-system-put 'cp932-mac :mnemonic ?P)
+(coding-system-put 'cp932 :mnemonic ?P)
+(coding-system-put 'cp932-dos :mnemonic ?P)
+(coding-system-put 'cp932-unix :mnemonic ?P)
+(coding-system-put 'cp932-mac :mnemonic ?P)
 
+;; modeline
+(line-number-mode 1)
+(column-number-mode 0)
+
+;; 同一バッファ名にディレクトリ付与
+(setq uniquify-buffer-name-style 'post-forward-angle-brackets)
+(setq uniquify-ignore-buffers-re "*[^*]+*")
+
+;; バッファ画面外文字の切り詰め表示
+(setq truncate-lines nil)
+;; ウィンドウ縦分割時のバッファ画面外文字の切り詰め表示
+(setq truncate-partial-width-windows t)
 
 ;; --------------------------------
 ;; Editor configuration
