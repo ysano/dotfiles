@@ -1,0 +1,11 @@
+! Font: 150% in windows (96*1.5)
+Xft.dpi: 144
+! BCI hinting (use FreeType Interpreter)
+Xft.hinting: 1
+! ignore default hinting
+Xft.autohint: 0
+! hintfull hintmedium hintslight hintnone
+Xft.hintstyle:  hintslight
+Xft.antialias: 1
+Xft.lcdfilter:  lcddefault
+Xft.rgba: rgb

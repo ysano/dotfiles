@@ -214,6 +214,7 @@ fi
 if [[ `uname -a` =~ 'Microsoft' ]]; then
 	export DISPLAY=localhost:0.0
 	export LANG=ja_JP.utf-8
+    source $HOME/.xinitrc
 fi
 
 ################################
