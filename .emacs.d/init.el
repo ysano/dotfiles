@@ -237,6 +237,10 @@
 (add-hook 'prog-mode-hook 'auto-revert-mode)
 
 ;; Color theme
+(use-package solarized-theme :ensure t :disabled
+  :config
+  (load-theme 'solarized-dark))
+
 (use-package doom-themes :ensure t
   :config
   (load-theme 'doom-dracula t)
