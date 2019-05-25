@@ -212,6 +212,15 @@
   :config (auto-compile-on-load-mode))
 (setq load-prefer-newer t)
 
+(use-package diminish :ensure t
+  :config
+  (defmacro safe-diminish (file mode &optional new-name)
+    `(with-eval-after-load ,file
+       (diminish ,mode ,new-name)))
+  (safe-diminish 'autorevert 'auto-revert-mode))
+(use-package delight :ensure t)
+
+
 ;; --------------------------------
 ;; Emacs standard lisp
 ;; --------------------------------
@@ -322,7 +331,7 @@
 ;; Time in the mode line
 (defvar display-time-24hr-format 1)
 (defvar display-time-string-forms '(month "/" day " " dayname " " 24-hours ":" minutes))
-(display-time-mode 1)
+(display-time-mode 0)
 
 ;; P is cp932 in mode line
 (coding-system-put 'cp932 :mnemonic ?P)
@@ -349,18 +358,21 @@
 
 ;; background color to strings that match color
 (use-package rainbow-mode :ensure t
+  :diminish
   :hook (sh-mode c-mode c++mode
                  html-mode css-mode php-mode nxml-mode xml-mode
                  latex-mode ess-mode
                  emacs-lisp-mode lisp-interaction-mode c-mode c++-mode java-mode))
 
 (use-package rainbow-delimiters :ensure t
+  :diminish
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package expand-region :ensure t
   :bind ("C-=" . er/expand-region))
 
 (use-package undo-tree :ensure t
+  :diminish
   :defer t
   :config
   (global-undo-tree-mode)
@@ -413,6 +425,7 @@
 
 ;; ivy, swiper, counsel - interactive completion
 (use-package ivy :ensure t
+  :diminish
   :custom
   (ivy-format-function 'ivy-format-function-arrow)
   :init
@@ -471,6 +484,7 @@
   (setq search-default-mode #'char-fold-to-regexp)
   :bind ("C-s" . 'swiper))
 (use-package counsel :ensure t
+  :diminish
   :after ivy
   :config
   (counsel-mode 1)
