@@ -373,7 +373,6 @@
 
 (use-package undo-tree :ensure t
   :diminish
-  :defer t
   :config
   (global-undo-tree-mode)
   (setq undo-tree-visualizer-timestamps t)
