@@ -11,7 +11,10 @@
 ;; (setq debug-on-error  t
 ;;       init-file-debug t)
 
+;; Add my elisp directory and other files
 (add-to-list 'load-path "~/.emacs.d/inits")
+(add-to-list 'load-path "~/.emacs.d/elisp")
+
 ;; custom-file
 (setq custom-file "~/.emacs.d/custom-settings.el")
 (load custom-file t)
@@ -57,6 +60,9 @@
 ;; Cygwin
 (when (memq system-type '(cygwin windows-nt))
   (progn
+    ;; Cygwin shell fix
+    (setq cygwin-root-directory (getenv "CYGWIN_DIR"))
+    (require 'setup-cygwin)
     ;; Cygwin coding tweak
     (set-keyboard-coding-system 'cp932)
     (set-file-name-coding-system 'cp932)
@@ -196,9 +202,6 @@
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
 (unless (assoc-default "org" package-archives)
   (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t))
-
-;; Add my elisp directory and other files
-(add-to-list 'load-path "~/.emacs.d/elisp")
 
 ;; use-package
 (unless (package-installed-p 'use-package)
