@@ -57,12 +57,14 @@
 (defvar default-buffer-file-coding-system 'utf-8-unix)
 (set-buffer-file-coding-system 'utf-8-unix)
 
-;; Cygwin
+;; Cygwin shell fix when Windows-nt
+(when (eq system-type 'windows-nt)
+  (progn
+    (setq cygwin-root-directory (getenv "CYGWIN_DIR"))
+    (require 'setup-cygwin)))
+;; Windows
 (when (memq system-type '(cygwin windows-nt))
   (progn
-    ;; Cygwin shell fix
-    (setq cygwin-root-directory (getenv "CYGWIN_DIR"))
-    (require 'setup-cygwin)
     ;; Cygwin coding tweak
     (set-keyboard-coding-system 'cp932)
     (set-file-name-coding-system 'cp932)
