@@ -550,7 +550,9 @@
   (recentf-mode 1)
   )
 
-;; TODO Magit
+;; Magit
+(use-package magit :ensure t
+  :bind ("C-x g" . magit-status))
 
 ;; Grep
 (use-package wgrep :ensure t
