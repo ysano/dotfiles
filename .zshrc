@@ -1,6 +1,9 @@
 # -*- mode:shell-script -*-
 echo "Loading $HOME/.zshrc"
 
+# zprof
+zmodload zsh/zprof && zprof
+
 # Search path for the cd command
 cdpath=(.. ~ ~/src)
 
@@ -222,7 +225,15 @@ fi
 ################################
 
 autoload -Uz compinit
-compinit
+setopt EXTENDEDGLOB
+for dump in $HOME/.zcompdump(#qN.m1); do
+    compinit
+    if [[ -s "$dump" && (! -s "$dump.zwc" || "$dump" -nt "$dump.zwc") ]]; then
+        zcompile "$dump"
+    fi
+done
+unsetopt EXTENDEDGLOB
+compinit -C
 
 function cd() { builtin cd "$@"; echo $PWD; }
 
@@ -384,7 +395,7 @@ fi
 # rbenv
 if [ -d $HOME/.rbenv ]; then
     path=($HOME/.rbenv/bin $path)
-	eval "$(rbenv init -)"
+	eval "$(rbenv init - zsh --no-rehash)"
 fi
 path=($HOME/bin $path)
 
@@ -429,4 +440,9 @@ else
     else
         export PAGER=less
     fi
+fi
+
+# zprof
+if (which zprof > /dev/null) ;then
+    zprof | less
 fi
