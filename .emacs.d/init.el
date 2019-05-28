@@ -48,9 +48,6 @@
 (setq x-stretch-cursor t)
 (global-hl-line-mode t)
 
-;; Shell
-(setq shell-file-name "/bin/bash")
-
 ;; Coding
 (set-language-environment "Japanese")
 (prefer-coding-system 'utf-8-unix)
@@ -58,10 +55,32 @@
 (set-buffer-file-coding-system 'utf-8-unix)
 
 ;; Cygwin shell fix when Windows-nt
-(when (eq system-type 'windows-nt)
+(if (eq system-type 'windows-nt)
   (progn
     (setq cygwin-root-directory (getenv "CYGWIN_DIR"))
-    (require 'setup-cygwin)))
+    (require 'setup-cygwin)
+    ;; zsh if exists
+    (if (file-exists-p (expand-file-name "bin/zsh.exe" cygwin-root-directory))
+        (progn
+          (add-to-list 'exec-path (expand-file-name "bin" cygwin-root-directory))
+          (setq shell-file-name  (expand-file-name "bin/zsh.exe" cygwin-root-directory)) ; Subprocesses invoked by shell.
+          (setenv "SHELL" shell-file-name)
+          (setenv "PATH" (concat (expand-file-name "bin" cygwin-root-directory) ";" (getenv "PATH")))
+          (setq explicit-shell-file-name  shell-file-name) ; Interactive shell
+          (setq ediff-shell               shell-file-name)    ; Ediff shell
+          (setq explicit-shell-args       '("--login" "-i"))
+          ))
+    ;; Cygwin shell tweak
+    (modify-coding-system-alist 'process ".*sh\\.exe" 'utf-8))
+  ;; like gnu/linux etc
+  (progn
+    (setq shell-file-name "zsh") ; Subprocesses invoked by shell.
+    (setenv "SHELL" shell-file-name)
+    (setq explicit-shell-file-name  shell-file-name) ; Interactive shell
+    (setq ediff-shell               shell-file-name)    ; Ediff shell
+    (setq explicit-shell-args       '("--login" "-i"))
+    ))
+
 ;; Windows
 (when (memq system-type '(cygwin windows-nt))
   (progn
@@ -72,14 +91,7 @@
     (setq default-process-coding-system '(undecided-dos . utf-8-unix))
     (set-charset-priority 'ascii 'japanese-jisx0208 'latin-jisx0201
                           'katakana-jisx0201 'iso-8859-1 'cp1252 'unicode)
-    (set-coding-system-priority 'utf-8 'euc-jp 'iso-2022-jp 'cp932)
-    ;; Cygwin shell tweak
-    (defvar explicit-shell-file-name "bash.exe")
-    (setq shell-command-switch "-c")
-    (setq shell-file-name "bash.exe")
-    ;; (M-! and M-| and compile.el)
-    (setq shell-file-name "bash.exe")
-    (modify-coding-system-alist 'process ".*sh\\.exe" 'utf-8)))
+    (set-coding-system-priority 'utf-8 'euc-jp 'iso-2022-jp 'cp932)))
 
 ;; Disp notification
 (setq visible-bell nil)

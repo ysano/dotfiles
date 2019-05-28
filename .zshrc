@@ -150,14 +150,20 @@ export ZUSERDIR=$ZDOTDIR/.zsh
 ## keybind
 ################################
 
-# emacs
-bindkey -e
+case "${TERMCAP}" in
+    emacs*)
+    ;;
 
-# bind C-s and C-q
-stty -ixon
+    *)
+        # emacs
+        bindkey -e
+        # bind C-s and C-q
+        stty -ixon
+        # meta key on xterm
+        stty pass8
+        ;;
+esac
 
-# meta key on xterm
-stty pass8
 
 ################################
 ## color
