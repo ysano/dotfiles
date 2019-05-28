@@ -4,7 +4,7 @@
 [color]
 	ui = true
 [core]
-
+	autocrlf = input
 [alias]
 	co = checkout
 	ci = commit
@@ -13,3 +13,5 @@
 	tool = emerge
 [push]
 	default = simple
+[http]
+	sslVerify = false
