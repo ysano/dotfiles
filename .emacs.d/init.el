@@ -58,6 +58,7 @@
 (if (eq system-type 'windows-nt)
   (progn
     (setq cygwin-root-directory (getenv "CYGWIN_DIR"))
+    (setq cygwin-mount-cygwin-bin-directory (expand-file-name "bin" cygwin-root-directory))
     (require 'setup-cygwin)
     ;; zsh if exists
     (if (file-exists-p (expand-file-name "bin/zsh.exe" cygwin-root-directory))
