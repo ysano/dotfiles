@@ -639,10 +639,16 @@
 (use-package org
   :defer t
   :ensure (org-plus-contrib :pin "org")
-  :ensure (ox-reveal :pin "melpa")
+  :after ox-reveal
   :config
-  (if (file-directory-p "~/org")
+  (if (or (file-directory-p "~/org")
+          (file-symlink-p "~/org"))
       (load "init-org")))
+
+(use-package ox-reveal
+  :defer t
+  :ensure (ox-reveal :pin "melpa"))
+
 (use-package auctex :ensure nil :disabled)
 (use-package cdlatex :ensure nil :disabled
   :after auctex
