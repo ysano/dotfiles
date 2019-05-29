@@ -2,7 +2,7 @@
 echo "Loading $HOME/.zshrc"
 
 # zprof
-zmodload zsh/zprof && zprof
+# zmodload zsh/zprof && zprof
 
 # Search path for the cd command
 cdpath=(.. ~ ~/src)
@@ -449,6 +449,6 @@ else
 fi
 
 # zprof
-if (which zprof > /dev/null) ;then
-    zprof | less
-fi
+# if (which zprof > /dev/null) ;then
+#     zprof | less
+# fi
