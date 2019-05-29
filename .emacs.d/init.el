@@ -646,7 +646,6 @@
       (load "init-org")))
 
 (use-package ox-reveal
-  :defer t
   :ensure (ox-reveal :pin "melpa"))
 
 (use-package auctex :ensure nil :disabled)
