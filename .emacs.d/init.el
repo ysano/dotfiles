@@ -603,6 +603,11 @@
   (defalias 'spacer 'text-adjust-space-buffer)
   (add-hook 'before-save-hook 'text-adjust-space-before-save-if-needed))
 
+;; sudo-edit
+(use-package sudo-edit :ensure t
+  :bind ("C-c C-r" . sudo-edit))
+  
+
 ;;--------------------------------
 ;; auto-complete
 ;;--------------------------------
