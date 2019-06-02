@@ -722,6 +722,9 @@
   (json-encoding-default-indentation "    ") ;json.el
   :mode "\\.json\\'")
 
+(use-package nginx-mode :ensure t
+  :mode ("nginx.+conf" . nginx-mode))
+
 ;; Local Variables:
 ;; coding: utf-8-unix
 ;; End:
