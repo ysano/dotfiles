@@ -711,6 +711,12 @@
 (use-package yaml-mode :ensure nil
   :mode "\\.ya?ml\\'")
 
+(use-package json-mode :ensure t
+  :custom
+  (json-mode-indent-level 4)
+  (json-encoding-default-indentation "    ") ;json.el
+  :mode "\\.json\\'")
+
 ;; Local Variables:
 ;; coding: utf-8-unix
 ;; End:
