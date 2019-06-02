@@ -725,6 +725,13 @@
 (use-package nginx-mode :ensure t
   :mode ("nginx.+conf" . nginx-mode))
 
+(use-package apache-mode :ensure t
+  :mode (("\\.htaccess\\'" . apache-mode)
+         ("/etc/httpd.+\\.conf\\'" . apache-mode)
+         ("/etc/apache.+\\.conf\\'" . apache-mode)
+         ("sites-\\(available\\|enabled\\)/" . apache-mode)))
+
+
 ;; Local Variables:
 ;; coding: utf-8-unix
 ;; End:
