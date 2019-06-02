@@ -723,14 +723,14 @@
   :mode "\\.json\\'")
 
 (use-package nginx-mode :ensure t
-  :mode ("nginx.+conf" . nginx-mode))
+  :mode "nginx.*\\.conf\\'")
 
 (use-package apache-mode :ensure t
-  :mode (("\\.htaccess\\'" . apache-mode)
-         ("/etc/httpd.+\\.conf\\'" . apache-mode)
-         ("/etc/apache.+\\.conf\\'" . apache-mode)
-         ("sites-\\(available\\|enabled\\)/" . apache-mode)))
-
+  :mode 
+  "\\.htaccess\\'"
+  "/etc/httpd.+\\.conf\\'"
+  "/etc/apache.+\\.conf\\'"
+  "sites-\\(available\\|enabled\\)/")
 
 ;; Local Variables:
 ;; coding: utf-8-unix
