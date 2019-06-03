@@ -418,6 +418,12 @@
 
 ;; TODO LSP
 
+;; imenu-list
+(use-package imenu-list :ensure t
+  :custom
+  (imenu-list-focus-after-activation t)
+  :bind ("C-'" . imenu-list-smart-toggle))
+
 ;;--------------------------------
 ;; Navigation
 ;;--------------------------------
