@@ -446,6 +446,12 @@
   :bind (("M-p" . 'previous-buffer)
          ("M-n" . 'next-buffer)))
 
+(use-package beacon :ensure t
+  :custom
+  (beacon-color "yellow")
+  :config
+  (beacon-mode t))
+
 ;;--------------------------------
 ;; Eazy interface
 ;;--------------------------------
