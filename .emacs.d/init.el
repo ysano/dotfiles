@@ -578,6 +578,11 @@
   (if (eq system-type 'windows-nt)
       (setq magit-need-cygwin-noglob t))) ; noglob on Cygwin and MSYS2
 
+;; Git gutter
+(use-package git-gutter :ensure t
+  :config
+  (global-git-gutter-mode t))
+
 ;; Grep
 (use-package wgrep :ensure t
   :defer t
