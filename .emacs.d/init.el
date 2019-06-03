@@ -586,6 +586,9 @@
 
 ;; Git gutter
 (use-package git-gutter :ensure t
+  :diminish
+  :custom
+  (git-gutter:update-interval 2)
   :config
   (global-git-gutter-mode t))
 
