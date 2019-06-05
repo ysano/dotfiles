@@ -573,7 +573,10 @@
 
 ;; Magit
 (use-package magit :ensure t
-  :bind ("C-x g" . magit-status))
+  :bind ("C-x g" . magit-status)
+  :init
+  (if (eq system-type 'windows-nt)
+      (setq magit-need-cygwin-noglob t))) ; noglob on Cygwin and MSYS2
 
 ;; Grep
 (use-package wgrep :ensure t
