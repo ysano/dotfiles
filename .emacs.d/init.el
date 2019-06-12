@@ -543,6 +543,10 @@
               ("M-," . counsel-gtags-go-backward))
   )
 
+(use-package counsel-tramp :ensure t
+  :after counsel
+  :bind ("C-c s" . 'counsel-tramp))
+
 ;; Help - guide-key
 (use-package guide-key :ensure t
   :defer t
