@@ -685,6 +685,12 @@
   :defer t
   :ensure (org-plus-contrib :pin "org")
   :after ox-reveal
+  :custom
+  (org-babel-load-languages '((emacs-lisp . t)
+                              (perl . t)
+                              (python . t)
+                              (R . t)
+                              (shell . t)))
   :config
   (if (or (file-directory-p "~/org")
           (file-symlink-p "~/org"))
