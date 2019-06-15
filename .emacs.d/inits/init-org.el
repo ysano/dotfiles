@@ -1,7 +1,8 @@
-;;-----------------------------------------------------------------
-;; org
-;;-----------------------------------------------------------------
-;; (require 'org-loaddefs)
+;;; init-org.el --- init
+;;; Commentary:
+;;
+;;; Code:
+
 (setq org-directory "~/org")                    ; org directory
 (setq org-mobile-directory "~/MobileOrg")       ; MobileOrg directory
 ;; Set to the name of the file where new notes will be stored
@@ -327,3 +328,8 @@
 (global-set-key "\C-cc" 'org-capture)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
+
+;; Local Variables:
+;; coding: utf-8-unix
+;; End:
+
