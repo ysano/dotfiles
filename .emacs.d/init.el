@@ -593,6 +593,13 @@
   :diminish
   :custom
   (git-gutter:update-interval 2)
+  (git-gutter:modified-sign "  ")
+  (git-gutter:added-sign "++")
+  (git-gutter:deleted-sign "--")
+  :custom-face
+  (git-gutter:modified ((t (:background "purple"))))
+  (git-gutter:added ((t (:foreground "green"))))
+  (git-gutter:deleted ((t (:foreground "red"))))
   :bind (("C-x v =" . 'git-gutter:popup-hunk)
          ("C-x p" . 'git-gutter:previous-hunk)
          ("C-x n" . 'git-gutter:next-hunk)
