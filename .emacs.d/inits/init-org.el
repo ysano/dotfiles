@@ -157,18 +157,18 @@
     ;; review stuck projects as designated by org-stuck-projects
     (stuck ""); 行き詰まり＝TODOが無いProject
     ;; review all projects (assuming you use todo keywords to designate projects)
-    (tags "+LEVEL=2+project")
+    (tags "+LEVEL=2+Persp" ((org-agenda-sorting-strategy '(priority-up effort-down))))
     ;; review undone items
     (todo "TODO")
     ;; review waiting items
     (todo "WAIT")
     ;; review someday/maybe items
-    (tags-todo "reading" ((org-agenda-files '("~/org/someday.org"))
+    (tags-todo "reading" ((org-agenda-files '("~/org/gtd/someday.org"))
                             (org-agenda-sorting-strategy '(priority-up effort-down))
                               ))
     ;; review someday/maybe items
-    (tags-todo "-reading" ((org-agenda-files '("~/org/someday.org"))
-                             (org-agenda-sorting-strategy '(priority-up effort-down))
+    (tags-todo "-reading" ((org-agenda-files '("~/org/gtd/someday.org"))
+                           (org-agenda-sorting-strategy '(priority-up effort-down))
                                ))
     ))
 
