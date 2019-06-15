@@ -127,18 +127,18 @@
 ;;------------------------------------------------------------
 (setq org-agenda-custom-commands
 '(
-  ;; ("p" "Projects"
-  ;;  ((tags "PROJECT")))
-  ;; ("g" "Goals"
-  ;;  ((tags "GOAL")))
-  ;; ("h" "Office and Home Lists"
-  ;;  ((agenda)
-  ;;   (tags-todo "@OFFICE")
-  ;;   (tags-todo "@HOME")
-  ;;   (tags-todo "@WEB")
-  ;;   (tags-todo "@DOWNTOWN")
-  ;;   (tags-todo "@CALL")
-  ;;   ))
+  ;;------------------------------------------------------------
+  ;; GTD heigh focus
+  ;;------------------------------------------------------------
+  ("V" "3-5 year Vision"
+   ((tags "+LEVEL=2+VISION")))
+  ("G" "1-2 year Goals and objective"
+   ((tags "+LEVEL=2+GOAL")))
+  ("A" "Area of Focus and accountability"
+   ((tags "+LEVEL=2+AOF")))
+  ("P" "Projects"
+   ((tags "+LEVEL=2+PROJECT")))
+
   ("d" "Daily Action List (Next Action)"
    (
     (agenda "" ((org-agenda-ndays 1)
