@@ -210,19 +210,13 @@
   ;;------------------------------------------------------------
   ;; GTD contexts
   ;;------------------------------------------------------------
-  ("g" . "GTD contexts")
-  ("go" "@office" tags-todo "@office")
-  ("gh" "@home" tags-todo "@home")
-  ("ge" "@errands" tags-todo "@errands")
-  ("gc" "@call" tags-todo "@call")
-  ;; ("G" "GTD Agenda of Contexts"
-  ;;  ((tags-todo "@office")
-  ;; (tags-todo "@home")
-  ;; (tags-todo "@errands")
-  ;; (tags-todo "@call")
-  ;; )
-  ;;  nil                      ;; i.e., no local settings
-  ;;  ("~/next-actions.html")) ;; exports block to this file with C-c a e
+  ("g" . "GTD Energy and Time contexts")
+  ("gf" "@FullFocus" tags-todo "@FullFocus")
+  ("gs" "@ShortDashes" tags-todo "@ShortDashes")
+  ("gh" "@HangingAround" tags-todo "@HangingAround")
+  ("gb" "@BrainDead" tags-todo "@BrainDead")
+  ("gt" "@Thinking" tags-todo "@Thinking")
+  ("gc" "@Call" tags-todo "@Call")
 
   ;;------------------------------------------------------------
   ;; Priorities
