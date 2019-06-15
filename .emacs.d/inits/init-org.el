@@ -40,21 +40,16 @@
 ;; (add-hook 'org-mode-hook 'ac-latex-mode-setup)
 
 ;; ロケール修正
-(add-hook 'org-mode-hook
-          (lambda ()
-            (set (make-local-variable 'system-time-locale) "C")))
-(add-hook 'org-agenda-mode-hook
-          (lambda ()
-            (set (make-local-variable 'system-time-locale) "C")))
-(add-hook 'org-capture-mode-hook
-          (lambda ()
-            (set (make-local-variable 'system-time-locale) "C")))
-(add-hook 'org-remember-mode-hook
-          (lambda ()
-            (set (make-local-variable 'system-time-locale) "C")))
-(add-hook 'org-src-mode-hook
-          (lambda ()
-            (set (make-local-variable 'system-time-locale) "C")))
+(mapcar (lambda (hook) 
+          (add-hook hook
+                    (lambda ()
+                      (set (make-local-variable 'system-time-locale) "C"))))
+        '(org-mode-hook
+          org-agenda-mode-hook
+          org-capture-mode-hook
+          org-remember-mode-hook
+          org-src-mode-hook))
+
 
 ;;------------------------------------------------------------
 ;; Hyperlinks Setup
