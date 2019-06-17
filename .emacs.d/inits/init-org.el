@@ -65,12 +65,27 @@
 ;;------------------------------------------------------------
 (setq org-capture-templates
       '(
-        ("i" "Inbox (GTD)" entry
+        ("t" "Tasks (Inbox)" entry
          (file+headline "~/org/gtd/gtd.org" "Inbox")
-         "* TODO %?\n  %i\n  %a")
+         "* TODO %? %^g\n %x\n %a")
+
+        ("q" "Quick task (Inbox scheduled today)" entry
+         (file+headline "~/org/gtd/gtd.org" "Inbox")
+         "* TODO %^{Task} %^g\nSCHEDULED: %t\n %i\n  %a"
+         :immediate-finish t)
+
+        ("i" "Interrupting task (Inbox clock-in)" entry
+         (file+headline "~/org/gtd/gtd.org" "Inbox")
+         "* TODO %^{Task} :@ShortDashes:"
+         :clock-in :clock-resume)
+
         ("j" "Journal (Resume memory)" entry
          (file+olp+datetree "~/org/journal.org")
          "* %?\n     %i\n     %a")
+
+        ("m" "Journal (clipboard flagment)" entry
+         (file+olp+datetree "~/org/journal.org")
+         "* %? %^g\n %x\n")
         )
       )
 
