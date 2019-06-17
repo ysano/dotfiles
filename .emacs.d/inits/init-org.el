@@ -136,6 +136,12 @@
 ;(setq org-agenda-skip-scheduled-if-done t)
 ;; Remove completed items from search results
 ;(setq org-agenda-skip-timestamp-if-done t)
+;; Sorting by date and priority
+(setq org-agenda-sorting-strategy
+      '((agenda time-up priority-down tag-up category-keep effort-up)
+        (todo todo-state-up priority-down effort-up)
+        (tags user-defined-up)
+        (search category-keep)))
 
 ;;------------------------------------------------------------
 ;; Agenda Custom Commands
