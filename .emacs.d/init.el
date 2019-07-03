@@ -723,6 +723,11 @@
   :mode ("\\.py\\'" . python-mode)
   :interpreter ("python" . python-mode))
 
+(use-package powershell
+  :if (memq system-type '(cygwin windows-nt)) :ensure t
+  :mode ("\\.ps[dm]?1\\'" . powershell-mode)
+  :interpreter "powershell")
+
 ;;--------------------------------
 ;; text-mode children
 ;;--------------------------------
