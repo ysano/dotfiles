@@ -401,7 +401,7 @@ fi
 # rbenv
 if [ -d $HOME/.rbenv ]; then
     path=($HOME/.rbenv/bin $path)
-	eval "$(rbenv init - zsh --no-rehash)"
+	eval "$(rbenv init - --no-rehash zsh)"
 fi
 path=($HOME/bin $path)
 
