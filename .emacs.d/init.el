@@ -690,6 +690,7 @@
                               (perl . t)
                               (python . t)
                               (R . t)
+                              (js . t)
                               (shell . t)))
   :config
   (if (or (file-directory-p "~/org")
