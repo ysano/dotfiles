@@ -642,6 +642,13 @@
   (setq idm-database-file "~/secret/idm-db.gpg")
   )
 
+;; eww
+(use-package eww :ensure t
+  :custom
+  (eww-search-prefix "http://www.google.com/?k1=-1&q=")
+  (url-user-agent "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Mobile Safari/537.36")
+  )
+
 ;; text-adjust
 (when (require 'text-adjust nil t)
   (defun text-adjust-space-before-save-if-needed ()
