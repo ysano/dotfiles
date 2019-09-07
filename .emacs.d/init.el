@@ -452,6 +452,12 @@
   :config
   (beacon-mode t))
 
+;; subword (camelCase Navigation)
+(use-package subword :ensure t
+  :diminish subword-mode
+  :init
+  (global-subword-mode))
+
 ;;--------------------------------
 ;; Eazy interface
 ;;--------------------------------
