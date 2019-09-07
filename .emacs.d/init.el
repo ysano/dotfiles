@@ -655,6 +655,21 @@
   (defalias 'spacer 'text-adjust-space-buffer)
   (add-hook 'before-save-hook 'text-adjust-space-before-save-if-needed))
 
+;; aspell
+(use-package ispell :ensure t
+  :defer t
+  :init
+  (setq ispell-program-name "aspell")
+  :config
+  ;; (setq ispell-alternate-dictionary (expand-file-name "~/.emacs.d/etc/dict/words"))
+  (add-to-list 'ispell-skip-region-alist '("[^\000-\377]+")))
+
+;; flyspell
+(use-package flyspell :ensure t
+  :defer t
+  :hook ((prog-mode . flyspell-prog-mode)
+         (text-mode . flyspell-mode))
+
 ;; sudo-edit
 (use-package sudo-edit :ensure t
   :bind ("C-c C-r" . sudo-edit))
