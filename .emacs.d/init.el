@@ -619,7 +619,13 @@
 
 ;; TODO Migemo
 
-;; TODO Google Translate
+;; Google Translate
+(use-package google-translate :ensure t
+  :custom
+  (google-translate-default-source-language "en")
+  (google-translate-default-target-language "ja")
+  :bind (("C-c t" . 'google-translate-at-point)
+         ("C-c T" . 'google-translate-query-translate)))
 
 ;; id-manager
 (use-package id-manager :ensure t
