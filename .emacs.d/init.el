@@ -229,6 +229,7 @@
 (use-package auto-compile :ensure t
   :config (auto-compile-on-load-mode))
 (setq load-prefer-newer t)
+(setq use-package-compute-statistics t)
 
 (use-package diminish :ensure t
   :config
@@ -478,9 +479,8 @@
   :bind (("C-c C-r" . 'ivy-resume)
          ([f6] . 'ivy-resume)))
 
-(use-package ivy-rich :ensure nil
+(use-package ivy-rich :ensure nil :disabled
   :after ivy
-  :defer t
   :preface
   (defun ivy-rich-switch-buffer-icon (candidate)
     (with-current-buffer
@@ -555,6 +555,7 @@
   )
 
 (use-package counsel-tramp :ensure t
+  :defer t
   :after counsel
   :bind ("C-c s" . 'counsel-tramp))
 
@@ -632,6 +633,7 @@
 
 ;; Google Translate
 (use-package google-translate :ensure t
+  :defer t
   :custom
   (google-translate-default-source-language "en")
   (google-translate-default-target-language "ja")
@@ -648,7 +650,8 @@
   )
 
 ;; eww
-(use-package eww :ensure t
+(use-package eww :ensure nil
+  :defer t
   :custom
   (eww-search-prefix "http://www.google.com/?k1=-1&q=")
   (url-user-agent "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Mobile Safari/537.36")
@@ -721,7 +724,6 @@
 ;;--------------------------------
 
 (use-package org
-  :defer t
   :ensure (org-plus-contrib :pin "org")
   :custom
   (org-babel-load-languages '((emacs-lisp . t)
@@ -764,7 +766,7 @@
               ("C-x t" . ruby-compilation-this-buffer)
               ("C-x T" . ruby-compilation-this-test)))
 
-(use-package python :ensure nil
+(use-package python :ensure t
   :mode ("\\.py\\'" . python-mode)
   :interpreter ("python" . python-mode))
 
