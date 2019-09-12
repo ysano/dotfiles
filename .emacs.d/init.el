@@ -263,13 +263,13 @@
   :config
   (load-theme 'doom-dracula t)
   ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
+  ;; (doom-themes-visual-bell-config)
   ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
+  ;; (doom-themes-neotree-config)
   ;; or for treemacs users
-  (doom-themes-treemacs-config)
+  ;; (doom-themes-treemacs-config)
   ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config)
+  ;; (doom-themes-org-config)
   )
 
 (use-package hide-mode-line :ensure t
