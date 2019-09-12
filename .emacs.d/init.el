@@ -411,8 +411,10 @@
               ("C-c y g" . yas-reload-all))
   :config
   (yas-global-mode 1))
+
 (use-package yasnippet-snippets :ensure nil
   :after yasnippet)
+
 (use-package yatemplate :ensure nil
   :after yasnippet)
 
@@ -475,6 +477,7 @@
   (ivy-mode 1)
   :bind (("C-c C-r" . 'ivy-resume)
          ([f6] . 'ivy-resume)))
+
 (use-package ivy-rich :ensure nil
   :after ivy
   :defer t
@@ -517,11 +520,13 @@
            ((ivy-rich-candidate (:width 0.8)) ; return the candidate itself
             (ivy-rich-file-last-modified-time (:face font-lock-comment-face)))))) ; return the last modified time of the file
   (ivy-rich-mode 1))
+
 (use-package swiper :ensure t
   :after ivy
   :init
   (setq search-default-mode #'char-fold-to-regexp)
   :bind ("C-s" . 'swiper))
+
 (use-package counsel :ensure t
   :diminish
   :after ivy
@@ -680,7 +685,6 @@
 ;; sudo-edit
 (use-package sudo-edit :ensure t
   :bind ("C-c C-r" . sudo-edit))
-  
 
 ;;--------------------------------
 ;; auto-complete
@@ -702,6 +706,7 @@
   (setq ac-ignore-case 'smart)
   (global-auto-complete-mode t)
   )
+
 (use-package ac-math :ensure t :disabled
   :after auto-complete
   :hook (TeX-mode LaTeX-mode laTeX-mode org-mode)
@@ -735,6 +740,7 @@
   :ensure (ox-reveal :pin "melpa"))
 
 (use-package auctex :ensure nil :disabled)
+
 (use-package cdlatex :ensure nil :disabled
   :after auctex
   :hook ((LaTeX-mode . turn-on-cdlatex)   ; with AUCTeX LaTeX mode
