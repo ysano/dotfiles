@@ -732,6 +732,7 @@
                               (js . t)
                               (shell . t)))
   :config
+  (require 'org-tempo)
   (if (or (file-directory-p "~/org")
           (file-symlink-p "~/org"))
       (load "init-org")))
