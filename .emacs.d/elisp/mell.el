@@ -335,7 +335,7 @@
 
 (defun mell-region-get-rectangle-marker-list (start end &optional buffer)
   (mapcar
-   '(lambda (region)
+   #'(lambda (region)
       (cons (mell-marker-make (car region)) (mell-marker-make (cdr region)))
       )
    (mell-region-get-rectangle-list start end buffer))
@@ -423,7 +423,7 @@
 (defun mell-alist-delete (alist key)
   (if key
       (let (return-alist)
-	(mapcar '(lambda (x)
+	(mapcar #'(lambda (x)
 		   (or (equal key (car x))
 		       (setq return-alist (cons x return-alist))))
 		alist)
@@ -438,7 +438,7 @@
 
 (defun mell-alist-combine (var-list val-list)
   (let ((i 0))
-    (mapcar '(lambda (var) 
+    (mapcar #'(lambda (var)
 	       (prog1 (cons var (nth i val-list))
 		 (setq i (1+ i))))
 	    var-list)))
@@ -490,7 +490,7 @@
 (defun mell-key-binding-minor-mode-list (key)
   (delq nil
 	(mapcar 
-	 '(lambda (x) (lookup-key x key))
+	 #'(lambda (x) (lookup-key x key))
 	 (current-minor-mode-maps))
   ))
 (define-obsolete-function-alias
@@ -498,7 +498,7 @@
 
 (defun mell-key-binding-next-minor-mode (keymap)
   (car (delq nil
-	     (mapcar '(lambda (x) (lookup-key x (this-command-keys)))
+	     (mapcar #'(lambda (x) (lookup-key x (this-command-keys)))
 		     (cdr (member keymap (current-minor-mode-maps))))
 	     )))
 (define-obsolete-function-alias
@@ -509,7 +509,7 @@
 		     (current-minor-mode-maps)))
 	(command-keys (or command-keys (this-command-keys))))
     (or (car (cdr (delq nil
-			(mapcar '(lambda (x) (lookup-key x command-keys))
+			(mapcar #'(lambda (x) (lookup-key x command-keys))
 				mode-maps))))
 	(mell-key-binding-local command-keys)
 	(mell-key-binding-global command-keys)

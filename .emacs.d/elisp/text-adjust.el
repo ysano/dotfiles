@@ -254,7 +254,7 @@ text-adjust-space を順に実行することにより,
   (save-excursion
     (let ((tmp-table (text-adjust--copy-char-table char-code-property-table)))
       (text-adjust--modify-char-table ?　 (list 'ascii "  "))
-      (mapcar '(lambda (c) (text-adjust--modify-char-table c nil))
+      (mapcar #'(lambda (c) (text-adjust--modify-char-table c nil))
        (string-to-list text-adjust-hankaku-except))
       (japanese-hankaku-region from to t)
       (setq char-code-property-table 
