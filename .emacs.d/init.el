@@ -723,7 +723,6 @@
 (use-package org
   :defer t
   :ensure (org-plus-contrib :pin "org")
-  :after ox-reveal
   :custom
   (org-babel-load-languages '((emacs-lisp . t)
                               (perl . t)
@@ -738,7 +737,11 @@
       (load "init-org")))
 
 (use-package ox-reveal
-  :ensure (ox-reveal :pin "melpa"))
+  :defer t
+  :ensure (ox-reveal :pin "melpa")
+  :config
+  (setq org-reveal-root "https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.8.0/")
+  )
 
 (use-package auctex :ensure nil :disabled)
 

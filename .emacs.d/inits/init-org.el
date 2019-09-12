@@ -308,10 +308,6 @@
           (lambda ()
             (define-key org-mode-map (kbd "C-c 1") 'my-org-export-icalendar)))
 
-;; ox-reveal
-(require 'ox-reveal)
-(setq org-reveal-root "https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/")
-
 ;;------------------------------------------------------------
 ;; Shortcut
 ;;------------------------------------------------------------
