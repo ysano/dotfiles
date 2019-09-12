@@ -768,6 +768,16 @@
   :mode ("\\.py\\'" . python-mode)
   :interpreter ("python" . python-mode))
 
+(use-package jedi :ensure nil
+  :defer t
+  :init
+  (add-hook 'python-mode-hook 'jedi:setup)
+  (add-hook 'python-mode-hook 'jedi:ac-setup)
+  (setq jedi:complete-on-dot t))
+
+(use-package py-yapf :ensure t
+  :hook (python-mode . py-yapf-enable-on-save))
+
 (use-package powershell
   :if (memq system-type '(cygwin windows-nt)) :ensure t
   :mode ("\\.ps[dm]?1\\'" . powershell-mode)
