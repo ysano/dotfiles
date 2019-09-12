@@ -675,7 +675,7 @@
 (use-package flyspell :ensure t
   :defer t
   :hook ((prog-mode . flyspell-prog-mode)
-         (text-mode . flyspell-mode))
+         (text-mode . flyspell-mode)))
 
 ;; sudo-edit
 (use-package sudo-edit :ensure t
