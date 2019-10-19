@@ -543,7 +543,9 @@
          ))
 
 (use-package counsel-gtags :ensure t
+  :diminish (counsel-gtags-mode . "Gtags")
   :after counsel
+  :hook ((prog-mode php-mode) . counsel-gtags-mode)
   :bind (
          :map counsel-gtags-mode-map
               ("M-t" . counsel-gtags-find-definition)
