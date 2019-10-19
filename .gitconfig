@@ -1,17 +1,26 @@
+# -*- indent-tabs-mode: t -*-
 [user]
 	name = ysano
 	email = ysano@ysnet.org
 [color]
-	ui = true
+	ui = auto
 [core]
 	autocrlf = input
 [alias]
 	co = checkout
 	ci = commit
 	st = status
+	difff = diff --name-only
+	diffc = diff --cached
+	lg = log --oneline --decorate --graph
+	lga = log --oneline --decorate --graph --branches --tags --remotes
 [merge]
 	tool = emerge
+	autoCRLF = false
 [push]
 	default = simple
 [http]
 	sslVerify = false
+[diff]
+	compactionHeuristic = true
+	renames = true
