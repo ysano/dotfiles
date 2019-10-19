@@ -790,10 +790,41 @@
 ;;--------------------------------
 ;; text-mode children
 ;;--------------------------------
-(use-package emmet-mode :ensure nil
+(use-package emmet-mode :ensure t
   :hook (sgml-mode html-mode css-mode web-mode))
 
-(use-package web-mode :ensure nil
+(use-package php-mode :ensure t
+  :custom
+  (php-manual-url 'ja)
+  (php-mode-coding-style 'psr2)
+  (php-mode-template-compatibility nil)
+  :config
+  (setq ac-sources '(ac-source-php
+                     ac-source-abbrev
+                     ac-source-dictionary
+                     ac-source-words-in-same-mode-buffers))
+  )
+
+(use-package php-eldoc :ensure t
+  :hook (php-mode . php-eldoc-enable))
+
+(use-package ac-php :ensure t :disabled
+  :after auto-complete
+  :init
+  (ac-php-core-eldoc-setup)
+  :hook (php-mode . ac-php-mode)
+  :bind (
+         :map php-mode-map
+              ;; Jump to definition (optional)
+              ("M-]" . ac-php-find-symbol-at-point)
+              ;; Return back (optional)
+              ("M-[" . ac-php-location-stack-back))
+  )
+
+(use-package flycheck-phpstan :ensure t :disabled
+  :hook php-mode)
+
+(use-package web-mode :ensure t
   :after emmet-mode
   :mode
   "\\.p?html\\'"
