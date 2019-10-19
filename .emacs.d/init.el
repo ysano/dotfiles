@@ -226,8 +226,6 @@
 (defvar use-package-verbose t)
 (eval-when-compile
   (require 'use-package))
-(use-package auto-compile :ensure t
-  :config (auto-compile-on-load-mode))
 (setq load-prefer-newer t)
 (setq use-package-compute-statistics t)
 
@@ -706,6 +704,8 @@
   (add-to-list 'ac-user-dictionary user-mail-address)
   (ac-config-default)
   (setq ac-use-menu-map t)
+  (setq ac-quick-help-delay 0.3)
+  (setq ac-menu-height 20)
   (setq ac-ignore-case 'smart)
   (global-auto-complete-mode t)
   )
