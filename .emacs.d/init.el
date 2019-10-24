@@ -757,6 +757,10 @@
 ;;--------------------------------
 ;; prog-mode children
 ;;--------------------------------
+(use-package google-c-style :ensure t
+  :hook ((c-mode-common . google-set-c-style)
+         (c-mode-common . google-make-newline-indent)))
+
 (use-package ruby-mode :ensure nil
   :mode ("\\.rb\\'" "Rakefile")
   :interpreter "ruby"
