@@ -94,6 +94,13 @@
                           'katakana-jisx0201 'iso-8859-1 'cp1252 'unicode)
     (set-coding-system-priority 'utf-8 'euc-jp 'iso-2022-jp 'cp932)))
 
+;; Tramp on Windows
+(when (eq window-system 'w32)
+  (setq tramp-default-method "plink"))
+
+;; Tramp autosave
+(setq tramp-auto-save-directory "~/.emacs.d/tramp-autosave")
+
 ;; Disp notification
 (setq visible-bell nil)
 
