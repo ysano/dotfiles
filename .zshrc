@@ -383,6 +383,12 @@ if [ -f $ZUSERDIR/gibo-completion.zsh ]; then
   source $ZUSERDIR/gibo-completion.zsh
 fi
 
+if [ -f $ZUSERDIR/wp-completion.bash ]; then
+  echo "Loading $ZUSERDIR/wp-completion.bash"
+  autoload bashcompinit
+  bashcompinit
+  source $ZUSERDIR/wp-completion.bash
+fi
 
 ################################
 ## path setting
