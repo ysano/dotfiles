@@ -318,7 +318,7 @@
 ;; Menu bar
 (menu-bar-mode 0)
 (tool-bar-mode 0)
-(scroll-bar-mode 0)
+(setq scroll-bar-mode 0)
 
 ;; XTerm mouse mode
 (use-package xt-mouse
