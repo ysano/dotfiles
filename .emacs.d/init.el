@@ -808,6 +808,12 @@
   :mode ("\\.ps[dm]?1\\'" . powershell-mode)
   :interpreter "powershell")
 
+(use-package octo-mode :ensure t
+  :mode ("\\.m\\'" "octave"))
+
+(use-package ac-octave :ensure t
+  :hook (octave-mode . ac-octave-setup))
+
 ;;--------------------------------
 ;; text-mode children
 ;;--------------------------------
