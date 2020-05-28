@@ -823,9 +823,15 @@
 (use-package php-mode :ensure t
   :custom
   (php-manual-url 'ja)
-  (php-mode-coding-style 'psr2)
+  (php-mode-coding-style 'pear)
   (php-mode-template-compatibility nil)
   :config
+  (add-hook 'php-mode-hook
+            '(lambda()
+               (subword-mode 1)
+               (setq c-basic-offset 4)
+               (setq tab-width 4)
+               (setq indent-tabs-mode nil)))
   (setq ac-sources '(ac-source-php
                      ac-source-abbrev
                      ac-source-dictionary
