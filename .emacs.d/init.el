@@ -847,7 +847,7 @@
 (use-package php-mode :ensure t
   :custom
   (php-manual-url 'ja)
-  (php-mode-coding-style 'pear)
+  (php-mode-coding-style 'psr2)
   (php-mode-template-compatibility nil)
   :config
   (add-hook 'php-mode-hook
