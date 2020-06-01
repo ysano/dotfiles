@@ -365,6 +365,7 @@
 ;; Paren
 (show-paren-mode 1)
 (defvar show-paren-style 'expression)
+(electric-pair-mode 1)
 
 ;; Time in the mode line
 (defvar display-time-24hr-format 1)
@@ -667,11 +668,34 @@
   )
 
 ;; eww
-(use-package eww :ensure nil
+(use-package eww :ensure t
   :defer t
   :custom
   (eww-search-prefix "http://www.google.com/?k1=-1&q=")
-  (url-user-agent "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Mobile Safari/537.36")
+  :init
+  (setq browse-url-browser-function 'eww-browse-url)
+  ;; color tweak
+  (defvar eww-disable-colorize t)
+  (defun shr-colorize-region--disable (orig start end fg &optional bg &rest _)
+    (unless eww-disable-colorize
+      (funcall orig start end fg)))
+  (advice-add 'shr-colorize-region :around 'shr-colorize-region--disable)
+  (advice-add 'eww-colorize-region :around 'shr-colorize-region--disable)
+  (defun eww-disable-color ()
+    "eww で文字色を反映させない"
+    (interactive)
+    (setq-local eww-disable-colorize t)
+    (eww-reload))
+  (defun eww-enable-color ()
+    "eww で文字色を反映させる"
+    (interactive)
+    (setq-local eww-disable-colorize nil)
+    (eww-reload))
+
+  ;; eww with hatebu
+  (when (require 'eww-hatebu nil t)
+    (with-eval-after-load 'eww
+      (eww-hatebu-setup)))
   )
 
 ;; text-adjust
@@ -889,6 +913,22 @@
 
 (use-package yaml-mode :ensure nil
   :mode "\\.ya?ml\\'")
+
+(use-package add-node-modules-path :ensure t)
+
+(use-package vue-mode :ensure t
+  :after add-node-modules-path
+  :config
+  (eval-after-load 'vue-mode '(add-hook 'vue-mode-hook #'add-node-modules-path))
+  (flycheck-add-mode 'javascript-eslint 'vue-mode)
+  (flycheck-add-mode 'javascript-eslint 'vue-html-mode)
+  (flycheck-add-mode 'javascript-eslint 'css-mode)
+  (add-hook 'vue-mode-hook 'flycheck-mode)
+  (add-hook 'vue-mode-hook
+            (lambda () (local-set-key (kbd "TAB")
+                                      'indent-relative-first-indent-point)))
+  
+  )
 
 (use-package json-mode :ensure t
   :custom
