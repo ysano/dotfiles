@@ -6,7 +6,7 @@
 	ui = auto
 [core]
 	autocrlf = input
-	editor = emacs -q -nw
+	editor = emacs -nw
 [alias]
 	co = checkout
 	ci = commit
