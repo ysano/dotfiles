@@ -424,7 +424,6 @@ export LC_CTYPE=ja_JP.UTF-8
 export JAVA_HOME=${JAVA_HOME:-/usr/local/openjdk6}
 
 # gnu global + exuberant ctags + pygments in local
-export GTAGSCONF=$HOME/share/gtags/gtags.conf
 export GTAGSLABEL=pygments
 
 # editor
