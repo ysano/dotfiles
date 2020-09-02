@@ -583,7 +583,12 @@
 (use-package counsel-tramp :ensure t
   :defer t
   :after counsel
-  :bind ("C-c s" . 'counsel-tramp))
+  :bind ("C-c s" . 'counsel-tramp)
+  :config
+  (setq tramp-default-method "ssh")
+  (setq make-backup-files nil)
+  (setq create-lockfiles nil)
+  )
 
 ;; Help - guide-key
 (use-package guide-key :ensure t
