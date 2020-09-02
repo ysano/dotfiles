@@ -229,6 +229,8 @@
 (package-initialize)
 
 ;; Add package sources
+(unless (assoc-default "melpa-stable" package-archives)
+  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t))
 (unless (assoc-default "melpa" package-archives)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
 (unless (assoc-default "org" package-archives)
@@ -850,7 +852,7 @@
 (use-package emmet-mode :ensure t
   :hook (sgml-mode html-mode css-mode web-mode))
 
-(use-package php-mode :ensure t
+(use-package php-mode :ensure t :pin melpa-stable
   :custom
   (php-manual-url 'ja)
   (php-mode-coding-style 'psr2)
