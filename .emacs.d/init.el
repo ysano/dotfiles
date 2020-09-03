@@ -811,7 +811,7 @@
 ;;--------------------------------
 ;; prog-mode children
 ;;--------------------------------
-(use-package google-c-style :ensure t
+(use-package google-c-style :ensure nil :disabled
   :hook ((c-mode-common . google-set-c-style)
          (c-mode-common . google-make-newline-indent)))
 
