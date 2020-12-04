@@ -857,14 +857,24 @@
 (use-package emmet-mode :ensure t
   :hook (sgml-mode html-mode css-mode web-mode))
 
-(use-package php-mode :ensure t :pin melpa-stable
+(use-package php-mode :ensure t
   :custom
   (php-manual-url 'ja)
+  (php-manual-path "~/share/php-chunked-xhtml")
   (php-mode-coding-style 'psr2)
   (php-mode-template-compatibility nil)
+  :bind (:map php-mode-map
+              ([f5] . phpunit-current-test)
+              ("S-<f5>" . phpunit-current-project)
+              ("C-c -" . php-current-class)
+              ("C-c =" . php-current-namespace))
   :config
   (add-hook 'php-mode-hook
             '(lambda()
+               (setq show-trailing-whitespace t)
+               (setq c-tab-always-indent t)
+               (setq c-auto-newline nil)
+               (setq c-hungry-delete-key t)
                (subword-mode 1)
                (setq c-basic-offset 4)
                (setq tab-width 4)
@@ -875,10 +885,12 @@
                      ac-source-words-in-same-mode-buffers))
   )
 
+(use-package phpunit :ensure t)
+
 (use-package php-eldoc :ensure t
   :hook (php-mode . php-eldoc-enable))
 
-(use-package ac-php :ensure t :disabled
+(use-package ac-php :ensure t
   :after auto-complete
   :init
   (ac-php-core-eldoc-setup)
@@ -932,6 +944,7 @@
 (use-package vue-mode :ensure t
   :after add-node-modules-path
   :config
+  (setq mmm-submode-decoration-level 2)
   (eval-after-load 'vue-mode '(add-hook 'vue-mode-hook #'add-node-modules-path))
   (flycheck-add-mode 'javascript-eslint 'vue-mode)
   (flycheck-add-mode 'javascript-eslint 'vue-html-mode)
