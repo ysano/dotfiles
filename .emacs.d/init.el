@@ -247,10 +247,11 @@
 (setq load-prefer-newer t)
 (setq use-package-compute-statistics t)
 
-(use-package auto-package-update
+(use-package auto-package-update :ensure t
   :config
   (setq auto-package-update-delete-old-versions t)
   (setq auto-package-update-hide-results t)
+  (setq auto-package-update-prompt-before-update t)
   (auto-package-update-maybe))
 
 (use-package diminish :ensure t
