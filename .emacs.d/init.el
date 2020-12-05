@@ -366,7 +366,7 @@
 ;; Flymake
 (use-package flycheck :ensure t
   :defer t
-  :bind ("S-<f2>" . flycheck-mode)
+  :bind ([f7] . flycheck-mode)
   :config
   (setq flycheck-display-errors-delay 0.1)
   (setq eldoc-idle-delay 1.5))
