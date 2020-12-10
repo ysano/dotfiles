@@ -744,6 +744,11 @@
 (use-package sudo-edit :ensure t
   :bind ("C-c C-r" . sudo-edit))
 
+;; editorconfig
+(use-package editorconfig :ensure t
+  :config
+  (editorconfig-mode 1))
+
 ;;--------------------------------
 ;; auto-complete
 ;;--------------------------------
