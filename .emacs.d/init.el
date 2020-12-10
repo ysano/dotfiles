@@ -284,16 +284,21 @@
   (load-theme 'solarized-dark))
 
 (use-package doom-themes :ensure t
+  :custom
+  (doom-themes-enable-italic t)
+  (doom-themes-enable-bold t)
+  :custom-face
+  (doom-modeline-bar ((t (:background "#6272a4"))))  
   :config
   (load-theme 'doom-dracula t)
   ;; Enable flashing mode-line on errors
-  ;; (doom-themes-visual-bell-config)
+  (doom-themes-visual-bell-config)
   ;; Enable custom neotree theme (all-the-icons must be installed!)
-  ;; (doom-themes-neotree-config)
+  (doom-themes-neotree-config)
   ;; or for treemacs users
-  ;; (doom-themes-treemacs-config)
+  (doom-themes-treemacs-config)
   ;; Corrects (and improves) org-mode's native fontification.
-  ;; (doom-themes-org-config)
+  (doom-themes-org-config)
   )
 
 (use-package hide-mode-line :ensure t
@@ -303,6 +308,9 @@
 (use-package doom-modeline :ensure t ;; nil :disabled
   :custom
   (doom-modeline-buffer-file-name-style 'truncate-with-project)
+  (doom-modeline-icon t)
+  (doom-modeline-major-mode-icon nil)
+  (doom-modeline-minor-modes nil)
   :init
   (message "Download latest icons: M-x all-the-icons-install-fonts")
   :hook
