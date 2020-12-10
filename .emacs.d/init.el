@@ -469,6 +469,15 @@
   (ace-jump-mode-enable-mark-sync)
   )
 
+(use-package ace-window :ensure t
+  :bind
+  ("M-o" . ace-window)
+  :custom
+  (aw-keys '(?j ?k ?l ?i ?o ?h ?y ?u ?p))
+  (aw-background nil)
+  :custom-face
+  (aw-leading-char-face ((t (:height 4.0 :foreground "#f1fa8c")))))
+
 ;; Winner mode - undo and redo window configuration
 (use-package winner :ensure t :disabled
   :bind (("M-p" . 'previous-buffer)
