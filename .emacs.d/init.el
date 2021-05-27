@@ -832,6 +832,11 @@
   (setq org-reveal-root "https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.8.0/")
   )
 
+(use-package org-bullets :ensure t
+  :hook (org-mode . org-bullets-mode)
+  :init (setq org-bullets-bullet-list
+              '("❀" "☯" "♥" "★" "●" "◇" "◆" "►" "•" "▸")))
+
 (use-package auctex :ensure nil :disabled)
 
 (use-package cdlatex :ensure nil :disabled
