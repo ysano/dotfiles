@@ -103,9 +103,12 @@
                           'katakana-jisx0201 'iso-8859-1 'cp1252 'unicode)
     (set-coding-system-priority 'utf-8 'euc-jp 'iso-2022-jp 'cp932)))
 
-;; Tramp on Windows
-(when (eq window-system 'w32)
-  (setq tramp-default-method "plink"))
+;; Tramp speedup (disable version control to avoid delays)
+(setq vc-handled-backends '(SVN Git Hg))
+(setq vc-ignore-dir-regexp
+      (format "\\(%s\\)\\|\\(%s\\)"
+              vc-ignore-dir-regexp
+              tramp-file-name-regexp))
 
 ;; Tramp autosave
 (setq tramp-auto-save-directory "~/.emacs.d/tramp-autosave")
@@ -603,7 +606,9 @@
   :after counsel
   :bind ("C-c s" . 'counsel-tramp)
   :config
-  (setq tramp-default-method "ssh")
+  (if (eq window-system 'w32)
+    (setq tramp-default-method "plinkx")
+    (setq tramp-default-method "sshx"))
   (setq make-backup-files nil)
   (setq create-lockfiles nil)
   )
