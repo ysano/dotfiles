@@ -759,6 +759,11 @@
 ;; flyspell
 (use-package flyspell :ensure t
   :defer t
+  :bind (:map flyspell-mode-map
+              ("C-;" . flyspell-auto-correct-previous-word)
+              ("C-," . flyspell-goto-next-error)
+              ("C-." . flyspell-auto-correct-word)
+              ("C-c #" . flyspell-correct-word-before-point))
   :hook ((prog-mode . flyspell-prog-mode)
          (text-mode . flyspell-mode)))
 
