@@ -988,7 +988,8 @@
 (use-package add-node-modules-path :ensure t)
 
 (use-package vue-mode :ensure t
-  :after add-node-modules-path
+  :requires (add-node-modules-path flycheck)
+  :after (add-node-modules-path flycheck)
   :config
   (setq mmm-submode-decoration-level 2)
   (eval-after-load 'vue-mode '(add-hook 'vue-mode-hook #'add-node-modules-path))
@@ -998,9 +999,7 @@
   (add-hook 'vue-mode-hook 'flycheck-mode)
   (add-hook 'vue-mode-hook
             (lambda () (local-set-key (kbd "TAB")
-                                      'indent-relative-first-indent-point)))
-  
-  )
+                                      'indent-relative-first-indent-point))))
 
 (use-package json-mode :ensure t
   :custom
