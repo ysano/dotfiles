@@ -824,25 +824,28 @@
   :ensure (org-plus-contrib :pin "org")
   :custom
   (org-babel-load-languages '((emacs-lisp . t)
+                              (gnuplot . t)
                               (perl . t)
                               (python . t)
                               (R . t)
                               (js . t)
                               (shell . t)))
   :config
-  (require 'org-tempo)
   (if (or (file-directory-p "~/org")
           (file-symlink-p "~/org"))
       (load "init-org")))
 
-(use-package ox-reveal
-  :defer t
-  :ensure (ox-reveal :pin "melpa")
+;; part of org-mode so ensure nil
+(use-package org-tempo :requires org :after org :ensure nil)
+
+(use-package ox-reveal :ensure t
+  :requires org
   :config
-  (setq org-reveal-root "https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.8.0/")
+  (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js")
   )
 
 (use-package org-bullets :ensure t
+  :requires org
   :hook (org-mode . org-bullets-mode)
   :init (setq org-bullets-bullet-list
               '("❀" "☯" "♥" "★" "●" "◇" "◆" "►" "•" "▸")))
