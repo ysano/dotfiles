@@ -982,7 +982,7 @@
                      (setq emmet-use-css-transform t)
                    (setq emmet-use-css-transform nil))))))
 
-(use-package yaml-mode :ensure nil
+(use-package yaml-mode :ensure t
   :mode "\\.ya?ml\\'")
 
 (use-package add-node-modules-path :ensure t)
