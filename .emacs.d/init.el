@@ -437,7 +437,7 @@
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t))
 
-(use-package yasnippet :ensure nil
+(use-package yasnippet :disabled
   :custom
   (yas-indent-line 'fixed)
   :bind (:map yas-minor-mode-map
@@ -449,10 +449,10 @@
   :config
   (yas-global-mode 1))
 
-(use-package yasnippet-snippets :ensure nil
+(use-package yasnippet-snippets :disabled
   :after yasnippet)
 
-(use-package yatemplate :ensure nil
+(use-package yatemplate :disabled
   :after yasnippet)
 
 ;; TODO LSP
