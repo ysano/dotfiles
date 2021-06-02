@@ -64,7 +64,7 @@
 (set-buffer-file-coding-system 'utf-8-unix)
 
 ;; Cygwin shell fix when Windows-nt
-(if (eq system-type 'windows-nt)
+(if (and (eq system-type 'windows-nt) (getenv "CYGWIN_DIR"))
   (progn
     (setq cygwin-root-directory (getenv "CYGWIN_DIR"))
     (setq cygwin-mount-cygwin-bin-directory (expand-file-name "bin" cygwin-root-directory))
