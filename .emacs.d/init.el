@@ -629,6 +629,76 @@
   :config
   (guide-key-mode 1))
 
+;; use-package-chords
+(use-package use-package-chords :ensure t
+  :config (key-chord-mode 1))
+
+;; hydra
+(use-package hydra :ensure t
+  :after (magit git-gutter git-timemachine)
+  :bind ("C-c C-v" . hydra-toggle/body)
+  :chords ("sg" . hydra-git-gutter/body)
+  :chords ("jk" . hydra-general/body)
+  :config
+  (defhydra hydra-general ()
+    "move"
+    ("n" next-line)
+    ("p" previous-line)
+    ("f" forward-char)
+    ("b" backward-char)
+    ("a" beginning-of-line)
+    ("e" move-end-of-line)
+    ("v" scroll-up-command)
+    ;; Converting M-v to V here by analogy.
+    ("V" scroll-down-command)
+    ("l" recenter-top-bottom)
+    ;; clipboard
+    ("w" clipboard-kill-ring-save)
+    ("SPC" set-mark-command)
+    ;; window
+    ("S" window-swap-states)
+    ("1" delete-other-windows)
+    ("2" split-window-below)
+    ("3" split-window-right)
+    ("0" delete-window)
+    ("x" delete-window)
+    ;; buffer
+    ("q" kill-buffer)
+    (";" counsel-switch-buffer)
+    ("<" beginning-of-buffer)
+    (">" end-of-buffer)
+    ("M-n" next-buffer)
+    ("M-p" previous-buffer))
+  (defhydra hydra-git-gutter (:color red :hint nil)
+    "
+_m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tage  _r_evert  pop_u_p  _SPC_:toggle
+"
+    ("m" magit-status :exit t)
+    ("b" magit-blame :exit t)
+    ("t" git-timemachine :exit t)
+    ("d" magit-dispatch :exit t)
+    ("p" git-gutter:previous-hunk)
+    ("n" git-gutter:next-hunk)
+    ("s" git-gutter:stage-hunk)
+    ("r" git-gutter:revert-hunk)
+    ("u" git-gutter:popup-hunk)
+    ("SPC" git-gutter:toggle-popup-hunk)
+    ("h" (progn (goto-char (point-min))
+                (git-gutter:next-hunk 1)))
+    ("l" (progn (goto-char (point-min))
+                (git-gutter:previous-hunk 1)))
+    ("R" git-gutter:set-start-revision)
+    ("q" nil :color blue))
+  (defhydra hydra-toggle (:color blue)
+    "toggle"
+    ("a" abbrev-mode "abbrev")
+    ("d" toggle-debug-on-error "debug")
+    ("f" auto-fill-mode "fill")
+    ("t" toggle-truncate-lines "truncate")
+    ("w" whitespace-mode "whitespace")
+    ("q" nil "cancel"))
+  )
+
 ;; --------------------------------
 ;; Utility
 ;; --------------------------------
@@ -653,6 +723,9 @@
   :init
   (if (eq system-type 'windows-nt)
       (setq magit-need-cygwin-noglob t))) ; noglob on Cygwin and MSYS2
+
+;; Git time machine
+(use-package git-timemachine :ensure t)
 
 ;; Git gutter
 (use-package git-gutter :ensure t
