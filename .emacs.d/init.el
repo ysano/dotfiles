@@ -239,6 +239,8 @@
 (unless (assoc-default "org" package-archives)
   (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t))
 
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 ;; use-package
 (unless (package-installed-p 'use-package)
   (progn
