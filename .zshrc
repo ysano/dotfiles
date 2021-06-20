@@ -216,7 +216,7 @@ fi
 # emacs 24bits alias
 if which toe > /dev/null 2>&1; then
     if [ `toe | grep "xterm-24bits" | wc -l` -gt 0 ]; then
-        alias emacs='TERM=xterm-24bits emacs -nw'
+        alias emacs='TERM=xterm-24bits emacs'
     fi
 fi
 
