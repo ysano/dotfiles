@@ -939,12 +939,12 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   :hook ((c-mode-common . google-set-c-style)
          (c-mode-common . google-make-newline-indent)))
 
-(use-package ruby-mode :ensure nil
+(use-package ruby-mode :ensure t
   :mode ("\\.rb\\'" "Rakefile")
   :interpreter "ruby"
 )
 
-(use-package ruby-compilation :ensure nil
+(use-package ruby-compilation :ensure t
   :bind (
          :map ruby-mode-map
               ("C-x t" . ruby-compilation-this-buffer)
