@@ -1095,6 +1095,13 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   "/etc/apache.+\\.conf\\'"
   "sites-\\(available\\|enabled\\)/")
 
+(use-package plantuml-mode :ensure t
+  :mode "\\.puml\\'"
+  :custom
+  (plantuml-defalt-exec-mode 'jar)
+  (org-plantuml-jar-path "~/.emacs.d/lib/plantuml.jar")
+  )
+
 ;; Local Variables:
 ;; coding: utf-8-unix
 ;; End:
