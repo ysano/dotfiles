@@ -975,6 +975,23 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 (use-package ac-octave :ensure t
   :hook (octave-mode . ac-octave-setup))
 
+(use-package go-mode :ensure t
+  :mode "\\.go\\'"
+  :config
+  ;; (gofmt-command "goimports")
+  :init
+  (add-hook 'before-save-hook #'gofmt-before-save)
+  (set (make-local-variable 'compile-command)
+       "go build -v && go test -v && go vet")
+  )
+
+(use-package go-autocomplete :ensure t)
+(use-package go-eldoc :ensure t
+  :commands go-eldoc-setup
+  :init
+  (add-hook 'go-mode-hook #'go-eldoc-setup)
+  )
+
 ;;--------------------------------
 ;; text-mode children
 ;;--------------------------------
