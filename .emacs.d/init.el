@@ -310,7 +310,7 @@
   :hook
   ((neotree-mode imenu-list-minor-mode minimap-mode) . hide-mode-line-mode))
 
-(use-package doom-modeline :ensure t ;; nil :disabled
+(use-package doom-modeline :ensure nil :disabled
   :custom
   (doom-modeline-buffer-file-name-style 'truncate-with-project)
   (doom-modeline-icon t)
