@@ -912,10 +912,11 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;; part of org-mode so ensure nil
 (use-package org-tempo :requires org :after org :ensure nil)
 
-(use-package ox-reveal :ensure t
+(use-package org-re-reveal :ensure t
   :requires org
   :config
-  (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js")
+  (setq org-re-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js")
+  (setq org-re-reveal-revealjs-version "4")
   )
 
 (use-package org-bullets :ensure t
