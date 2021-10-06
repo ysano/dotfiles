@@ -420,10 +420,7 @@
 ;; background color to strings that match color
 (use-package rainbow-mode :ensure t
   :diminish
-  :hook (sh-mode c-mode c++mode
-                 html-mode css-mode php-mode nxml-mode xml-mode
-                 latex-mode ess-mode
-                 emacs-lisp-mode lisp-interaction-mode c-mode c++-mode java-mode))
+  :hook (prog-mode text-mode))
 
 (use-package rainbow-delimiters :ensure t
   :diminish
