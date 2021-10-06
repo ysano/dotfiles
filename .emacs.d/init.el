@@ -898,12 +898,14 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 (use-package org
   :ensure (org-plus-contrib :pin "org")
   :custom
+  (org-latex-to-mathml-convert-command "latexmlmath \"%i\" --presentationmathml=%o")
   (org-babel-load-languages '((emacs-lisp . t)
                               (gnuplot . t)
                               (perl . t)
                               (python . t)
                               (R . t)
                               (js . t)
+                              (plantuml . t)
                               (shell . t)))
   :config
   (if (or (file-directory-p "~/org")
