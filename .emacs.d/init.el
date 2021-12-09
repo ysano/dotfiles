@@ -236,8 +236,8 @@
 ;;   (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t))
 (unless (assoc-default "melpa" package-archives)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
-(unless (assoc-default "org" package-archives)
-  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t))
+(unless (assoc-default "nongnu" package-archives)
+  (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
@@ -891,10 +891,10 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;;--------------------------------
 ;; org-mode
 ;;--------------------------------
-
-(use-package org
-  :ensure (org-plus-contrib :pin "org")
+(use-package org :ensure t :pin gnu
   :custom
+  (assq-delete-all 'org package--builtins)
+  (assq-delete-all 'org package--builtin-versions)
   (org-latex-to-mathml-convert-command "latexmlmath \"%i\" --presentationmathml=%o")
   (org-babel-load-languages '((emacs-lisp . t)
                               (gnuplot . t)
@@ -909,8 +909,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
           (file-symlink-p "~/org"))
       (load "init-org")))
 
-;; part of org-mode so ensure nil
-(use-package org-tempo :requires org :after org :ensure nil)
+(use-package org-contrib :requires org :after org :ensure t :pin nongnu)
 
 (use-package org-re-reveal :ensure t
   :requires org
