@@ -414,6 +414,12 @@ if [ -d $HOME/.rbenv ]; then
 fi
 path=($HOME/bin $path)
 
+# asdf
+eval ". $(brew --prefix asdf)/libexec/asdf.sh"
+
+# node path
+path=($path ./node_modules/.bin)
+
 ################################
 ## environment
 ################################
