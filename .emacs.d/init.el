@@ -1127,6 +1127,11 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
 
+;; TypeScript
+(use-package typescript-mode
+  :mode (("\\.ts\\'" . typescript-mode))
+  :mode (("\\.tsx\\'" . typescript-mode)))
+
 ;; Local Variables:
 ;; coding: utf-8-unix
 ;; End:
