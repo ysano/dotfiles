@@ -420,6 +420,11 @@ eval ". $(brew --prefix asdf)/libexec/asdf.sh"
 # node path
 path=($path ./node_modules/.bin)
 
+# lima docker
+if [ -d $HOME/.lima ]; then
+	export DOCKER_HOST=ssh://localhost:60006
+fi
+
 ################################
 ## environment
 ################################
