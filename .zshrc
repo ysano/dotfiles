@@ -250,8 +250,7 @@ function cd() { builtin cd "$@"; echo $PWD; }
 # Options
 ################################
 # changing directories
-setopt auto_cd
-setopt auto_pushd
+unsetopt auto_cd
 setopt cdable_vars
 setopt pushd_minus
 setopt pushd_silent
@@ -265,7 +264,7 @@ setopt rec_exact
 unsetopt auto_param_slash
 
 # expansion and globbing
-setopt extended_glob            # '#~^' characters as filename generation
+unsetopt extended_glob            # '#~^' characters as filename generation
 setopt equals                   # =filename
 setopt magic_equal_subst        # --prefix=/usr
 setopt multibyte
@@ -281,8 +280,8 @@ setopt share_history            # ksh only
 # initialisation
 
 # input / output
-#setopt correct                  # command spelling correction
-#setopt correct_all              # arguments spelling correction
+setopt correct                  # command spelling correction
+unsetopt correct_all              # arguments spelling correction
 setopt print_eight_bit          # japanese fix
 setopt mail_warning
 setopt rc_quotes
