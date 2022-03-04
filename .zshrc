@@ -415,7 +415,16 @@ fi
 path=($HOME/bin $path)
 
 # asdf
-eval ". $(brew --prefix asdf)/libexec/asdf.sh"
+case "${OSTYPE}" in
+    darwin*)
+        eval ". $(brew --prefix asdf)/libexec/asdf.sh"
+        ;;
+    *)
+        . $HOME/.asdf/asdf.sh
+        ;;
+esac
+# append completions to fpath
+fpath=(${ASDF_DIR}/completions $fpath)
 
 # node path
 path=($path ./node_modules/.bin)
