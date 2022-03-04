@@ -61,6 +61,7 @@ alias wget-subdir="wget -r -np"
 alias irb='irb -r irb/completion'
 alias wget-site-save="wget -m -np -p -k -K -E -nv --random-wait -U 'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko'"
 alias wget-page-save="wget -m -np -p -k -K -E -nv --random-wait -U 'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko' -H -D 'stat.ameba.jp,livedoor.blogimg.jp'"
+alias mysql="mysql --pager='less -S -n -i -F -X'"
 
 # gitignore
 function gi() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@ ;}
