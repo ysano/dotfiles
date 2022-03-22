@@ -430,8 +430,10 @@ fpath=(${ASDF_DIR}/completions $fpath)
 path=($path ./node_modules/.bin)
 
 # lima docker
+# > limactl start docker
+# > docker context use lima
 if [ -d $HOME/.lima ]; then
-	export DOCKER_HOST=ssh://localhost:60006
+    export LIMA_INSTANCE=docker
 fi
 
 ################################
