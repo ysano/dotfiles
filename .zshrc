@@ -19,6 +19,7 @@ freebsd*|darwin*)
     alias ls='ls -G'            # use LSCOLORS
     #        dilnsopiexbdcdsusgtwow
     export LSCOLORS=ExGxFxdaCxDaDahbadacec
+    alias whoislistening="lsof -i -P|grep LISTEN|grep :$PORT"
     ;;
 linux*)
     unlimit
@@ -26,6 +27,7 @@ linux*)
     limit core 0
     limit -s
     alias ls='ls --color'       # use LS_COLORS
+    alias whoislistening="netstat -pntl |grep $PORT"
     ;;
 esac
 
