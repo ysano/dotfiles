@@ -404,6 +404,7 @@ path=($path /usr/ucb /usr/etc)  # for SunOS
 path=($path $HOME/my/android/sdk/platform-tools)  # for android
 path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
 path=($path $HOME/.composer/vendor/bin)  # for composer
+path=($path /usr/local/opt/openjdk/bin)  # for jdk
 
 # qmail path
 if [ -d /var/qmail/bin ]; then
@@ -448,7 +449,8 @@ export GZIP='-v9N'
 export LESS=-cex3M
 export LANG=ja_JP.UTF-8
 export LC_CTYPE=ja_JP.UTF-8
-export JAVA_HOME=${JAVA_HOME:-/usr/local/openjdk6}
+export CPPFLAGS="-I/usr/local/opt/openjdk/include"
+export JAVA_HOME="/usr/local/opt/openjdk/"
 
 # gnu global + exuberant ctags + pygments in local
 export GTAGSLABEL=pygments
