@@ -236,6 +236,11 @@ fi
 ## functions
 ################################
 
+# gh
+if which gh > /dev/null 2>&1; then
+    eval "$(gh completion -s zsh)"
+fi
+
 autoload -Uz compinit
 setopt EXTENDEDGLOB
 for dump in $HOME/.zcompdump(#qN.m1); do
