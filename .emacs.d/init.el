@@ -976,6 +976,8 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   (add-hook 'python-mode-hook 'jedi:ac-setup)
   (setq jedi:complete-on-dot t))
 
+(use-package dart-mode :ensure t)
+
 (use-package py-yapf :ensure t
   :hook (python-mode . py-yapf-enable-on-save))
 
