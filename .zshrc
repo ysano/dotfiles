@@ -409,6 +409,7 @@ path=($path /usr/ucb /usr/etc)  # for SunOS
 path=($path $HOME/my/android/sdk/platform-tools)  # for android
 path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
 path=($path $HOME/.composer/vendor/bin)  # for composer
+path=($path $HOME/DEV/flutter/bin)       # for flutter
 path=($path /usr/local/opt/openjdk/bin)  # for jdk
 
 # qmail path
@@ -451,7 +452,7 @@ export CVSROOT=$HOME/cvs
 export SVNROOT=$HOME/svn
 export ACK_COLOR_MATCH='underline white'
 export GZIP='-v9N'
-export LESS=-cex3M
+export LESS=-FXx3M
 export LANG=ja_JP.UTF-8
 export LC_CTYPE=ja_JP.UTF-8
 export CPPFLAGS="-I/usr/local/opt/openjdk/include"
@@ -461,13 +462,21 @@ export JAVA_HOME="/usr/local/opt/openjdk/"
 export GTAGSLABEL=pygments
 
 # editor
-if which emacs > /dev/null 2>&1; then
-    export EDITOR=emacs
-elif which vi > /dev/null 2>&1; then
-    export EDITOR=vi
-else
-    export EDITOR=ee
-fi
+case "${TERM_PROGRAM}" in
+    vscode*)
+        export EDITOR='code --wait'
+        ;;
+    *)
+        if which emacs > /dev/null 2>&1; then
+            export EDITOR=emacs
+        elif which vi > /dev/null 2>&1; then
+            export EDITOR=vi
+        else
+            export EDITOR=ee
+        fi
+        ;;
+esac
+
 
 # pager
 export LESSCHARSET=
