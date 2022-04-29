@@ -60,6 +60,9 @@
       (run-with-idle-timer 0.03 t 'global-hl-line-timer-function))
 ;; (cancel-timer global-hl-line-timer)
 
+;; ediff
+(setq ediff-window-setup-function 'ediff-setup-windows-plain)
+
 ;; Coding
 (set-language-environment "Japanese")
 (prefer-coding-system 'utf-8-unix)
