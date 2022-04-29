@@ -26,6 +26,9 @@
 (load "~/.emacs.secrets" t)
 (setq user-full-name "Yoshiaki Sano"
       user-mail-address "ysano@ysnet.org")
+(setq calendar-latitude 35.7)
+(setq calendar-longitude 139.6)
+(setq browse-url-browser-function 'browse-url-default-browser)
 
 ;; --------------------------------
 ;; Emacs core
