@@ -747,26 +747,26 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;; Git time machine
 (use-package git-timemachine :ensure t)
 
-;; Git gutter
-(use-package git-gutter :ensure t
-  :diminish
+;; Git gutter+
+(use-package git-gutter+ :ensure t
+  :diminish (git-gutter+-mode . "gg")
+  :init (global-git-gutter+-mode)
   :custom
-  (git-gutter:update-interval 2)
-  (git-gutter:modified-sign "  ")
-  (git-gutter:added-sign "++")
-  (git-gutter:deleted-sign "--")
+  ;; (git-gutter+:update-interval 2)
+  (git-gutter+-modified-sign "  ")
+  (git-gutter+-added-sign "++")
+  (git-gutter+-deleted-sign "--")
   :custom-face
-  (git-gutter:modified ((t (:background "purple"))))
-  (git-gutter:added ((t (:foreground "green"))))
-  (git-gutter:deleted ((t (:foreground "red"))))
-  :bind (("C-x v =" . 'git-gutter:popup-hunk)
-         ("C-x p" . 'git-gutter:previous-hunk)
-         ("C-x n" . 'git-gutter:next-hunk)
-         ("C-x v s" . 'git-gutter:stage-hunk)
-         ("C-x v r" . 'git-gutter:revert-hunk)
-         ("C-x v SPC" . #'git-gutter:mark-hunk))
-  :config
-  (global-git-gutter-mode t))
+  (git-gutter+-modified ((t (:background "purple"))))
+  (git-gutter+-added ((t (:foreground "green"))))
+  (git-gutter+-deleted ((t (:foreground "red"))))
+  :bind (("C-x v =" . 'git-gutter+-popup-hunk)
+         ("C-x p" . 'git-gutter+-previous-hunk)
+         ("C-x n" . 'git-gutter+-next-hunk)
+         ("C-x v s" . 'git-gutter+-stage-hunks)
+         ("C-x v r" . 'git-gutter+-revert-hunks)
+         ("C-x v SPC" . #'git-gutter+-mark-hunk))
+)
 
 ;; Grep
 (use-package wgrep :ensure t
