@@ -1015,6 +1015,11 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   (add-hook 'go-mode-hook #'go-eldoc-setup)
   )
 
+;; optional if you want which-key integration
+(use-package which-key :ensure t
+    :config
+    (which-key-mode))
+
 ;;--------------------------------
 ;; text-mode children
 ;;--------------------------------
