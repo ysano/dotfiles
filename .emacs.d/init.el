@@ -302,6 +302,12 @@
   :config
   (load-theme 'solarized-dark))
 
+;; Icons
+;; M-x all-the-icons-install-fonts
+(use-package all-the-icons :ensure t
+  :if (display-graphic-p))
+
+;; Themes
 (use-package doom-themes :ensure t
   :custom
   (doom-themes-enable-italic t)
@@ -324,7 +330,7 @@
   :hook
   ((neotree-mode imenu-list-minor-mode minimap-mode) . hide-mode-line-mode))
 
-(use-package doom-modeline :ensure nil :disabled
+(use-package doom-modeline :ensure t
   :custom
   (doom-modeline-buffer-file-name-style 'truncate-with-project)
   (doom-modeline-icon t)
@@ -345,7 +351,7 @@
 
 ;; Dimmer
 ;; Visually highlight the selected buffer.
-(use-package dimmer :ensure t :disabled
+(use-package dimmer :ensure t
   :config
   (dimmer-mode))
 
