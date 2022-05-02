@@ -18,8 +18,12 @@
 ;; org-modeでの強調表示を可能にする
 (add-hook 'org-mode-hook 'turn-on-font-lock)
 
+;; org-indent- mode
+(add-hook 'org-mode-hook 'org-indent-mode)
+
 ;; 見出しの余分な*を消す
-(setq org-hide-leading-stars t)
+;; (setq org-hide-leading-stars nil)
+;; (setq org-adapt-indentation t)
 
 ;; latexmk
 (setq org-latex-pdf-process '("latexmk %f"))
