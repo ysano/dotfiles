@@ -96,12 +96,12 @@
 ;;------------------------------------------------------------
 ;; Agenda Setup
 ;;------------------------------------------------------------
-
+(setq org-agenda-skip-function-global '(org-agenda-skip-entry-if 'todo 'done))
 (setq org-agenda-files (cons (concat org-directory "/gtd/gtd.org")
-                             (car (mapcar (lambda (w)
+                             (cadr (mapcar (lambda (w)
                                        (file-expand-wildcards
                                         (concat org-directory w)))
-                                     '("/sch/*.org" "/project/sch/*.org")))))
+                                     '("/sch/*.org" "/project/*.org")))))
 ;; アジェンダ表示で下線を用いる
 (add-hook 'org-agenda-mode-hook '(lambda () (hl-line-mode 1)))
 (setq hl-line-face 'underline)
@@ -113,7 +113,7 @@
 
 ;; 積み残しプロジェクトタスクの定義
 (setq org-stuck-projects
-        '("+LEVEL=2+project/-DONE-CANCEL-SOMEDAY-DEFERRED" ("TODO" "WAIT") () "\\<IGNORE\\>"))
+        '("+LEVEL=1+PROJECT/-DONE-CANCEL-SOMEDAY-DEFERRED" ("TODO" "NEXT" "STARTED" "WAIT") () "\\<IGNORE\\>"))
 ;; (setq org-stuck-projects "+LEVEL=2/-DONE" ("TODO" "NEXT" "NEXTACTION") nil "")
 ;(setq org-stuck-projects '("+LEVEL=2/-DONE-CANCEL" ("TODO" "WAITING") ("goal") ""))
 ;; (setq org-stuck-projects
@@ -146,6 +146,10 @@
         (todo todo-state-up priority-down effort-up)
         (tags user-defined-up)
         (search category-keep)))
+(setq org-agenda-start-day nil)
+(setq org-agenda-span 'week)
+(setq org-agenda-start-on-weekday nil)
+
 
 ;;------------------------------------------------------------
 ;; Agenda Custom Commands
@@ -182,7 +186,7 @@
     ;; review stuck projects as designated by org-stuck-projects
     (stuck ""); 行き詰まり＝TODOが無いProject
     ;; review all projects (assuming you use todo keywords to designate projects)
-    (tags "+LEVEL=2+Persp" ((org-agenda-sorting-strategy '(priority-up effort-down))))
+    (tags-todo "+LEVEL=2+PROJECT" ((org-agenda-sorting-strategy '(priority-up effort-down))))
     ;; review undone items
     (todo "TODO")
     ;; review waiting items
