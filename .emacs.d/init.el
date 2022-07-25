@@ -69,6 +69,22 @@
 (defvar default-buffer-file-coding-system 'utf-8-unix)
 (set-buffer-file-coding-system 'utf-8-unix)
 
+
+;; (defun set-exec-path-from-shell-PATH ()
+;;   "Set up Emacs' `exec-path' and PATH environment variable to match
+;; that used by the user's shell.
+
+;; This is particularly useful under Mac OS X and macOS, where GUI
+;; apps are not started from a shell."
+;;   (interactive)
+;;   (let ((path-from-shell (replace-regexp-in-string
+;;                           "[ \t\n]*$" "" (shell-command-to-string
+;;                                           "$SHELL --login -c 'echo $PATH'"
+;;                                           ))))
+;;     (setenv "PATH" path-from-shell)
+;;     (setq exec-path (split-string path-from-shell path-separator))))
+;; (set-exec-path-from-shell-PATH)
+
 ;; Cygwin shell fix when Windows-nt
 (if (and (eq system-type 'windows-nt) (getenv "CYGWIN_DIR"))
   (progn
@@ -802,7 +818,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   :custom
   (eww-search-prefix "http://www.google.com/?k1=-1&q=")
   :init
-  (setq browse-url-browser-function 'eww-browse-url)
+  ;; (setq browse-url-browser-function 'eww-browse-url)
   ;; color tweak
   (defvar eww-disable-colorize t)
   (defun shr-colorize-region--disable (orig start end fg &optional bg &rest _)
@@ -828,17 +844,17 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   )
 
 ;; text-adjust
-(when (require 'text-adjust nil t)
-  (defun text-adjust-space-before-save-if-needed ()
-    (when (memq major-mode '(org-mode text-mode))
-      (progn
-        ;; 括弧は対象外,org tables
-        (setq text-adjust-rule-space
-              '((("\\cj" "" "[[0-9a-zA-Z]")   " ")
-                (("[]/!?0-9a-zA-Z]" "" "\\cj") " ")))
-        (text-adjust-space-buffer))))
-  (defalias 'spacer 'text-adjust-space-buffer)
-  (add-hook 'before-save-hook 'text-adjust-space-before-save-if-needed))
+;; (when (require 'text-adjust nil t)
+;;   (defun text-adjust-space-before-save-if-needed ()
+;;     (when (memq major-mode '(org-mode text-mode))
+;;       (progn
+;;         ;; 括弧は対象外,org tables
+;;         (setq text-adjust-rule-space
+;;               '((("\\cj" "" "[[0-9a-zA-Z]")   " ")
+;;                 (("[]/!?0-9a-zA-Z]" "" "\\cj") " ")))
+;;         (text-adjust-space-buffer))))
+;;   (defalias 'spacer 'text-adjust-space-buffer)
+;;   (add-hook 'before-save-hook 'text-adjust-space-before-save-if-needed))
 
 ;; aspell
 (use-package ispell :ensure t
@@ -856,6 +872,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
               ("C-;" . flyspell-auto-correct-previous-word)
               ("C-," . flyspell-goto-next-error)
               ("C-." . flyspell-auto-correct-word)
+              ("C-c $" . nil)           ;flyspell-correct-word-before-point
               ("C-c #" . flyspell-correct-word-before-point))
   :hook ((prog-mode . flyspell-prog-mode)
          (text-mode . flyspell-mode)))
