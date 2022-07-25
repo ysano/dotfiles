@@ -963,6 +963,32 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   :init (setq org-bullets-bullet-list
               '("❀" "☯" "♥" "★" "●" "◇" "◆" "►" "•" "▸")))
 
+(use-package org-superstar :ensure t :disabled
+  :after org
+  :hook (org-mode . org-superstar-mode)
+  :init
+  (setq org-superstar-headline-bullets-list
+        '("❀" "☯" "♥" "★" "●" "◇" "◆" "►" "•" "▸"))
+  (setq org-superstar-item-bullet-alist
+        '((?* . ?•)
+          (?+ . ?➤)
+          (?- . ?•)))  
+  (setq org-superstar-headline-bullets-list '(?\s))
+  (setq org-superstar-special-todo-items t)
+  (setq org-superstar-remove-leading-stars t)
+  (setq org-superstar-todo-bullet-alist
+        '(("TODO" . ?☐)
+          ("NEXT" . ?✒)
+          ("HOLD" . ?✰)
+          ("WAIT" . ?☕)
+          ("APPT" . ?📅)
+          ("CANCEL" . ?✘)
+          ("DEFERRED" . ?🚚)
+          ("DONE" . ?✔)))
+  )
+
+(use-package org-super-agenda :ensure t)
+
 (use-package auctex :ensure nil :disabled)
 
 (use-package cdlatex :ensure nil :disabled

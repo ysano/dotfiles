@@ -54,6 +54,13 @@
           org-remember-mode-hook
           org-src-mode-hook))
 
+;; faces
+(setq org-todo-keyword-faces
+      '(("TODO" . org-todo)
+        ("NEXT" . "yellow")
+        ("WAIT" . "brown")
+        ("APPT" . "red")
+        ("CANCELED" . (:foreground "blue" :weight bold))))
 
 ;;------------------------------------------------------------
 ;; Hyperlinks Setup
@@ -150,6 +157,11 @@
 (setq org-agenda-span 'week)
 (setq org-agenda-start-on-weekday nil)
 
+;; Only show immediate subtask for task with dependencies
+;; (Properties: ordered: t project)
+(setq org-agenda-dim-blocked-tasks t)
+(setq org-enforce-todo-dependencies t)
+(setq org-enforce-todo-checkbox-dependencies t)
 
 ;;------------------------------------------------------------
 ;; Agenda Custom Commands
@@ -187,6 +199,8 @@
     (stuck ""); 行き詰まり＝TODOが無いProject
     ;; review all projects (assuming you use todo keywords to designate projects)
     (tags-todo "+LEVEL=2+PROJECT" ((org-agenda-sorting-strategy '(priority-up effort-down))))
+    ;; review undone items
+    (todo "NEXT")
     ;; review undone items
     (todo "TODO")
     ;; review waiting items
@@ -282,7 +296,7 @@
 ;;------------------------------------------------------------
 ;; Targets include this file and any file contributing to the agenda - up to 9 levels deep
 (setq org-refile-targets (quote (
-                                 ;; (nil :maxlevel . 1)
+                                 (nil :maxlevel . 2)
                                  ("gtd.org" :maxlevel . 1)
                                  ("someday.org" :maxlevel . 1)
                                  )))
