@@ -411,6 +411,7 @@ path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
 path=($path $HOME/.composer/vendor/bin)  # for composer
 path=($path $HOME/DEV/flutter/bin)       # for flutter
 path=($path /usr/local/opt/openjdk/bin)  # for jdk
+path=($path /usr/local/sbin) # for brew doctor
 
 # qmail path
 if [ -d /var/qmail/bin ]; then
