@@ -422,6 +422,10 @@ if [ -d $HOME/.rbenv ]; then
     path=($HOME/.rbenv/bin $path)
 	eval "$(rbenv init - --no-rehash zsh)"
 fi
+# asdf
+if [ -d /opt/asdf-vm ]; then
+    path=(/opt/asdf-vm/bin $path)
+fi
 path=($HOME/bin $path)
 
 # asdf
