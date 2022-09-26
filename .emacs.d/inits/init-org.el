@@ -199,12 +199,17 @@
     (stuck ""); 行き詰まり＝TODOが無いProject
     ;; review all projects (assuming you use todo keywords to designate projects)
     (tags-todo "+LEVEL=2+PROJECT" ((org-agenda-sorting-strategy '(priority-up effort-down))))
+    ;; clock counter
+    (tags "+in_mtg" ((org-agenda-sorting-strategy '(category-up priority-up))))
+    (tags "+cl_mtg" ((org-agenda-sorting-strategy '(category-up priority-up))))
     ;; review undone items
-    (todo "NEXT")
-    ;; review undone items
-    (todo "TODO")
+    (todo "NEXT" ((org-agenda-sorting-strategy '(category-up priority-up))))
     ;; review waiting items
-    (todo "WAIT")
+    (todo "WAIT" ((org-agenda-sorting-strategy '(category-up priority-up))))
+    ;; review appointing items
+    (todo "APPT" ((org-agenda-sorting-strategy '(category-up priority-up))))
+    ;; review undone items
+    (todo "TODO" ((org-agenda-sorting-strategy '(category-up priority-up))))
     ;; review someday/maybe items
     (tags-todo "reading" ((org-agenda-files '("~/org/gtd/someday.org"))
                             (org-agenda-sorting-strategy '(priority-up effort-down))
