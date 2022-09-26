@@ -6,6 +6,7 @@
 	ui = auto
 [core]
 	autocrlf = input
+	quotepath = false
 	# editor = emacs -nw
 [alias]
 	co = checkout
