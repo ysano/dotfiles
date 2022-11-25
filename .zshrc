@@ -477,6 +477,9 @@ export JAVA_HOME="/usr/local/opt/openjdk/"
 # gnu global + exuberant ctags + pygments in local
 export GTAGSLABEL=pygments
 
+# export
+export GPG_TTY=$(tty)
+
 # editor
 case "${TERM_PROGRAM}" in
     vscode*)
