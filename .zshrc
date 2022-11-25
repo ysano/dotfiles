@@ -5,7 +5,7 @@ echo "Loading $HOME/.zshrc"
 # zmodload zsh/zprof && zprof
 
 # Search path for the cd command
-cdpath=(.. ~ ~/src)
+cdpath=(.. ~ ~/src ~/DEV ~/MY)
 
 case "${OSTYPE}" in
 cygwin*)
