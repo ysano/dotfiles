@@ -106,7 +106,19 @@ setopt prompt_subst
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
 xterm*|rxvt*)
-    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
+    if [ -x $HOME/.zsh/pure ]; then
+        # pure prompt
+        fpath+=($HOME/.zsh/pure)
+        zstyle :prompt:pure:git:stash show yes
+        autoload -U promptinit; promptinit
+        prompt pure
+    elif [ -f $ZUSERDIR/my_vcs_info ]; then
+        PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
+        # load vcs prompt
+        source $ZUSERDIR/my_vcs_info
+    else
+        PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
+    fi
     ;;
 dumb | emacs)
     PROMPT="%n@%~%(!.#.$)"
