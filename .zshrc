@@ -449,7 +449,7 @@ case "${OSTYPE}" in
         ;;
 esac
 # append completions to fpath
-fpath=(${ASDF_DIR}/completions $fpath)
+fpath+=(${ASDF_DIR}/completions $fpath)
 
 # node path
 path=($path ./node_modules/.bin)
