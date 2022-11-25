@@ -812,6 +812,9 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   (setq idm-database-file "~/secret/idm-db.gpg")
   )
 
+;; EasyPG Assistant
+(setq epa-pinentry-mode 'loopback)
+
 ;; eww
 (use-package eww :ensure t
   :defer t
