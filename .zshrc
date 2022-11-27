@@ -238,9 +238,14 @@ if which toe > /dev/null 2>&1; then
     fi
 fi
 
-if [[ `uname -a` =~ 'Microsoft' ]]; then
-	export DISPLAY=localhost:0.0
-	export LANG=ja_JP.utf-8
+# xorg for wsl
+# vcxsrv options memo:
+# - disable access control
+# - approve public-network in firewall
+if [[ `uname -a` =~ 'microsoft' ]]; then
+    export DISPLAY=`hostname`.mshome.net:0.0
+    export LANG=ja_JP.utf-8
+    export LIBGL_ALWAYS_INDIRECT=1
     source $HOME/.xinitrc
 fi
 

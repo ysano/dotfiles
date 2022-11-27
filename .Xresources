@@ -1,5 +1,6 @@
 ! Font: 150% in windows (96*1.5)
-Xft.dpi: 144
+!Xft.dpi: 144
+Xft.dpi: 96
 ! BCI hinting (use FreeType Interpreter)
 Xft.hinting: 1
 ! ignore default hinting
