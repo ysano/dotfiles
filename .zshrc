@@ -100,6 +100,7 @@ setopt prompt_subst
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
 xterm*|rxvt*)
+    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
     if [ -x $HOME/.zsh/pure ]; then
         # pure prompt
         fpath+=($HOME/.zsh/pure)
@@ -124,11 +125,6 @@ dumb | emacs)
     RPROMPT=' %~'     # prompt for right side of screen
     ;;
 esac
-
-# load vcs prompt
-if [ -f $ZUSERDIR/my_vcs_info ]; then
-  source $ZUSERDIR/my_vcs_info
-fi
 
 ########################################
 # Some environment variables
