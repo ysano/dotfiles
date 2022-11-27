@@ -346,7 +346,12 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 # completions
 ################################
 
-zstyle ':completion:*' completer _expand _complete _correct _ignored _approximate
+# menu select
+zstyle ':completion:*:default' menu select interactive
+
+#zstyle ':completion:*' completer _expand _complete _correct _ignored _approximate
+#zstyle ':completion:*' completer _expand _complete _match _prefix _approximate _list _history
+zstyle ':completion:*' completer _complete _approximate _match _expand _history _prefix
 
 # allow one error for every three characters typed in approximate completer
 zstyle -e ':completion:*:approximate:*' max-errors \
@@ -377,7 +382,7 @@ zstyle '*' hosts $hosts
 
 # Filename suffixes to ignore during completion (except after rm command)
 zstyle ':completion:*:*:(^rm):*:*files' ignored-patterns '*?.o' '*?.c~' \
-    '*?.old' '*?.pro'
+    '*?.old' '*?.pro' '*?.~undo-tree~'
 # the same for old style completion
 #fignore=(.o .c~ .old .pro)
 
