@@ -440,7 +440,7 @@ fi
 # rbenv
 if [ -d $HOME/.rbenv ]; then
     path=($HOME/.rbenv/bin $path)
-	eval "$(rbenv init - --no-rehash zsh)"
+    eval "$(rbenv init - --no-rehash zsh)"
 fi
 # asdf
 if [ -d /opt/asdf-vm ]; then
@@ -454,11 +454,11 @@ case "${OSTYPE}" in
         eval ". $(brew --prefix asdf)/libexec/asdf.sh"
         ;;
     *)
-        . $HOME/.asdf/asdf.sh
+        if [ -f $HOME/.asdf/asdf.sh ]; then
+            . $HOME/.asdf/asdf.sh
+        fi
         ;;
 esac
-# append completions to fpath
-fpath+=(${ASDF_DIR}/completions $fpath)
 
 # node path
 path=($path ./node_modules/.bin)
