@@ -70,6 +70,8 @@ freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }
 
 # Where to look for autoloaded function definitions
 fpath=($fpath ~/.zfunc)
+# append completions to fpath
+fpath+=${ASDF_DIR}/completions
 
 # Autoload all shell functions from all directories in $fpath (following
 # symlinks) that have the executable bit on (the executable bit is not
