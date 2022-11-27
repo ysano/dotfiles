@@ -16,18 +16,12 @@ freebsd*|darwin*)
     limit stack 8192
     limit core 0
     limit -s
-    alias ls='ls -G'            # use LSCOLORS
-    #        dilnsopiexbdcdsusgtwow
-    export LSCOLORS=ExGxFxdaCxDaDahbadacec
-    alias whoislistening="lsof -i -P|grep LISTEN|grep :$PORT"
     ;;
 linux*)
     unlimit
     limit stack 8192
     limit core 0
     limit -s
-    alias ls='ls --color'       # use LS_COLORS
-    alias whoislistening="netstat -pntl |grep $PORT"
     ;;
 esac
 
@@ -211,8 +205,15 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 # tcsh color key are few.
 case "${OSTYPE}" in
 freebsd*|darwin*)
-        unset LS_COLORS
-        ;;
+    unset LS_COLORS
+    alias ls='ls -G'            # use LSCOLORS
+    #               dilnsopiexbdcdsusgtwow
+    export LSCOLORS=ExGxFxdaCxDaDahbadacec
+    alias whoislistening="lsof -i -P|grep LISTEN|grep :$PORT"
+    ;;
+linux*)
+    alias ls='ls --color'       # use LS_COLORS
+    alias whoislistening="netstat -pntl |grep $PORT"
 esac
 
 # set a fancy prompt (non-color, unless we know we "want" color)
