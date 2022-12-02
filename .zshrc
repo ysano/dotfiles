@@ -524,6 +524,12 @@ else
     fi
 fi
 
+# wsl mozc
+# copy wsl/mozc to /mnt/c/opt/mozc
+if [[ -f /mnt/c/opt/mozc/mozc_emacs_helper.sh ]]; then
+    path+=/mnt/c/opt/mozc
+fi
+
 # zprof
 # if (which zprof > /dev/null) ;then
 #     zprof | less
