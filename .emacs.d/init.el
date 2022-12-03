@@ -1230,11 +1230,11 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   :mode (("\\.tsx\\'" . typescript-mode)))
 
 ;; wsl mozc
-(if (< 0 (length (getenv "WSL_DISTRO_NAME")))
-    (if (file-exists-p "/mnt/c/opt/mozc/mozc_emacs_helper.sh")
-        (load "init-mozc")
-      )
-  )
+(if (file-exists-p "/mnt/c/opt/mozc/mozc_emacs_helper.sh")
+    (progn
+      (use-package mozc-im :ensure t)
+      (use-package mozc-popup :ensure t)
+      (load "init-mozc")))
 
 ;; Local Variables:
 ;; coding: utf-8-unix
