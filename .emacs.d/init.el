@@ -294,6 +294,15 @@
 ;; Emacs standard lisp
 ;; --------------------------------
 
+;; GC
+(use-package gcmh :ensure t
+  :diminish
+  :custom
+  (gcmh-verbose t)
+  (gcmh-low-cons-threshold gc-cons-threshold)
+  :config
+  (gcmh-mode 1))
+
 ;; PATH
 (use-package exec-path-from-shell
   :ensure t
