@@ -201,13 +201,13 @@
   ;; ↑↑↓↓←→←→BA
 
   ;; フォントサイズ調整
-  (global-set-key (kbd "C-<wheel-up>")   '(lambda() (interactive) (text-scale-increase 1)))
-  (global-set-key (kbd "S-=")            '(lambda() (interactive) (text-scale-increase 1)))
-  (global-set-key (kbd "C-<wheel-down>") '(lambda() (interactive) (text-scale-decrease 1)))
-  (global-set-key (kbd "S--")            '(lambda() (interactive) (text-scale-decrease 1)))
+  (global-set-key (kbd "C-<wheel-up>")   #'(lambda() (interactive) (text-scale-increase 1)))
+  (global-set-key (kbd "S-=")            #'(lambda() (interactive) (text-scale-increase 1)))
+  (global-set-key (kbd "C-<wheel-down>") #'(lambda() (interactive) (text-scale-decrease 1)))
+  (global-set-key (kbd "S--")            #'(lambda() (interactive) (text-scale-decrease 1)))
 
   ;; フォントサイズ リセット
-  (global-set-key (kbd "S-0") '(lambda() (interactive) (text-scale-set 0))))
+  (global-set-key (kbd "S-0") #'(lambda() (interactive) (text-scale-set 0))))
 
 ;; History
 ;; From http://www.wisdomandwonder.com/wp-content/uploads/2014/03/C3F.html:
