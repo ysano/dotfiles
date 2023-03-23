@@ -308,7 +308,7 @@
   :ensure t
   :if (memq window-system '(mac ns x))
   :config
-  (setq exec-path-from-shell-variables '("PATH" "GOPATH"))
+  (setq exec-path-from-shell-variables '("PATH" "GOPATH" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO"))
   (exec-path-from-shell-initialize))
 
 ;; Libraries
