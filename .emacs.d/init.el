@@ -274,6 +274,9 @@
 (setq load-prefer-newer t)
 (setq use-package-compute-statistics t)
 
+;; quelpa
+(use-package quelpa-use-package :ensure t)
+
 (use-package auto-package-update :ensure t
   :config
   (setq auto-package-update-delete-old-versions t)
@@ -937,6 +940,56 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   (setq ac-sources
         (append '(ac-source-math-unicode ac-source-math-latex ac-source-latex-commands)
                 ac-sources)) )
+
+;;--------------------------------
+;; company
+;;--------------------------------
+(use-package company
+  :ensure t
+  :diminish (company . "cm")
+  :config
+  (global-company-mode)
+  ;; 遅延なしにする。
+  (setq company-idle-delay 0)
+  ;; デフォルトは4。より少ない文字数から補完が始まる様にする。
+  (setq company-minimum-prefix-length 2)
+  ;; 候補の一番下でさらに下に行こうとすると一番上に戻る。
+  (setq company-selection-wrap-around t)
+  ;; 番号を表示する。
+  (setq company-show-numbers t)
+  ;; copilotとの連携
+  :bind ("<f2>" . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . copilot-accept-completion))
+  :bind (:map company-active-map
+              ("C-n" . company-select-next)
+              ("C-p" . company-select-previous)
+              ("C-s" . company-filter-candidates)
+              ("<tab>" . company-complete-selection))
+  :bind (:map company-search-map
+              ("C-n" . company-select-next)
+              ("C-p" . company-select-previous)))
+
+(use-package company-tabnine :disabled
+    :ensure t
+    :config
+    (add-to-list 'company-backends #'company-tabnine))
+
+;;--------------------------------
+;; copilot
+;;--------------------------------
+(use-package copilot
+  :quelpa (copilot :fetcher github
+                   :repo "zerolfx/copilot.el"
+                   :branch "main"
+                   :files ("dist" "*.el"))
+  :hook prog-mode
+  :config
+  ;; disable inline preview
+  (delq 'company-preview-if-just-one-frontend company-frontends)
+  (copilot-mode)
+  )
+;; you can utilize :map :hook and :config to customize copilot
 
 ;;--------------------------------
 ;; org-mode
