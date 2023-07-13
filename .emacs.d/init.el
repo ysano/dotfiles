@@ -756,6 +756,20 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
     ("q" nil "cancel"))
   )
 
+(use-package projectile :ensure t
+  :delight '(:eval (concat " " (projectile-project-name)))
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  )
+
+(use-package use-package-ensure-system-package
+  :ensure t)
+
+(use-package rg
+  :ensure t
+  :ensure-system-package
+  (rg . ripgrep))
+
 ;; --------------------------------
 ;; Utility
 ;; --------------------------------
@@ -922,7 +936,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;; auto-complete
 ;;--------------------------------
 
-(use-package auto-complete :ensure t
+(use-package auto-complete :ensure t :disabled
   :defer nil
   :bind (("<f2>" . auto-complete-mode)
          :map ac-menu-map
@@ -1022,7 +1036,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
       (load "init-org")))
 
 (use-package org-contrib :requires org :after org :ensure t :pin nongnu)
-
+(use-package ox-gfm :requires org :after org :ensure t)
 (use-package org-re-reveal :ensure t
   :requires org
   :config
