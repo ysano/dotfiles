@@ -481,9 +481,18 @@
 (use-package undo-tree :ensure t
   :diminish
   :config
+  (setq undo-tree-limit 160000)
+  (setq undo-tree-strong-limit 240000)
+  (setq undo-tree-outer-limit 24000000)
   (global-undo-tree-mode)
   (setq undo-tree-visualizer-timestamps t)
-  (setq undo-tree-visualizer-diff t))
+  (setq undo-tree-visualizer-diff t)
+  :init
+  (defun clear-undo-tree ()
+    (interactive)
+    (setq buffer-undo-tree nil))
+  (global-set-key (kbd "C-c u") 'clear-undo-tree)
+  )
 
 (use-package yasnippet :disabled
   :custom
