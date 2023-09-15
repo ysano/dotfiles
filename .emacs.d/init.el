@@ -993,6 +993,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 (use-package company
   :ensure t
   :diminish (company . "cm")
+  :hook prog-mode
   :config
   (global-company-mode)
   ;; 遅延なしにする。
@@ -1115,6 +1116,11 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
          (c-mode-common . google-make-newline-indent)))
 
 (use-package ruby-mode :ensure t
+  :ensure-system-package
+  ((rubocop     . "gem install rubocop")
+   (ruby-lint   . "gem install ruby-lint")
+   (ripper-tags . "gem install ripper-tags")
+   (pry         . "gem install pry"))
   :mode ("\\.rb\\'" "Rakefile")
   :interpreter "ruby"
 )
