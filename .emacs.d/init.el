@@ -138,7 +138,7 @@
     (set-coding-system-priority 'utf-8 'euc-jp 'iso-2022-jp 'cp932)))
 
 ;; Tramp speedup (disable version control to avoid delays)
-(setq vc-handled-backends '(SVN Git Hg))
+(setq vc-handled-backends '(Git))       ;
 (setq vc-ignore-dir-regexp
       (format "\\(%s\\)\\|\\(%s\\)"
               vc-ignore-dir-regexp
