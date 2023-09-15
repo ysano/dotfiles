@@ -396,6 +396,8 @@
   (setq doom-modeline-bar-width 6)
   ;; Whether display minor modes in mode-line or not.
   (setq doom-modeline-minor-modes t)
+  ;; Don’t compact font caches during GC.
+  (setq inhibit-compacting-font-caches t)
   )
 
 ;; Dimmer
@@ -409,7 +411,7 @@
 ;; Menu bar
 (menu-bar-mode 0)
 (tool-bar-mode 0)
-(setq scroll-bar-mode 0)
+(setq scroll-bar-mode nil)
 
 ;; XTerm mouse mode
 (use-package xt-mouse
