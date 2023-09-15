@@ -344,8 +344,17 @@
 
 ;; Icons
 ;; M-x all-the-icons-install-fonts
-(use-package all-the-icons :ensure t
+(use-package all-the-icons :ensure t :disabled
   :if (display-graphic-p))
+
+(use-package nerd-icons :ensure t
+  :if (display-graphic-p)
+  :custom
+  ;; The Nerd Font you want to use in GUI
+  ;; "Symbols Nerd Font Mono" is the default and is recommended
+  ;; but you can use any other Nerd Font if you want
+  (nerd-icons-font-family "Symbols Nerd Font Mono")
+  )
 
 ;; Themes
 (use-package doom-themes :ensure t
