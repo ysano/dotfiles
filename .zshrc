@@ -42,6 +42,7 @@ alias h=history
 alias grep=egrep
 alias ll='ls -l'
 alias la='ls -a'
+alias dt='date "+%Y-%m-%d %H:%M:%S"'
 
 # List only directories and symbolic
 # links that point to directories
@@ -49,6 +50,11 @@ alias lsd='ls -ld *(-/DN)'
 
 # List only file beginning with "."
 alias lsa='ls -ld .*'
+
+# emacs
+alias e='emacsclient -n'
+alias ee='open -a /Applications/Emacs.app $1'
+alias ekill='emacsclient -e "(kill-emacs)"'
 
 # others
 alias mketags="jexctags --langmap=html:+.rhtml,ruby:+.yml,php:+.thtml -e -R --append=no --exclude=.svn"
@@ -409,9 +415,22 @@ setopt listpacked
 zstyle ':completion:*' use-cache true
 
 # load gibo-completion.zsh
-if [ -f $ZUSERDIR/gibo-completion.zsh ]; then
-  echo "Loading $ZUSERDIR/gibo-completion.zsh"
-  source $ZUSERDIR/gibo-completion.zsh
+# if [ -f $ZUSERDIR/gibo-completion.zsh ]; then
+#   echo "Loading $ZUSERDIR/gibo-completion.zsh"
+#   source $ZUSERDIR/gibo-completion.zsh
+# fi
+
+# if [ -f $ZUSERDIR/wp-completion.bash ]; then
+#   echo "Loading $ZUSERDIR/wp-completion.bash"
+#   autoload bashcompinit
+#   bashcompinit
+#   source $ZUSERDIR/wp-completion.bash
+# fi
+
+if [ -f /usr/local/bin/aws_completer ]; then
+  echo "Loading aws_completer"
+  autoload bashcompinit && bashcompinit
+  complete -C '/usr/local/bin/aws_completer' aws
 fi
 
 if [ -f $ZUSERDIR/_docker-compose ]; then
@@ -470,6 +489,22 @@ if [ -d $HOME/.lima ]; then
     export LIMA_INSTANCE=docker
 fi
 
+# google cloud sdk
+case "${OSTYPE}" in
+    darwin*)
+        source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
+        source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
+        ;;
+    *)
+        if [ -f $HOME/google-cloud-sdk/path.zsh.inc ]; then
+            source $HOME/google-cloud-sdk/path.zsh.inc
+        fi
+        if [ -f $HOME/google-cloud-sdk/completion.zsh.inc ]; then
+            source $HOME/google-cloud-sdk/completion.zsh.inc
+        fi
+        ;;
+esac
+
 ################################
 ## environment
 ################################
@@ -523,6 +558,11 @@ else
         export PAGER=less
     fi
 fi
+
+if command -v ngrok &>/dev/null; then
+  eval "$(ngrok completion)"
+fi
+
 
 # wsl mozc
 # copy wsl/mozc to /mnt/c/opt/mozc
