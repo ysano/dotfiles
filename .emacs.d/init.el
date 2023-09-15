@@ -34,6 +34,18 @@
 ;; Emacs core
 ;; --------------------------------
 
+(if window-system (progn
+    (require 'server)
+    (unless (server-running-p)
+         (server-start) )))    ; GUIで起動するときはサーバーも起動
+
+;; GUI (emacs-mac port)
+(if window-system (progn
+    (bind-key "C-x C-c" 'kill-this-buffer)    ; C-x C-c で終了させてしまわないように変更
+    (when (equal system-type 'darwin)         ; Mac, optionをmeta
+      (setq mac-option-modifier 'meta))
+))
+
 ;; Memory allocation
 (setq gc-cons-threshold (expt 10 8)
       garbage-collection-messages t)
