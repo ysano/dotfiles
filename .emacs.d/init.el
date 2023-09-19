@@ -945,6 +945,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 
 ;; editorconfig
 (use-package editorconfig :ensure t
+  :diminish "EC"
   :config
   (editorconfig-mode 1))
 
@@ -993,7 +994,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;;--------------------------------
 (use-package company
   :ensure t
-  :diminish (company . "cm")
+  :diminish "cm"
   :hook prog-mode
   :config
   (global-company-mode)
