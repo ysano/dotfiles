@@ -657,6 +657,7 @@
   :after ivy
   :config
   (counsel-mode 1)
+  (setq counsel-find-file-ignore-regexp "\\.\\(~undo-tree~\\|#\\)\\'")
   :bind (("<f2> u" . 'counsel-unicode-char)
          ("C-c g" . 'counsel-git)
          ("C-c j" . 'counsel-git-grep)
