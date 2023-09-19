@@ -996,6 +996,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   :ensure t
   :diminish "cm"
   :hook prog-mode
+  :after copilot
   :config
   (global-company-mode)
   ;; 遅延なしにする。
@@ -1006,6 +1007,10 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   (setq company-selection-wrap-around t)
   ;; 番号を表示する。
   (setq company-show-numbers t)
+  ;; 補完候補をソートする。
+  (setq company-transformers '(company-sort-by-backend-importance))
+  ;; disable inline preview
+  (delq 'company-preview-if-just-one-frontend company-frontends)
   ;; copilotとの連携
   :bind ("<f2>" . copilot-mode)
   :bind (:map copilot-completion-map
@@ -1024,6 +1029,14 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
     :config
     (add-to-list 'company-backends #'company-tabnine))
 
+(use-package company-box :ensure t
+  :diminish "cbox"
+  :hook company-mode)
+
+(use-package company-quickhelp :ensure t
+  :diminish "cqh"
+  :hook company-mode)
+
 ;;--------------------------------
 ;; copilot
 ;;--------------------------------
@@ -1032,11 +1045,13 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
                    :repo "zerolfx/copilot.el"
                    :branch "main"
                    :files ("dist" "*.el"))
-  :hook prog-mode
-  :config
+  ;; :hook prog-mode
+  ;; :config
   ;; disable inline preview
-  (delq 'company-preview-if-just-one-frontend company-frontends)
-  (copilot-mode)
+  ;; (delq 'company-preview-if-just-one-frontend company-frontends)
+  ;; (copilot-mode)
+  ;; :bind (:map copilot-completion-map
+  ;;              ("<tab>" . copilot-accept-completion)
   )
 ;; you can utilize :map :hook and :config to customize copilot
 
