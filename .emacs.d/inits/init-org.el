@@ -133,8 +133,8 @@
 (add-hook 'org-agenda-mode-hook '(lambda () (hl-line-mode 1)))
 (setq hl-line-face 'underline)
 ;; アジェンダカラム
-;; (setq org-agenda-overriding-columns-format
-;;   "%25ITEM %TODO %3PRIORITY %TAGS %DEADLINE")
+(setq org-agenda-overriding-columns-format
+  "%10CATEGORY %35ITEM %TODO %3PRIORITY %Time_Estimate(Time){:} %CLOCKSUM(Total) %CLOCKSUM_T(Today) %DEADLINE")
 ;; 標準の祝日を利用しない
 ;(setq calendar-holidays nil)
 
