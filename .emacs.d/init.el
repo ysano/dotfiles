@@ -1308,6 +1308,14 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 (use-package yaml-mode :ensure t
   :mode "\\.ya?ml\\'")
 
+(use-package highlight-indent-guides :ensure t
+  :diminish "hig"
+  :hook (prog-mode yaml-mode)
+  :custom
+  (highlight-indent-guides-auto-enabled t)
+  (highlight-indent-guides-responsive t)
+  (highlight-indent-guides-method 'fill))
+
 (use-package add-node-modules-path :ensure t)
 
 (use-package vue-mode :ensure t
