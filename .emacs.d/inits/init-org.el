@@ -62,6 +62,26 @@
         ("APPT" . "red")
         ("CANCELED" . (:foreground "blue" :weight bold))))
 
+
+;; clock format
+(setq org-duration-format (quote h:mm))
+
+;; effort
+(setq org-global-properties '(("Effort_ALL" . "0:30 1:00 2:00 3:00 4:00 5:00 6:00")))
+
+;; global tags
+(setq org-tag-alist '((:startgroup . nil)
+                      ("EnergyAndTime" . ?+)
+                      (:grouptags . nil)
+                      ("@FullFocus" . ?f) ; creative task: writing,designing,coding
+                      ("@ShortDashes" . ?s) ; Short focused task: 10-15min
+                      ("@HangingAround" . ?h) ;things to read, research, watch, plan
+                      ("@BrainDead" . ?b); Drone task: cleaning, updating, backup, slacking
+                      ("@Thinking" . ?t) ; inspiration: change location, mindmapping
+                      ("@Call" . ?c)     ; like short dashes
+                      (:endgroup . nil)
+                      ))
+
 ;;------------------------------------------------------------
 ;; Hyperlinks Setup
 ;;------------------------------------------------------------
