@@ -1,5 +1,5 @@
 #!/usr/bin/zsh
-files=(.zshrc .gitconfig .tmux.conf .tmux-linux.conf .tmux-freebsd.conf .aspell.conf .xinitrc .Xresources)
+files=(.zshrc .gitconfig .tmux.conf .tmux-linux.conf .tmux-freebsd.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc)
 dirs=(.zsh .emacs.d)
 dotfiles=dotfiles
 
