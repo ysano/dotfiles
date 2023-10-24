@@ -240,6 +240,24 @@
                                ))
     ))
 
+  ("h" "WorkHub"
+   ((agenda "" ((org-agenda-span 'day) ;; viewing span is day
+                (org-agenda-start-with-log-mode t)   ;; log mode on
+                (org-agenda-clockreport-mode t) ;; clocktable mode on
+                (org-agenda-start-with-follow-mode t)))
+
+    (tags "+in_mtg" ((org-agenda-sorting-strategy '(ts-up))))
+    (tags "+cl_mtg" ((org-agenda-sorting-strategy '(ts-up))))
+    ;; ;; review undone items
+    (todo "NEXT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ;; ;; review waiting items
+    (todo "WAIT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ;; ;; review appointing items
+    (todo "APPT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ;; ;; review undone items
+    (todo "TODO" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ))
+
   ;;------------------------------------------------------------
   ;; 浮いてるTODO
   ;;------------------------------------------------------------
