@@ -246,16 +246,19 @@
                 (org-agenda-clockreport-mode t) ;; clocktable mode on
                 (org-agenda-start-with-follow-mode t)))
 
-    (tags "+in_mtg" ((org-agenda-sorting-strategy '(ts-up))))
-    (tags "+cl_mtg" ((org-agenda-sorting-strategy '(ts-up))))
-    ;; ;; review undone items
-    (todo "NEXT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ;; ;; review Project for clocksum
+    (tags "+LEVEL=2+PROJECT" ((org-agenda-sorting-strategy '(category-up priority-up))))
     ;; ;; review waiting items
     (todo "WAIT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
-    ;; ;; review appointing items
-    (todo "APPT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ;; ;; review undone items
+    (todo "NEXT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
     ;; ;; review undone items
     (todo "TODO" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+    ;; ;; review appointing items
+    (todo "APPT" ((org-agenda-sorting-strategy '(ts-up category-up priority-up))))
+
+    (tags "+in_mtg" ((org-agenda-sorting-strategy '(ts-up))))
+    (tags "+cl_mtg" ((org-agenda-sorting-strategy '(ts-up))))
     ))
 
   ;;------------------------------------------------------------
