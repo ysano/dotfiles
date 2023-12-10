@@ -452,6 +452,9 @@ path=($path $HOME/DEV/flutter/bin)       # for flutter
 path=($path /usr/local/opt/openjdk/bin)  # for jdk
 path=($path /usr/local/sbin) # for brew doctor
 
+# homebrew path
+eval $(/usr/local/bin/brew shellenv)
+
 # qmail path
 if [ -d /var/qmail/bin ]; then
     path=($path /var/qmail/bin)
@@ -531,7 +534,7 @@ case "${TERM_PROGRAM}" in
         ;;
     *)
         if which emacs > /dev/null 2>&1; then
-            export EDITOR=emacs
+            export EDITOR=emacsclient
         elif which vi > /dev/null 2>&1; then
             export EDITOR=vi
         else
