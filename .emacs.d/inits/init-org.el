@@ -94,6 +94,20 @@
 ;;------------------------------------------------------------
 ;; Capture Setup
 ;;------------------------------------------------------------
+;; (defun my-org-agenda-capture-in-file ()
+;;   "Capture a new TODO in the file corresponding to the current agenda item."
+;;   (interactive)
+;;   (let* ((marker (org-get-at-bol 'org-hd-marker))
+;;          (buffer (marker-buffer marker))
+;;          (file (buffer-file-name buffer)))
+;;     (set-marker org-capture-last-stored-marker marker)
+;;     (org-capture nil "t")
+;;     (setq org-capture-templates
+;;           `(("a" "Agenda Context Task" entry (file+headline ,file "task")
+;;              "* NEXT %?\n")))))
+
+;; (define-key org-agenda-mode-map "C" 'my-org-agenda-capture-in-file)
+
 (setq org-capture-templates
       '(
         ("t" "Tasks (Inbox)" entry
@@ -110,11 +124,16 @@
          "* TODO %^{Task} :@ShortDashes:"
          :clock-in :clock-resume)
 
+        ("s" "Interrupting sub-task (clocked place)" entry
+         (clock)
+         "* %? %^g\n %x\n %a"
+         :clock-in :clock-resume)
+
         ("j" "Journal (Resume memory)" entry
          (file+olp+datetree "~/org/journal.org")
          "* %?\n     %i\n     %a")
 
-        ("m" "Journal (clipboard flagment)" entry
+        ("M" "Journal (clipboard flagment)" entry
          (file+olp+datetree "~/org/journal.org")
          "* %? %^g\n %x\n")
         )
@@ -208,6 +227,12 @@
                 (org-deadline-warning-days 0)
                 ))
     ))
+
+  ("pw" "Weekday Start"
+   ((tags "Prodoc"
+          ((org-super-agenda-groups '((:name "予定が過ぎてる作業" :scheduled past)
+                                      (:name "今日の作業" :scheduled today)
+                                      (:discard (:anything t))))))))
 
   ;;------------------------------------------------------------
   ;; GTD weekly review
