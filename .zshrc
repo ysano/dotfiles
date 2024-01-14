@@ -453,7 +453,7 @@ path=($path /usr/local/opt/openjdk/bin)  # for jdk
 path=($path /usr/local/sbin) # for brew doctor
 
 # homebrew path
-eval $(/usr/local/bin/brew shellenv)
+eval $(brew shellenv)
 
 # qmail path
 if [ -d /var/qmail/bin ]; then
