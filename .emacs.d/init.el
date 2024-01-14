@@ -961,7 +961,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;; auto-complete
 ;;--------------------------------
 
-(use-package auto-complete :ensure t :disabled
+(use-package auto-complete :ensure nil :disabled
   :defer nil
   :bind (("<f2>" . auto-complete-mode)
          :map ac-menu-map
@@ -980,7 +980,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
   (global-auto-complete-mode t)
   )
 
-(use-package ac-math :ensure t :disabled
+(use-package ac-math :ensure nil :disabled
   :after auto-complete
   :hook (TeX-mode LaTeX-mode laTeX-mode org-mode)
   :config
