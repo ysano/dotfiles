@@ -1042,7 +1042,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 ;;--------------------------------
 (use-package copilot
   :quelpa (copilot :fetcher github
-                   :repo "zerolfx/copilot.el"
+                   :repo "copilot-emacs/copilot.el"
                    :branch "main"
                    :files ("dist" "*.el"))
   ;; :hook prog-mode
