@@ -1220,6 +1220,15 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
     :config
     (which-key-mode))
 
+(use-package terraform-mode :ensure t
+  :custom (terraform-indent-level 2)
+  :config
+  (defun my-terraform-mode-init ()
+    ;; if you want to use outline-minor-mode
+    ;; (outline-minor-mode 1)
+    )
+  (add-hook 'terraform-mode-hook 'my-terraform-mode-init))
+
 ;;--------------------------------
 ;; text-mode children
 ;;--------------------------------
