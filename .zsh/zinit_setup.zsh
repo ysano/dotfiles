@@ -48,31 +48,39 @@ zinit ice wait lucid as"program" pick"bin/rbenv" \
 zinit light rbenv/rbenv
 
 # Load Google Cloud SDK
-zinit ice wait lucid
-zinit snippet /opt/homebrew/share/google-cloud-sdk/path.zsh.inc
-zinit snippet /opt/homebrew/share/google-cloud-sdk/completion.zsh.inc
+if [[ -f /opt/homebrew/share/google-cloud-sdk/path.zsh.inc ]]; then
+    zinit ice wait lucid
+    zinit snippet /opt/homebrew/share/google-cloud-sdk/path.zsh.inc
+    zinit snippet /opt/homebrew/share/google-cloud-sdk/completion.zsh.inc
+fi
 
 # GitHub CLI completion
-zinit ice as"completion" wait lucid
-zinit snippet ~/.zsh/completions/_gh
+if [[ -f ~/.zsh/completions/_gh ]]; then
+    zinit ice as"completion" wait lucid
+    zinit snippet ~/.zsh/completions/_gh
+fi
 
 # ngrok completion
-zinit ice as"completion" wait lucid
-zinit snippet ~/.zsh/completions/_ngrok
+if [[ -f ~/.zsh/completions/_ngrok ]]; then
+    zinit ice as"completion" wait lucid
+    zinit snippet ~/.zsh/completions/_ngrok
+fi
 
 # AWS CLI completion
 zinit ice as"completion"
 zinit snippet https://github.com/aws/aws-cli/blob/v2/bin/aws_zsh_completer.sh
 
 # Load Homebrew
-homebrew_init() {
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-}
-zinit ice wait"2" lucid
-zinit light-mode for \
-    trigger-load'!brew' \
-    atload'homebrew_init' \
-    zdharma-continuum/null
+if [[ "$OSTYPE" == "darwin"* && -x /opt/homebrew/bin/brew ]]; then
+    homebrew_init() {
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    }
+    zinit ice wait"2" lucid
+    zinit light-mode for \
+          trigger-load'!brew' \
+          atload'homebrew_init' \
+          zdharma-continuum/null
+fi
 
 # Load Powerlevel10k theme
 zinit ice depth=1

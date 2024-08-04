@@ -10,7 +10,6 @@ fi
 
 # 256dark
 if [ -f ~/.zsh/dircolors.256dark ]; then
-    echo "Loading dircolors.256dark"
     if type dircolors > /dev/null 2>&1; then
         eval $(dircolors ~/.zsh/dircolors.256dark)
     elif type gdircolors > /dev/null 2>&1; then
