@@ -1,10 +1,13 @@
+# Improved ghq.zsh for Emacs keybindings
+
 peco-src () {
     local selected_dir=$(ghq list | peco --query "$LBUFFER")
     if [ -n "$selected_dir" ]; then
         BUFFER="cd $(ghq list --full-path --exact $selected_dir)"
         zle accept-line
+    else
+        zle reset-prompt
     fi
-    zle clear-screen
 }
 
 ghq-cd () {
@@ -16,35 +19,43 @@ ghq-cd () {
         fi
         cd "$target_dir"
     else
-        echo "Usage: ghq-cd <repo>"
-        return 1
+        local selected_dir=$(ghq list | peco --query "$LBUFFER")
+        if [ -n "$selected_dir" ]; then
+            cd "$(ghq list --full-path --exact $selected_dir)"
+        else
+            echo "No directory selected"
+            return 1
+        fi
     fi
 }
 
-# peco-src () {
-#     local repo=$(ghq list | peco --query "$LBUFFER")
-#     if [ -n "$repo" ]; then
-#         repo=$(ghq list --full-path --exact $repo)
-#         BUFFER="cd ${repo}"
-#         zle accept-line
-#     fi
-#     zle clear-screen
-# }
-
-# ghq-cd () {
-#     if [ -n "$1" ]; then
-#         dir="$(ghq list --full-path --exact "$1")"
-#         if [ -z "$dir" ]; then
-#             echo "no directories found for '$1'"
-#             return 1
-#         fi
-#         cd "$dir"
-#         return
-#     fi
-#     echo 'usage: ghq-cd $repo'
-#     return 1
-# }
+# Add completion for ghq
+if (( $+commands[ghq] )); then
+    compdef _ghq ghq
+fi
 
 zle -N peco-src
-bindkey '^]' peco-src
+bindkey '\e]' peco-src  # Alt+] (ESC followed by ])
+# Alternatively, you can keep the original binding:
+# bindkey '^]' peco-src
 
+# Alias for quick access
+alias repo='ghq-cd'
+
+# Function to update all ghq repositories
+ghq-update-all() {
+    ghq list | ghq get --update --parallel
+}
+
+# Function to clone and cd into a repository
+ghq-get-cd() {
+    local repo=$1
+    if [ -z "$repo" ]; then
+        echo "Usage: ghq-get-cd <repository>"
+        return 1
+    fi
+    ghq get $repo && cd $(ghq list --full-path --exact $repo)
+}
+
+# Alias for ghq-get-cd
+alias gcd='ghq-get-cd'

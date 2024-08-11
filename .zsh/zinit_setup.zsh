@@ -43,9 +43,12 @@ zinit load $HOME/.zsh/functions.zsh
 zinit ice wait lucid
 zinit snippet OMZP::asdf/asdf.plugin.zsh
 
-zinit ice wait lucid as"program" pick"bin/rbenv" \
-    atload'eval "$(rbenv init - --no-rehash zsh)"'
-zinit light rbenv/rbenv
+# rbenvの設定（MinGW以外の環境で有効）
+if [[ "$OSTYPE" != "msys" ]]; then
+  zinit ice wait lucid as"program" pick"bin/rbenv" \
+      atload'eval "$(rbenv init - --no-rehash zsh)"'
+  zinit light rbenv/rbenv
+fi
 
 # Load Google Cloud SDK
 if [[ -f /opt/homebrew/share/google-cloud-sdk/path.zsh.inc ]]; then

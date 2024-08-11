@@ -27,7 +27,8 @@ source "$HOME/.zsh/colors_and_prompt.zsh"
 source "$HOME/.zsh/completion.zsh"
 
 # 8. Functions and Aliases
-#source "$HOME/.zsh/functions_and_aliases.zsh"
+source "$HOME/.zsh/functions.zsh"
+source "$HOME/.zsh/aliases.zsh"
 
 # 9. Local Settings (if exists)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
