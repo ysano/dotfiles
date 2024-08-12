@@ -163,6 +163,7 @@ zsdoc/data
 .emacs.d/server
 .emacs.d/transient
 .emacs.d/.cache
+.emacs.d/ellama-sessions
 
 # karabinar
 karabiner/assets/complex_modifications/[0-9]*.json
