@@ -44,7 +44,6 @@
 
 ;; GUI (emacs-mac port)
 (if window-system (progn
-    (bind-key "C-x C-c" 'kill-this-buffer)    ; C-x C-c で終了させてしまわないように変更
     (when (equal system-type 'darwin)         ; Mac, optionをmeta
       (setq mac-option-modifier 'meta))
 ))
@@ -1032,11 +1031,11 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
     :config
     (add-to-list 'company-backends #'company-tabnine))
 
-(use-package company-box :ensure t
+(use-package company-box :ensure t :disabled
   :diminish "cbox"
   :hook company-mode)
 
-(use-package company-quickhelp :ensure t
+(use-package company-quickhelp :ensure t :disabled
   :diminish "cqh"
   :hook company-mode)
 
@@ -1316,7 +1315,7 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
 (use-package ac-php :ensure t
   :after auto-complete
   :init
-  (ac-php-core-eldoc-setup)
+  ;;(ac-php-core-eldoc-setup)
   :hook (php-mode . ac-php-mode)
   :bind (
          :map php-mode-map
