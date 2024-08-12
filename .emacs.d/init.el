@@ -11,6 +11,9 @@
 ;; (setq debug-on-error  t
 ;;       init-file-debug t)
 
+;; Suppress byte-compile warnings
+(setq byte-compile-warnings '(not free-vars unresolved callargs redefine obsolete noruntime cl-functions interactive-only make-local))
+
 ;; Add my elisp directory and other files
 (add-to-list 'load-path "~/.emacs.d/inits")
 (add-to-list 'load-path "~/.emacs.d/elisp")
