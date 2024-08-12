@@ -276,6 +276,7 @@
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+(setq package-check-signature nil)
 
 ;; use-package
 (unless (package-installed-p 'use-package)
