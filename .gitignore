@@ -162,6 +162,7 @@ zsdoc/data
 .emacs.d/quelpa
 .emacs.d/server
 .emacs.d/transient
+.emacs.d/.cache
 
 # karabinar
 karabiner/assets/complex_modifications/[0-9]*.json
