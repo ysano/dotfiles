@@ -76,6 +76,7 @@ fi
 # AWS CLI completion
 zinit ice as"completion"
 zinit snippet https://github.com/aws/aws-cli/blob/v2/bin/aws_zsh_completer.sh
+zinit snippet OMZP::aws
 
 # docker completion
 zinit ice as"completion"
