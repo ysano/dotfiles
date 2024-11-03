@@ -76,6 +76,10 @@ fi
 zinit ice as"completion"
 zinit snippet https://github.com/aws/aws-cli/blob/v2/bin/aws_zsh_completer.sh
 
+# docker completion
+zinit ice as"completion"
+zinit snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh/_docker
+
 # Load Homebrew
 if [[ "$OSTYPE" == "darwin"* && -x /opt/homebrew/bin/brew ]]; then
     homebrew_init() {
