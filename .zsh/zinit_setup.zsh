@@ -56,6 +56,11 @@ fi
 # Load Google Cloud SDK
 zinit snippet OMZP::gcloud
 
+# Load Terraform
+zinit ice as"completion" wait lucid
+zinit snippet OMZP::terraform/_terraform
+zinit snippet OMZP::terraform/terraform.plugin.zsh
+
 # GitHub CLI completion
 if [[ -f ~/.zsh/completions/_gh ]]; then
     zinit ice as"completion" wait lucid
