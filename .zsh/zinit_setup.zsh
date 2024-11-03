@@ -1,3 +1,6 @@
+# Check and create required directories
+[[ ! -d $HOME/.cache/zinit/completions ]] && mkdir -p $HOME/.cache/zinit/completions
+
 # Zinit installation check and setup
 if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
     print -P "%F{33}▓▒░ %F{220}Installing %F{33}DHARMA%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
