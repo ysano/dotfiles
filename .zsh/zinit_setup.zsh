@@ -54,11 +54,7 @@ if [[ "$OSTYPE" != "msys" ]]; then
 fi
 
 # Load Google Cloud SDK
-if [[ -f /opt/homebrew/share/google-cloud-sdk/path.zsh.inc ]]; then
-    zinit ice wait lucid
-    zinit snippet /opt/homebrew/share/google-cloud-sdk/path.zsh.inc
-    zinit snippet /opt/homebrew/share/google-cloud-sdk/completion.zsh.inc
-fi
+zinit snippet OMZP::gcloud
 
 # GitHub CLI completion
 if [[ -f ~/.zsh/completions/_gh ]]; then
