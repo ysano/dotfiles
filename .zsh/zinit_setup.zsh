@@ -56,6 +56,11 @@ fi
 # Load Google Cloud SDK
 zinit snippet OMZP::gcloud
 
+# Load Azure CLI
+zinit ice as"completion" wait lucid
+zinit snippet https://github.com/Azure/azure-cli/blob/dev/az.completion
+zinit snippet OMZP::azure
+
 # Load Terraform
 zinit ice as"completion" wait lucid
 zinit snippet OMZP::terraform/_terraform
