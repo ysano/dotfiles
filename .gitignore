@@ -59,7 +59,8 @@ flycheck_*.el
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -164,6 +165,7 @@ zsdoc/data
 .emacs.d/transient
 .emacs.d/.cache
 .emacs.d/ellama-sessions
+.emacs.d/org-roam.db
 
 # karabinar
 karabiner/assets/complex_modifications/[0-9]*.json
