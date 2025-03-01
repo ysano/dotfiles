@@ -19,7 +19,7 @@ typeset -U path cdpath fpath manpath
 fpath=($fpath ~/.zfunc)
 
 # Append completions to fpath
-fpath+=${ASDF_DIR}/completions
+fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
 
 # Autoload all shell functions from all directories in $fpath (following
 # symlinks) that have the executable bit on (the executable bit is not

@@ -92,6 +92,7 @@ umask 022
 typeset -U path
 path=(
   $HOME/bin
+  $HOME/go/bin
   /usr/local/bin
   /usr/local/sbin
   /usr/bin
@@ -108,6 +109,17 @@ fi
 
 if [ -d "$HOME/rd/.bin" ]; then
   path+=($HOME/rd/.bin)
+fi
+
+if [ -d "$HOME/.asdf/shims" ]; then
+  path+=(${ASDF_DATA_DIR:-$HOME/.asdf}/shims)
+fi
+
+if command -v npm >/dev/null; then
+  npm_global_bin="$(npm prefix -g)/bin"
+  if [ -d "$npm_global_bin" ]; then
+    path+=("$npm_global_bin")
+  fi
 fi
 
 if [[ -f /mnt/c/opt/mozc/mozc_emacs_helper.sh ]]; then
