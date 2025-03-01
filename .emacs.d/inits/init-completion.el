@@ -37,9 +37,20 @@
                    :repo "copilot-emacs/copilot.el"
                    :branch "main"
                    :files ("dist" "*.el"))
+  :ensure-system-package
+  (("copilot" . "npm install -g @github/copilot-language-server"))
   :bind ("<f2>" . copilot-mode)
   :bind (:map copilot-completion-map
-              ("<tab>" . copilot-accept-completion)))
+              ("<tab>" . copilot-accept-completion)
+              ("TAB" . copilot-accept-completion)
+              ("C-TAB" . copilot-accept-completion-by-word)
+              ("C-<tab>" . copilot-accept-completion-by-word)
+              ("M-<tab>" . copilot-accept-completion-by-line)
+              ("M-TAB" . copilot-accept-completion-by-line)
+              ("C-n" . copilot-next-completion)
+              ("C-p" . copilot-previous-completion)
+              ("C-g" . copilot-clear-overlay))
+  :hook (prog-mode . copilot-mode))
 
 ;; --------------------------------
 ;; LSP Mode

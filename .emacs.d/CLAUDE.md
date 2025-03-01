@@ -32,5 +32,29 @@
 - `jk` chord for hydra-general movement
 
 ## AI Assistance
-- Copilot: `F2` to toggle, `<tab>` to accept completion
-- Ellama: `C-c e` prefix for AI commands
+- **Copilot:**
+  - `F2` to toggle completion mode
+  - `<tab>` to accept completion
+  - `C-<tab>` to accept completion by word
+  - `M-<tab>` to accept completion by line
+  - `C-n`/`C-p` to navigate suggestions
+  - `C-g` to clear overlay
+- **Ellama:** `C-c e` prefix for LLM commands
+
+## Zettelkasten（org-roam）
+- **ナビゲーション:**
+  - `C-c n f` タイトルでゼッテルを検索
+  - `C-c n T` タグでゼッテルを検索
+  - `C-c n l` バックリンクサイドバーの表示/非表示
+  - `C-c n g` グラフ可視化を表示
+  - `C-c n u` Web UI可視化を開く
+
+- **作成:**
+  - `C-c n c` 新規ノート作成（z:ゼッテル, r:文献, f:一時的）
+  - `C-c n i` 既存ゼッテルへのリンクを挿入
+  - `C-c n j` 今日の日誌を作成/開く
+
+- **整理:**
+  - `C-c n t` 現在のノートにタグを追加
+  - `C-c n a` 現在のノートにエイリアスを追加
+  - `C-c n s` データベースを手動で同期
