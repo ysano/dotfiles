@@ -1,0 +1,26 @@
+---
+description: X Window System関連の設定ファイルに対する効率的な指示ガイド
+globs: .Xresources, .xinitrc
+alwaysApply: false
+---
+# X Window System設定ガイド
+
+このファイルは、X Window System関連の設定ファイルに対して、Cursorに効率的な指示を出すためのガイドです。
+
+## .Xresources
+
+```cursor
+# X Window System設定
+フォント設定: フォントを変更する
+色設定: 色スキームを変更する
+DPI設定: 画面のDPI設定を変更する
+ターミナル設定: ターミナルエミュレータの設定を変更する
+```
+
+## .xinitrc
+
+```cursor
+# X起動設定
+起動プログラム: X起動時に実行するプログラムを設定する
+環境変数: X環境の環境変数を設定する
+```

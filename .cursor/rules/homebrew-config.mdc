@@ -1,0 +1,18 @@
+---
+description: Homebrew関連の設定ファイルに対する効率的な指示ガイド
+globs: .Brewfile
+alwaysApply: false
+---
+ # Homebrew設定ガイド
+
+このファイルは、Homebrew関連の設定ファイルに対して、Cursorに効率的な指示を出すためのガイドです。
+
+## .Brewfile
+
+```cursor
+# Homebrew設定
+パッケージ追加: 新しいパッケージを追加する
+カスク追加: 新しいカスクを追加する
+タップ追加: 新しいタップを追加する
+グループ化: パッケージをグループ化する
+```
