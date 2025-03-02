@@ -194,6 +194,15 @@
 ;; UI and Theming
 (load "init-ui")
 
+;; Encoding
+(load "init-encode")
+
+;; Environment
+(load "init-env")
+
+;; Mozc
+;(load "init-mozc")
+
 ;; Editor Enhancements
 (load "init-editor")
 
@@ -210,7 +219,13 @@
 (load "init-text-modes")
 
 ;; Org mode
-(load "init-org-mode")
+;; (load "init-org-mode")
+
+;; Org-roam
+;; (load "init-org-roam")
+
+;; Org-integrated
+(load "init-org-integrated")
 
 ;; AI Assistance
 (load "init-ai")
