@@ -155,15 +155,12 @@
 (set-buffer-file-coding-system 'utf-8-unix)
 
 ;; History and session management
-(use-package savehist
-  :custom
-  (history-length t)
-  (history-delete-duplicates t)
-  (savehist-save-minibuffer-history 1)
-  (savehist-additional-variables
-   '(kill-ring search-ring regexp-search-ring))
-  :config
-  (savehist-mode 1))
+(setq history-length t
+      history-delete-duplicates t
+      savehist-save-minibuffer-history t
+      savehist-additional-variables
+      '(kill-ring search-ring regexp-search-ring))
+(savehist-mode 1)
 
 ;; Simple UI improvements
 (fset 'yes-or-no-p 'y-or-n-p)             ;; y/n instead of yes/no
