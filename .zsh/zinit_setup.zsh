@@ -35,7 +35,6 @@ zinit snippet OMZL::completion.zsh
 zinit snippet OMZP::git/git.plugin.zsh
 
 zinit wait lucid for \
-    OMZP::docker/docker.plugin.zsh \
     OMZP::composer/composer.plugin.zsh
 
 # Load custom files

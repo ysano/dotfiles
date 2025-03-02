@@ -8,7 +8,6 @@ LISTMAX=0
 # compact list
 setopt listpacked
 
-
 # 基本的な補完システムの初期化
 # autoload -Uz compinit
 # if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
@@ -16,15 +15,6 @@ setopt listpacked
 # else
 #     compinit -C
 # fi
-
-# Zinitを使用した補完プラグインの読み込み
-# zinit wait lucid for \
-#     atinit"zicompinit; zicdreplay" \
-#         zdharma-continuum/fast-syntax-highlighting \
-#     atload"!_zsh_autosuggest_start" \
-#         zsh-users/zsh-autosuggestions \
-#     blockf \
-#         zsh-users/zsh-completions
 
 # 補完スタイルの設定
 zstyle ':completion:*' menu select interactive
@@ -41,24 +31,6 @@ setopt complete_aliases
 # キャッシュの設定
 zstyle ':completion::complete:*' use-cache on
 zstyle ':completion::complete:*' cache-path "${ZDOTDIR:-$HOME}/.zcompcache"
-
-# 補完関数の読み込み
-# zinit wait lucid for \
-#     as"completion" \
-#     atpull'zinit creinstall -q .' \
-#     atload"zicompinit; zicdreplay" \
-#         zsh-users/zsh-completions
-
-# 特定のコマンドの補完
-# zinit wait lucid as"completion" for \
-#     OMZP::docker/_docker \
-#     OMZP::docker-compose/_docker-compose
-
-# AWS CLI補完（存在する場合）
-# if [ -f /usr/local/bin/aws_completer ]; then
-#     zinit ice wait lucid as"completion"
-#     zinit snippet https://github.com/aws/aws-cli/blob/v2/bin/aws_zsh_completer.sh
-# fi
 
 # その他の補完設定
 zstyle ':completion:*:*:*:*:*' menu select
