@@ -7,6 +7,7 @@ alwaysApply: false
 
 このファイルは、Emacs関連の設定ファイルに対して、Cursorに効率的な指示を出すためのガイドです。
 
+
 ## .emacs.d/init.el
 
 ```cursor
@@ -28,4 +29,41 @@ alwaysApply: false
 起動設定: 起動時の動作を設定する
 補完設定: 補完機能の設定を変更する
 言語設定: プログラミング言語サポートを設定する
+```
+
+## バッチモードでのデバッグ
+
+### 基本的なデバッグ方法
+
+特定の設定ファイルをデバッグする場合：
+
+```bash
+emacs --debug-init --batch -l <設定ファイル> | cat
+```
+
+例：
+```bash
+emacs --debug-init --batch -l ~/.emacs.d/inits/init-ai.el | cat
+```
+
+### 全体の設定をデバッグする場合
+
+init.elから読み込まれる全ての設定をデバッグする場合：
+
+```bash
+emacs --batch -l ~/.emacs.d/init.el | cat
+```
+
+## パッケージの依存関係の確認
+
+インストール済みパッケージの確認：
+
+```bash
+ls -la ~/.emacs.d/elpa/ | grep <パッケージ名>
+```
+
+パッケージの内容確認：
+
+```bash
+ls -la ~/.emacs.d/elpa/<パッケージ名>-<バージョン>/
 ```
