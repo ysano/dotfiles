@@ -170,3 +170,4 @@ zsdoc/data
 # karabinar
 karabiner/assets/complex_modifications/[0-9]*.json
 karabiner/automatic_backups
+.emacs.d/kkcrc
