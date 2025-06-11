@@ -46,13 +46,12 @@ source "$HOME/.zsh/aliases.zsh"
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="/Users/yoshiaki_sano/.rd/bin:$PATH"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
-
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # fzf, run `$(brew --prefix)/opt/fzf/install` to enable key bindings
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
+export PATH="/Users/yoshiaki_sano/.rd/bin:$PATH"
+### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
