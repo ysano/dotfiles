@@ -83,8 +83,10 @@ zinit snippet https://github.com/aws/aws-cli/blob/v2/bin/aws_zsh_completer.sh
 zinit snippet OMZP::aws
 
 # docker completion
-zinit ice as"completion"
-zinit snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh/_docker
+if command -v docker >/dev/null 2>&1 && docker version >/dev/null 2>&1; then
+    zinit ice as"completion" wait lucid
+    zinit snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh/_docker
+fi
 
 # Load Homebrew
 if [[ "$OSTYPE" == "darwin"* && -x /opt/homebrew/bin/brew ]]; then
