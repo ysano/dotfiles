@@ -1,6 +1,11 @@
 # -*- mode:shell-script -*-
 
 # Enable Powerlevel10k instant prompt
+# Suppress console output warning in WSL
+if [[ $(uname -a) =~ 'microsoft' ]]; then
+  typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+fi
+
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -42,8 +47,6 @@ source "$HOME/.zsh/aliases.zsh"
 # Some environment variables
 ########################################
 
-# local setting
-[ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
@@ -52,6 +55,5 @@ source "$HOME/.zsh/aliases.zsh"
 # fzf, run `$(brew --prefix)/opt/fzf/install` to enable key bindings
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="/Users/yoshiaki_sano/.rd/bin:$PATH"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
+
+. "$HOME/.local/bin/env"

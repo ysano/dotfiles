@@ -93,6 +93,7 @@ typeset -U path
 path=(
   $HOME/bin
   $HOME/go/bin
+  /snap/bin
   /usr/local/bin
   /usr/local/sbin
   /usr/bin
@@ -133,8 +134,16 @@ fi
 # path=($path $HOME/my/android/sdk/platform-tools)  # for android
 # path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
 # path=($path $HOME/.composer/vendor/bin)  # for composer
-# path=($path $HOME/DEV/flutter/bin)       # for flutter
+path=($path $HOME/ghq/github.com/flutter/flutter/bin)       # for flutter
 # path=($path /usr/local/opt/openjdk/bin)  # for jdk
+export ANDROID_HOME=$HOME/Android/Sdk
+path=($path $ANDROID_HOME/cmdline-tools/latest/bin)
+path=($path $ANDROID_HOME/platform-tools)
+
+# Rancher Desktop (cross-platform)
+if [ -d "$HOME/.rd/bin" ]; then
+  path+=("$HOME/.rd/bin")
+fi
 
 # Remove duplicate entries from PATH
 typeset -U PATH
