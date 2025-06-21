@@ -28,7 +28,7 @@ zinit wait lucid for \
     blockf \
         zsh-users/zsh-completions
 
-# Load Oh-My-Zsh libraries and plugins
+# Load Oh-My-Zsh libraries and plugins (activated for better functionality)
 zinit snippet OMZL::history.zsh
 zinit snippet OMZL::key-bindings.zsh
 zinit snippet OMZL::completion.zsh

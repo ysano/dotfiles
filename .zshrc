@@ -13,33 +13,21 @@ fi
 # 1. Core Settings
 source "$HOME/.zsh/core_settings.zsh"
 
-# 2. Plugin Management (Zinit)
+# 2. Plugin Management (Zinit) - includes OMZ libraries
 source "$HOME/.zsh/zinit_setup.zsh"
 
-# 3. OS-specific Settings
-#source "$HOME/.zsh/os_specific.zsh"
-
-# 4. Environment Variables
-#source "$HOME/.zsh/env_variables.zsh"
-
-# 5. Keybindings
-source "$HOME/.zsh/keybindings.zsh"
-
-# 6. Colors and Prompt
+# 3. Colors and Prompt
 source "$HOME/.zsh/colors_and_prompt.zsh"
 
-# 7. Completion
-source "$HOME/.zsh/completion.zsh"
+# 4. Custom Keybindings (supplements OMZ key-bindings)
+source "$HOME/.zsh/keybindings_custom.zsh"
 
-# 8. Functions and Aliases
+# 5. Functions and Aliases
 source "$HOME/.zsh/functions.zsh"
 source "$HOME/.zsh/aliases.zsh"
 
-# 9. Local Settings (if exists)
+# 6. Local Settings (if exists)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
-
-# 10. Path Modifications
-#source "$HOME/.zsh/path_modifications.zsh"
 
 [ -f ~/.zprofile ] && source ~/.zprofile
 

@@ -62,17 +62,8 @@ DIRSTACKSIZE=20
 # zle
 setopt emacs
 
-# History settings
-export HISTFILE="$HOME/.zsh_history"
-export HISTSIZE=10000
-export SAVEHIST=10000
+# History settings (core only - main config in OMZ history.zsh)
 export HISTCONTROL=ignorespace # ignore commands that start with space
-setopt EXTENDED_HISTORY       # record timestamp of command in HISTFILE
-setopt HIST_VERIFY            # show command with history expansion to user before running it
-setopt HIST_IGNORE_DUPS       # ignore duplicated commands history list
-setopt HIST_IGNORE_SPACE      # ignore commands that start with space
-setopt HIST_SAVE_NO_DUPS      # do not save duplicated command
-setopt SHARE_HISTORY          # share command history data
 
 
 # Autoload zsh modules
