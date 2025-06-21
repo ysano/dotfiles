@@ -1,7 +1,11 @@
 ;;; init-ai.el --- AI assistance
 ;;; Commentary:
-;; AI related integrations like Copilot, Ellama, etc.
+;; AI related integrations like Copilot, Ellama, Claude Code, etc.
 ;;; Code:
+
+;; Check if Emacs supports :vc keyword (Emacs 29+)
+(defvar use-package-supports-vc (>= emacs-major-version 29)
+  "Whether this Emacs version supports use-package :vc keyword.")
 
 ;; --------------------------------
 ;; Ellama - LLM interface
@@ -23,6 +27,7 @@
   ;; Default model
   (setq ellama-provider
         (make-llm-ollama
+         :host "172.29.80.1"
          :chat-model "llama3.1:8b-instruct-q4_K_S"
          :embedding-model "nomic-embed-text"
          :default-chat-non-standard-params '(("num_ctx" . 8192))))
@@ -55,6 +60,77 @@
         (make-llm-ollama
          :chat-model "aya:8b-23-q4_K_S"
          :embedding-model "aya:8b-23-q4_K_S")))
+
+;; --------------------------------
+;; Claude Code Integration
+;; --------------------------------
+;; Load Claude Code integration based on Emacs version and availability
+(condition-case nil
+    (if use-package-supports-vc
+        ;; Try modern integration for Emacs 29+
+        (progn
+          (message "Attempting modern Claude Code integration...")
+          (require 'init-claude-code-simple))
+      ;; Fallback to simple integration
+      (progn
+        (message "Using simple Claude Code integration...")
+        (require 'init-claude-code-simple)))
+  (error
+   ;; If everything fails, provide basic functionality
+   (message "Claude Code integration failed, providing basic functions...")
+   (require 'init-claude-code-simple)))
+
+;; --------------------------------
+;; AI Tools Integration and Keybindings
+;; --------------------------------
+;; Unified AI tool access under C-c a prefix
+(global-set-key (kbd "C-c a") nil)  ;; Clear any existing binding
+
+;; Create a keymap for AI tools
+(defvar ai-tools-map (make-sparse-keymap)
+  "Keymap for AI tools.")
+
+;; Ellama bindings (existing LLM interface)
+(define-key ai-tools-map (kbd "e") ellama-keymap-prefix)
+(define-key ai-tools-map (kbd "l") 'ellama-chat)                   ;; Chat with LLM
+(define-key ai-tools-map (kbd "t") 'ellama-translate)              ;; Translate text
+(define-key ai-tools-map (kbd "s") 'ellama-summarize)              ;; Summarize text
+(define-key ai-tools-map (kbd "w") 'ellama-write)                  ;; Write with AI
+
+;; Claude Code bindings (new integration)
+(define-key ai-tools-map (kbd "c") 'claude-code-toggle)            ;; Claude Code
+(define-key ai-tools-map (kbd "r") 'claude-code-send-region-for-review) ;; Review code
+(define-key ai-tools-map (kbd "f") 'claude-code-explain-function)  ;; Explain function
+(define-key ai-tools-map (kbd "d") 'claude-code-generate-docstring) ;; Generate docs
+(define-key ai-tools-map (kbd "R") 'claude-code-refactor-with-diff) ;; Refactor with diff
+(define-key ai-tools-map (kbd "D") 'claude-code-show-last-diff)     ;; Show last diff
+(define-key ai-tools-map (kbd "h") 'claude-code-show-change-history) ;; Change history
+(define-key ai-tools-map (kbd "u") 'claude-code-undo-last-change)   ;; Undo last change
+
+;; Copilot bindings (existing code completion)
+(define-key ai-tools-map (kbd "C") 'copilot-mode)                  ;; Toggle Copilot
+(define-key ai-tools-map (kbd "a") 'copilot-accept-completion)     ;; Accept completion
+
+;; Bind the AI tools map to C-c a
+(global-set-key (kbd "C-c a") ai-tools-map)
+
+;; --------------------------------
+;; AI Tools Mode Line Indicator
+;; --------------------------------
+(defun ai-tools-mode-line-indicator ()
+  "Show active AI tools in mode line."
+  (let ((indicators '()))
+    (when (and (boundp 'copilot-mode) copilot-mode)
+      (push "Co" indicators))
+    (when (and (boundp 'claude-code-active) claude-code-active)
+      (push "CC" indicators))
+    (when (and (boundp 'ellama-mode) ellama-mode)
+      (push "El" indicators))
+    (when indicators
+      (format " [AI:%s]" (string-join indicators ",")))))
+
+;; Add to mode line (optional)
+;; (add-to-list 'mode-line-misc-info '(:eval (ai-tools-mode-line-indicator)))
 
 (provide 'init-ai)
 ;;; init-ai.el ends here
