@@ -1,6 +1,6 @@
 #!/usr/bin/zsh
-files=(.zshrc .zprofile .gitconfig .tmux.conf .tmux-linux.conf .tmux-freebsd.conf .tmux-darwin.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
-dirs=(.zsh .emacs.d)
+files=(.zshrc .zprofile .gitconfig .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
+dirs=(.zsh .emacs.d .tmux)
 dotfiles=dotfiles
 
 case "${OSTYPE}" in
