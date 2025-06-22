@@ -98,24 +98,141 @@
   :bind ("C-c C-r" . sudo-edit))
 
 ;; Auto-revert mode for all files
-(setq auto-revert-interval 10)
-(setq auto-revert-check-vc-info t)
-(add-hook 'text-mode-hook 'auto-revert-mode)
-(add-hook 'prog-mode-hook 'auto-revert-mode)
+(use-package autorevert
+  :diminish auto-revert-mode
+  :custom
+  (auto-revert-verbose nil)                     ;; Silence revert messages
+  (auto-revert-check-vc-info t)                 ;; Auto-revert VC info
+  (global-auto-revert-non-file-buffers t)      ;; Revert dired and other buffers
+  :config
+  (global-auto-revert-mode 1))
 
-;; Time display (disabled by default)
-(setq display-time-24hr-format 1)
-(setq display-time-string-forms 
-      '(month "/" day " " dayname " " 24-hours ":" minutes))
-(display-time-mode 0)
+;; --------------------------------
+;; Modern Emacs Features
+;; --------------------------------
+;; Electric pair mode improvements (Emacs 28+)
+(use-package elec-pair
+  :config
+  (electric-pair-mode 1)
+  ;; Don't pair quotes in text modes
+  (add-hook 'text-mode-hook
+            (lambda ()
+              (setq-local electric-pair-pairs 
+                         '((?\" . ?\")
+                           (?\{ . ?\})
+                           (?\[ . ?\])
+                           (?\( . ?\)))))))
 
-;; Modeline settings
-(line-number-mode 1)
-(column-number-mode 0)
+;; Better whitespace handling (modern alternative to whitespace-mode)
+(use-package whitespace
+  :diminish whitespace-mode
+  :custom
+  (whitespace-style '(face tabs empty trailing))
+  (whitespace-action '(auto-cleanup warn-if-read-only))
+  :hook ((prog-mode text-mode) . whitespace-mode))
 
-;; Line truncation
-(setq truncate-lines nil)
-(setq truncate-partial-width-windows t)
+;; Enhanced abbrev mode
+(use-package abbrev
+  :diminish abbrev-mode
+  :custom
+  (abbrev-file-name (expand-file-name "abbrev_defs" user-emacs-directory))
+  (save-abbrevs 'silently)
+  :config
+  (if (file-exists-p abbrev-file-name)
+      (quietly-read-abbrev-file)))
+
+;; Modern repeat mode (Emacs 28+)
+(when (>= emacs-major-version 28)
+  (use-package repeat
+    :custom
+    (repeat-exit-timeout 3)                     ;; Exit repeat mode after 3 seconds
+    (repeat-exit-key "RET")                     ;; Exit with Return key
+    :config
+    (repeat-mode 1)))
+
+;; Better tab handling
+(use-package tab-bar
+  :when (>= emacs-major-version 27)
+  :custom
+  (tab-bar-show 1)                              ;; Show tab bar when more than 1 tab
+  (tab-bar-close-button-show nil)              ;; Hide close button
+  (tab-bar-new-button-show nil)                ;; Hide new button
+  (tab-bar-tab-hints t)                        ;; Show tab numbers
+  :config
+  (tab-bar-mode 1)
+  (tab-bar-history-mode 1))
+
+;; Improved help system
+(use-package help
+  :custom
+  (help-window-select t)                        ;; Select help window automatically
+  (help-enable-symbol-autoload t))              ;; Auto-load symbols in help
+
+;; Enhanced search and replace
+(use-package replace
+  :custom
+  (replace-char-fold t)                         ;; Case-fold search
+  (query-replace-highlight t)                   ;; Highlight during query-replace
+  (query-replace-show-replacement t))           ;; Show replacement text
+
+;; Modern file handling
+(use-package files
+  :custom
+  (auto-save-visited-mode t)                    ;; Auto-save visited files
+  (auto-save-visited-interval 30)               ;; Auto-save every 30 seconds
+  (backup-by-copying t)                         ;; Don't clobber symlinks
+  (delete-old-versions t)                       ;; Delete old backup versions
+  (kept-new-versions 6)                         ;; Keep 6 new versions
+  (kept-old-versions 2)                         ;; Keep 2 old versions
+  (version-control t)                           ;; Use version control for backups
+  (vc-make-backup-files t))                     ;; Backup files under version control
+
+;; Enhanced clipboard and kill ring
+(use-package simple
+  :custom
+  (kill-ring-max 200)                           ;; Larger kill ring
+  (kill-do-not-save-duplicates t)              ;; Don't save duplicate kills
+  (save-interprogram-paste-before-kill t))     ;; Save clipboard before killing
+
+;; Better buffer switching
+(use-package uniquify
+  :custom
+  (uniquify-buffer-name-style 'forward)        ;; Use forward slashes
+  (uniquify-separator "/")                      ;; Separator character
+  (uniquify-after-kill-buffer-p t)              ;; Rename after killing
+  (uniquify-ignore-buffers-re "^\\*"))         ;; Ignore special buffers
+
+;; --------------------------------
+;; Modern Display Features
+;; --------------------------------
+;; Enhanced line numbers (Emacs 26+)
+(when (>= emacs-major-version 26)
+  (use-package display-line-numbers
+    :custom
+    (display-line-numbers-type 'relative)      ;; Relative line numbers
+    (display-line-numbers-width-start t)       ;; Auto-adjust width
+    :hook (prog-mode . display-line-numbers-mode)))
+
+;; Modern window and frame handling
+(use-package window
+  :custom
+  (switch-to-buffer-obey-display-actions t)    ;; Modern buffer switching
+  (split-width-threshold 80)                   ;; Split windows threshold
+  (split-height-threshold 40))
+
+;; Enhanced time display
+(use-package time
+  :custom
+  (display-time-24hr-format t)                 ;; 24-hour format
+  (display-time-load-average nil)              ;; Don't show load average
+  (display-time-default-load-average nil))
+
+;; Better modeline
+(use-package simple
+  :config
+  (line-number-mode 1)                         ;; Show line numbers in modeline
+  (column-number-mode 1)                       ;; Show column numbers in modeline
+  (size-indication-mode 1))                    ;; Show buffer size
 
 (provide 'init-editor)
 ;;; init-editor.el ends here

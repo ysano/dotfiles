@@ -134,30 +134,37 @@
 (defvar my-face-b-2 'my-face-b-2)
 (defvar my-face-u-1 'my-face-u-1)
 
-;; Use advice to add keywords to all major modes
+;; Modern way to highlight whitespace issues
 (defun my-add-watchwords ()
   "Highlight tabs and trailing whitespace."
-  (font-lock-add-keywords
-   nil
-   '(("\t" 0 my-face-b-2 append)
-     ("　" 0 my-face-b-1 append)
-     ("[ \t]+$" 0 my-face-u-1 append))))
+  (when font-lock-mode
+    (font-lock-add-keywords
+     nil
+     '(("\t" 0 my-face-b-2 append)
+       ("　" 0 my-face-b-1 append)       ;; Full-width space
+       ("[ \t]+$" 0 my-face-u-1 append))
+     'append)))
 
-(add-hook 'prog-mode-hook 'my-add-watchwords)
-(add-hook 'text-mode-hook 'my-add-watchwords)
+;; Use modern hook syntax
+(dolist (hook '(prog-mode-hook text-mode-hook))
+  (add-hook hook #'my-add-watchwords))
 
 ;; --------------------------------
 ;; Dashboard
 ;; --------------------------------
 (use-package dashboard
   :ensure t
+  :defer t
+  :commands (dashboard-setup-startup-hook)
   :custom
   (dashboard-startup-banner 'logo)
   (dashboard-items '((recents . 10)
                      (bookmarks . 5)
                      (projects . 5)))
-  :config
-  (dashboard-setup-startup-hook))
+  :init
+  ;; Only setup dashboard if we start with no files
+  (when (< (length command-line-args) 2)
+    (add-hook 'emacs-startup-hook #'dashboard-setup-startup-hook)))
 
 (provide 'init-ui)
 ;;; init-ui.el ends here

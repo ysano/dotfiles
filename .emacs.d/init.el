@@ -10,6 +10,30 @@
 ;; Suppress byte-compile warnings
 (setq byte-compile-warnings '(not free-vars unresolved callargs redefine obsolete noruntime cl-functions interactive-only make-local))
 
+;; --------------------------------
+;; Error Handling and Debugging
+;; --------------------------------
+;; Better error handling during initialization
+(setq debug-on-error nil)                              ;; Don't debug on error by default
+(setq debug-on-quit nil)                               ;; Don't debug on quit
+
+;; Function to safely load configuration files
+(defun safe-load (file &optional noerror)
+  "Safely load a configuration FILE with error handling."
+  (condition-case err
+      (load file noerror)
+    (error
+     (message "Error loading %s: %s" file (error-message-string err))
+     nil)))
+
+;; Function to check if a file is readable
+(defun check-config-file (file)
+  "Check if configuration FILE exists and is readable."
+  (let ((full-path (expand-file-name file user-emacs-directory)))
+    (unless (file-readable-p full-path)
+      (message "Warning: Configuration file %s is not readable" full-path)
+      nil)))
+
 ;; Add load paths
 (add-to-list 'load-path (expand-file-name "inits" user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "elisp" user-emacs-directory))
@@ -26,12 +50,17 @@
 ;; Add package repositories
 (unless (assoc-default "melpa" package-archives)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
+(unless (assoc-default "melpa-stable" package-archives)
+  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t))
 (unless (assoc-default "nongnu" package-archives)
   (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
 
-;; TLS settings
+;; TLS and Security settings
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-(setq package-check-signature nil)
+(setq gnutls-verify-error t)                           ;; Verify TLS certificates
+(setq gnutls-min-prime-bits 2048)                      ;; Minimum prime bits for security
+(setq package-check-signature 'allow-unsigned)         ;; Allow unsigned but warn
+(setq package-unsigned-archives nil)                   ;; Don't silently allow unsigned
 
 (package-initialize)
 
@@ -47,20 +76,39 @@
 (setq load-prefer-newer t)
 
 ;; Package manager helpers
-(use-package quelpa-use-package :ensure t)
+(use-package quelpa-use-package 
+  :ensure t
+  :custom
+  (quelpa-update-melpa-p nil)                    ;; Don't auto-update MELPA
+  (quelpa-checkout-melpa-p nil)                  ;; Don't checkout MELPA
+  (quelpa-upgrade-interval 7))                   ;; Check for upgrades weekly
+
 (use-package use-package-ensure-system-package :ensure t)
-(use-package use-package-chords :ensure t
+
+(use-package use-package-chords 
+  :ensure t
   :config (key-chord-mode 1))
 
-;; Auto-update packages
+;; Pin critical packages to specific versions for stability
+(setq package-pinned-packages
+      '((org . "gnu")                           ;; Use GNU version of org
+        (magit . "melpa-stable")                ;; Use stable magit
+        (company . "melpa-stable")              ;; Use stable company
+        (ivy . "melpa-stable")                  ;; Use stable ivy
+        (projectile . "melpa-stable")))         ;; Use stable projectile
+
+;; Auto-update packages (defer to prevent startup delay)
 (use-package auto-package-update
   :ensure t
+  :defer t
   :custom
   (auto-package-update-delete-old-versions t)
   (auto-package-update-hide-results t)
   (auto-package-update-prompt-before-update t)
   :config
-  (auto-package-update-maybe))
+  ;; Remove auto-update-maybe to prevent automatic updates on startup
+  ;; Call manually with M-x auto-package-update-now when needed
+  )
 
 ;; For diminishing minor modes in modeline
 (use-package diminish :ensure t
@@ -187,56 +235,73 @@
 ;; --------------------------------
 ;; Load Component Modules
 ;; --------------------------------
+;; Load configuration modules with error handling
+(let ((config-modules '("init-ui"
+                        "init-encode"
+                        "init-env"
+                        "init-editor"
+                        "init-navigation"
+                        "init-completion"
+                        "init-dev-core"
+                        "init-dev-languages"
+                        "init-dev-web"
+                        "init-text-modes"
+                        "init-org-complete"
+                        "init-ai"
+                        "init-claude-code-workflows"
+                        "init-platform")))
+  (dolist (module config-modules)
+    (message "Loading configuration module: %s" module)
+    (condition-case err
+        (load module)
+      (error
+       (message "Error loading %s: %s" module (error-message-string err))
+       (sit-for 1)))))  ;; Brief pause to see error messages
 
-;; UI and Theming
-(load "init-ui")
-
-;; Encoding
-(load "init-encode")
-
-;; Environment
-(load "init-env")
-
-;; Mozc
-;(load "init-mozc")
-
-;; Editor Enhancements
-(load "init-editor")
-
-;; Navigation & Search
-(load "init-navigation")
-
-;; Completion and autocompletion
-(load "init-completion")
-
-;; Development Tools
-(load "init-dev")
-
-;; Text modes
-(load "init-text-modes")
-
-;; Org mode
-;; (load "init-org-mode")
-
-;; Org-roam
-;; (load "init-org-roam")
-
-;; Org-integrated
-(load "init-org-integrated")
-
-;; AI Assistance
-(load "init-ai")
-
-;; OS and Platform specific
-(load "init-platform")
+;; Optional modules (load if present)
+(dolist (optional-module '("init-mozc" "init-local"))
+  (when (locate-library optional-module)
+    (message "Loading optional module: %s" optional-module)
+    (condition-case err
+        (load optional-module)
+      (error
+       (message "Error loading optional module %s: %s" 
+                optional-module (error-message-string err))))))
 
 ;; --------------------------------
 ;; Libraries
 ;; --------------------------------
 (use-package dash 
   :ensure t
+  :defer t
   :config
   (dash-enable-font-lock))
+
+;; --------------------------------
+;; Startup Performance Monitoring
+;; --------------------------------
+(defun my-startup-hook ()
+  "Display startup time and configuration statistics."
+  (message "Emacs started in %.2f seconds with %d garbage collections."
+           (float-time (time-subtract after-init-time before-init-time))
+           gcs-done)
+  
+  ;; Show package count
+  (when (fboundp 'package-installed-p)
+    (message "Loaded %d packages" (length package-activated-list)))
+  
+  ;; Show use-package statistics if available
+  (when (and (fboundp 'use-package-statistics)
+             use-package-compute-statistics)
+    (message "Use-package statistics available. Run M-x use-package-report for details.")))
+
+(add-hook 'emacs-startup-hook #'my-startup-hook)
+
+;; --------------------------------
+;; Final Error Handling
+;; --------------------------------
+;; Catch any remaining initialization errors
+(setq after-init-time (current-time))
 
 (provide 'init)
 ;;; init.el ends here

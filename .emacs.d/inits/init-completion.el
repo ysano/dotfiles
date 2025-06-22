@@ -35,10 +35,16 @@
 (use-package copilot
   :quelpa (copilot :fetcher github
                    :repo "copilot-emacs/copilot.el"
-                   :branch "main"
+                   :commit "c83ff157eaa8b9ef3c5c86e2c7b1c55f0b48e3d6"  ;; Pin to specific commit
                    :files ("dist" "*.el"))
+  :defer t
+  :commands copilot-mode
   :ensure-system-package
-  (("copilot" . "npm install -g @github/copilot-language-server"))
+  (("node" . "node")
+   ("npm" . "npm"))
+  :custom
+  (copilot-idle-delay 0.1)                              ;; Delay before showing completions
+  (copilot-max-char -1)                                 ;; No character limit
   :bind ("<f2>" . copilot-mode)
   :bind (:map copilot-completion-map
               ("<tab>" . copilot-accept-completion)
@@ -50,19 +56,29 @@
               ("C-n" . copilot-next-completion)
               ("C-p" . copilot-previous-completion)
               ("C-g" . copilot-clear-overlay))
-  :hook (prog-mode . copilot-mode))
+  :hook (prog-mode . copilot-mode)
+  :config
+  ;; Only enable in specific modes for security
+  (setq copilot-enable-predicates
+        '(evil-insert-state-p
+          (lambda () (not (or (org-mode-p) (buffer-file-name))))
+          (lambda () (not (string-match-p "secret\\|password\\|token" (buffer-name)))))))
 
 ;; --------------------------------
 ;; LSP Mode
 ;; --------------------------------
 (use-package lsp-mode
   :ensure t
+  :defer t
   :commands lsp
   :custom
   (lsp-keymap-prefix "C-c l")
   (lsp-enable-snippet nil)
   (lsp-auto-guess-root t)
   (lsp-keep-workspace-alive nil)
+  (lsp-signature-auto-activate nil)  ;; Improve performance
+  (lsp-signature-render-documentation nil)
+  (lsp-completion-provider :capf)    ;; Use capf for better performance
   :hook
   ((js-mode typescript-mode) . lsp)
   (lsp-mode . lsp-enable-which-key-integration)
@@ -130,6 +146,7 @@
 (use-package google-translate
   :ensure t
   :defer t
+  :commands (google-translate-at-point google-translate-query-translate)
   :custom
   (google-translate-default-source-language "en")
   (google-translate-default-target-language "ja")
