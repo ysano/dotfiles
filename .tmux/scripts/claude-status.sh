@@ -79,19 +79,19 @@ debug_log "Claude Code UI patterns confirmed"
 
 STATUS=""
 
-# Check for waiting input state (ccmanager-inspired patterns)
-if echo "$TERMINAL_OUTPUT" | grep -qE "(│.*Do you want|│.*Would you like|Continue\?|Press.*continue|awaiting.*input)"; then
-    STATUS="⌛"  # Waiting for input
-    debug_log "Detected waiting_input state"
-# Check for busy state (processing/working)
-elif echo "$LOWER_OUTPUT" | grep -qE "(esc to interrupt|interrupt.*esc|multiplexing|running|processing)"; then
+# Check for busy state first (processing/working)
+if echo "$LOWER_OUTPUT" | grep -qE "esc to interrupt"; then
     STATUS="⚡"  # Busy state
     debug_log "Detected busy state"
-# Check for auto-accept or prompt state
-elif echo "$TERMINAL_OUTPUT" | grep -qE "(auto-accept edits|>\s*$|shift\+tab)"; then
+# Check for explicit waiting input state (user confirmation required)
+elif echo "$TERMINAL_OUTPUT" | grep -qE "(Do you want|Would you like|Continue\?|Press.*continue|awaiting.*input)"; then
+    STATUS="⌛"  # Waiting for input
+    debug_log "Detected waiting_input state"
+# Check for specific auto-accept prompts (but not just idle prompt)
+elif echo "$TERMINAL_OUTPUT" | grep -qE "(auto-accept edits.*shift\+tab|shift\+tab.*auto-accept)"; then
     STATUS="⌛"  # Ready for input
-    debug_log "Detected prompt/auto-accept state"
-# If we have Claude Code UI but no specific state, it's idle
+    debug_log "Detected auto-accept configuration state"
+# If we have Claude Code UI but no active patterns, it's idle
 else
     STATUS="✅"  # Idle state
     debug_log "Detected idle state (Claude Code confirmed but no active patterns)"
