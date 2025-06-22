@@ -1,0 +1,271 @@
+#+TITLE: Sophisticated Cross-Platform Dotfiles
+#+AUTHOR: Yoshiaki Sano
+#+DATE: 2025-06-07
+#+STARTUP: overview
+#+LANGUAGE: ja
+
+* 概要
+
+このリポジトリは、**AI統合**、**多言語対応**、**クロスプラットフォーム一貫性**を重視した高度なdotfiles構成です。
+Emacsを中心とした統一的なコンピューティング環境を、Windows、macOS、Linux全体で提供します。
+
+** 主要特徴
+
+- 🧠 *AI駆動ワークフロー*: 複数LLMプロバイダー（Ollama、GitHub Copilot）
+- ⌨️  *統一キーバインド*: 全プラットフォームでEmacsライクなナビゲーション
+- 🌏 *日英バイリンガル対応*: Mozcと最適化された入力メソッド
+- 📚 *高度ナレッジマネジメント*: Org-roamベースのZettelkasten
+- ⚡ *パフォーマンス最適化*: 遅延読み込みと起動時間最適化
+
+* アーキテクチャ
+
+** Emacs設定 (~2,500行)
+#+begin_src
+.emacs.d/
+├── inits/                    # モジュラー設定
+│   ├── init-ai.el           # AI/LLM統合 (23行)
+│   ├── init-org-integrated.el # Org-roam + GTD (479行)
+│   ├── init-dev.el          # 開発環境 (271行)
+│   └── ...                  # その他14モジュール
+├── elisp/                   # カスタムLisp
+│   └── mozc-cursor-color.el # 日本語入力視覚フィードバック
+└── early-init.el           # 起動最適化
+#+end_src
+
+** クロスプラットフォームキーボード統一
+#+begin_src
+karabiner/                   # macOS (Karabiner-Elements)
+├── assets/complex_modifications/
+│   └── emacs-like.json
+keyboard-maestro/            # macOS マクロ自動化
+mayu/                       # Windows キーリマップ
+└── 104onFKB.mayu
+#+end_src
+
+** Shell設定 (Zsh + Zinit)
+#+begin_src
+.zsh/
+├── zinit_setup.zsh         # プラグイン管理
+├── completion.zsh          # 補完システム
+├── keybindings.zsh         # キーバインド
+└── ...                     # モジュラー構成
+#+end_src
+
+** WSL最適化
+#+begin_src
+wsl/
+├── etc_fonts/local.conf    # フォントレンダリング
+├── mnt_c_opt_mozc/         # 日本語入力メソッド
+└── vcxsrv/config.xlaunch   # X11転送設定
+#+end_src
+
+* 主要機能
+
+** AI統合ワークフロー
+
+*** LLMプロバイダー設定
+#+begin_src emacs-lisp
+;; 複数の専門化されたモデル
+(setq ellama-providers
+  '(("deepseek-coder-v2" . (make-llm-ollama...))  ; コーディング
+    ("mixtral" . (make-llm-ollama...))             ; 汎用
+    ("mistral" . (make-llm-ollama...))             ; 翻訳
+    ("zephyr" . (make-llm-ollama...))))            ; 軽量
+#+end_src
+
+*** GitHub Copilot統合
+- Company-modeとの統合
+- リアルタイム補完
+- コード生成ワークフロー
+
+** 高度ナレッジマネジメント
+
+*** Org-roam Zettelkasten
+- データベース駆動の知識グラフ
+- 日英バイリンガルノート
+- AI支援ノート作成
+- GTDワークフロー統合
+
+*** キーバインド (=C-c n= プレフィックス)
+- =C-c n f= : ノード検索
+- =C-c n i= : ノード挿入
+- =C-c n c= : キャプチャー
+- =C-c n g= : グラフ表示
+
+** 日本語入力最適化
+
+*** Mozc統合
+- カーソル色による状態表示
+- クロスプラットフォーム対応
+- 入力メソッド切り替えの視覚フィードバック
+
+*** WSL日本語環境
+- フォント最適化
+- 入力メソッド統合
+- X11アプリケーション対応
+
+** 開発環境
+
+*** 言語別設定
+- *PHP*: PSR-2準拠、PHPCSとの統合
+- *Go*: gofmt自動フォーマット
+- *Python*: yapf、flake8統合
+- *Ruby*: Rubocop統合
+- *JavaScript/TypeScript*: ESLint、Prettier
+
+*** 高度な機能
+- Magit (Git統合)
+- Flycheck (構文チェック)
+- Company-mode (補完)
+- Projectile (プロジェクト管理)
+
+* セットアップ
+
+** 前提条件
+- Emacs 28+ (native-compサポート推奨)
+- Zsh 5.8+
+- Git 2.25+
+- Node.js (Copilot用)
+
+** インストール
+
+*** 1. リポジトリクローン
+#+begin_src bash
+git clone https://github.com/username/dotfiles.git ~/.dotfiles
+cd ~/.dotfiles
+#+end_src
+
+*** 2. シンボリックリンク作成
+#+begin_src bash
+chmod +x link.sh
+./link.sh
+#+end_src
+
+*** 3. OS固有設定
+
+**** macOS
+#+begin_src bash
+# Karabiner-Elements設定
+cp karabiner/karabiner.json ~/.config/karabiner/
+
+# Homebrew パッケージ
+brew install emacs zsh zinit
+#+end_src
+
+**** Linux/WSL
+#+begin_src bash
+# フォント設定
+sudo cp wsl/etc_fonts/local.conf /etc/fonts/local.conf
+
+# Mozc設定 (WSL)
+sudo cp wsl/mnt_c_opt_mozc/* /mnt/c/opt/mozc/
+#+end_src
+
+**** Windows
+- Mayu設定ファイルを適用
+- Keyboard Maestroマクロをインポート
+
+** AI設定
+
+*** Ollama setup
+#+begin_src bash
+# Ollamaインストール
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# モデルダウンロード
+ollama pull llama3.1:8b-instruct-q4_K_S
+ollama pull deepseek-coder-v2:16b
+ollama pull mixtral:8x7b
+#+end_src
+
+*** GitHub Copilot
+#+begin_src bash
+# Node.js依存関係
+npm install -g copilot-node-server
+#+end_src
+
+* カスタマイズ
+
+** ローカル設定
+- =~/.zshrc.local= : ローカルZsh設定
+- =~/.emacs.d/inits/init-local.el= : ローカルEmacs設定
+- =CLAUDE.md= : AI支援コマンド履歴
+
+** 設定の拡張
+各モジュールは独立しており、必要に応じて個別に無効化・カスタマイズ可能です。
+
+** OS固有の調整
+=.zprofile= のOS検出ロジックにより、プラットフォーム固有の設定が自動適用されます。
+
+* トラブルシューティング
+
+** よくある問題
+
+*** Zsh起動時エラー
+#+begin_src bash
+# Docker補完エラー
+sudo rm /usr/share/zsh/vendor-completions/_docker
+
+# Zinitキャッシュクリア
+rm -rf ~/.cache/zinit
+#+end_src
+
+*** Emacs パッケージエラー
+#+begin_src emacs-lisp
+;; パッケージリフレッシュ
+M-x package-refresh-contents
+M-x package-reinstall RET [package-name]
+#+end_src
+
+*** WSL X11問題
+#+begin_src bash
+# DISPLAY変数確認
+echo $DISPLAY
+# VcXsrv再起動が必要な場合があります
+#+end_src
+
+** パフォーマンス最適化
+
+*** Emacs起動時間
+#+begin_src emacs-lisp
+;; 起動時間測定
+M-x emacs-init-time
+
+;; 統計情報
+M-x use-package-report
+#+end_src
+
+*** Zsh起動時間
+#+begin_src bash
+# プロファイリング
+time zsh -i -c exit
+
+# Zinit統計
+zinit times
+#+end_src
+
+* 貢献
+
+このdotfiles設定への改善提案やバグ報告は歓迎します。
+特に以下の分野での貢献を求めています：
+
+- AI統合ワークフローの改善
+- 新しいプラットフォーム対応
+- パフォーマンス最適化
+- ドキュメント改善
+
+* ライセンス
+
+このリポジトリは個人使用向けに設計されていますが、
+参考にしていただくことは自由です。
+
+* リンク
+
+- [[https://www.gnu.org/software/emacs/][GNU Emacs]]
+- [[https://github.com/zdharma-continuum/zinit][Zinit]]
+- [[https://github.com/org-roam/org-roam][Org-roam]]
+- [[https://ollama.ai/][Ollama]]
+- [[https://github.com/features/copilot][GitHub Copilot]]
+
+---
+/最終更新: 2025-06-07/

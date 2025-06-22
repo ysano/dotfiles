@@ -171,3 +171,24 @@ zsdoc/data
 karabiner/assets/complex_modifications/[0-9]*.json
 karabiner/automatic_backups
 .emacs.d/kkcrc
+
+# Backup and temporary files
+*.backup
+*.old
+*.orig
+
+# Claude Code related
+.claude/cache/
+.claude/sessions/
+CLAUDE_WORKFLOWS_TEST_RESULTS.md
+
+# Cursor editor related
+.cursor/cache/
+.cursor/logs/
+
+# tmux related
+.tmux/cache/
+.tmux/status/.last_cleanup
+
+# Additional undo-tree files
+*.~undo-tree~
