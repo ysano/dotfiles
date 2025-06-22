@@ -1,82 +1,101 @@
 #!/bin/bash
-# Optimized Claude Code status monitoring script
+# Enhanced Claude Code status monitoring script (ccmanager-inspired, tmux-optimized)
+# Debug mode: set CLAUDE_STATUS_DEBUG=1 to enable detailed logging
 
 WINDOW_ID=${1:-$(tmux display-message -p '#I')}
 PANE_ID=${2:-$(tmux display-message -p '#P')}
 
-# Cache directory for performance optimization
-CACHE_DIR="$HOME/.tmux/cache"
-CACHE_FILE="$CACHE_DIR/claude-status-${WINDOW_ID}-${PANE_ID}"
-PROCESS_CACHE_FILE="$CACHE_DIR/claude-process"
-
-mkdir -p "$CACHE_DIR"
-
-# Performance optimization: Check process less frequently
-check_process_cache() {
-    local now=$(date +%s)
-    local cache_age=0
-    
-    if [ -f "$PROCESS_CACHE_FILE" ]; then
-        local cache_time=$(stat -c %Y "$PROCESS_CACHE_FILE" 2>/dev/null || echo 0)
-        cache_age=$((now - cache_time))
-    fi
-    
-    # Only check process every 10 seconds instead of every 3
-    if [ $cache_age -gt 10 ]; then
-        local claude_process=$(pgrep -f "claude.*code|claude-code|code.*claude" 2>/dev/null)
-        echo "${claude_process:-none}" > "$PROCESS_CACHE_FILE"
-        echo "$claude_process"
-    else
-        local cached_process=$(cat "$PROCESS_CACHE_FILE" 2>/dev/null)
-        [ "$cached_process" = "none" ] && echo "" || echo "$cached_process"
-    fi
+# Debug function
+debug_log() {
+    [ "$CLAUDE_STATUS_DEBUG" = "1" ] && echo "[DEBUG] $1" >&2
 }
 
-# Check if Claude Code is running using cached result
-CLAUDE_PROCESS=$(check_process_cache)
+debug_log "Starting Claude status detection for window $WINDOW_ID, pane $PANE_ID"
 
-# If no Claude Code process, return empty (no icon)
+# Step 1: Check if Claude Code is running globally
+CLAUDE_PROCESS=$(pgrep -f "claude" 2>/dev/null)
+
 if [ -z "$CLAUDE_PROCESS" ]; then
+    debug_log "No Claude process found globally"
     echo ""
-    # Clean up cache when process is not running
-    rm -f "$CACHE_FILE" "$PROCESS_CACHE_FILE" 2>/dev/null
     exit 0
 fi
 
-# Performance optimization: Only capture terminal output if process is running
-# and reduce lines captured from 30 to 10 for better performance
-TERMINAL_OUTPUT=$(tmux capture-pane -p -S -10 -t "${WINDOW_ID}.${PANE_ID}" 2>/dev/null)
+debug_log "Claude process found globally: $CLAUDE_PROCESS"
 
-# Cache the output hash to avoid expensive regex operations on same content
-OUTPUT_HASH=$(echo "$TERMINAL_OUTPUT" | md5sum | cut -d' ' -f1)
-CACHED_HASH=""
-CACHED_STATUS=""
-
-if [ -f "$CACHE_FILE" ]; then
-    CACHED_HASH=$(head -n1 "$CACHE_FILE" 2>/dev/null)
-    CACHED_STATUS=$(tail -n1 "$CACHE_FILE" 2>/dev/null)
+# Step 2: Check if Claude Code is running in this specific pane
+if [ "$WINDOW_ID" != "" ] && [ "$PANE_ID" != "" ]; then
+    PANE_PID=$(tmux display-message -t "${WINDOW_ID}.${PANE_ID}" -p '#{pane_pid}' 2>/dev/null)
+else
+    PANE_PID=$(tmux display-message -p '#{pane_pid}' 2>/dev/null)
 fi
-
-# Return cached result if content hasn't changed
-if [ "$OUTPUT_HASH" = "$CACHED_HASH" ] && [ -n "$CACHED_STATUS" ]; then
-    echo "$CACHED_STATUS"
+if [ -z "$PANE_PID" ]; then
+    debug_log "Failed to get pane PID"
+    echo ""
     exit 0
 fi
 
-# Determine status with optimized regex patterns
+debug_log "Pane PID: $PANE_PID"
+
+# Check if claude is in the process tree of this pane
+PANE_PROCESSES=$(pstree -p "$PANE_PID" 2>/dev/null || echo "")
+if ! echo "$PANE_PROCESSES" | grep -q "claude"; then
+    debug_log "Claude not found in pane process tree"
+    echo ""
+    exit 0
+fi
+
+debug_log "Claude found in pane process tree"
+
+# Capture terminal output (30 lines as per ccmanager)
+TERMINAL_OUTPUT=$(tmux capture-pane -p -S -30 -t "${WINDOW_ID}.${PANE_ID}" 2>/dev/null)
+
+if [ -z "$TERMINAL_OUTPUT" ]; then
+    debug_log "Failed to capture terminal output"
+    echo ""
+    exit 0
+fi
+
+debug_log "Captured terminal output (${#TERMINAL_OUTPUT} chars)"
+if [ "$CLAUDE_STATUS_DEBUG" = "1" ]; then
+    echo "[DEBUG] Terminal output:" >&2
+    echo "$TERMINAL_OUTPUT" >&2
+    echo "[DEBUG] ---" >&2
+fi
+
+# Step 3: Verify this is actually Claude Code by checking for characteristic patterns
+# Convert to lowercase for case-insensitive matching
+LOWER_OUTPUT=$(echo "$TERMINAL_OUTPUT" | tr '[:upper:]' '[:lower:]')
+
+# Check for Claude Code characteristic patterns
+CLAUDE_UI_PATTERNS="(╭─|╰─|claude\.ai|claude code|>\s*$|auto-accept edits|shift\+tab|esc to interrupt|multiplexing)"
+if ! echo "$TERMINAL_OUTPUT" | grep -qE "$CLAUDE_UI_PATTERNS"; then
+    debug_log "No Claude Code UI patterns found - not a Claude Code session"
+    echo ""
+    exit 0
+fi
+
+debug_log "Claude Code UI patterns confirmed"
+
 STATUS=""
-if echo "$TERMINAL_OUTPUT" | grep -qE "(esc to interrupt|interrupt.*esc)"; then
+
+# Check for waiting input state (ccmanager-inspired patterns)
+if echo "$TERMINAL_OUTPUT" | grep -qE "(│.*Do you want|│.*Would you like|Continue\?|Press.*continue|awaiting.*input)"; then
+    STATUS="⌛"  # Waiting for input
+    debug_log "Detected waiting_input state"
+# Check for busy state (processing/working)
+elif echo "$LOWER_OUTPUT" | grep -qE "(esc to interrupt|interrupt.*esc|multiplexing|running|processing)"; then
     STATUS="⚡"  # Busy state
-elif echo "$TERMINAL_OUTPUT" | grep -qE "(│.*Do you want|>\s*$|Continue\?|Press.*continue|awaiting.*input)"; then
-    STATUS="⌛"  # Waiting state
+    debug_log "Detected busy state"
+# Check for auto-accept or prompt state
+elif echo "$TERMINAL_OUTPUT" | grep -qE "(auto-accept edits|>\s*$|shift\+tab)"; then
+    STATUS="⌛"  # Ready for input
+    debug_log "Detected prompt/auto-accept state"
+# If we have Claude Code UI but no specific state, it's idle
 else
     STATUS="✅"  # Idle state
+    debug_log "Detected idle state (Claude Code confirmed but no active patterns)"
 fi
 
-# Cache the result
-{
-    echo "$OUTPUT_HASH"
-    echo "$STATUS"
-} > "$CACHE_FILE"
-
+debug_log "Final status: $STATUS"
 echo "$STATUS"
