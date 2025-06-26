@@ -24,6 +24,14 @@
 - `C-c SPC` ace-jump-mode
 - `M-o` ace-window
 - `C-'` imenu-list-smart-toggle
+- `C-x C-r` counsel-buffer-or-recentf
+
+## File Navigation (counsel-find-file)
+- `C-l` or `C-<backspace>` move up directory
+- `C-j` select current input exactly (ivy-immediate-done)
+- `RET` smart selection (ivy-alt-done)
+- `C-M-y` insert current full path
+- `C-o` show action menu with additional options
 
 ## Keyboard Shortcuts
 - `C-=` expand region, `C--` contract region
@@ -33,14 +41,11 @@
 
 ## AI Assistance
 - **Claude Code Integration:**
-  - `C-c C-c b` send buffer for analysis
-  - `C-c C-c r` review selected code
-  - `C-c C-c f` explain function at point
-  - `C-c C-c e` debug compilation errors
-  - `C-c C-c R` refactor code with diff preview
-  - `C-c C-c d` show last change diff
-  - `C-c C-c h` show change history
-  - `C-c C-c u` undo last Claude Code change
+  - `C-c C-b` send buffer for analysis
+  - `C-c C-r` review selected code
+  - `C-c C-f` explain function at point
+  - `C-c C-q` query Claude Code
+  - `C-c C-d` generate documentation
 
 - **Advanced Claude Code Workflows (`C-c c w` prefix):**
   - `C-c c w RET` auto workflow (context-aware)

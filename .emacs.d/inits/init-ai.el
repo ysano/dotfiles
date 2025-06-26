@@ -62,23 +62,9 @@
          :embedding-model "aya:8b-23-q4_K_S")))
 
 ;; --------------------------------
-;; Claude Code Integration
+;; Claude Code Integration Note
 ;; --------------------------------
-;; Load Claude Code integration based on Emacs version and availability
-(condition-case nil
-    (if use-package-supports-vc
-        ;; Try modern integration for Emacs 29+
-        (progn
-          (message "Attempting modern Claude Code integration...")
-          (require 'init-claude-code-simple))
-      ;; Fallback to simple integration
-      (progn
-        (message "Using simple Claude Code integration...")
-        (require 'init-claude-code-simple)))
-  (error
-   ;; If everything fails, provide basic functionality
-   (message "Claude Code integration failed, providing basic functions...")
-   (require 'init-claude-code-simple)))
+;; Claude Code integration is now handled in init-claude-code.el
 
 ;; --------------------------------
 ;; AI Tools Integration and Keybindings

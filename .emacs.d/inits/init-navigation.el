@@ -14,10 +14,18 @@
   (ivy-use-virtual-buffers t)
   (enable-recursive-minibuffers t)
   (ivy-height 20)
+  ;; Better ivy behavior
+  (ivy-count-format "(%d/%d) ")
+  (ivy-use-selectable-prompt t)
+  (ivy-re-builders-alist '((t . ivy--regex-plus)))
   :config
   (ivy-mode 1)
   :bind (("C-c C-r" . ivy-resume)
-         ([f6] . ivy-resume)))
+         ([f6] . ivy-resume)
+         ;; Better completion navigation
+         :map ivy-minibuffer-map
+         ("C-j" . ivy-immediate-done)
+         ("RET" . ivy-alt-done)))
 
 (use-package swiper
   :ensure t
@@ -32,17 +40,25 @@
   :after ivy
   :config
   (counsel-mode 1)
+  ;; Enhanced counsel-find-file directory navigation
+  (with-eval-after-load 'counsel
+    (define-key counsel-find-file-map (kbd "C-<backspace>") 'counsel-up-directory)
+    (define-key counsel-find-file-map (kbd "C-l") 'counsel-up-directory)
+    (define-key counsel-find-file-map (kbd "C-M-y") 'ivy-insert-current-full))
   :custom
   (counsel-find-file-ignore-regexp "\\.\\(~undo-tree~\\|#\\)\\'")
+  ;; Better counsel-find-file behavior
+  (counsel-find-file-at-point t)
+  (counsel-preselect-current-file t)
   :bind (("<f2> u" . counsel-unicode-char)
          ("C-c g" . counsel-git)
          ("C-c j" . counsel-git-grep)
          ("C-c k" . counsel-ag)
          ("C-x l" . counsel-locate)
+         ("C-x C-r" . counsel-buffer-or-recentf)
          :map minibuffer-local-map
-         ("C-r" . counsel-minibuffer-history)
-         :map counsel-find-file-map
-         ("C-l" . counsel-up-directory)))
+         ("C-r" . counsel-minibuffer-history)))
+
 
 ;; --------------------------------
 ;; Jump Navigation
@@ -115,8 +131,7 @@
 ;; --------------------------------
 (use-package rg
   :ensure t
-  :ensure-system-package
-  (rg . ripgrep))
+  :if (executable-find "rg"))
 
 ;; --------------------------------
 ;; Interactive mode for grep results
@@ -130,23 +145,16 @@
   (wgrep-change-readonly-file t))
 
 ;; --------------------------------
-;; Guide key
+;; Which-key (modern replacement for guide-key)
 ;; --------------------------------
-(use-package guide-key
+(use-package which-key
   :ensure t
-  :defer t
+  :diminish
   :custom
-  (guide-key/idle-delay 1.5)
-  (guide-key/guide-key-sequence
-   '("C-x r" "C-x 4" "C-c"
-     (org-mode "C-c C-x")
-     (outline-minor-mode "C-c @")))
-  (guide-key/highlight-command-regexp
-   '("rectangle"
-     ("register" . font-lock-type-face)
-     ("bookmark" . "hot pink")))
+  (which-key-idle-delay 1.0)
+  (which-key-max-description-length 32)
   :config
-  (guide-key-mode 1))
+  (which-key-mode 1))
 
 ;; --------------------------------
 ;; Hydra for key sequences
@@ -154,37 +162,7 @@
 (use-package hydra
   :ensure t
   :bind ("C-c C-v" . hydra-toggle/body)
-  :chords (("jk" . hydra-general/body))
   :config
-  (defhydra hydra-general ()
-    "move"
-    ("n" next-line)
-    ("p" previous-line)
-    ("f" forward-char)
-    ("b" backward-char)
-    ("a" beginning-of-line)
-    ("e" move-end-of-line)
-    ("v" scroll-up-command)
-    ("V" scroll-down-command)
-    ("l" recenter-top-bottom)
-    ;; clipboard
-    ("w" clipboard-kill-ring-save)
-    ("SPC" set-mark-command)
-    ;; window
-    ("S" window-swap-states)
-    ("1" delete-other-windows)
-    ("2" split-window-below)
-    ("3" split-window-right)
-    ("0" delete-window)
-    ("x" delete-window)
-    ;; buffer
-    ("q" kill-buffer)
-    (";" counsel-switch-buffer)
-    ("<" beginning-of-buffer)
-    (">" end-of-buffer)
-    ("M-n" next-buffer)
-    ("M-p" previous-buffer))
-  
   (defhydra hydra-toggle (:color blue)
     "toggle"
     ("a" abbrev-mode "abbrev")
