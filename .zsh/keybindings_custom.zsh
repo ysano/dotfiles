@@ -17,10 +17,10 @@ if [[ -f ~/.zsh/ghq.zsh ]]; then
 fi
 
 # ヘルプ機能
-if [[ "$OSTYPE" != "msys" ]]; then
-  run-help() { help "$BUFFER" }
-  zle -N run-help
-  bindkey '\ek' run-help  # Alt+K
+if [[ "$OSTYPE" != "msys" ]] && command -v help >/dev/null 2>&1; then
+  custom-run-help() { help "$BUFFER" }
+  zle -N custom-run-help
+  bindkey '\ek' custom-run-help  # Alt+K
 fi
 
 # カスタムヘルプ表示
