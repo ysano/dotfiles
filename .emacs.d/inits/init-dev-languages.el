@@ -11,11 +11,6 @@
   :defer t
   :mode ("\\.rb\\'" "Rakefile" "Gemfile" "\\.rake\\'" "\\.gemspec\\'")
   :interpreter "ruby"
-  :ensure-system-package
-  ((rubocop     . "gem install rubocop")
-   (ruby-lint   . "gem install ruby-lint")
-   (ripper-tags . "gem install ripper-tags")
-   (pry         . "gem install pry"))
   :custom
   (ruby-indent-level 2)
   (ruby-indent-tabs-mode nil))
@@ -33,8 +28,8 @@
 ;; --------------------------------
 (use-package python
   :defer t
-  :mode ("\\.py\\'" . python-mode)
-  :interpreter ("python" "python3" . python-mode)
+  :mode "\\.py\\'"
+  :interpreter ("python" "python3")
   :custom
   (python-indent-offset 4)
   (python-shell-interpreter "python3"))

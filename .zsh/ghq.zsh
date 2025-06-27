@@ -29,8 +29,8 @@ ghq-cd () {
     fi
 }
 
-# Add completion for ghq
-if (( $+commands[ghq] )); then
+# Add completion for ghq (only if compdef is available)
+if (( $+commands[ghq] )) && command -v compdef >/dev/null 2>&1; then
     compdef _ghq ghq
 fi
 

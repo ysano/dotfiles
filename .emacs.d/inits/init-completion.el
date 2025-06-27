@@ -39,9 +39,7 @@
                    :files ("dist" "*.el"))
   :defer t
   :commands copilot-mode
-  :ensure-system-package
-  (("node" . "node")
-   ("npm" . "npm"))
+  :if (and (executable-find "node") (executable-find "npm"))
   :custom
   (copilot-idle-delay 0.1)                              ;; Delay before showing completions
   (copilot-max-char -1)                                 ;; No character limit

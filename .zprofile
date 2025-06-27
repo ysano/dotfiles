@@ -1,149 +1,231 @@
 # ~/.zprofile
+# Core environment setup - executed once per login session
+# Refactored for better maintainability and performance
 
-## core environment variables
-# Contains:
-# - EDITOR, PAGER settings
-# - Other environment variables (e.g., LESSCHARSET)
+# Load utility functions first
+[[ -f "$HOME/.zsh/utils.zsh" ]] && source "$HOME/.zsh/utils.zsh"
 
-# Common environment variables
-export LANG=ja_JP.UTF-8
-export LC_CTYPE=ja_JP.UTF-8
-export EDITOR='emacsclient'
-export VISUAL='emacsclient'
+# ================================
+# Core Environment Variables
+# ================================
+
+# Locale setup with fallbacks
+setup_locale
+
+# Core environment
 export PAGER='less'
 export LESS='-RFXx3M'
 
-# Development related
-export CVSROOT=$HOME/cvs
-export SVNROOT=$HOME/svn
+# Development environment
+export CVSROOT="$HOME/cvs"
+export SVNROOT="$HOME/svn" 
 export GZIP='-v9N'
 export ACK_COLOR_MATCH='underline white'
-export CPPFLAGS="-I/usr/local/opt/openjdk/include"
-export JAVA_HOME="/usr/local/opt/openjdk/"
 export GTAGSLABEL=pygments
 
-# GPG
+# Security
 export GPG_TTY=$(tty)
 
+# ================================
+# OS-Specific Configuration
+# ================================
 
-## OS-specific settings
-# Contains:
-# - Case statement for different OS types
-# - WSL-specific settings
-
-# Detect the operating system
-case "${OSTYPE}" in
-    darwin*)
-        # macOS specific settings
-        # Homebrew
-        if [ -f /opt/homebrew/bin/brew ]; then
-            eval "$(/opt/homebrew/bin/brew shellenv)"
+setup_macos() {
+    # Homebrew setup
+    local brew_paths=(
+        "/opt/homebrew/bin/brew"
+        "/usr/local/bin/brew"
+    )
+    
+    for brew_path in $brew_paths; do
+        if [[ -x "$brew_path" ]]; then
+            eval "$($brew_path shellenv)"
+            break
         fi
+    done
 
-        # Use GNU versions of tools if available
-        if [ -d /opt/homebrew/opt/gnu-tar/libexec/gnubin ]; then
-            path=(/opt/homebrew/opt/gnu-tar/libexec/gnubin $path)
+    # GNU tools preference
+    safe_path_prepend "/opt/homebrew/opt/gnu-tar/libexec/gnubin"
+    
+    # Java setup for macOS
+    if [[ -d "/opt/homebrew/opt/openjdk" ]]; then
+        export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include $CPPFLAGS"
+        export JAVA_HOME="/opt/homebrew/opt/openjdk"
+    elif [[ -d "/usr/local/opt/openjdk" ]]; then
+        export CPPFLAGS="-I/usr/local/opt/openjdk/include $CPPFLAGS"
+        export JAVA_HOME="/usr/local/opt/openjdk"
+    fi
+}
+
+setup_linux() {
+    # WSL-specific configuration
+    if is_wsl; then
+        setup_wsl
+    fi
+    # Regular Linux settings would go here
+}
+
+setup_wsl() {
+    # X11 configuration for WSL
+    local display_hosts=(
+        "$(hostname).mshome.net:0.0"
+        "localhost:0.0"
+        ":0.0"
+    )
+    
+    for display in $display_hosts; do
+        export DISPLAY="$display"
+        if timeout 1 xset q >/dev/null 2>&1; then
+            break
         fi
+    done
+    
+    # WSL-specific environment
+    export LIBGL_ALWAYS_INDIRECT=1
+    [[ -f "$HOME/.xinitrc" ]] && source "$HOME/.xinitrc"
 
-        # macOS specific aliases or functions can be added here
-        ;;
-    linux*)
-        # Linux specific settings
-        if [[ $(uname -a) =~ 'microsoft' ]]; then
-            # WSL specific settings
-            # xorg for wsl
-            # vcxsrv options memo:
-            # - disable access control
-            # - approve public-network in firewall
-            export DISPLAY=$(hostname).mshome.net:0.0
-            export LANG=ja_JP.utf-8
-            export LIBGL_ALWAYS_INDIRECT=1
-            [ -f $HOME/.xinitrc ] && source $HOME/.xinitrc
+    # Mozc setup for WSL
+    if [[ -f "/mnt/c/opt/mozc/mozc_emacs_helper.sh" ]]; then
+        safe_path_append "/mnt/c/opt/mozc"
+    fi
+}
 
-            # WSL Mozc setup
-            if [[ -f /mnt/c/opt/mozc/mozc_emacs_helper.sh ]]; then
-                path+=/mnt/c/opt/mozc
-            fi
-        else
-            # Regular Linux settings
-        fi
-        ;;
-    freebsd*)
-        # FreeBSD specific settings
-        ;;
-    cygwin*)
-        # Cygwin specific settings
-        ;;
+setup_freebsd() {
+    # FreeBSD-specific settings
+    :  # placeholder
+}
+
+setup_cygwin() {
+    # Cygwin-specific settings  
+    :  # placeholder
+}
+
+# Apply OS-specific setup
+case "$OSTYPE" in
+    darwin*)  setup_macos  ;;
+    linux*)   setup_linux ;;
+    freebsd*) setup_freebsd ;;
+    cygwin*)  setup_cygwin ;;
 esac
 
-# Common settings for Unix-like systems
+# ================================
+# System Limits (Unix-like only)
+# ================================
+
 if [[ "$OSTYPE" != "cygwin"* ]]; then
-    unlimit
-    limit stack 8192
-    limit core 0
-    limit -s
+    # Set resource limits safely
+    command -v unlimit >/dev/null 2>&1 && unlimit
+    command -v limit >/dev/null 2>&1 && {
+        limit stack 8192 2>/dev/null
+        limit core 0 2>/dev/null
+    }
 fi
 
-# Set umask
+# Set secure umask
 umask 022
 
-## PATH settings
+# ================================
+# PATH Configuration
+# ================================
 
+# Initialize PATH with safe defaults
 typeset -U path
 path=(
-  $HOME/bin
-  $HOME/go/bin
-  /snap/bin
-  /usr/local/bin
-  /usr/local/sbin
-  /usr/bin
-  /bin
-  /usr/sbin
-  /sbin
-  $path
+    "$HOME/bin"
+    "$HOME/.local/bin"
+    "/usr/local/bin"
+    "/usr/local/sbin"
+    "/usr/bin"
+    "/bin"
+    "/usr/sbin"
+    "/sbin"
 )
 
-# Conditional PATH additions
-if [ -d "/var/qmail/bin" ]; then
-  path+=(/var/qmail/bin)
+# ================================
+# Development Environment Setup
+# ================================
+
+setup_go() {
+    if has_command go; then
+        export GOPATH="${GOPATH:-$HOME/go}"
+        safe_path_append "$GOPATH/bin"
+    fi
+}
+
+setup_rust() {
+    safe_path_append "$HOME/.cargo/bin"
+}
+
+setup_node() {
+    if has_command npm; then
+        local npm_global_bin
+        npm_global_bin="$(npm prefix -g 2>/dev/null)/bin"
+        safe_path_append "$npm_global_bin"
+    fi
+}
+
+setup_ruby() {
+    # ASDF Ruby support
+    if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" ]]; then
+        safe_path_prepend "${ASDF_DATA_DIR:-$HOME/.asdf}/shims"
+    fi
+}
+
+setup_android() {
+    if [[ -d "$HOME/Android/Sdk" ]]; then
+        export ANDROID_HOME="$HOME/Android/Sdk"
+        safe_path_append "$ANDROID_HOME/cmdline-tools/latest/bin"
+        safe_path_append "$ANDROID_HOME/platform-tools"
+    fi
+}
+
+setup_flutter() {
+    # Flutter setup - make configurable
+    local flutter_path="${FLUTTER_HOME:-$HOME/ghq/github.com/flutter/flutter/bin}"
+    safe_path_append "$flutter_path"
+}
+
+# ================================
+# Legacy and Optional Tools
+# ================================
+
+setup_legacy_tools() {
+    # Legacy mail system
+    safe_path_append "/var/qmail/bin"
+    
+    # Ruby development
+    safe_path_append "$HOME/rd/.bin"
+    
+    # Rancher Desktop
+    safe_path_append "$HOME/.rd/bin"
+}
+
+# ================================
+# Execute Setup Functions
+# ================================
+
+# Core development environments
+setup_go
+setup_rust  
+setup_node
+setup_ruby
+setup_android
+setup_flutter
+
+# Optional/legacy tools
+setup_legacy_tools
+
+# Editor setup (after OS-specific config)
+setup_editor
+
+# Final PATH cleanup
+cleanup_path
+
+# ================================
+# Validation
+# ================================
+
+# Validate configuration if in debug mode
+if [[ -n "${ZSH_DEBUG:-}" ]]; then
+    validate_zsh_config
 fi
-
-if [ -d "$HOME/rd/.bin" ]; then
-  path+=($HOME/rd/.bin)
-fi
-
-if [ -d "$HOME/.asdf/shims" ]; then
-  path+=(${ASDF_DATA_DIR:-$HOME/.asdf}/shims)
-fi
-
-if command -v npm >/dev/null; then
-  npm_global_bin="$(npm prefix -g)/bin"
-  if [ -d "$npm_global_bin" ]; then
-    path+=("$npm_global_bin")
-  fi
-fi
-
-if [[ -f /mnt/c/opt/mozc/mozc_emacs_helper.sh ]]; then
-  path+=(/mnt/c/opt/mozc)
-fi
-
-# Additional PATH entries (uncomment if needed)
-# path=($path /usr/libexec /usr/local/libexec)
-# path=($path /usr/local/sysutil)
-# path=($path /usr/ucb /usr/etc)  # for SunOS
-# path=($path $HOME/my/android/sdk/platform-tools)  # for android
-# path=($path $HOME/local/pig-0.12.1/bin)  # for apache-pig
-# path=($path $HOME/.composer/vendor/bin)  # for composer
-path=($path $HOME/ghq/github.com/flutter/flutter/bin)       # for flutter
-# path=($path /usr/local/opt/openjdk/bin)  # for jdk
-export ANDROID_HOME=$HOME/Android/Sdk
-path=($path $ANDROID_HOME/cmdline-tools/latest/bin)
-path=($path $ANDROID_HOME/platform-tools)
-
-# Rancher Desktop (cross-platform)
-if [ -d "$HOME/.rd/bin" ]; then
-  path+=("$HOME/.rd/bin")
-fi
-
-# Remove duplicate entries from PATH
-typeset -U PATH

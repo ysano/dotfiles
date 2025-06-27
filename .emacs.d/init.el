@@ -17,23 +17,6 @@
 (setq debug-on-error nil)                              ;; Don't debug on error by default
 (setq debug-on-quit nil)                               ;; Don't debug on quit
 
-;; Function to safely load configuration files
-(defun safe-load (file &optional noerror)
-  "Safely load a configuration FILE with error handling."
-  (condition-case err
-      (load file noerror)
-    (error
-     (message "Error loading %s: %s" file (error-message-string err))
-     nil)))
-
-;; Function to check if a file is readable
-(defun check-config-file (file)
-  "Check if configuration FILE exists and is readable."
-  (let ((full-path (expand-file-name file user-emacs-directory)))
-    (unless (file-readable-p full-path)
-      (message "Warning: Configuration file %s is not readable" full-path)
-      nil)))
-
 ;; Add load paths
 (add-to-list 'load-path (expand-file-name "inits" user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "elisp" user-emacs-directory))
@@ -76,14 +59,13 @@
 (setq load-prefer-newer t)
 
 ;; Package manager helpers
-(use-package quelpa-use-package 
+(use-package quelpa-use-package
   :ensure t
   :custom
   (quelpa-update-melpa-p nil)                    ;; Don't auto-update MELPA
   (quelpa-checkout-melpa-p nil)                  ;; Don't checkout MELPA
   (quelpa-upgrade-interval 7))                   ;; Check for upgrades weekly
 
-(use-package use-package-ensure-system-package :ensure t)
 
 (use-package use-package-chords 
   :ensure t
@@ -111,30 +93,21 @@
   )
 
 ;; For diminishing minor modes in modeline
-(use-package diminish :ensure t
-  :config
-  (defmacro safe-diminish (file mode &optional new-name)
-    `(with-eval-after-load ,file
-       (diminish ,mode ,new-name)))
-  (safe-diminish 'autorevert 'auto-revert-mode))
+(use-package diminish :ensure t)
 (use-package delight :ensure t)
 
 ;; --------------------------------
 ;; Personal Settings
 ;; --------------------------------
-;; Load secrets file if exists
-(load "~/.emacs.secrets" t)
-
-;; User info
-(setq user-full-name "Yoshiaki Sano"
-      user-mail-address "ysano@ysnet.org")
-
-;; Calendar location
-(setq calendar-latitude 35.7
-      calendar-longitude 139.6)
-
-;; Browser settings
-(setq browse-url-browser-function 'browse-url-default-browser)
+(use-package emacs
+  :custom
+  (user-full-name "Yoshiaki Sano")
+  (user-mail-address "ysano@ysnet.org")
+  (calendar-latitude 35.7)
+  (calendar-longitude 139.6)
+  (browse-url-browser-function 'browse-url-default-browser)
+  :config
+  (load "~/.emacs.secrets" t))
 
 ;; --------------------------------
 ;; Startup Optimizations
@@ -170,48 +143,41 @@
 ;; --------------------------------
 ;; Core Editor Settings
 ;; --------------------------------
-;; Buffer defaults
-(setq-default 
- tab-width 4                         ;; Tab width
- indent-tabs-mode nil                ;; Use spaces instead of tabs
- fill-column 80                      ;; Line width for auto-fill
- truncate-lines t                    ;; Don't wrap lines
- truncate-partial-width-windows t    ;; Don't wrap in split windows
- cursor-type t                       ;; Cursor type
- line-spacing 0.0)                   ;; No extra line spacing
+(use-package emacs
+  :custom
+  ;; Buffer defaults
+  (tab-width 4)
+  (indent-tabs-mode nil)
+  (fill-column 80)
+  (truncate-lines t)
+  (truncate-partial-width-windows t)
+  (cursor-type t)
+  (line-spacing 0.0)
+  (x-stretch-cursor t)
+  ;; Ediff settings
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
+  ;; History settings
+  (history-length t)
+  (history-delete-duplicates t)
+  (savehist-save-minibuffer-history t)
+  (savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
+  :config
+  ;; Encoding settings
+  (set-language-environment "Japanese")
+  (prefer-coding-system 'utf-8-unix)
+  (setq default-buffer-file-coding-system 'utf-8-unix)
+  (set-buffer-file-coding-system 'utf-8-unix)
+  ;; History mode
+  (savehist-mode 1)
+  ;; Simple UI improvements
+  (fset 'yes-or-no-p 'y-or-n-p))
 
-;; Cursor enhancements
-(setq x-stretch-cursor t)            ;; Stretch cursor over tabs
-
-;; Highlight current line more efficiently
-(global-hl-line-mode 0)
-(defun global-hl-line-timer-function ()
-  "Update the line highlighting."
-  (global-hl-line-unhighlight-all)
-  (let ((global-hl-line-mode t))
-    (global-hl-line-highlight)))
-(setq global-hl-line-timer
-      (run-with-idle-timer 0.03 t 'global-hl-line-timer-function))
-
-;; Ediff settings
-(setq ediff-window-setup-function 'ediff-setup-windows-plain)
-
-;; Encoding settings
-(set-language-environment "Japanese")
-(prefer-coding-system 'utf-8-unix)
-(setq default-buffer-file-coding-system 'utf-8-unix)
-(set-buffer-file-coding-system 'utf-8-unix)
-
-;; History and session management
-(setq history-length t
-      history-delete-duplicates t
-      savehist-save-minibuffer-history t
-      savehist-additional-variables
-      '(kill-ring search-ring regexp-search-ring))
-(savehist-mode 1)
-
-;; Simple UI improvements
-(fset 'yes-or-no-p 'y-or-n-p)             ;; y/n instead of yes/no
+;; Highlight current line
+(use-package hl-line
+  :custom
+  (global-hl-line-sticky-flag t)
+  :config
+  (global-hl-line-mode 1))
 
 ;; --------------------------------
 ;; Key Bindings
@@ -221,12 +187,13 @@
 (global-set-key (kbd "M-1") 'help)
 
 ;; Font scaling
-(when (display-graphic-p)
-  (global-set-key (kbd "C-<wheel-up>") (lambda () (interactive) (text-scale-increase 1)))
-  (global-set-key (kbd "S-=") (lambda () (interactive) (text-scale-increase 1)))
-  (global-set-key (kbd "C-<wheel-down>") (lambda () (interactive) (text-scale-decrease 1)))
-  (global-set-key (kbd "S--") (lambda () (interactive) (text-scale-decrease 1)))
-  (global-set-key (kbd "S-0") (lambda () (interactive) (text-scale-set 0))))
+(use-package face-remap
+  :if (display-graphic-p)
+  :bind (("C-<wheel-up>" . text-scale-increase)
+         ("S-=" . text-scale-increase)
+         ("C-<wheel-down>" . text-scale-decrease)
+         ("S--" . text-scale-decrease)
+         ("S-0" . (lambda () (interactive) (text-scale-set 0)))))
 
 ;; Navigation
 (bind-key "C-x p" 'pop-to-mark-command)
@@ -235,38 +202,27 @@
 ;; --------------------------------
 ;; Load Component Modules
 ;; --------------------------------
-;; Load configuration modules with error handling
-(let ((config-modules '("init-ui"
-                        "init-encode"
-                        "init-env"
-                        "init-editor"
-                        "init-navigation"
-                        "init-completion"
-                        "init-dev-core"
-                        "init-dev-languages"
-                        "init-dev-web"
-                        "init-text-modes"
-                        "init-org-complete"
-                        "init-ai"
-                        "init-claude-code-workflows"
-                        "init-platform")))
-  (dolist (module config-modules)
-    (message "Loading configuration module: %s" module)
-    (condition-case err
-        (load module)
-      (error
-       (message "Error loading %s: %s" module (error-message-string err))
-       (sit-for 1)))))  ;; Brief pause to see error messages
+;; --------------------------------
+;; Load Configuration Modules
+;; --------------------------------
+;; Core modules (required)
+(require 'init-ui-simple)
+(require 'init-editor)
+(require 'init-navigation)
+(require 'init-completion)
+(require 'init-dev-core)
+(require 'init-dev-languages)
+(require 'init-dev-web)
+(require 'init-text-modes)
+(require 'init-org-simple)
+(require 'init-ai)
+(require 'init-claude-code)
+(require 'init-japanese)
+(require 'init-platform)
 
 ;; Optional modules (load if present)
-(dolist (optional-module '("init-mozc" "init-local"))
-  (when (locate-library optional-module)
-    (message "Loading optional module: %s" optional-module)
-    (condition-case err
-        (load optional-module)
-      (error
-       (message "Error loading optional module %s: %s" 
-                optional-module (error-message-string err))))))
+(when (locate-library "init-local")
+  (require 'init-local))
 
 ;; --------------------------------
 ;; Libraries
@@ -280,22 +236,13 @@
 ;; --------------------------------
 ;; Startup Performance Monitoring
 ;; --------------------------------
-(defun my-startup-hook ()
-  "Display startup time and configuration statistics."
-  (message "Emacs started in %.2f seconds with %d garbage collections."
-           (float-time (time-subtract after-init-time before-init-time))
-           gcs-done)
-  
-  ;; Show package count
-  (when (fboundp 'package-installed-p)
-    (message "Loaded %d packages" (length package-activated-list)))
-  
-  ;; Show use-package statistics if available
-  (when (and (fboundp 'use-package-statistics)
-             use-package-compute-statistics)
-    (message "Use-package statistics available. Run M-x use-package-report for details.")))
-
-(add-hook 'emacs-startup-hook #'my-startup-hook)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "Emacs started in %.2f seconds with %d garbage collections."
+                     (float-time (time-subtract after-init-time before-init-time))
+                     gcs-done)
+            (when (fboundp 'package-installed-p)
+              (message "Loaded %d packages" (length package-activated-list)))))
 
 ;; --------------------------------
 ;; Final Error Handling
