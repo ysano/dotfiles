@@ -31,18 +31,37 @@ export GPG_TTY=$(tty)
 # ================================
 
 setup_macos() {
-    # Homebrew setup
+    # Homebrew setup - immediately set PATH to avoid Zinit lazy loading issues
     local brew_paths=(
         "/opt/homebrew/bin/brew"
         "/usr/local/bin/brew"
     )
     
+    local homebrew_found=false
     for brew_path in $brew_paths; do
         if [[ -x "$brew_path" ]]; then
+            # Execute shellenv immediately to set environment variables
             eval "$($brew_path shellenv)"
+            homebrew_found=true
+            
+            # Also add the bin directory to PATH manually to ensure it's available
+            local brew_prefix="$(dirname "$(dirname "$brew_path")")"
+            safe_path_prepend "$brew_prefix/bin"
+            safe_path_prepend "$brew_prefix/sbin"
+            
+            # Set Homebrew environment variables
+            export HOMEBREW_PREFIX="$brew_prefix"
+            export HOMEBREW_CELLAR="$brew_prefix/Cellar"
+            export HOMEBREW_REPOSITORY="$brew_prefix"
             break
         fi
     done
+    
+    if [[ "$homebrew_found" == "false" ]]; then
+        echo "Warning: Homebrew not found in standard locations" >&2
+    elif [[ -n "${ZSH_DEBUG:-}" ]]; then
+        echo "✓ Homebrew setup completed in .zprofile" >&2
+    fi
 
     # GNU tools preference
     safe_path_prepend "/opt/homebrew/opt/gnu-tar/libexec/gnubin"
@@ -100,12 +119,12 @@ setup_cygwin() {
     :  # placeholder
 }
 
-# Apply OS-specific setup
+# Store OS-specific setup function for later execution
 case "$OSTYPE" in
-    darwin*)  setup_macos  ;;
-    linux*)   setup_linux ;;
-    freebsd*) setup_freebsd ;;
-    cygwin*)  setup_cygwin ;;
+    darwin*)  OS_SETUP_FUNC="setup_macos"  ;;
+    linux*)   OS_SETUP_FUNC="setup_linux" ;;
+    freebsd*) OS_SETUP_FUNC="setup_freebsd" ;;
+    cygwin*)  OS_SETUP_FUNC="setup_cygwin" ;;
 esac
 
 # ================================
@@ -215,11 +234,20 @@ setup_flutter
 # Optional/legacy tools
 setup_legacy_tools
 
+# OS-specific setup (execute after all other PATH modifications)
+# This ensures OS-specific paths (like Homebrew) take precedence
+if [[ -n "${OS_SETUP_FUNC:-}" ]]; then
+    $OS_SETUP_FUNC
+fi
+
 # Editor setup (after OS-specific config)
 setup_editor
 
-# Final PATH cleanup
+# Final PATH cleanup and export
 cleanup_path
+
+# Force PATH export to ensure changes are applied
+export PATH
 
 # ================================
 # Validation

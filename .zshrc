@@ -29,7 +29,7 @@ source "$HOME/.zsh/aliases.zsh"
 # 6. Local Settings (if exists)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-[ -f ~/.zprofile ] && source ~/.zprofile
+# .zprofile is automatically sourced by login shells
 
 ########################################
 # Some environment variables
@@ -44,4 +44,5 @@ source "$HOME/.zsh/aliases.zsh"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 
-. "$HOME/.local/bin/env"
+# Local environment file (if needed)
+# [[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"

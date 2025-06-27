@@ -1,0 +1,132 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 重要な注意事項
+
+- 不具合を修正する前に、不具合を再現するテストコードを書き、失敗することを確認すること。その後、実装を変更すること。
+- 日本語で受け答えすること
+
+## リポジトリ概要
+
+このdotfilesリポジトリは、クロスプラットフォーム（Windows、macOS、Linux/WSL）対応の統合開発環境設定です。Emacsを中心とした構成で、AI統合ワークフロー、日本語環境、高度なZsh設定を含んでいます。
+
+## 主要な開発コマンド
+
+### セットアップとリンク作成
+```bash
+# 設定ファイルのシンボリックリンク作成
+./link.sh
+
+# Zsh設定の検証とテスト
+./test_zsh_config.zsh
+```
+
+### Emacs設定のデバッグ
+```bash
+# 設定ファイルの構文チェック
+emacs --debug-init --batch -l ~/.emacs.d/inits/init-ai.el | cat
+
+# 特定モジュールのテスト
+emacs --batch -l ~/.emacs.d/init.el | cat
+
+# パッケージ依存関係の確認
+ls -la ~/.emacs.d/elpa/ | grep <パッケージ名>
+```
+
+### Zsh設定のテストとパフォーマンス測定
+```bash
+# デバッグモードで設定検証
+ZSH_DEBUG=1 zsh -c "source ~/.zprofile && echo 'Configuration validated'"
+
+# 起動時間の測定
+time zsh -i -c exit
+
+# Zinit統計
+zinit times
+
+# キャッシュクリア（必要時）
+unset ZSH_CMD_CACHE ZSH_OS_TYPE ZSH_IS_WSL
+```
+
+## アーキテクチャ概要
+
+### Emacs設定 (~2,500行)
+- **モジュラー構成**: `~/.emacs.d/inits/` 以下に機能別設定
+- **AI統合**: `init-ai.el` でOllama、GitHub Copilotを統合
+- **ナレッジマネジメント**: `init-org-integrated.el` でOrg-roam + GTD
+- **開発環境**: `init-dev.el` で多言語開発支援
+- **カスタムLisp**: `~/.emacs.d/elisp/` にユーティリティ関数
+
+### Zsh設定アーキテクチャ
+- **ユーティリティライブラリ**: `~/.zsh/utils.zsh` - OS検出、コマンドキャッシュ
+- **プラグイン管理**: `~/.zsh/zinit_setup.zsh` - 最適化されたZinit設定
+- **エイリアス**: `~/.zsh/aliases.zsh` - モダンツール統合（exa, bat, fd, rg）
+- **キーバインド**: `~/.zsh/keybindings.zsh` - Emacsライクナビゲーション
+
+### キーバインド統一システム
+- **macOS**: Karabiner-Elements設定 (`karabiner/`)
+- **Windows**: Mayu設定 (`mayu/`)
+- **クロスプラットフォーム**: Emacsライクキーバインド統一
+
+### WSL最適化
+- **フォント**: `wsl/etc_fonts/local.conf`
+- **日本語入力**: `wsl/mnt_c_opt_mozc/`
+- **X11設定**: `wsl/vcxsrv/config.xlaunch`
+
+## 重要な設計原則
+
+### パフォーマンス最適化
+- **キャッシュ機構**: OS検出とコマンド存在チェックをキャッシュ
+- **遅延読み込み**: Zinitとuse-packageで段階的ロード
+- **PATH管理**: 重複チェックと安全な追加機能
+
+### エラーハンドリング
+- **グレースフル劣化**: モダンツール未導入時の自動フォールバック
+- **設定検証**: デバッグモードでの包括的チェック
+- **バックアップ**: 既存設定の自動保護
+
+### AI統合ワークフロー
+- **複数LLMプロバイダー**: Ollama（ローカル）、GitHub Copilot（クラウド）
+- **専門化モデル**: コーディング用、翻訳用、汎用の使い分け
+- **統合キーバインド**: `C-c a` プレフィックスで統一操作
+
+## 主要ファイルの役割
+
+### 設定の読み込み順序
+1. `~/.zprofile` → OS検出とPATH設定
+2. `~/.zshrc` → インタラクティブ設定
+3. `~/.zsh/utils.zsh` → ユーティリティ関数
+4. `~/.zsh/zinit_setup.zsh` → プラグイン読み込み
+
+### Emacs初期化順序
+1. `early-init.el` → パフォーマンス最適化
+2. `init.el` → パッケージシステム初期化
+3. `inits/` モジュール群 → 機能別設定
+
+## トラブルシューティング
+
+### よくある問題のデバッグ手順
+1. **Zsh起動エラー**: `ZSH_DEBUG=1` でデバッグモード実行
+2. **Emacs起動失敗**: `emacs --debug-init` で初期化デバッグ
+3. **パッケージエラー**: `M-x package-refresh-contents` でリフレッシュ
+4. **WSL表示問題**: `echo $DISPLAY` でX11設定確認
+
+### パフォーマンス問題
+- Emacs起動時間: `M-x emacs-init-time` で測定
+- Zsh起動時間: `time zsh -i -c exit` で測定
+- キャッシュクリア: 上記コマンド参照
+
+## 開発時の注意点
+
+### コード修正時のワークフロー
+1. 該当ファイルのバックアップ作成
+2. テストスクリプトで動作確認
+3. 段階的デプロイ（新ファイル → リンク切り替え）
+4. 設定検証スクリプト実行
+
+### 新機能追加時
+- OS固有機能は条件分岐で対応
+- フォールバック機構を必ず実装
+- デバッグ出力を含める
+- パフォーマンス影響を測定

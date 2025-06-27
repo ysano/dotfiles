@@ -199,13 +199,21 @@ setup_macos_tools() {
         return 0
     fi
     
-    # Homebrew with lazy loading
-    if [[ -x /opt/homebrew/bin/brew ]]; then
-        zinit ice wait"2" lucid \
-            trigger-load'!brew' \
-            atload'eval "$(/opt/homebrew/bin/brew shellenv)"'
-        zinit light zdharma-continuum/null
-    fi
+    # Homebrew setup - disabled lazy loading to ensure immediate PATH availability
+    # The Homebrew environment is now set up in .zprofile during login shell initialization
+    # This prevents the lazy loading function from overriding the PATH setup
+    
+    # Note: Homebrew lazy loading was causing issues where 'brew' commands were available
+    # but Homebrew paths were not in PATH until the first 'brew' command was executed.
+    # The .zprofile now handles Homebrew setup immediately during login.
+    
+    # Uncomment below to re-enable lazy loading if needed:
+    # if [[ -x /opt/homebrew/bin/brew ]]; then
+    #     zinit ice wait"2" lucid \
+    #         trigger-load'!brew' \
+    #         atload'eval "$(/opt/homebrew/bin/brew shellenv)"'
+    #     zinit light zdharma-continuum/null
+    # fi
 }
 
 # ================================
