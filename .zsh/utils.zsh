@@ -91,16 +91,22 @@ has_command() {
 
 # Set up locale with fallbacks
 setup_locale() {
-    # Try Japanese UTF-8, fall back to English UTF-8, then C
-    local locales=("ja_JP.UTF-8" "en_US.UTF-8" "C.UTF-8" "C")
+    # Try Japanese UTF-8 (both formats), fall back to English UTF-8, then C
+    local locales=("ja_JP.UTF-8" "ja_JP.utf8" "en_US.UTF-8" "en_US.utf8" "C.UTF-8" "C")
     
     for locale in $locales; do
         if locale -a 2>/dev/null | grep -q "^${locale}$"; then
             export LANG="$locale"
             export LC_CTYPE="$locale"
+            # For better compatibility, also set LC_ALL for Japanese locales
+            if [[ "$locale" == ja_JP.* ]]; then
+                export LC_ALL="$locale"
+            fi
+            [[ -n "${ZSH_DEBUG:-}" ]] && echo "✓ Locale set to: $locale" >&2
             return 0
         fi
     done
+    [[ -n "${ZSH_DEBUG:-}" ]] && echo "✗ No suitable locale found, using default" >&2
 }
 
 # Set up editor with fallbacks
