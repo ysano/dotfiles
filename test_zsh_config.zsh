@@ -60,9 +60,9 @@ main() {
     # Test file syntax
     echo -e "\n${YELLOW}1. Syntax Tests${NC}"
     test_assert "utils.zsh syntax" "zsh -n .zsh/utils.zsh"
-    test_assert "new .zprofile syntax" "zsh -n .zprofile.new"
-    test_assert "new aliases.zsh syntax" "zsh -n .zsh/aliases.zsh.new"
-    test_assert "new zinit_setup.zsh syntax" "zsh -n .zsh/zinit_setup.zsh.new"
+    test_assert "new .zprofile syntax" "zsh -n .zprofile"
+    test_assert "new aliases.zsh syntax" "zsh -n .zsh/aliases.zsh"
+    test_assert "new zinit_setup.zsh syntax" "zsh -n .zsh/zinit_setup.zsh"
     
     # Test utility functions in isolation
     echo -e "\n${YELLOW}2. Utility Function Tests${NC}"
@@ -115,11 +115,11 @@ EOF
     cat > "$profile_test" << 'EOF'
 # Simulate login shell environment
 export HOME="$PWD"
-source .zprofile.new
+source .zprofile
 echo "Profile loaded successfully"
 EOF
     
-    test_assert ".zprofile.new loads without errors" "zsh '$profile_test' 2>/dev/null | grep -q 'Profile loaded'"
+    test_assert ".zprofile loads without errors" "zsh '$profile_test' 2>/dev/null | grep -q 'Profile loaded'"
     
     # Test specific functions
     echo -e "\n${YELLOW}4. Function Availability Tests${NC}"
@@ -144,7 +144,7 @@ EOF
     local env_test="$temp_dir/env_test.zsh"
     cat > "$env_test" << 'EOF'
 export HOME="$PWD"
-source .zprofile.new 2>/dev/null
+source .zprofile 2>/dev/null
 
 # Check critical environment variables
 [[ -n "$PATH" ]] && echo "PATH: SET"
@@ -165,7 +165,7 @@ EOF
     cat > "$perf_test" << 'EOF'
 start=$(date +%s.%N)
 source .zsh/utils.zsh
-source .zprofile.new >/dev/null 2>&1
+source .zprofile >/dev/null 2>&1
 end=$(date +%s.%N)
 duration=$(echo "$end - $start" | bc 2>/dev/null || echo "1")
 if (( $(echo "$duration < 2.0" | bc 2>/dev/null || echo "1") )); then

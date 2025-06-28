@@ -137,7 +137,7 @@ alias wget-domain='wget -r -L -l 10'
 alias wget-subdir='wget -r -np'
 
 # Modern user agent for wget
-readonly MODERN_USER_AGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+[[ -z "$MODERN_USER_AGENT" ]] && readonly MODERN_USER_AGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 
 alias wget-site-save="wget -m -np -p -k -K -E -nv --random-wait -U '$MODERN_USER_AGENT'"
 alias wget-page-save="wget -m -np -p -k -K -E -nv --random-wait -U '$MODERN_USER_AGENT' -H"

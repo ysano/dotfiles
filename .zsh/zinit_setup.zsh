@@ -9,8 +9,8 @@
 # ================================
 
 # Zinit directories
-readonly ZINIT_HOME="${ZINIT_HOME:-$HOME/.zinit}"
-readonly ZINIT_BIN_DIR="$ZINIT_HOME/bin"
+[[ -z "$ZINIT_HOME" ]] && readonly ZINIT_HOME="$HOME/.zinit"
+[[ -z "$ZINIT_BIN_DIR" ]] && readonly ZINIT_BIN_DIR="$ZINIT_HOME/bin"
 
 # Create required directories
 setup_zinit_dirs() {
