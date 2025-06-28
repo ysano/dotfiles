@@ -1,0 +1,4 @@
+> run invalid command
+
+Error: Command not found
+Failed to execute the requested operation.
