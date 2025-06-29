@@ -1,33 +1,33 @@
-# Refactor Code Command
+# コードリファクタリングコマンド
 
-Safely refactor code to improve maintainability, performance, and readability while preserving functionality.
+機能を保持しながら保守性、パフォーマンス、可読性を向上させるために安全にコードをリファクタリングします。
 
-## Instructions
+## 実行手順
 
-Follow this systematic approach to refactor code: **$ARGUMENTS**
+コードをリファクタリングするための体系的なアプローチに従う: **$ARGUMENTS**
 
-1. **Pre-Refactoring Analysis**
-   - Identify the code that needs refactoring and the reasons why
-   - Understand the current functionality and behavior completely
-   - Review existing tests and documentation
-   - Identify all dependencies and usage points
+1. **リファクタリング前分析**
+   - リファクタリングが必要なコードとその理由を特定
+   - 現在の機能と動作を完全に理解
+   - 既存のテストとドキュメントの確認
+   - すべての依存関係と使用ポイントの特定
 
-2. **Test Coverage Verification**
-   - Ensure comprehensive test coverage exists for the code being refactored
-   - If tests are missing, write them BEFORE starting refactoring
-   - Run all tests to establish a baseline
-   - Document current behavior with additional tests if needed
+2. **テストカバレッジ検証**
+   - リファクタリング対象コードに包括的なテストカバレッジが存在することを確認
+   - テストが不足している場合は、リファクタリング開始前に作成
+   - すべてのテストを実行してベースラインを確立
+   - 必要に応じて追加テストで現在の動作を文書化
 
-3. **Refactoring Strategy**
-   - Define clear goals for the refactoring (performance, readability, maintainability)
-   - Choose appropriate refactoring techniques:
-     - Extract Method/Function
-     - Extract Class/Component
-     - Rename Variable/Method
-     - Move Method/Field
-     - Replace Conditional with Polymorphism
-     - Eliminate Dead Code
-   - Plan the refactoring in small, incremental steps
+3. **リファクタリング戦略**
+   - リファクタリングの明確な目標を定義（パフォーマンス、可読性、保守性）
+   - 適切なリファクタリング技法を選択:
+     - メソッド/関数の抽出
+     - クラス/コンポーネントの抽出
+     - 変数/メソッドの名前変更
+     - メソッド/フィールドの移動
+     - ポリモーフィズムによる条件分岐の置換
+     - デッドコードの除去
+   - 小さな増分ステップでリファクタリングを計画
 
 4. **Environment Setup**
    - Create a new branch: `git checkout -b refactor/$ARGUMENTS`
@@ -113,4 +113,4 @@ Follow this systematic approach to refactor code: **$ARGUMENTS**
     - Prepare rollback procedures
     - Set up monitoring for the refactored components
 
-Remember: Refactoring should preserve external behavior while improving internal structure. Always prioritize safety over speed, and maintain comprehensive test coverage throughout the process.
+重要: リファクタリングは内部構造を改善しながら外部動作を保持する必要がある。常に速度よりも安全性を優先し、プロセス全体を通じて包括的なテストカバレッジを維持する。

@@ -1,16 +1,16 @@
 # issue-triage
 
-Intelligently triage GitHub issues into Linear with automatic categorization and prioritization
+自動カテゴリ化と優先度付けでGitHubイシューをLinearにインテリジェントにトリアージします
 
-## System
+## システム
 
-You are an issue triage specialist that analyzes GitHub issues and intelligently routes them to Linear with appropriate categorization, prioritization, and team assignment. You use content analysis, patterns, and rules to make smart triage decisions.
+GitHubイシューを分析し、適切なカテゴリ化、優先度付け、チーム割り当てでLinearにインテリジェントにルーティングするイシュートリアージスペシャリストです。コンテンツ分析、パターン、ルールを使用してスマートなトリアージ決定を行います。
 
-## Instructions
+## 実行手順
 
-When triaging GitHub issues:
+GitHubイシューをトリアージする際に:
 
-1. **Issue Analysis**
+1. **イシュー分析**
    ```javascript
    async function analyzeIssue(issue) {
      const analysis = {
@@ -38,7 +38,7 @@ When triaging GitHub issues:
    }
    ```
 
-2. **Categorization Rules**
+2. **カテゴリ化ルール**
    ```javascript
    const categorizationRules = [
      {
@@ -47,7 +47,9 @@ When triaging GitHub issues:
        labels: ['security'],
        priority: 1, // Urgent
        team: 'security',
-       notify: ['security-lead']
+       notify: ['security-lead'],
+       project: 'Security Issues',
+       milestone: 'Security Review'
      },
      {
        name: 'Bug Report',
@@ -55,7 +57,8 @@ When triaging GitHub issues:
        hasStackTrace: true,
        labels: ['bug'],
        priority: (issue) => issue.sentiment < -0.5 ? 2 : 3,
-       team: 'engineering'
+       team: 'engineering',
+       project: 'Engineering Backlog'
      },
      {
        name: 'Feature Request',
@@ -63,19 +66,21 @@ When triaging GitHub issues:
        labels: ['enhancement'],
        priority: 4,
        team: 'product',
-       requiresDiscussion: true
+       requiresDiscussion: true,
+       project: 'Product Roadmap'
      },
      {
        name: 'Documentation',
        patterns: [/docs/i, /documentation/i, /readme/i],
        labels: ['documentation'],
        priority: 4,
-       team: 'docs'
+       team: 'docs',
+       project: 'Documentation'
      }
    ];
    ```
 
-3. **Priority Calculation**
+3. **優先度計算**
    ```javascript
    function calculatePriority(issue, analysis) {
      let score = 0;
@@ -106,7 +111,7 @@ When triaging GitHub issues:
    }
    ```
 
-4. **Team Assignment**
+4. **チーム割り当て**
    ```javascript
    async function assignTeam(issue, analysis) {
      // Rule-based assignment
@@ -140,7 +145,7 @@ When triaging GitHub issues:
    }
    ```
 
-5. **Duplicate Detection**
+5. **重複検出**
    ```javascript
    async function findDuplicates(issue) {
      // Semantic similarity search
@@ -169,7 +174,7 @@ When triaging GitHub issues:
    }
    ```
 
-6. **Auto-labeling**
+6. **自動ラベル付け**
    ```javascript
    function generateLabels(issue, analysis) {
      const labels = new Set();
@@ -197,7 +202,7 @@ When triaging GitHub issues:
    }
    ```
 
-7. **Triage Workflow**
+7. **トリアージワークフロー**
    ```javascript
    async function triageIssue(issue) {
      const workflow = {
@@ -243,7 +248,7 @@ When triaging GitHub issues:
    }
    ```
 
-8. **Batch Triage**
+8. **バッチトリアージ**
    ```javascript
    async function batchTriage(filters) {
      const issues = await fetchUntriaged(filters);
@@ -284,7 +289,7 @@ When triaging GitHub issues:
    }
    ```
 
-9. **Triage Templates**
+9. **トリアージテンプレート**
    ```javascript
    const triageTemplates = {
      bug: {
@@ -333,7 +338,7 @@ When triaging GitHub issues:
    };
    ```
 
-10. **Triage Metrics**
+10. **トリアージメトリクス**
     ```javascript
     function generateTriageMetrics(period = '7d') {
       return {
@@ -359,114 +364,285 @@ When triaging GitHub issues:
     }
     ```
 
-## Examples
+## 例
 
-### Manual Triage
+### 手動トリアージ
 ```bash
-# Triage single issue
+# 単一イシューのトリアージ
 claude issue-triage 123
 
-# Triage with options
+# オプション付きトリアージ
 claude issue-triage 123 --team="backend" --priority="high"
 
-# Interactive triage
+# インタラクティブトリアージ
 claude issue-triage 123 --interactive
 ```
 
-### Automated Triage
+### 自動トリアージ
 ```bash
-# Triage all untriaged issues
+# 未トリアージのすべてのイシューをトリアージ
 claude issue-triage --auto
 
-# Triage with filters
+# フィルター付きトリアージ
 claude issue-triage --auto --label="needs-triage"
 
-# Scheduled triage
+# スケジュールされたトリアージ
 claude issue-triage --auto --schedule="*/15 * * * *"
 ```
 
-### Triage Configuration
+### トリアージ設定
 ```bash
-# Set up triage rules
+# トリアージルールの設定
 claude issue-triage --setup-rules
 
-# Test triage rules
+# トリアージルールのテスト
 claude issue-triage --test-rules --dry-run
 
-# Export triage config
+# トリアージ設定のエクスポート
 claude issue-triage --export-config > triage-config.json
 ```
 
-## Output Format
+## 出力形式
 
 ```
-Issue Triage Report
+イシュートリアージレポート
 ===================
-Processed: 2025-01-16 11:00:00
-Mode: Automatic
+処理日時: 2025-01-16 11:00:00
+モード: 自動
 
-Triage Summary:
+トリアージ概要:
 ───────────────────────────────────
-Total Issues      : 47
-Successfully Triaged : 44 (93.6%)
-Duplicates Found  : 3
-Manual Review     : 3
-Failed           : 0
+総イシュー数      : 47
+成功トリアージ : 44 (93.6%)
+重複検出数  : 3
+手動レビュー     : 3
+失敗           : 0
 
-By Category:
-- Bug Reports     : 28 (63.6%)
-- Feature Requests: 12 (27.3%)
-- Documentation   : 4 (9.1%)
+カテゴリ別:
+- バグレポート     : 28 (63.6%)
+- 機能リクエスト: 12 (27.3%)
+- ドキュメント   : 4 (9.1%)
 
-By Priority:
-- Urgent (P1)     : 3  ████
-- High (P2)       : 12 ████████████
-- Medium (P3)     : 24 ████████████████████████
-- Low (P4)        : 5  █████
+優先度別:
+- 緊急 (P1)     : 3  ████
+- 高 (P2)       : 12 ████████████
+- 中 (P3)     : 24 ████████████████████████
+- 低 (P4)        : 5  █████
 
-Team Assignments:
-- Backend         : 18
-- Frontend        : 15
-- Security        : 3
-- Documentation   : 4
-- Triage Team     : 4
+チーム割り当て:
+- バックエンド         : 18
+- フロントエンド        : 15
+- セキュリティ        : 3
+- ドキュメント   : 4
+- トリアージチーム     : 4
 
-Notable Issues:
-🔴 #456: Security vulnerability in auth system → Security Team (P1)
-🟠 #789: Database connection pooling errors → Backend Team (P2)
-🟡 #234: Add dark mode support → Frontend Team (P3)
+注目すべきイシュー:
+🔴 #456: 認証システムのセキュリティ脆弱性 → セキュリティチーム (P1)
+🟠 #789: データベース接続プールエラー → バックエンドチーム (P2)
+🟡 #234: ダークモードサポート追加 → フロントエンドチーム (P3)
 
-Actions Taken:
-✓ Created 44 Linear tasks
-✓ Applied 156 labels
-✓ Assigned to 12 team members
-✓ Linked 3 duplicates
-✓ Sent 8 notifications
+実行されたアクション:
+✓ 44のLinearタスクを作成
+✓ 156のラベルを適用
+✓ 12名のチームメンバーに割り当て
+✓ 3つの重複をリンク
+✓ 8通の通知を送信
 
-Triage Metrics:
-- Avg time per issue: 2.3s
-- Auto-triage accuracy: 94.2%
-- Manual intervention: 6.8%
+トリアージメトリクス:
+- 1イシューあたり平均時間: 2.3秒
+- 自動トリアージ精度: 94.2%
+- 手動介入: 6.8%
 ```
 
-## Best Practices
+## GitHub Actions統合
 
-1. **Rule Refinement**
-   - Regularly review triage accuracy
-   - Update patterns based on feedback
-   - Test rules before deployment
+### 自動トリアージワークフロー
+```yaml
+# .github/workflows/issue-triage.yml
+name: Automated Issue Triage
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
 
-2. **Quality Control**
-   - Sample triaged issues for review
-   - Track false positives/negatives
-   - Implement feedback loops
+jobs:
+  triage-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze Issue Content
+        id: analyze
+        run: |
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          
+          # Determine issue type
+          if echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "bug\|error\|crash\|broken"; then
+            echo "issue_type=bug" >> $GITHUB_OUTPUT
+            echo "priority=2" >> $GITHUB_OUTPUT
+            echo "labels=bug,needs-investigation" >> $GITHUB_OUTPUT
+            echo "project=Bug Triage" >> $GITHUB_OUTPUT
+          elif echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "feature\|enhancement\|add"; then
+            echo "issue_type=feature" >> $GITHUB_OUTPUT
+            echo "priority=4" >> $GITHUB_OUTPUT
+            echo "labels=enhancement,needs-discussion" >> $GITHUB_OUTPUT
+            echo "project=Feature Requests" >> $GITHUB_OUTPUT
+          elif echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "security\|vulnerability\|CVE"; then
+            echo "issue_type=security" >> $GITHUB_OUTPUT
+            echo "priority=1" >> $GITHUB_OUTPUT
+            echo "labels=security,urgent" >> $GITHUB_OUTPUT
+            echo "project=Security Issues" >> $GITHUB_OUTPUT
+          else
+            echo "issue_type=general" >> $GITHUB_OUTPUT
+            echo "priority=3" >> $GITHUB_OUTPUT
+            echo "labels=needs-triage" >> $GITHUB_OUTPUT
+            echo "project=General Backlog" >> $GITHUB_OUTPUT
+          fi
 
-3. **Stakeholder Communication**
-   - Notify teams of new assignments
-   - Provide triage summaries
-   - Escalate critical issues
+      - name: Apply Labels and Priority
+        run: |
+          # Add labels based on analysis
+          IFS=',' read -ra LABELS <<< "${{ steps.analyze.outputs.labels }}"
+          for label in "${LABELS[@]}"; do
+            gh issue edit ${{ github.event.issue.number }} --add-label "$label"
+          done
+          
+          # Add priority label
+          gh issue edit ${{ github.event.issue.number }} --add-label "priority/P${{ steps.analyze.outputs.priority }}"
 
-4. **Continuous Improvement**
-   - Analyze triage patterns
-   - Optimize assignment rules
-   - Implement ML when appropriate
+      - name: Assign Team Based on Content
+        run: |
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          
+          # Assign based on components mentioned
+          if echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "auth\|login\|jwt\|oauth"; then
+            gh issue edit ${{ github.event.issue.number }} --add-assignee "@org/identity-team"
+          elif echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "api\|endpoint\|rest\|graphql"; then
+            gh issue edit ${{ github.event.issue.number }} --add-assignee "@org/platform-team"
+          elif echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "ui\|frontend\|component\|css"; then
+            gh issue edit ${{ github.event.issue.number }} --add-assignee "@org/frontend-team"
+          elif echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "database\|sql\|migration"; then
+            gh issue edit ${{ github.event.issue.number }} --add-assignee "@org/data-team"
+          fi
+
+      - name: Add to Project Board
+        run: |
+          # Add issue to appropriate project
+          gh project item-create --owner ${{ github.repository_owner }} --number 1 --url "${{ github.event.issue.html_url }}"
+
+      - name: Check for Duplicates
+        run: |
+          # Search for similar issues
+          SIMILAR_ISSUES=$(gh issue list --search "is:issue \"${{ github.event.issue.title }}\" -number:-${{ github.event.issue.number }}" --json number,title --limit 5)
+          
+          if [ "$(echo "$SIMILAR_ISSUES" | jq 'length')" -gt 0 ]; then
+            echo "Found potential duplicates:"
+            echo "$SIMILAR_ISSUES" | jq -r '.[] | "#\(.number): \(.title)"'
+            
+            # Comment on issue about potential duplicates
+            gh issue comment ${{ github.event.issue.number }} --body "
+            🤖 **Automated Duplicate Check**
+            
+            I found some potentially similar issues:
+            $(echo "$SIMILAR_ISSUES" | jq -r '.[] | "- #\(.number): \(.title)"')
+            
+            Please check if this is a duplicate before proceeding.
+            "
+            
+            gh issue edit ${{ github.event.issue.number }} --add-label "potential-duplicate"
+          fi
+
+      - name: Security Alert
+        if: steps.analyze.outputs.issue_type == 'security'
+        run: |
+          # Create urgent notification for security issues
+          gh issue comment ${{ github.event.issue.number }} --body "
+          🚨 **Security Issue Detected**
+          
+          This issue has been flagged as security-related and requires immediate attention.
+          - Priority: P1 (Urgent)
+          - Team: @org/security-team
+          - Next steps: Security team will review within 2 hours
+          "
+          
+          # Notify security team (if Slack webhook is configured)
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data '{"text":"🚨 Security issue reported: ${{ github.event.issue.html_url }}"}' \
+              ${{ secrets.SLACK_WEBHOOK_URL }}
+          fi
+```
+
+### 自動ラベル管理
+```yaml
+# .github/workflows/label-management.yml
+name: Label Management
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday 2 AM
+
+jobs:
+  ensure-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Standard Triage Labels
+        run: |
+          # Priority labels
+          gh label create "priority/P1" --color "d73a4a" --description "Urgent - requires immediate attention" || true
+          gh label create "priority/P2" --color "e99695" --description "High priority" || true
+          gh label create "priority/P3" --color "fbca04" --description "Medium priority" || true
+          gh label create "priority/P4" --color "0e8a16" --description "Low priority" || true
+          
+          # Type labels
+          gh label create "type/bug" --color "d73a4a" --description "Something isn't working" || true
+          gh label create "type/feature" --color "a2eeef" --description "New feature or request" || true
+          gh label create "type/security" --color "b60205" --description "Security related issue" || true
+          gh label create "type/docs" --color "0075ca" --description "Documentation" || true
+          
+          # Status labels
+          gh label create "status/needs-triage" --color "ffffff" --description "Requires initial triage" || true
+          gh label create "status/triaged" --color "c2e0c6" --description "Has been triaged" || true
+          gh label create "status/blocked" --color "e4e669" --description "Blocked by external dependency" || true
+          gh label create "status/duplicate" --color "cfd3d7" --description "Duplicate issue" || true
+          
+          # Component labels
+          gh label create "component/auth" --color "f9d0c4" --description "Authentication/Authorization" || true
+          gh label create "component/api" --color "c5def5" --description "API related" || true
+          gh label create "component/ui" --color "fef2c0" --description "User Interface" || true
+          gh label create "component/database" --color "d4c5f9" --description "Database related" || true
+
+      - name: Clean Up Old Labels
+        run: |
+          # Archive or remove deprecated labels
+          gh label edit "bug" --new-name "legacy-bug" --description "Deprecated: use type/bug" || true
+          gh label edit "enhancement" --new-name "legacy-enhancement" --description "Deprecated: use type/feature" || true
+```
+
+## ベストプラクティス
+
+1. **ルールの精緻**
+   - トリアージ精度を定期的にレビュー
+   - フィードバックに基づいてパターンを更新
+   - GitHub Actions ワークフローでルールをテスト
+
+2. **品質管理**
+   - トリアージされたIssuesをサンプルレビュー
+   - 偽陽性/偽陰性を追跡
+   - GitHub Insights でフィードバックループを実装
+
+3. **ステークホルダーコミュニケーション**
+   - 新しい割り当てをチームに通知
+   - GitHub Discussions でトリアージ概要を提供
+   - 重要な問題をGitHub Actions経由でエスカレーション
+
+4. **継続的改善**
+   - GitHub API データでトリアージパターンを分析
+   - ラベルとプロジェクト割り当てルールを最適化
+   - GitHub Actions とWebhookで自動化を強化
+
+5. **GitHub固有の最適化**
+   - Projects V2 のカスタムフィールドを活用
+   - GitHub Teams を使用したチーム管理
+   - GitHub Apps を使用した高度な自動化
+   - Webhooks によるリアルタイムトリアージ

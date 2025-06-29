@@ -1,68 +1,68 @@
-# Security Audit Command
+# セキュリティ監査コマンド
 
-Conduct a comprehensive security analysis of any codebase to identify vulnerabilities and security best practices.
+あらゆるコードベースの包括的なセキュリティ分析を実施し、脆弱性とセキュリティベストプラクティスを特定します。
 
-## Instructions
+## 実行手順
 
-Perform a systematic security audit following these steps:
+以下の手順に従って体系的なセキュリティ監査を実行してください：
 
-1. **Environment Setup**
-   - Identify the technology stack and framework
-   - Check for existing security tools and configurations
-   - Review deployment and infrastructure setup
+1. **環境設定**
+   - 技術スタックとフレームワークの特定
+   - 既存のセキュリティツールと設定のチェック
+   - デプロイメントとインフラストラクチャ設定のレビュー
 
-2. **Dependency Security**
-   - Scan all dependencies for known vulnerabilities
-   - Check for outdated packages with security issues
-   - Review dependency sources and integrity
-   - Use appropriate tools: `npm audit`, `pip check`, `cargo audit`, etc.
+2. **依存関係セキュリティ**
+   - 既知の脆弱性についてすべての依存関係をスキャン
+   - セキュリティ問題のある古いパッケージのチェック
+   - 依存関係のソースと整合性のレビュー
+   - 適切なツールの使用：`npm audit`、`pip check`、`cargo audit`等
 
-3. **Authentication & Authorization**
-   - Review authentication mechanisms and implementation
-   - Check for proper session management
-   - Verify authorization controls and access restrictions
-   - Examine password policies and storage
+3. **認証・認可**
+   - 認証メカニズムと実装のレビュー
+   - 適切なセッション管理のチェック
+   - 認可制御とアクセス制限の検証
+   - パスワードポリシーと保存方法の検査
 
-4. **Input Validation & Sanitization**
-   - Check all user input validation and sanitization
-   - Look for SQL injection vulnerabilities
-   - Identify potential XSS (Cross-Site Scripting) issues
-   - Review file upload security and validation
+4. **入力検証・サニタイゼーション**
+   - すべてのユーザー入力の検証とサニタイゼーションのチェック
+   - SQLインジェクション脆弱性の探索
+   - 潜在的なXSS（Cross-Site Scripting）問題の特定
+   - ファイルアップロードのセキュリティと検証のレビュー
 
-5. **Data Protection**
-   - Identify sensitive data handling practices
-   - Check encryption implementation for data at rest and in transit
-   - Review data masking and anonymization practices
-   - Verify secure communication protocols (HTTPS, TLS)
+5. **データ保護**
+   - 機密データの処理方法の特定
+   - 保存時および転送時のデータ暗号化実装のチェック
+   - データマスキングと匿名化の手法のレビュー
+   - セキュアな通信プロトコル（HTTPS、TLS）の検証
 
-6. **Secrets Management**
-   - Scan for hardcoded secrets, API keys, and passwords
-   - Check for proper secrets management practices
-   - Review environment variable security
-   - Identify exposed configuration files
+6. **シークレット管理**
+   - ハードコードされたシークレット、APIキー、パスワードのスキャン
+   - 適切なシークレット管理手法のチェック
+   - 環境変数のセキュリティのレビュー
+   - 露出している設定ファイルの特定
 
-7. **Error Handling & Logging**
-   - Review error messages for information disclosure
-   - Check logging practices for security events
-   - Verify sensitive data is not logged
-   - Assess error handling robustness
+7. **エラーハンドリング・ログ記録**
+   - 情報漏洩につながるエラーメッセージのレビュー
+   - セキュリティイベントのログ記録方法のチェック
+   - 機密データがログに記録されていないことの検証
+   - エラーハンドリングの堅牢性の評価
 
-8. **Infrastructure Security**
-   - Review containerization security (Docker, etc.)
-   - Check CI/CD pipeline security
-   - Examine cloud configuration and permissions
-   - Assess network security configurations
+8. **インフラストラクチャセキュリティ**
+   - コンテナ化セキュリティ（Docker等）のレビュー
+   - CI/CDパイプラインセキュリティのチェック
+   - クラウド設定と権限の検査
+   - ネットワークセキュリティ設定の評価
 
-9. **Security Headers & CORS**
-   - Check security headers implementation
-   - Review CORS configuration
-   - Verify CSP (Content Security Policy) settings
-   - Examine cookie security attributes
+9. **セキュリティヘッダー・CORS**
+   - セキュリティヘッダー実装のチェック
+   - CORS設定のレビュー
+   - CSP（Content Security Policy）設定の検証
+   - cookieセキュリティ属性の検査
 
-10. **Reporting**
-    - Document all findings with severity levels (Critical, High, Medium, Low)
-    - Provide specific remediation steps for each issue
-    - Include code examples and file references
-    - Create an executive summary with key recommendations
+10. **レポート作成**
+    - 重要度レベル（緊急、高、中、低）を含むすべての発見事項の文書化
+    - 各問題に対する具体的な修正手順の提供
+    - コード例とファイル参照の含有
+    - 主要な推奨事項を含むエグゼクティブサマリーの作成
 
-Use automated security scanning tools when available and provide manual review for complex security patterns.
+利用可能な自動セキュリティスキャンツールを使用し、複雑なセキュリティパターンについては手動レビューを実施してください。

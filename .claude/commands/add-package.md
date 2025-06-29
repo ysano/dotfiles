@@ -1,83 +1,83 @@
-# Add Package to Workspace
+# ワークスペースへのパッケージ追加
 
-Add new package/module to existing workspace with proper structure, configuration, and integration.
+適切な構造、設定、統合により、既存のワークスペースに新しいパッケージ/モジュールを追加します。
 
-## Instructions
+## 実行手順
 
-1. **Package Definition and Analysis**
-   - Parse package name and type from arguments: `$ARGUMENTS` (format: name [type])
-   - If no arguments provided, prompt for package name and type
-   - Validate package name follows workspace naming conventions
-   - Determine package type: library, application, tool, shared, service, component-library
-   - Check for naming conflicts with existing packages
+1. **パッケージの定義と分析**
+   - 引数からパッケージ名とタイプを解析：`$ARGUMENTS`（形式：name [type]）
+   - 引数が提供されない場合は、パッケージ名とタイプの入力を促す
+   - パッケージ名がワークスペースの命名規約に従っているかを検証
+   - パッケージタイプの決定：library、application、tool、shared、service、component-library
+   - 既存パッケージとの名前の競合をチェック
 
-2. **Package Structure Creation**
-   - Create package directory in appropriate workspace location (packages/, apps/, libs/)
-   - Set up standard package directory structure based on type:
-     - `src/` for source code
-     - `tests/` or `__tests__/` for testing
-     - `docs/` for package documentation
-     - `examples/` for usage examples (if library)
-     - `public/` for static assets (if application)
-   - Create package-specific configuration files
+2. **パッケージ構造の作成**
+   - 適切なワークスペース場所（packages/、apps/、libs/）にパッケージディレクトリを作成
+   - タイプに基づく標準パッケージディレクトリ構造の設定：
+     - `src/` ソースコード用
+     - `tests/` または `__tests__/` テスト用
+     - `docs/` パッケージドキュメント用
+     - `examples/` 使用例用（ライブラリの場合）
+     - `public/` 静的資産用（アプリケーションの場合）
+   - パッケージ固有の設定ファイルを作成
 
-3. **Package Configuration Setup**
-   - Generate package.json with proper metadata:
-     - Name following workspace conventions
-     - Version aligned with workspace strategy
-     - Dependencies and devDependencies
-     - Scripts for build, test, lint, dev
-     - Entry points and exports configuration
-   - Configure TypeScript (tsconfig.json) extending workspace settings
-   - Set up package-specific linting and formatting rules
+3. **パッケージ設定のセットアップ**
+   - 適切なメタデータでpackage.jsonを生成：
+     - ワークスペース規約に従った名前
+     - ワークスペース戦略に合わせたバージョン
+     - dependenciesとdevDependencies
+     - build、test、lint、dev用のスクリプト
+     - エントリーポイントとexports設定
+   - ワークスペース設定を継承するTypeScript設定（tsconfig.json）
+   - パッケージ固有のlintingとフォーマットルールの設定
 
-4. **Package Type-Specific Setup**
-   - **Library**: Configure build system, export definitions, API documentation
-   - **Application**: Set up routing, environment configuration, build optimization
-   - **Tool**: Configure CLI setup, binary exports, command definitions
-   - **Shared**: Set up common utilities, type definitions, shared constants
-   - **Service**: Configure server setup, API routes, database connections
-   - **Component Library**: Set up Storybook, component exports, styling system
+4. **パッケージタイプ固有のセットアップ**
+   - **Library**: ビルドシステム、export定義、APIドキュメントの設定
+   - **Application**: ルーティング、環境設定、ビルド最適化の設定
+   - **Tool**: CLI設定、バイナリexport、コマンド定義の設定
+   - **Shared**: 共通ユーティリティ、型定義、共有定数の設定
+   - **Service**: サーバー設定、APIルート、データベース接続の設定
+   - **Component Library**: Storybook、コンポーネントexport、スタイリングシステムの設定
 
-5. **Workspace Integration**
-   - Register package in workspace configuration (nx.json, lerna.json, etc.)
-   - Configure package dependencies and peer dependencies
-   - Set up cross-package imports and references
-   - Configure workspace-wide build order and dependencies
-   - Add package to workspace scripts and task runners
+5. **ワークスペース統合**
+   - ワークスペース設定（nx.json、lerna.json等）でのパッケージ登録
+   - パッケージ依存関係とpeer dependenciesの設定
+   - パッケージ間importと参照の設定
+   - ワークスペース全体のビルド順序と依存関係の設定
+   - ワークスペーススクリプトとタスクランナーへのパッケージ追加
 
-6. **Development Environment**
-   - Configure package-specific development server (if applicable)
-   - Set up hot reloading and watch mode
-   - Configure debugging and source maps
-   - Set up development proxy and API mocking (if needed)
-   - Configure environment variable management
+6. **開発環境**
+   - パッケージ固有の開発サーバー設定（該当する場合）
+   - ホットリロードとwatchモードの設定
+   - デバッグとソースマップの設定
+   - 開発プロキシとAPIモッキングの設定（必要な場合）
+   - 環境変数管理の設定
 
-7. **Testing Infrastructure**
-   - Set up testing framework configuration for the package
-   - Create initial test files and examples
-   - Configure test coverage reporting
-   - Set up package-specific test scripts
-   - Configure integration testing with other workspace packages
+7. **テストインフラ**
+   - パッケージ用のテストフレームワーク設定
+   - 初期テストファイルと例の作成
+   - テストカバレッジレポートの設定
+   - パッケージ固有のテストスクリプト設定
+   - 他のワークスペースパッケージとの統合テスト設定
 
-8. **Build and Deployment**
-   - Configure build system for the package type
-   - Set up build artifacts and output directories
-   - Configure bundling and optimization
-   - Set up package publishing configuration (if library)
-   - Configure deployment scripts (if application)
+8. **ビルドとデプロイメント**
+   - パッケージタイプ用のビルドシステム設定
+   - ビルド成果物と出力ディレクトリの設定
+   - バンドルと最適化の設定
+   - パッケージ公開設定（ライブラリの場合）
+   - デプロイメントスクリプト設定（アプリケーションの場合）
 
-9. **Documentation and Examples**
-   - Create package README with installation and usage instructions
-   - Set up API documentation generation
-   - Create usage examples and demos
-   - Document package architecture and design decisions
-   - Add package to workspace documentation
+9. **ドキュメントと例**
+   - インストールと使用方法を含むパッケージREADMEの作成
+   - APIドキュメント生成の設定
+   - 使用例とデモの作成
+   - パッケージアーキテクチャと設計決定の文書化
+   - ワークスペースドキュメントへのパッケージ追加
 
-10. **Validation and Integration Testing**
-    - Verify package builds successfully
-    - Test package installation and imports
-    - Validate workspace dependency resolution
-    - Test development workflow and hot reloading
-    - Verify CI/CD pipeline includes new package
-    - Test cross-package functionality and integration
+10. **検証と統合テスト**
+    - パッケージのビルド成功の確認
+    - パッケージインストールとimportのテスト
+    - ワークスペース依存関係解決の検証
+    - 開発ワークフローとホットリロードのテスト
+    - CI/CDパイプラインに新しいパッケージが含まれることの確認
+    - クロスパッケージ機能と統合のテスト

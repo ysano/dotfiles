@@ -1,18 +1,18 @@
-# Design REST API
+# REST API設計
 
-Design RESTful API with proper structure, documentation, and best practices for scalable and maintainable API development.
+スケーラブルで保守性の高いAPI開発のための適切な構造、ドキュメンテーション、ベストプラクティスを備えたRESTful APIを設計します。
 
-## Instructions
+## 実行手順
 
-1. **API Design Strategy and Planning**
-   - Analyze business requirements and define API scope
-   - Identify resources, entities, and their relationships
-   - Plan API versioning strategy and backward compatibility
-   - Define authentication and authorization requirements
-   - Plan for scalability, rate limiting, and performance
+1. **API設計戦略と計画**
+   - ビジネス要件を分析し、APIのスコープを定義
+   - リソース、エンティティ、およびその関係の特定
+   - APIバージョニング戦略と後方互換性の計画
+   - 認証と許可要件の定義
+   - スケーラビリティ、レート制限、パフォーマンスの計画
 
-2. **RESTful Resource Design**
-   - Design RESTful endpoints following REST principles:
+2. **RESTfulリソース設計**
+   - REST原則に従ったRESTfulエンドポイントの設計：
 
    **Express.js API Structure:**
    ```javascript
@@ -97,8 +97,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    module.exports = router;
    ```
 
-3. **Request/Response Data Models**
-   - Define comprehensive data models and validation:
+3. **リクエスト/レスポンスデータモデル**
+   - 包括的なデータモデルとバリデーションの定義：
 
    **Data Validation with Joi:**
    ```javascript
@@ -205,8 +205,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    };
    ```
 
-4. **Controller Implementation**
-   - Implement robust controller logic:
+4. **コントローラー実装**
+   - 堅牢なコントローラーロジックの実装：
 
    **User Controller Example:**
    ```javascript
@@ -380,8 +380,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    module.exports = new UserController();
    ```
 
-5. **API Response Standardization**
-   - Implement consistent response formats:
+5. **APIレスポンスの標準化**
+   - 一貫したレスポンスフォーマットの実装：
 
    **API Response Utilities:**
    ```javascript
@@ -502,8 +502,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    };
    ```
 
-6. **Authentication and Authorization**
-   - Implement comprehensive auth system:
+6. **認証と許可**
+   - 包括的な認証システムの実装：
 
    **JWT Authentication Middleware:**
    ```javascript
@@ -643,8 +643,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    module.exports = AuthMiddleware;
    ```
 
-7. **API Documentation with OpenAPI/Swagger**
-   - Generate comprehensive API documentation:
+7. **OpenAPI/Swaggerを使用したAPIドキュメンテーション**
+   - 包括的なAPIドキュメンテーションの生成：
 
    **Swagger Configuration:**
    ```javascript
@@ -981,8 +981,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
     */
    ```
 
-8. **API Testing and Quality Assurance**
-   - Implement comprehensive API testing:
+8. **APIテストと品質保証**
+   - 包括的なAPIテストの実装：
 
    **API Test Suite:**
    ```javascript
@@ -1169,8 +1169,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    });
    ```
 
-9. **API Versioning Strategy**
-   - Implement flexible API versioning:
+9. **APIバージョニング戦略**
+   - 柔軟なAPIバージョニングの実装：
 
    **Version Management:**
    ```javascript
@@ -1264,8 +1264,8 @@ Design RESTful API with proper structure, documentation, and best practices for 
    module.exports = ApiVersioning;
    ```
 
-10. **Production Monitoring and Analytics**
-    - Implement API monitoring and analytics:
+10. **本番環境の監視と分析**
+    - API監視と分析の実装：
 
     **API Analytics Middleware:**
     ```javascript

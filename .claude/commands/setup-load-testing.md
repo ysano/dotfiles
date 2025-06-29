@@ -1,80 +1,80 @@
 # Setup Load Testing
 
-Configure performance and load testing infrastructure to validate application performance under various load conditions.
+様々な負荷条件下でアプリケーションパフォーマンスを検証するためのパフォーマンスと負荷テストインフラストラクチャを設定します。
 
-## Instructions
+## 手順
 
-1. **Load Testing Strategy and Requirements**
-   - Analyze application architecture and identify performance-critical components
-   - Define load testing objectives (capacity planning, performance validation, bottleneck identification)
-   - Determine testing scenarios (normal load, peak load, stress testing, spike testing)
-   - Identify key performance metrics and acceptance criteria
-   - Plan load testing environments and infrastructure requirements
+1. **負荷テスト戦略と要件**
+   - アプリケーションアーキテクチャを分析し、パフォーマンス重要コンポーネントを特定
+   - 負荷テスト目標（容量計画、パフォーマンス検証、ボトルネック特定）を定義
+   - テストシナリオ（通常負荷、ピーク負荷、ストレステスト、スパイクテスト）を決定
+   - 重要パフォーマンスメトリクスと受入基準を特定
+   - 負荷テスト環境とインフラ要件を計画
 
-2. **Load Testing Tool Selection**
-   - Choose appropriate load testing tools based on requirements:
-     - **k6**: Modern, developer-friendly with JavaScript scripting
-     - **Artillery**: Simple, powerful, great for CI/CD integration
-     - **JMeter**: Feature-rich GUI and command-line tool
-     - **Gatling**: High-performance tool with detailed reporting
-     - **Locust**: Python-based with web UI and distributed testing
-     - **WebPageTest**: Web performance and real user monitoring
-   - Consider factors: scripting language, reporting, CI integration, cost
+2. **負荷テストツール選択**
+   - 要件に基づいて適切な負荷テストツールを選択：
+     - **k6**: 現代的で開発者フレンドリー、JavaScriptスクリプティング
+     - **Artillery**: シンプルで強力、CI/CD統合に適している
+     - **JMeter**: 機能豊富なGUIとコマンドラインツール
+     - **Gatling**: 詳細レポートを持つ高性能ツール
+     - **Locust**: PythonベースでWeb UIと分散テスト対応
+     - **WebPageTest**: Webパフォーマンスとリアルユーザー監視
+   - 考慮要素：スクリプト言語、レポート、CI統合、コスト
 
-3. **Test Environment Setup**
-   - Set up dedicated load testing environment matching production
-   - Configure test data and database setup for consistent testing
-   - Set up network configuration and firewall rules
-   - Configure monitoring and observability for test environment
-   - Set up test isolation and cleanup procedures
+3. **テスト環境セットアップ**
+   - プロダクションに一致する専用負荷テスト環境をセットアップ
+   - 一貫したテストのためのテストデータとデータベースセットアップを設定
+   - ネットワーク設定とファイアウォールルールをセットアップ
+   - テスト環境用の監視と可観測性を設定
+   - テスト分離とクリーンアップ手順をセットアップ
 
-4. **Load Test Script Development**
-   - Create test scripts for critical user journeys and API endpoints
-   - Implement realistic user behavior patterns and think times
-   - Set up test data generation and management
-   - Configure authentication and session management
-   - Implement parameterization and data-driven testing
+4. **負荷テストスクリプト開発**
+   - 重要なユーザージャーニーとAPIエンドポイント用のテストスクリプトを作成
+   - 現実的なユーザー行動パターンと思考時間を実装
+   - テストデータ生成と管理をセットアップ
+   - 認証とセッション管理を設定
+   - パラメータ化とデータ駆動テストを実装
 
-5. **Performance Scenarios Configuration**
-   - **Load Testing**: Normal expected traffic patterns
-   - **Stress Testing**: Beyond normal capacity to find breaking points
-   - **Spike Testing**: Sudden traffic increases and decreases
-   - **Volume Testing**: Large amounts of data processing
-   - **Endurance Testing**: Extended periods under normal load
-   - **Capacity Testing**: Maximum user load determination
+5. **パフォーマンスシナリオ設定**
+   - **負荷テスト**: 通常の予想トラフィックパターン
+   - **ストレステスト**: 通常容量を超えて限界点を発見
+   - **スパイクテスト**: 突然のトラフィック増減
+   - **ボリュームテスト**: 大量データ処理
+   - **耐久テスト**: 通常負荷下で長時間
+   - **容量テスト**: 最大ユーザー負荷決定
 
-6. **Monitoring and Metrics Collection**
-   - Set up application performance monitoring during tests
-   - Configure infrastructure metrics collection (CPU, memory, disk, network)
-   - Set up database performance monitoring and query analysis
-   - Configure real-time dashboards and alerting
-   - Set up log aggregation and error tracking
+6. **監視とメトリクス収集**
+   - テスト中のアプリケーションパフォーマンス監視をセットアップ
+   - インフラメトリクス収集（CPU、メモリ、ディスク、ネットワーク）を設定
+   - データベースパフォーマンス監視とクエリ分析をセットアップ
+   - リアルタイムダッシュボードとアラートを設定
+   - ログ集約とエラートラッキングをセットアップ
 
-7. **Test Execution and Automation**
-   - Configure automated test execution and scheduling
-   - Set up test result collection and analysis
-   - Configure test environment provisioning and teardown
-   - Set up parallel and distributed test execution
-   - Configure test result storage and historical tracking
+7. **テスト実行と自動化**
+   - 自動テスト実行とスケジューリングを設定
+   - テスト結果収集と分析をセットアップ
+   - テスト環境プロビジョニングと破棄を設定
+   - 並列と分散テスト実行をセットアップ
+   - テスト結果ストレージと履歴追跡を設定
 
-8. **Performance Analysis and Reporting**
-   - Set up automated performance analysis and threshold checking
-   - Configure performance trend analysis and regression detection
-   - Set up detailed performance reporting and visualization
-   - Configure performance alerts and notifications
-   - Set up performance benchmark and baseline management
+8. **パフォーマンス分析とレポート**
+   - 自動パフォーマンス分析と闾値チェックをセットアップ
+   - パフォーマンストレンド分析と回帰検出を設定
+   - 詳細パフォーマンスレポートと可視化をセットアップ
+   - パフォーマンスアラートと通知を設定
+   - パフォーマンスベンチマークとベースライン管理をセットアップ
 
-9. **CI/CD Integration**
-   - Integrate load tests into continuous integration pipeline
-   - Configure performance gates and deployment blocking
-   - Set up automated performance regression detection
-   - Configure test result integration with development workflow
-   - Set up performance testing in staging and pre-production environments
+9. **CI/CD統合**
+   - 継続統合パイプラインに負荷テストを統合
+   - パフォーマンスゲートとデプロイメントブロッキングを設定
+   - 自動パフォーマンス回帰検出をセットアップ
+   - 開発ワークフローとテスト結果統合を設定
+   - ステージングとプリプロダクション環境でパフォーマンステストをセットアップ
 
-10. **Optimization and Maintenance**
-    - Document load testing procedures and maintenance guidelines
-    - Set up load test script maintenance and version control
-    - Configure test environment maintenance and updates
-    - Create performance optimization recommendations workflow
-    - Train team on load testing best practices and tool usage
-    - Set up performance testing standards and conventions
+10. **最適化とメンテナンス**
+    - 負荷テスト手順とメンテナンスガイドラインを文書化
+    - 負荷テストスクリプトメンテナンスとバージョン管理をセットアップ
+    - テスト環境メンテナンスと更新を設定
+    - パフォーマンス最適化推奨ワークフローを作成
+    - 負荷テストベストプラクティスとツール使用法についてチームをトレーニング
+    - パフォーマンステスト標準と規約をセットアップ

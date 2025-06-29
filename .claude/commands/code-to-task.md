@@ -1,9 +1,9 @@
-# code-to-task
+# コードからタスクへ
 
-Generate Linear tasks from code analysis by finding TODO comments, FIXME markers, deprecated code, and technical debt.
+TODOコメント、FIXMEマーカー、非推奨コード、技術的負債を見つけてコード分析からLinearタスクを生成します。
 
-## Purpose
-This command scans your codebase for TODO/FIXME comments, technical debt markers, deprecated code, and other indicators that should be tracked as tasks. It automatically creates organized, prioritized Linear tasks to ensure important code improvements aren't forgotten.
+## 目的
+このコマンドはコードベースをスキャンしてTODO/FIXMEコメント、技術的負債マーカー、非推奨コード、タスクとして追跡すべきその他の指標を探します。重要なコード改善が忘れられないよう、整理され優先順位付けされたLinearタスクを自動作成します。
 
 ## Usage
 ```bash

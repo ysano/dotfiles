@@ -1,99 +1,99 @@
-# Architecture Review Command
+# アーキテクチャレビューコマンド
 
-Analyze the overall architecture and design patterns of any codebase to assess maintainability, scalability, and adherence to best practices.
+コードベースの全体的なアーキテクチャと設計パターンを分析し、保守性、拡張性、ベストプラクティスへの準拠を評価します。
 
-## Instructions
+## 実行手順
 
-Perform a comprehensive architectural analysis following these steps:
+以下の手順に従って包括的なアーキテクチャ分析を実行してください：
 
-1. **High-Level Architecture Analysis**
-   - Map out the overall system architecture and components
-   - Identify architectural patterns in use (MVC, MVP, Clean Architecture, etc.)
-   - Review module boundaries and separation of concerns
-   - Analyze the application's layered structure
+1. **高レベルアーキテクチャ分析**
+   - システム全体のアーキテクチャとコンポーネントのマッピング
+   - 使用されているアーキテクチャパターンの特定（MVC、MVP、Clean Architecture等）
+   - モジュール境界と関心の分離のレビュー
+   - アプリケーションの階層構造の分析
 
-2. **Design Patterns Assessment**
-   - Identify design patterns used throughout the codebase
-   - Check for proper implementation of common patterns
-   - Look for anti-patterns and code smells
-   - Assess pattern consistency across the application
+2. **設計パターン評価**
+   - コードベース全体で使用されている設計パターンの特定
+   - 一般的なパターンの適切な実装のチェック
+   - アンチパターンとコードスメルの検出
+   - アプリケーション全体のパターン一貫性の評価
 
-3. **Dependency Management**
-   - Review dependency injection and inversion of control
-   - Analyze coupling between modules and components
-   - Check for circular dependencies
-   - Assess dependency direction and adherence to dependency rule
+3. **依存性管理**
+   - 依存性注入と制御の反転のレビュー
+   - モジュールとコンポーネント間の結合度の分析
+   - 循環依存のチェック
+   - 依存関係の方向と依存ルールの遵守の評価
 
-4. **Data Flow Architecture**
-   - Trace data flow through the application
-   - Review state management patterns and implementation
-   - Analyze data persistence and storage strategies
-   - Check for proper data validation and transformation
+4. **データフローアーキテクチャ**
+   - アプリケーション全体のデータフローの追跡
+   - 状態管理パターンと実装のレビュー
+   - データ永続化とストレージ戦略の分析
+   - 適切なデータ検証と変換のチェック
 
-5. **Component Architecture**
-   - Review component design and responsibilities
-   - Check for single responsibility principle adherence
-   - Analyze component composition and reusability
-   - Assess interface design and abstraction levels
+5. **コンポーネントアーキテクチャ**
+   - コンポーネント設計と責務のレビュー
+   - 単一責任原則の遵守のチェック
+   - コンポーネント構成と再利用性の分析
+   - インターフェース設計と抽象化レベルの評価
 
-6. **Error Handling Architecture**
-   - Review error handling strategy and consistency
-   - Check for proper error propagation and recovery
-   - Analyze logging and monitoring integration
-   - Assess resilience and fault tolerance patterns
+6. **エラーハンドリングアーキテクチャ**
+   - エラーハンドリング戦略と一貫性のレビュー
+   - 適切なエラー伝播と回復のチェック
+   - ログとモニタリング統合の分析
+   - レジリエンスと耐障害性パターンの評価
 
-7. **Scalability Assessment**
-   - Analyze horizontal and vertical scaling capabilities
-   - Review caching strategies and implementation
-   - Check for stateless design where appropriate
-   - Assess performance bottlenecks and scaling limitations
+7. **スケーラビリティ評価**
+   - 水平および垂直スケーリング能力の分析
+   - キャッシュ戦略と実装のレビュー
+   - 適切な場所でのステートレス設計のチェック
+   - パフォーマンスボトルネックとスケーリング制限の評価
 
-8. **Security Architecture**
-   - Review security boundaries and trust zones
-   - Check authentication and authorization architecture
-   - Analyze data protection and privacy measures
-   - Assess security pattern implementation
+8. **セキュリティアーキテクチャ**
+   - セキュリティ境界と信頼ゾーンのレビュー
+   - 認証と認可アーキテクチャのチェック
+   - データ保護とプライバシー対策の分析
+   - セキュリティパターン実装の評価
 
-9. **Testing Architecture**
-   - Review test structure and organization
-   - Check for testability in design
-   - Analyze mocking and dependency isolation strategies
-   - Assess test coverage across architectural layers
+9. **テストアーキテクチャ**
+   - テスト構造と組織のレビュー
+   - 設計におけるテスト可能性のチェック
+   - モッキングと依存性分離戦略の分析
+   - アーキテクチャ層全体のテストカバレッジの評価
 
-10. **Configuration Management**
-    - Review configuration handling and environment management
-    - Check for proper separation of config from code
-    - Analyze feature flags and runtime configuration
-    - Assess deployment configuration strategies
+10. **設定管理**
+    - 設定処理と環境管理のレビュー
+    - コードからの設定の適切な分離のチェック
+    - フィーチャーフラグとランタイム設定の分析
+    - デプロイメント設定戦略の評価
 
-11. **Documentation & Communication**
-    - Review architectural documentation and diagrams
-    - Check for clear API contracts and interfaces
-    - Assess code self-documentation and clarity
-    - Analyze team communication patterns in code
+11. **ドキュメントとコミュニケーション**
+    - アーキテクチャドキュメントと図のレビュー
+    - 明確なAPIコントラクトとインターフェースのチェック
+    - コードの自己文書化と明確性の評価
+    - コード内のチームコミュニケーションパターンの分析
 
-12. **Future-Proofing & Extensibility**
-    - Assess the architecture's ability to accommodate change
-    - Review extension points and plugin architectures
-    - Check for proper versioning and backward compatibility
-    - Analyze migration and upgrade strategies
+12. **将来性と拡張性**
+    - アーキテクチャの変更対応能力の評価
+    - 拡張ポイントとプラグインアーキテクチャのレビュー
+    - 適切なバージョニングと後方互換性のチェック
+    - 移行とアップグレード戦略の分析
 
-13. **Technology Choices**
-    - Review technology stack alignment with requirements
-    - Assess framework and library choices
-    - Check for consistent technology usage
-    - Analyze technical debt and modernization opportunities
+13. **技術選択**
+    - 技術スタックと要件の整合性のレビュー
+    - フレームワークとライブラリ選択の評価
+    - 一貫した技術使用のチェック
+    - 技術的負債と近代化機会の分析
 
-14. **Performance Architecture**
-    - Review caching layers and strategies
-    - Analyze asynchronous processing patterns
-    - Check for proper resource management
-    - Assess monitoring and observability architecture
+14. **パフォーマンスアーキテクチャ**
+    - キャッシュ層と戦略のレビュー
+    - 非同期処理パターンの分析
+    - 適切なリソース管理のチェック
+    - モニタリングと可観測性アーキテクチャの評価
 
-15. **Recommendations**
-    - Provide specific architectural improvements
-    - Suggest refactoring strategies for problem areas
-    - Recommend patterns and practices for better design
-    - Create a roadmap for architectural evolution
+15. **推奨事項**
+    - 具体的なアーキテクチャ改善の提供
+    - 問題領域のリファクタリング戦略の提案
+    - より良い設計のためのパターンとプラクティスの推奨
+    - アーキテクチャ進化のロードマップ作成
 
-Focus on providing actionable insights with specific examples and clear rationale for recommendations.
+具体的な例と推奨事項の明確な根拠を示し、実行可能な洞察の提供に焦点を当ててください。

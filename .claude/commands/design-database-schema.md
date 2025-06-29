@@ -1,18 +1,18 @@
-# Design Database Schema
+# データベーススキーマ設計
 
-Design optimal database schema with relationships, indexes, and performance considerations for scalable database design.
+スケーラブルなデータベース設計のため、最適なデータベーススキーマとリレーションシップ、インデックス、およびパフォーマンス考慮事項を設計します。
 
-## Instructions
+## 実行手順
 
-1. **Requirements Analysis and Data Modeling**
-   - Analyze business requirements and data relationships
-   - Identify entities, attributes, and relationships
-   - Define data types, constraints, and validation rules
-   - Plan for scalability and future requirements
-   - Consider data access patterns and query requirements
+1. **要件分析とデータモデリング**
+   - ビジネス要件とデータ関係の分析
+   - エンティティ、属性、リレーションシップの特定
+   - データ型、制約、バリデーションルールの定義
+   - スケーラビリティと将来要件の計画
+   - データアクセスパターンとクエリ要件の検討
 
-2. **Entity Relationship Design**
-   - Create comprehensive entity relationship diagrams:
+2. **エンティティリレーションシップ設計**
+   - 包括的なエンティティリレーションシップ図の作成：
 
    **User Management Schema:**
    ```sql
@@ -205,8 +205,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    );
    ```
 
-3. **Advanced Schema Patterns**
-   - Implement complex data patterns:
+3. **高度なスキーマパターン**
+   - 複雑なデータパターンの実装：
 
    **Audit Trail Pattern:**
    ```sql
@@ -301,8 +301,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    $$ LANGUAGE plpgsql;
    ```
 
-4. **Performance Optimization Schema Design**
-   - Design for optimal query performance:
+4. **パフォーマンス最適化スキーマ設計**
+   - 最適なクエリパフォーマンスのための設計：
 
    **Strategic Indexing:**
    ```sql
@@ -384,8 +384,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    SELECT create_monthly_partitions('orders_partitioned', '2024-01-01'::DATE, '2025-01-01'::DATE);
    ```
 
-5. **Data Integrity and Constraints**
-   - Implement comprehensive data validation:
+5. **データ整合性と制約**
+   - 包括的なデータバリデーションの実装：
 
    **Advanced Constraints:**
    ```sql
@@ -448,8 +448,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    );
    ```
 
-6. **Temporal Data and Versioning**
-   - Handle time-based data requirements:
+6. **時系列データとバージョニング**
+   - 時間ベースのデータ要件の処理：
 
    **Temporal Tables:**
    ```sql
@@ -515,8 +515,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    EXECUTE FUNCTION update_price_history();
    ```
 
-7. **JSON/NoSQL Integration**
-   - Leverage JSON columns for flexible data:
+7. **JSON/NoSQL統合**
+   - 柔軟なデータのためのJSONカラムの活用：
 
    **JSONB Schema Design:**
    ```sql
@@ -583,8 +583,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    $$ LANGUAGE plpgsql;
    ```
 
-8. **Database Security Schema**
-   - Implement security at the schema level:
+8. **データベースセキュリティスキーマ**
+   - スキーマレベルでのセキュリティ実装：
 
    **Row Level Security:**
    ```sql
@@ -640,8 +640,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    $$ LANGUAGE plpgsql;
    ```
 
-9. **Schema Documentation and Maintenance**
-   - Document and maintain schema design:
+9. **スキーマドキュメンテーションとメンテナンス**
+   - スキーマ設計の文書化と維持：
 
    **Database Documentation:**
    ```sql
@@ -673,8 +673,8 @@ Design optimal database schema with relationships, indexes, and performance cons
    ORDER BY t.table_name, col.ordinal_position;
    ```
 
-10. **Schema Testing and Validation**
-    - Implement schema testing procedures:
+10. **スキーマテストとバリデーション**
+    - スキーマテスト手順の実装：
 
     **Schema Validation Tests:**
     ```sql

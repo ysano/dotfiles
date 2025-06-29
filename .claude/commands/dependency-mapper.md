@@ -1,65 +1,65 @@
 # dependency-mapper
 
-Visualize and manage task dependencies across your codebase and Linear workspace.
+コードベースとLinearワークスペース全体のタスク依存関係を可視化・管理します。
 
-## Purpose
-This command analyzes code dependencies, git history, and Linear tasks to create visual dependency maps. It helps identify blockers, circular dependencies, and optimal task ordering for efficient project execution.
+## 目的
+このコマンドはコード依存関係、git履歴、Linearタスクを分析して視覚的な依存関係マップを作成します。ブロッカー、循環依存関係、効率的なプロジェクト実行のための最適なタスク順序を特定するのに役立ちます。
 
-## Usage
+## 使用方法
 ```bash
-# Map dependencies for a specific Linear task
-claude "Show dependency map for task LIN-123"
+# 特定のLinearタスクの依存関係マップを表示
+claude "タスクLIN-123の依存関係マップを表示"
 
-# Analyze code dependencies in a module
-claude "Map dependencies for src/auth module"
+# モジュール内のコード依存関係を分析
+claude "src/authモジュールの依存関係をマップ"
 
-# Find circular dependencies in the project
-claude "Check for circular dependencies in the codebase"
+# プロジェクト内の循環依存関係を検出
+claude "コードベースの循環依存関係をチェック"
 
-# Generate task execution order
-claude "What's the optimal order to complete tasks in sprint SPR-45?"
+# タスク実行順序を生成
+claude "スプリントSPR-45のタスクを完了する最適な順序は？"
 ```
 
-## Instructions
+## 実行手順
 
-### 1. Analyze Code Dependencies
-Use various techniques to identify dependencies:
+### 1. コード依存関係の分析
+様々な手法で依存関係を特定：
 
 ```bash
-# Find import statements (JavaScript/TypeScript)
+# import文の検出 (JavaScript/TypeScript)
 rg "^import.*from ['\"](\.\.?/[^'\"]+)" --type ts --type js -o | sort | uniq
 
-# Find require statements (Node.js)
+# require文の検出 (Node.js)
 rg "require\(['\"](\.\.?/[^'\"]+)['\"]" --type js -o
 
-# Analyze Python imports
+# Pythonのimport分析
 rg "^from \S+ import|^import \S+" --type py
 
-# Find module references in comments
+# コメント内のモジュール参照を検出
 rg "TODO.*depends on|FIXME.*requires|NOTE.*needs" -i
 ```
 
-### 2. Extract Task Dependencies from Linear
-Query Linear for task relationships:
+### 2. Linearからタスク依存関係を抽出
+タスク関係のためのLinearクエリ：
 
 ```javascript
-// Get task with its dependencies
+// 依存関係を含むタスクを取得
 const task = await linear.getTask(taskId, {
   include: ['blockedBy', 'blocks', 'parent', 'children']
 });
 
-// Find mentions in task descriptions
+// タスク説明内の言及を検出
 const mentions = task.description.match(/(?:LIN-|#)\d+/g);
 
-// Get related tasks from same epic/project
+// 同じエピック/プロジェクトから関連タスクを取得
 const relatedTasks = await linear.searchTasks({
   projectId: task.projectId,
   includeArchived: false
 });
 ```
 
-### 3. Build Dependency Graph
-Create a graph structure:
+### 3. 依存関係グラフの構築
+グラフ構造を作成：
 
 ```javascript
 class DependencyGraph {
@@ -149,35 +149,35 @@ class DependencyGraph {
 }
 ```
 
-### 4. Generate Visual Representations
+### 4. 視覚的表現の生成
 
-#### ASCII Tree View
+#### ASCIIツリービュー
 ```
-LIN-123: Authentication System
-├─ LIN-124: User Model [DONE]
-├─ LIN-125: JWT Implementation [IN PROGRESS]
-│  └─ LIN-126: Token Refresh Logic [BLOCKED]
-└─ LIN-127: Login Endpoint [TODO]
-   ├─ LIN-128: Rate Limiting [TODO]
-   └─ LIN-129: 2FA Support [TODO]
+LIN-123: 認証システム
+├─ LIN-124: ユーザーモデル [DONE]
+├─ LIN-125: JWT実装 [IN PROGRESS]
+│  └─ LIN-126: トークンリフレッシュロジック [BLOCKED]
+└─ LIN-127: ログインエンドポイント [TODO]
+   ├─ LIN-128: レート制限 [TODO]
+   └─ LIN-129: 2FAサポート [TODO]
 ```
 
-#### Mermaid Diagram
+#### Mermaid図
 ```mermaid
 graph TD
-    LIN-123[Authentication System] --> LIN-124[User Model]
-    LIN-123 --> LIN-125[JWT Implementation]
-    LIN-123 --> LIN-127[Login Endpoint]
-    LIN-125 --> LIN-126[Token Refresh Logic]
-    LIN-127 --> LIN-128[Rate Limiting]
-    LIN-127 --> LIN-129[2FA Support]
+    LIN-123[認証システム] --> LIN-124[ユーザーモデル]
+    LIN-123 --> LIN-125[JWT実装]
+    LIN-123 --> LIN-127[ログインエンドポイント]
+    LIN-125 --> LIN-126[トークンリフレッシュロジック]
+    LIN-127 --> LIN-128[レート制限]
+    LIN-127 --> LIN-129[2FAサポート]
     
     style LIN-124 fill:#90EE90
     style LIN-125 fill:#FFD700
     style LIN-126 fill:#FF6B6B
 ```
 
-#### Dependency Matrix
+#### 依存関係マトリックス
 ```
          | LIN-123 | LIN-124 | LIN-125 | LIN-126 | LIN-127 |
 ---------|---------|---------|---------|---------|---------|
@@ -187,11 +187,11 @@ LIN-125  |         |    ←    |    -    |    →    |         |
 LIN-126  |         |         |    ←    |    -    |         |
 LIN-127  |    ←    |    ←    |         |         |    -    |
 
-Legend: → depends on, ← is dependency of
+凡例: → 依存、← 依存先
 ```
 
-### 5. Analyze File Dependencies
-Map code structure to tasks:
+### 5. ファイル依存関係の分析
+コード構造をタスクにマップ：
 
 ```javascript
 // Analyze file imports
@@ -221,8 +221,8 @@ async function analyzeFileDependencies(filePath) {
 }
 ```
 
-### 6. Generate Execution Order
-Calculate optimal task sequence:
+### 6. 実行順序の生成
+最適なタスクシーケンスを計算：
 
 ```javascript
 function calculateExecutionOrder(graph) {
@@ -248,29 +248,29 @@ function calculateExecutionOrder(graph) {
 }
 ```
 
-### 7. Error Handling
+### 7. エラーハンドリング
 ```javascript
-// Check for Linear access
+// Linearアクセスのチェック
 if (!linear.available) {
-  console.warn("Linear MCP not available, using code analysis only");
-  // Fall back to code-only analysis
+  console.warn("Linear MCPが利用できません、コード分析のみ使用します");
+  // コードのみの分析にフォールバック
 }
 
-// Handle circular dependencies
+// 循環依存関係の処理
 const cycles = graph.findCycles();
 if (cycles.length > 0) {
-  console.error("Circular dependencies detected:");
+  console.error("循環依存関係が検出されました:");
   cycles.forEach(cycle => {
     console.error(`  ${cycle.join(' → ')} → ${cycle[0]}`);
   });
 }
 
-// Validate task existence
+// タスク存在の検証
 for (const taskId of mentionedTasks) {
   try {
     await linear.getTask(taskId);
   } catch (error) {
-    console.warn(`Task ${taskId} not found or inaccessible`);
+    console.warn(`タスク ${taskId} が見つからないかアクセスできません`);
   }
 }
 ```

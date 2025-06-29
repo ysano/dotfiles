@@ -1,36 +1,36 @@
-# Optimize Build Command
+# ビルド最適化コマンド
 
-Analyze and optimize build processes for any project to improve build times, output size, and efficiency.
+プロジェクトのビルド時間、出力サイズ、効率性を改善するためにビルドプロセスを分析・最適化します。
 
-## Instructions
+## 実行手順
 
-Follow this systematic approach to optimize build performance: **$ARGUMENTS**
+以下の体系的なアプローチでビルドパフォーマンスを最適化: **$ARGUMENTS**
 
-1. **Build System Analysis**
-   - Identify the build system in use (Webpack, Vite, Rollup, Gradle, Maven, Cargo, etc.)
-   - Review build configuration files and settings
-   - Analyze current build times and output sizes
-   - Map the complete build pipeline and dependencies
+1. **ビルドシステム分析**
+   - 使用中のビルドシステムを特定（Webpack、Vite、Rollup、Gradle、Maven、Cargoなど）
+   - ビルド設定ファイルと設定の確認
+   - 現在のビルド時間と出力サイズの分析
+   - 完全なビルドパイプラインと依存関係のマッピング
 
-2. **Performance Baseline**
-   - Measure current build times for different scenarios:
-     - Clean build (from scratch)
-     - Incremental build (with cache)
-     - Development vs production builds
-   - Document bundle sizes and asset sizes
-   - Identify the slowest parts of the build process
+2. **パフォーマンスベースライン**
+   - 異なるシナリオでの現在のビルド時間を測定:
+     - クリーンビルド（最初から）
+     - インクリメンタルビルド（キャッシュ付き）
+     - 開発環境対本番環境ビルド
+   - バンドルサイズとアセットサイズの文書化
+   - ビルドプロセスの最も遅い部分の特定
 
-3. **Dependency Optimization**
-   - Analyze build dependencies and their impact
-   - Remove unused dependencies from build process
-   - Update build tools to latest stable versions
-   - Consider alternative, faster build tools
+3. **依存関係最適化**
+   - ビルド依存関係とその影響の分析
+   - ビルドプロセスから未使用の依存関係を除去
+   - ビルドツールを最新安定版に更新
+   - より高速な代替ビルドツールの検討
 
-4. **Caching Strategy**
-   - Enable and optimize build caching
-   - Configure persistent cache for CI/CD
-   - Set up shared cache for team development
-   - Implement incremental compilation where possible
+4. **キャッシュ戦略**
+   - ビルドキャッシュの有効化と最適化
+   - CI/CD用の永続キャッシュの設定
+   - チーム開発用の共有キャッシュの設定
+   - 可能な場合のインクリメンタルコンパイルの実装
 
 5. **Bundle Analysis**
    - Analyze bundle composition and sizes
@@ -136,4 +136,4 @@ Follow this systematic approach to optimize build performance: **$ARGUMENTS**
     - Set up alerts for build performance regressions
     - Regular review and updates of build configuration
 
-Focus on the optimizations that provide the biggest impact for your specific project and team workflow. Always measure before and after to quantify improvements.
+特定のプロジェクトとチームワークフローに最大の影響をもたらす最適化に焦点を当てる。改善を定量化するため、常に前後を測定する。

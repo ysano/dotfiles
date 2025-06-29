@@ -1,18 +1,18 @@
-# Optimize Database Performance
+# データベースパフォーマンス最適化
 
-Analyze and optimize database queries and schema for improved scalability and faster response times.
+スケーラビリティの向上とレスポンス時間の高速化のためにデータベースクエリとスキーマを分析・最適化します。
 
 ## Instructions
 
-1. **Database Performance Analysis**
-   - Analyze current database performance and identify bottlenecks
-   - Review slow query logs and execution plans
-   - Assess database schema design and normalization
-   - Evaluate indexing strategy and query patterns
-   - Monitor database resource utilization (CPU, memory, I/O)
+1. **データベースパフォーマンス分析**
+   - 現在のデータベースパフォーマンスを分析し、ボトルネックを特定
+   - スロークエリログと実行プランの確認
+   - データベーススキーマ設計と正規化の評価
+   - インデックス戦略とクエリパターンの評価
+   - データベースリソース使用率の監視（CPU、メモリ、I/O）
 
-2. **Query Optimization**
-   - Optimize slow queries and improve execution plans:
+2. **クエリ最適化**
+   - 遅いクエリを最適化し、実行プランを改善:
 
    **PostgreSQL Query Optimization:**
    ```sql
@@ -57,8 +57,8 @@ Analyze and optimize database queries and schema for improved scalability and fa
    ADD INDEX idx_category_price (category_id, price);
    ```
 
-3. **Index Strategy Optimization**
-   - Design and implement optimal indexing strategy:
+3. **インデックス戦略最適化**
+   - 最適なインデックス戦略の設計と実装:
 
    **Index Analysis and Creation:**
    ```sql
@@ -142,8 +142,8 @@ Analyze and optimize database queries and schema for improved scalability and fa
    }
    ```
 
-4. **Schema Design Optimization**
-   - Optimize database schema for performance:
+4. **スキーマ設計最適化**
+   - パフォーマンスのためのデータベーススキーマ最適化:
 
    **Normalization and Denormalization:**
    ```sql
@@ -215,8 +215,8 @@ Analyze and optimize database queries and schema for improved scalability and fa
    $$ LANGUAGE plpgsql;
    ```
 
-5. **Connection Pool Optimization**
-   - Configure optimal database connection pooling:
+5. **コネクションプール最適化**
+   - 最適なデータベースコネクションプールの設定:
 
    **Node.js Connection Pool Configuration:**
    ```javascript

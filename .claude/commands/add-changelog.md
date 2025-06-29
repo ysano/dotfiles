@@ -1,56 +1,56 @@
-# Add Changelog Command
+# Changelogコマンドの追加
 
-Create and maintain a comprehensive changelog following industry standards for any project.
+業界標準に従ったプロジェクト用の包括的なchangelogを作成・維持します。
 
-## Instructions
+## 実行手順
 
-Setup and maintain changelog following these steps: **$ARGUMENTS**
+以下の手順に従ってchangelogを設定・維持してください：**$ARGUMENTS**
 
-1. **Changelog Format (Keep a Changelog)**
+1. **Changelogフォーマット（Keep a Changelog）**
    ```markdown
    # Changelog
    
-   All notable changes to this project will be documented in this file.
+   このプロジェクトのすべての注目すべき変更はこのファイルに記録されます。
    
-   The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-   and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+   フォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
+   このプロジェクトは [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠しています。
    
    ## [Unreleased]
    ### Added
-   - New features
+   - 新機能
    
    ### Changed
-   - Changes in existing functionality
+   - 既存機能の変更
    
    ### Deprecated
-   - Soon-to-be removed features
+   - まもなく削除される機能
    
    ### Removed
-   - Removed features
+   - 削除された機能
    
    ### Fixed
-   - Bug fixes
+   - バグ修正
    
    ### Security
-   - Security improvements
+   - セキュリティ改善
    ```
 
-2. **Version Entries**
+2. **バージョンエントリ**
    ```markdown
    ## [1.2.3] - 2024-01-15
    ### Added
-   - User authentication system
-   - Dark mode toggle
-   - Export functionality for reports
+   - ユーザー認証システム
+   - ダークモード切り替え
+   - レポートのエクスポート機能
    
    ### Fixed
-   - Memory leak in background tasks
-   - Timezone handling issues
+   - バックグラウンドタスクのメモリリーク
+   - タイムゾーン処理の問題
    ```
 
-3. **Automation Tools**
+3. **自動化ツール**
    ```bash
-   # Generate changelog from git commits
+   # gitコミットからchangelogを生成
    npm install -D conventional-changelog-cli
    npx conventional-changelog -p angular -i CHANGELOG.md -s
    
@@ -59,9 +59,9 @@ Setup and maintain changelog following these steps: **$ARGUMENTS**
    npx auto-changelog
    ```
 
-4. **Commit Convention**
+4. **Commitの規約**
    ```bash
-   # Conventional commits for auto-generation
+   # 自動生成のためのConventional commits
    feat: add user authentication
    fix: resolve memory leak in tasks
    docs: update API documentation
@@ -71,10 +71,10 @@ Setup and maintain changelog following these steps: **$ARGUMENTS**
    chore: update dependencies
    ```
 
-5. **Integration with Releases**
-   - Update changelog before each release
-   - Include in release notes
-   - Link to GitHub releases
-   - Tag versions consistently
+5. **リリースとの統合**
+   - 各リリース前にchangelogを更新
+   - リリースノートに含める
+   - GitHubリリースとのリンク
+   - バージョンタグの一貫性
 
-Remember to keep entries clear, categorized, and focused on user-facing changes.
+エントリは分かりやすく分類し、ユーザー向けの変更に焦点を当てて記録することを忘れずに。

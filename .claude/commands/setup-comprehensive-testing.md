@@ -1,76 +1,76 @@
 # Setup Comprehensive Testing
 
-Set up complete testing stack including unit, integration, end-to-end, and visual testing with proper configuration and best practices.
+ユニットテスト、統合テスト、エンドツーエンドテスト、ビジュアルテストを含む完全なテストスタックを適切な設定とベストプラクティスで構築します。
 
-## Instructions
+## 手順
 
-1. **Testing Strategy Analysis**
-   - Analyze current project structure and identify testing needs
-   - Determine appropriate testing frameworks based on technology stack
-   - Define testing pyramid strategy (unit, integration, e2e, visual)
-   - Plan test coverage goals and quality metrics
-   - Assess existing testing infrastructure and gaps
+1. **テスト戦略分析**
+   - 現在のプロジェクト構造を分析し、テストニーズを特定
+   - 技術スタックに基づいて適切なテストフレームワークを決定
+   - テストピラミッド戦略（ユニット、統合、e2e、ビジュアル）を定義
+   - テストカバレッジ目標と品質メトリクスを計画
+   - 既存のテストインフラストラクチャとギャップを評価
 
-2. **Unit Testing Framework Setup**
-   - Install and configure primary testing framework (Jest, Vitest, pytest, etc.)
-   - Set up test runner configuration and environment
-   - Configure test file patterns and directory structure
-   - Set up test utilities and helper functions
-   - Configure mocking and stubbing capabilities
+2. **ユニットテストフレームワークセットアップ**
+   - 主要テストフレームワーク（Jest、Vitest、pytestなど）をインストールと設定
+   - テストランナー設定と環境をセットアップ
+   - テストファイルパターンとディレクトリ構造を設定
+   - テストユーティリティとヘルパー関数をセットアップ
+   - モッキングとスタブ機能を設定
 
-3. **Integration Testing Configuration**
-   - Set up integration testing framework and tools
-   - Configure test database and data seeding
-   - Set up API testing with tools like Supertest or requests
-   - Configure service integration testing
-   - Set up component integration testing for frontend
+3. **統合テスト設定**
+   - 統合テストフレームワークとツールをセットアップ
+   - テストデータベースとデータシーディングを設定
+   - SupertestやrequestsなどのツールでAPIテストをセットアップ
+   - サービス統合テストを設定
+   - フロントエンドのコンポーネント統合テストをセットアップ
 
-4. **End-to-End Testing Setup**
-   - Install and configure E2E testing framework (Playwright, Cypress, Selenium)
-   - Set up test environment and browser configuration
-   - Create page object models and test helpers
-   - Configure test data management and cleanup
-   - Set up cross-browser and device testing
+4. **エンドツーエンドテストセットアップ**
+   - E2Eテストフレームワーク（Playwright、Cypress、Selenium）をインストールと設定
+   - テスト環境とブラウザ設定をセットアップ
+   - ページオブジェクトモデルとテストヘルパーを作成
+   - テストデータ管理とクリーンアップを設定
+   - クロスブラウザとデバイステストをセットアップ
 
-5. **Visual Testing Integration**
-   - Set up visual regression testing tools (Chromatic, Percy, Playwright)
-   - Configure screenshot comparison and diff detection
-   - Set up visual testing for different viewports and devices
-   - Create visual test baselines and approval workflows
-   - Configure visual testing in CI/CD pipeline
+5. **ビジュアルテスト統合**
+   - ビジュアル回帰テストツール（Chromatic、Percy、Playwright）をセットアップ
+   - スクリーンショット比較と差分検出を設定
+   - 異なるビューポートとデバイス用のビジュアルテストをセットアップ
+   - ビジュアルテストベースラインと承認ワークフローを作成
+   - CI/CDパイプラインでビジュアルテストを設定
 
-6. **Test Coverage and Reporting**
-   - Configure code coverage collection and reporting
-   - Set up coverage thresholds and quality gates
-   - Configure test result reporting and visualization
-   - Set up test performance monitoring
-   - Configure test report generation and distribution
+6. **テストカバレッジとレポート**
+   - コードカバレッジ収集とレポートを設定
+   - カバレッジ閾値と品質ゲートをセットアップ
+   - テスト結果レポートと可視化を設定
+   - テストパフォーマンス監視をセットアップ
+   - テストレポート生成と配布を設定
 
-7. **Performance and Load Testing**
-   - Set up performance testing framework (k6, Artillery, JMeter)
-   - Configure load testing scenarios and benchmarks
-   - Set up performance monitoring and alerting
-   - Configure stress testing and capacity planning
-   - Set up performance regression detection
+7. **パフォーマンスと負荷テスト**
+   - パフォーマンステストフレームワーク（k6、Artillery、JMeter）をセットアップ
+   - 負荷テストシナリオとベンチマークを設定
+   - パフォーマンス監視とアラートをセットアップ
+   - ストレステストと容量計画を設定
+   - パフォーマンス回帰検出をセットアップ
 
-8. **Test Data Management**
-   - Set up test data factories and fixtures
-   - Configure database seeding and cleanup
-   - Set up test data isolation and parallel test execution
-   - Configure test environment data management
-   - Set up API mocking and service virtualization
+8. **テストデータ管理**
+   - テストデータファクトリとフィクスチャをセットアップ
+   - データベースシーディングとクリーンアップを設定
+   - テストデータ分離と並列テスト実行をセットアップ
+   - テスト環境データ管理を設定
+   - APIモッキングとサービス仮想化をセットアップ
 
-9. **CI/CD Integration**
-   - Configure automated test execution in CI/CD pipeline
-   - Set up parallel test execution and optimization
-   - Configure test result reporting and notifications
-   - Set up test environment provisioning and cleanup
-   - Configure deployment gates based on test results
+9. **CI/CD統合**
+   - CI/CDパイプラインで自動テスト実行を設定
+   - 並列テスト実行と最適化をセットアップ
+   - テスト結果レポートと通知を設定
+   - テスト環境プロビジョニングとクリーンアップをセットアップ
+   - テスト結果に基づくデプロイメントゲートを設定
 
-10. **Testing Best Practices and Documentation**
-    - Create comprehensive testing guidelines and standards
-    - Set up test naming conventions and organization
-    - Document testing workflows and procedures
-    - Create testing templates and examples
-    - Set up testing metrics and quality monitoring
-    - Train team on testing best practices and tools
+10. **テストベストプラクティスとドキュメント**
+    - 包括的なテストガイドラインと標準を作成
+    - テスト命名規則と組織化をセットアップ
+    - テストワークフローと手順を文書化
+    - テストテンプレートと例を作成
+    - テストメトリクスと品質監視をセットアップ
+    - テストベストプラクティスとツールについてチームをトレーニング

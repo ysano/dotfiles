@@ -1,18 +1,18 @@
-# Project Health Check
+# プロジェクトヘルスチェック
 
-Assess project health with metrics on velocity, quality, and team performance to identify risks and opportunities for improvement.
+ベロシティ、品質、チームパフォーマンスのメトリクスでプロジェクトの健全性を評価し、リスクと改善機会を特定します。
 
-## Instructions
+## 実行手順
 
-1. **Health Check Initialization**
-   - Verify tool connections (Linear, GitHub)
-   - Define evaluation period (default: last 30 days)
-   - Set health check criteria and thresholds
-   - Identify key metrics to evaluate
+1. **ヘルスチェックの初期化**
+   - ツール接続の検証（Linear、GitHub）
+   - 評価期間の定義（デフォルト：過去30日）
+   - ヘルスチェック基準と闾値の設定
+   - 評価すべき主要メトリクスの特定
 
-2. **Multi-Dimensional Analysis**
+2. **多元的分析**
 
-#### Code Health Metrics
+#### コードヘルスメトリクス
 ```bash
 # Code churn analysis
 git log --format=format: --name-only --since="30 days ago" | sort | uniq -c | sort -rg
@@ -30,35 +30,35 @@ cloc . --json --exclude-dir=node_modules,dist,build
 npm test -- --coverage --json
 ```
 
-#### Dependency Health
+#### 依存関係ヘルス
 ```bash
-# Check for outdated dependencies
+# 古い依存関係のチェック
 npm outdated --json
 
-# Security vulnerabilities
+# セキュリティ脆弱性
 npm audit --json
 
-# License compliance
+# ライセンスコンプライアンス
 npx license-checker --json
 ```
 
-#### Linear/Task Management Health
+#### Linear/タスク管理ヘルス
 ```
-1. Sprint velocity trends
-2. Cycle time analysis
-3. Blocked task duration
-4. Backlog growth rate
-5. Bug vs feature ratio
-6. Task completion predictability
+1. スプリントベロシティトレンド
+2. サイクルタイム分析
+3. ブロックされたタスクの期間
+4. バックログの成長率
+5. バグ対機能の比率
+6. タスク完了の予測可能性
 ```
 
-#### Team Health Indicators
+#### チームヘルス指標
 ```
-1. PR review turnaround time
-2. Commit frequency distribution
-3. Work distribution balance
-4. On-call incident frequency
-5. Documentation updates
+1. PRレビューのターンアラウンドタイム
+2. コミット頻度の分布
+3. 作業分担のバランス
+4. オンコールインシデント頻度
+5. ドキュメント更新
 ```
 
 3. **Health Report Generation**

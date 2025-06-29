@@ -1,18 +1,18 @@
-# Implement GraphQL API
+# GraphQL API実装
 
-Add GraphQL API with schema, resolvers, and advanced features for efficient data fetching and flexible API queries.
+効率的なデータ取得と柔軟なAPIクエリのためのスキーマ、リゾルバー、高度な機能を含むGraphQL APIを追加します。
 
 ## Instructions
 
-1. **GraphQL Setup and Configuration**
-   - Set up GraphQL server with Apollo Server or similar
-   - Configure schema-first or code-first approach
-   - Plan GraphQL architecture and data modeling
-   - Set up development tools and introspection
-   - Configure GraphQL playground and documentation
+1. **GraphQLセットアップと設定**
+   - Apollo Server等を使用してGraphQLサーバーを設定
+   - スキーマファーストまたはコードファーストアプローチを設定
+   - GraphQLアーキテクチャとデータモデリングを計画
+   - 開発ツールとイントロスペクションを設定
+   - GraphQLプレイグラウンドとドキュメントを設定
 
-2. **Schema Definition and Type System**
-   - Define comprehensive GraphQL schema:
+2. **スキーマ定義と型システム**
+   - 包括的なGraphQLスキーマを定義:
 
    **Schema Definition (SDL):**
    ```graphql
@@ -406,8 +406,8 @@ Add GraphQL API with schema, resolvers, and advanced features for efficient data
    }
    ```
 
-3. **Resolver Implementation**
-   - Implement comprehensive resolvers:
+3. **リゾルバー実装**
+   - 包括的なリゾルバーを実装:
 
    **Main Resolvers:**
    ```javascript
@@ -630,8 +630,8 @@ Add GraphQL API with schema, resolvers, and advanced features for efficient data
    module.exports = userResolvers;
    ```
 
-4. **DataLoader for N+1 Problem**
-   - Implement efficient data loading:
+4. **N+1問題のためのDataLoader**
+   - 効率的なデータ読み込みを実装:
 
    **DataLoader Implementation:**
    ```javascript
@@ -724,8 +724,8 @@ Add GraphQL API with schema, resolvers, and advanced features for efficient data
    module.exports = DataLoaders;
    ```
 
-5. **Authentication and Authorization**
-   - Implement GraphQL-specific auth:
+5. **認証と認可**
+   - GraphQL専用の認証を実装:
 
    **Auth Helpers:**
    ```javascript

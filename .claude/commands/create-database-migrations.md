@@ -1,18 +1,18 @@
-# Create Database Migrations
+# データベースマイグレーション作成
 
-Generate safe database migration scripts with proper rollback capabilities and automated schema evolution.
+適切なロールバック機能と自動スキーマ進化を備えた安全なデータベースマイグレーションスクリプトを生成します。
 
-## Instructions
+## 実行手順
 
-1. **Migration Strategy and Planning**
-   - Analyze current database schema and target changes
-   - Plan migration strategy for zero-downtime deployments
-   - Define rollback procedures and data safety measures
-   - Assess migration complexity and potential risks
-   - Plan for data transformation and validation
+1. **マイグレーション戦略と計画**
+   - 現在のデータベーススキーマと目標変更を分析
+   - ゼロダウンタイムデプロイメントのマイグレーション戦略を計画
+   - ロールバック手順とデータ安全対策を定義
+   - マイグレーションの複雑さと潜在的リスクを評価
+   - データ変換と検証を計画
 
-2. **Migration Framework Setup**
-   - Set up comprehensive migration framework:
+2. **マイグレーションフレームワークセットアップ**
+   - 包括的なマイグレーションフレームワークを設定：
 
    **Node.js Migration Framework:**
    ```javascript
@@ -297,8 +297,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    module.exports = MigrationManager;
    ```
 
-3. **Migration File Templates**
-   - Create standardized migration templates:
+3. **マイグレーションファイルテンプレート**
+   - 標準化されたマイグレーションテンプレートを作成：
 
    **SQL Migration Template:**
    ```sql
@@ -384,8 +384,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    module.exports = migration;
    ```
 
-4. **Advanced Migration Patterns**
-   - Implement complex migration scenarios:
+4. **高度なマイグレーションパターン**
+   - 複雑なマイグレーションシナリオを実装：
 
    **Data Migration with Validation:**
    ```javascript
@@ -519,8 +519,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    module.exports = migration;
    ```
 
-5. **Schema Alteration Migrations**
-   - Handle schema changes safely:
+5. **スキーマ変更マイグレーション**
+   - スキーマ変更を安全に処理：
 
    **Safe Column Addition:**
    ```sql
@@ -659,8 +659,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    DROP TYPE IF EXISTS address_type;
    ```
 
-6. **Migration Testing Framework**
-   - Test migrations thoroughly:
+6. **マイグレーションテストフレームワーク**
+   - マイグレーションを徹底的にテスト：
 
    **Migration Test Suite:**
    ```javascript
@@ -898,8 +898,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    }
    ```
 
-7. **Production Migration Safety**
-   - Implement production-safe migration practices:
+7. **本番環境マイグレーション安全性**
+   - 本番環境安全なマイグレーションプラクティスを実装：
 
    **Safe Production Migration:**
    ```javascript
@@ -1066,8 +1066,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    module.exports = ProductionMigrationSafety;
    ```
 
-8. **Migration Monitoring and Alerting**
-   - Monitor migration execution:
+8. **マイグレーション監視とアラート**
+   - マイグレーション実行を監視：
 
    **Migration Monitoring:**
    ```javascript
@@ -1191,8 +1191,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
    module.exports = MigrationMonitor;
    ```
 
-9. **Migration CLI Tools**
-   - Create comprehensive CLI interface:
+9. **マイグレーションCLIツール**
+   - 包括的なCLIインターフェースを作成：
 
    **Migration CLI:**
    ```javascript
@@ -1326,8 +1326,8 @@ Generate safe database migration scripts with proper rollback capabilities and a
      .argv;
    ```
 
-10. **Production Deployment Integration**
-    - Integrate with deployment pipelines:
+10. **本番環境デプロイメント統合**
+    - デプロイメントパイプラインと統合：
 
     **CI/CD Integration:**
     ```yaml

@@ -1,18 +1,18 @@
-# Optimize Bundle Size
+# バンドルサイズ最適化
 
-Analyze and optimize application bundle size to reduce load times and improve user experience.
+アプリケーションバンドルサイズを分析・最適化して読み込み時間を短縮し、ユーザーエクスペリエンスを向上させます。
 
 ## Instructions
 
-1. **Bundle Analysis and Assessment**
-   - Analyze current bundle size and composition using webpack-bundle-analyzer or similar
-   - Identify large dependencies and unused code
-   - Assess current build configuration and optimization settings
-   - Create baseline measurements for optimization tracking
-   - Document current performance metrics and loading times
+1. **バンドル分析と評価**
+   - webpack-bundle-analyzer等を使用して現在のバンドルサイズと構成を分析
+   - 大きな依存関係と未使用コードの特定
+   - 現在のビルド設定と最適化設定の評価
+   - 最適化追跡のためのベースライン測定の作成
+   - 現在のパフォーマンス指標と読み込み時間の文書化
 
-2. **Build Tool Configuration**
-   - Configure build tool optimization settings:
+2. **ビルドツール設定**
+   - ビルドツール最適化設定の構成:
 
    **Webpack Configuration:**
    ```javascript
@@ -79,8 +79,8 @@ Analyze and optimize application bundle size to reduce load times and improve us
    });
    ```
 
-3. **Code Splitting and Lazy Loading**
-   - Implement route-based code splitting:
+3. **コード分割と遅延読み込み**
+   - ルートベースのコード分割を実装:
 
    **React Route Splitting:**
    ```javascript
@@ -122,8 +122,8 @@ Analyze and optimize application bundle size to reduce load times and improve us
    }
    ```
 
-4. **Tree Shaking and Dead Code Elimination**
-   - Configure tree shaking for optimal dead code elimination:
+4. **ツリーシェイキングとデッドコード除去**
+   - 最適なデッドコード除去のためのツリーシェイキングを設定:
 
    **Package.json Configuration:**
    ```json
@@ -160,8 +160,8 @@ Analyze and optimize application bundle size to reduce load times and improve us
    }
    ```
 
-5. **Dependency Optimization**
-   - Analyze and optimize dependencies:
+5. **依存関係最適化**
+   - 依存関係の分析と最適化:
 
    **Package Analysis Script:**
    ```javascript

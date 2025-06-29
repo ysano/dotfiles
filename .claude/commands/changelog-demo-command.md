@@ -1,9 +1,9 @@
-# Demo Command for Changelog
+# Changelogデモコマンド
 
-This command demonstrates the automated changelog generation without triggering Claude review.
+このコマンドはClaudeレビューをトリガーすることなく自動化されたchangelog生成を実演します。
 
-## Instructions
+## 実行手順
 
-1. This is a demonstration command
-2. Shows changelog automation working independently
-3. Bypasses Claude review bot for faster testing
+1. これはデモンストレーションコマンドです
+2. changelog自動化が独立して動作することを示します
+3. より高速なテストのためClaudeレビューボットをバイパスします

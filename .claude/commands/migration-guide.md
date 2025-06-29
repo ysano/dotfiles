@@ -1,23 +1,23 @@
 # Migration Guide Generator Command
 
-Create comprehensive migration guides for upgrading dependencies, frameworks, or architectural changes.
+依存関係、フレームワーク、アーキテクチャ変更のアップグレード用の包括的なマイグレーションガイドを作成します。
 
-## Instructions
+## 手順
 
-Follow this systematic approach to create migration guides: **$ARGUMENTS**
+マイグレーションガイド作成の体系的なアプローチに従ってください： **$ARGUMENTS**
 
-1. **Migration Scope Analysis**
-   - Identify what is being migrated (framework, library, architecture, etc.)
-   - Determine source and target versions or technologies
-   - Assess the scale and complexity of the migration
-   - Identify affected systems and components
+1. **マイグレーション範囲分析**
+   - マイグレーション対象（フレームワーク、ライブラリ、アーキテクチャなど）を特定
+   - ソースとターゲットのバージョンまたは技術を決定
+   - マイグレーションの規模と複雑さを評価
+   - 影響を受けるシステムとコンポーネントを特定
 
-2. **Impact Assessment**
-   - Analyze breaking changes between versions
-   - Identify deprecated features and APIs
-   - Review new features and capabilities
-   - Assess compatibility requirements and constraints
-   - Evaluate performance and security implications
+2. **影響評価**
+   - バージョン間の破壊的変更を分析
+   - 非推奨機能とAPIを特定
+   - 新機能と能力を確認
+   - 互換性要件と制約を評価
+   - パフォーマンスとセキュリティの影響を評価
 
 3. **Prerequisites and Requirements**
    - Document system requirements for the target version

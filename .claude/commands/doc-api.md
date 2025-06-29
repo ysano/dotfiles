@@ -1,25 +1,25 @@
 # API Documentation Generator Command
 
-Generate comprehensive API documentation from code for any programming language and framework.
+任意のプログラミング言語とフレームワーク用のコードから包括的なAPIドキュメントを生成します。
 
-## Instructions
+## 手順
 
-Follow this systematic approach to create API documentation: **$ARGUMENTS**
+APIドキュメント作成の体系的なアプローチに従ってください： **$ARGUMENTS**
 
-1. **Code Analysis and Discovery**
-   - Scan the codebase for API endpoints, routes, and handlers
-   - Identify REST APIs, GraphQL schemas, and RPC services
-   - Map out controller classes, route definitions, and middleware
-   - Discover request/response models and data structures
+1. **コード分析と発見**
+   - コードベースをスキャンしてAPIエンドポイント、ルート、ハンドラーを検出
+   - REST API、GraphQLスキーマ、RPCサービスを特定
+   - コントローラークラス、ルート定義、ミドルウェアをマッピング
+   - リクエスト/レスポンスモデルとデータ構造を発見
 
-2. **Documentation Tool Selection**
-   - Choose appropriate documentation tools based on stack:
-     - **OpenAPI/Swagger**: REST APIs with interactive documentation
-     - **GraphQL**: GraphiQL, GraphQL Playground, or Apollo Studio
-     - **Postman**: API collections and documentation
-     - **Insomnia**: API design and documentation
-     - **Redoc**: Alternative OpenAPI renderer
-     - **API Blueprint**: Markdown-based API documentation
+2. **ドキュメントツール選択**
+   - スタックに基づいて適切なドキュメントツールを選択：
+     - **OpenAPI/Swagger**: インタラクティブドキュメント付きREST API
+     - **GraphQL**: GraphiQL、GraphQL Playground、Apollo Studio
+     - **Postman**: APIコレクションとドキュメント
+     - **Insomnia**: API設計とドキュメント
+     - **Redoc**: 代替OpenAPIレンダラー
+     - **API Blueprint**: MarkdownベースAPIドキュメント
 
 3. **API Specification Generation**
    

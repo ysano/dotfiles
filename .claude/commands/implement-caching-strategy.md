@@ -1,18 +1,18 @@
-# Implement Caching Strategy
+# キャッシュ戦略実装
 
-Add comprehensive caching at multiple layers to significantly improve application performance with proper caching strategies.
+適切なキャッシュ戦略により複数層にわたる包括的なキャッシュを追加し、アプリケーションパフォーマンスを大幅に改善します。
 
 ## Instructions
 
-1. **Caching Strategy Analysis**
-   - Analyze application architecture and identify caching opportunities
-   - Assess current performance bottlenecks and data access patterns
-   - Define caching requirements (TTL, invalidation, consistency)
-   - Plan multi-layer caching architecture (browser, CDN, application, database)
-   - Evaluate caching technologies and storage solutions
+1. **キャッシュ戦略分析**
+   - アプリケーションアーキテクチャを分析し、キャッシュ機会を特定
+   - 現在のパフォーマンスボトルネックとデータアクセスパターンを評価
+   - キャッシュ要件を定義（TTL、無効化、一貫性）
+   - 多層キャッシュアーキテクチャを計画（ブラウザ、CDN、アプリケーション、データベース）
+   - キャッシュ技術とストレージソリューションを評価
 
-2. **Browser and Client-Side Caching**
-   - Configure HTTP caching headers and cache policies:
+2. **ブラウザとクライアントサイドキャッシュ**
+   - HTTPキャッシュヘッダーとキャッシュポリシーを設定:
 
    **HTTP Cache Headers:**
    ```javascript
@@ -61,8 +61,8 @@ Add comprehensive caching at multiple layers to significantly improve applicatio
    });
    ```
 
-3. **Application-Level Caching**
-   - Implement in-memory and distributed caching:
+3. **アプリケーションレベルキャッシュ**
+   - インメモリと分散キャッシュを実装:
 
    **Node.js Memory Cache:**
    ```javascript
@@ -172,8 +172,8 @@ Add comprehensive caching at multiple layers to significantly improve applicatio
    }
    ```
 
-4. **Database Query Caching**
-   - Implement database-level caching strategies:
+4. **データベースクエリキャッシュ**
+   - データベースレベルのキャッシュ戦略を実装:
 
    **PostgreSQL Query Caching:**
    ```javascript
@@ -260,8 +260,8 @@ Add comprehensive caching at multiple layers to significantly improve applicatio
    ProductSchema.plugin(cachePlugin);
    ```
 
-5. **API Response Caching**
-   - Implement comprehensive API caching:
+5. **APIレスポンスキャッシュ**
+   - 包括的なAPIキャッシュを実装:
 
    **Express Cache Middleware:**
    ```javascript

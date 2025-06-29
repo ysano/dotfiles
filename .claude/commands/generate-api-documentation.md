@@ -1,26 +1,26 @@
 # Generate API Documentation
 
-Auto-generate comprehensive API documentation from code with interactive examples and always up-to-date specifications.
+インタラクティブな例と常に最新の仕様で、コードから包括的なAPIドキュメントを自動生成します。
 
-## Instructions
+## 手順
 
-1. **API Documentation Strategy Analysis**
-   - Analyze current API structure and endpoints
-   - Identify documentation requirements (REST, GraphQL, gRPC, etc.)
-   - Assess existing code annotations and documentation
-   - Determine documentation output formats and hosting requirements
-   - Plan documentation automation and maintenance strategy
+1. **APIドキュメント戦略分析**
+   - 現在のAPI構造とエンドポイントを分析
+   - ドキュメント要件（REST、GraphQL、gRPCなど）を特定
+   - 既存のコードアノテーションとドキュメントを評価
+   - ドキュメント出力フォーマットとホスティング要件を決定
+   - ドキュメント自動化とメンテナンス戦略を計画
 
-2. **Documentation Tool Selection**
-   - Choose appropriate API documentation tools:
-     - **OpenAPI/Swagger**: REST API documentation with Swagger UI
-     - **Redoc**: Modern OpenAPI documentation renderer
-     - **GraphQL**: GraphiQL, Apollo Studio, GraphQL Playground
-     - **Postman**: API documentation with collections
-     - **Insomnia**: API documentation and testing
-     - **API Blueprint**: Markdown-based API documentation
-     - **JSDoc/TSDoc**: Code-first documentation generation
-   - Consider factors: API type, team workflow, hosting, interactivity
+2. **ドキュメントツール選択**
+   - 適切なAPIドキュメントツールを選択：
+     - **OpenAPI/Swagger**: Swagger UI付きREST APIドキュメント
+     - **Redoc**: モダンなOpenAPIドキュメントレンダラー
+     - **GraphQL**: GraphiQL、Apollo Studio、GraphQL Playground
+     - **Postman**: コレクション付きAPIドキュメント
+     - **Insomnia**: APIドキュメントとテスト
+     - **API Blueprint**: MarkdownベースAPIドキュメント
+     - **JSDoc/TSDoc**: コードファーストドキュメント生成
+   - 考慮要素：APIタイプ、チームワークフロー、ホスティング、インタラクティビティ
 
 3. **Code Annotation and Schema Definition**
    - Add comprehensive code annotations for API endpoints

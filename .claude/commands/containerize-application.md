@@ -1,15 +1,15 @@
-# Containerize Application
+# アプリケーションのコンテナ化
 
-Create optimal Docker configuration for application with security best practices, multi-stage builds, and production-ready optimization.
+セキュリティベストプラクティス、マルチステージビルド、本番対応最適化を備えたアプリケーション用の最適なDocker設定を作成します。
 
-## Instructions
+## 実行手順
 
-1. **Application Analysis and Containerization Strategy**
-   - Analyze application architecture and runtime requirements
-   - Identify application dependencies and external services
-   - Determine optimal base image and runtime environment
-   - Plan multi-stage build strategy for optimization
-   - Assess security requirements and compliance needs
+1. **アプリケーション分析とコンテナ化戦略**
+   - アプリケーションアーキテクチャとランタイム要件の分析
+   - アプリケーション依存関係と外部サービスの特定
+   - 最適なベースイメージとランタイム環境の決定
+   - 最適化のためのマルチステージビルド戦略の計画
+   - セキュリティ要件とコンプライアンス要件の評価
 
 2. **Dockerfile Creation and Optimization**
    - Create comprehensive Dockerfile with multi-stage builds

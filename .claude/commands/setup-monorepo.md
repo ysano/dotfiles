@@ -1,80 +1,80 @@
-# Setup Monorepo
+# Monorepoセットアップ
 
-Configure monorepo structure with workspace management, proper tooling, and cross-package dependencies.
+ワークスペース管理、適切なツール、クロスパッケージ依存関係でmonorepo構造を設定します。
 
-## Instructions
+## 実行手順
 
-1. **Monorepo Tool Analysis**
-   - Parse monorepo tool from arguments: `$ARGUMENTS` (nx, lerna, rush, yarn-workspaces, pnpm-workspaces, turborepo)
-   - If no tool specified, analyze project structure and recommend best tool based on:
-     - Project size and complexity
-     - Existing package manager
-     - Team preferences and CI/CD requirements
-   - Validate tool compatibility with existing codebase
+1. **Monorepoツール分析**
+   - 引数からmonorepoツールを解析: `$ARGUMENTS` (nx, lerna, rush, yarn-workspaces, pnpm-workspaces, turborepo)
+   - ツールが指定されていない場合、プロジェクト構造を分析し、以下に基づいて最適なツールを推奨：
+     - プロジェクトのサイズと複雑度
+     - 既存のパッケージマネージャー
+     - チームの好みとCI/CD要件
+   - 既存コードベースとのツール互換性を検証
 
-2. **Workspace Structure Setup**
-   - Create standard monorepo directory structure:
-     - `packages/` or `apps/` for applications
-     - `libs/` or `shared/` for shared libraries
-     - `tools/` for build tools and scripts
-     - `docs/` for documentation
-   - Configure workspace root package.json with workspace definitions
-   - Set up proper .gitignore for monorepo patterns
+2. **ワークスペース構造のセットアップ**
+   - 標準的なmonorepoディレクトリ構造を作成：
+     - アプリケーション用の`packages/`または`apps/`
+     - 共有ライブラリ用の`libs/`または`shared/`
+     - ビルドツールとスクリプト用の`tools/`
+     - ドキュメンテーション用の`docs/`
+   - ワークスペース定義でワークスペースルートpackage.jsonを設定
+   - monorepoパターン用の適切な.gitignoreをセットアップ
 
-3. **Tool-Specific Configuration**
-   - **Nx**: Initialize Nx workspace, configure nx.json, add essential plugins
-   - **Lerna**: Set up lerna.json, configure version management and publishing
-   - **Rush**: Initialize rush.json, configure build orchestration and policies
-   - **Yarn Workspaces**: Configure workspaces in package.json, set up workspace protocols
-   - **pnpm Workspaces**: Set up pnpm-workspace.yaml, configure filtering and dependencies
-   - **Turborepo**: Initialize turbo.json, configure pipeline and caching
+3. **ツール固有の設定**
+   - **Nx**: Nxワークスペースの初期化、nx.jsonの設定、必須プラグインの追加
+   - **Lerna**: lerna.jsonのセットアップ、バージョン管理と公開の設定
+   - **Rush**: rush.jsonの初期化、ビルドオーケストレーションとポリシーの設定
+   - **Yarn Workspaces**: package.jsonでワークスペースを設定、ワークスペースプロトコルのセットアップ
+   - **pnpm Workspaces**: pnpm-workspace.yamlのセットアップ、フィルタリングと依存関係の設定
+   - **Turborepo**: turbo.jsonの初期化、パイプラインとキャッシュの設定
 
-4. **Package Management Configuration**
-   - Configure package manager settings for workspace support
-   - Set up dependency hoisting and deduplication rules
-   - Configure workspace-specific package.json templates
-   - Set up cross-package dependency management
-   - Configure private package registry if needed
+4. **パッケージ管理設定**
+   - ワークスペースサポート用にパッケージマネージャー設定を設定
+   - 依存関係の巻き上げと重複排除ルールのセットアップ
+   - ワークスペース固有のpackage.jsonテンプレートの設定
+   - クロスパッケージ依存関係管理のセットアップ
+   - 必要に応じてプライベートパッケージレジストリの設定
 
-5. **Build System Integration**
-   - Configure build orchestration and task running
-   - Set up dependency graph analysis and affected package detection
-   - Configure parallel builds and task caching
-   - Set up incremental builds for changed packages
-   - Configure build artifacts and output management
+5. **ビルドシステム統合**
+   - ビルドオーケストレーションとタスク実行の設定
+   - 依存関係グラフ分析と影響を受けるパッケージ検出のセットアップ
+   - 並列ビルドとタスクキャッシュの設定
+   - 変更されたパッケージのインクリメンタルビルドのセットアップ
+   - ビルド成果物と出力管理の設定
 
-6. **Development Workflow**
-   - Set up workspace-wide development scripts
-   - Configure hot reloading and watch mode for development
-   - Set up workspace-wide linting and formatting
-   - Configure debugging across multiple packages
-   - Set up workspace-wide testing and coverage
+6. **開発ワークフロー**
+   - ワークスペース全体の開発スクリプトのセットアップ
+   - 開発用のホットリロードとウォッチモードの設定
+   - ワークスペース全体のリントとフォーマットのセットアップ
+   - 複数パッケージ間のデバッグの設定
+   - ワークスペース全体のテストとカバレッジのセットアップ
 
-7. **Version Management**
-   - Configure versioning strategy (independent vs. fixed versions)
-   - Set up changelog generation for workspace packages
-   - Configure release workflow and package publishing
-   - Set up semantic versioning and conventional commits
-   - Configure workspace-wide dependency updates
+7. **バージョン管理**
+   - バージョニング戦略の設定（独立 vs 固定バージョン）
+   - ワークスペースパッケージのチェンジログ生成のセットアップ
+   - リリースワークフローとパッケージ公開の設定
+   - セマンティックバージョニングと定型コミットのセットアップ
+   - ワークスペース全体の依存関係更新の設定
 
-8. **CI/CD Pipeline Integration**
-   - Configure CI to detect affected packages and run targeted tests
-   - Set up build matrix for different package combinations
-   - Configure deployment pipeline for multiple packages
-   - Set up workspace-wide quality gates
-   - Configure artifact publishing and registry management
+8. **CI/CDパイプライン統合**
+   - 影響を受けるパッケージを検出し、ターゲットテストを実行するようにCIを設定
+   - 異なるパッケージ組み合わせのビルドマトリックスのセットアップ
+   - 複数パッケージのデプロイメントパイプラインの設定
+   - ワークスペース全体の品質ゲートのセットアップ
+   - 成果物公開とレジストリ管理の設定
 
-9. **Documentation and Standards**
-   - Create workspace-wide development guidelines
-   - Document package creation and management procedures
-   - Set up workspace-wide code standards and conventions
-   - Create architectural decision records for monorepo patterns
-   - Document deployment and release procedures
+9. **ドキュメンテーションと標準**
+   - ワークスペース全体の開発ガイドラインの作成
+   - パッケージ作成と管理手順の文書化
+   - ワークスペース全体のコード標準と規約のセットアップ
+   - monorepoパターンのアーキテクチャ決定レコードの作成
+   - デプロイメントとリリース手順の文書化
 
-10. **Validation and Testing**
-    - Verify workspace configuration is correct
-    - Test package creation and cross-package dependencies
-    - Validate build pipeline and task execution
-    - Test development workflow and hot reloading
-    - Verify CI/CD integration and affected package detection
-    - Create example packages to demonstrate workspace functionality
+10. **検証とテスト**
+    - ワークスペース設定が正しいことを検証
+    - パッケージ作成とクロスパッケージ依存関係のテスト
+    - ビルドパイプラインとタスク実行の検証
+    - 開発ワークフローとホットリロードのテスト
+    - CI/CD統合と影響を受けるパッケージ検出の検証
+    - ワークスペース機能を示すサンプルパッケージの作成

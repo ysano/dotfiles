@@ -1,41 +1,49 @@
-# Retrospective Analyzer
+# レトロスペクティブアナライザー
 
-Facilitate sprint retrospectives with data-driven insights and action items by analyzing sprint metrics and identifying patterns for improvement.
+GitHub Projects V2、Issues、PR、Actionsのメトリクスを分析し、改善のためのパターンを特定することで、データ駆動の洞察とアクションアイテムでスプリントレトロスペクティブを促進します。
 
-## Instructions
+## 実行手順
 
-1. **Retrospective Setup**
-   - Identify sprint to analyze (default: most recent)
-   - Check Linear MCP connection for sprint data
-   - Define retrospective format preference
-   - Set analysis time range
+1. **レトロスペクティブの設定**
+   - 分析するスプリント/マイルストーンの特定（デフォルト：最新）
+   - GitHub Projects V2、APIアクセスの確認
+   - レトロスペクティブ形式の設定
+   - 分析時間範囲の設定
 
-2. **Sprint Data Collection**
+2. **スプリントデータ収集**
 
-#### Quantitative Metrics
+#### 定量的メトリクス
 ```
-From Linear/Project Management:
-- Planned vs completed story points
-- Sprint velocity and capacity
-- Cycle time and lead time
-- Escaped defects count
-- Unplanned work percentage
+GitHub Projects V2/Issuesから：
+- 計画対完了Issues数
+- スプリントベロシティとキャパシティ
+- Issueサイクルタイムとリードタイム
+- バグラベルのIssues数
+- 計画外Issueの割合
 
-From Git/GitHub:
-- Commit frequency and distribution
-- PR merge time statistics  
-- Code review turnaround
-- Build success rate
-- Deployment frequency
+Git/GitHubから：
+- コミット頻度と分布
+- PRマージ時間統計
+- コードレビューのターンアラウンド
+- GitHub Actions成功率
+- デプロイ頻度と成功率
+
+GitHub Actions/Workflowsから：
+- CI/CDパイプライン実行時間
+- テストカバレッジトレンド
+- ワークフロー失敗率
+- デプロイメント頻度
 ```
 
-#### Qualitative Data Sources
+#### 定性データソース
 ```
-1. PR review comments sentiment
-2. Commit message patterns
-3. Slack conversations (if available)
-4. Previous retrospective action items
-5. Support ticket trends
+1. PRレビューコメントの感情
+2. コミットメッセージパターン
+3. GitHub Discussions/Issuesコメント
+4. 前回のレトロスペクティブアクションアイテム
+5. GitHub Issuesのバグレポートトレンド
+6. GitHub Actionsログエラーパターン
+7. Slack会話（利用可能な場合）
 ```
 
 3. **Automated Analysis**
@@ -236,19 +244,19 @@ Based on retrospective discussion, here are SMART action items:
 
 ## Error Handling
 
-### No Linear Data
+### No GitHub Projects Data
 ```
-"Linear MCP not connected. Using git data only.
+"GitHub Projects V2アクセスが制限されています。GitデータとIssuesのみを使用します。
 
-Missing insights:
-- Story point analysis
-- Task-level metrics
-- Team capacity data
+不足している洞察：
+- Projects V2のカスタムフィールド分析
+- プロジェクトレベルのメトリクス
+- チームキャパシティデータ
 
-Would you like to:
-1. Proceed with git data only
-2. Manually input sprint metrics
-3. Connect Linear and retry"
+以下のいずれかを希望しますか：
+1. GitとIssuesデータのみで続行
+2. スプリントメトリクスを手動入力
+3. GitHub Projects V2権限を設定して再試行"
 ```
 
 ### Incomplete Sprint
@@ -311,11 +319,97 @@ Trend: Improving from last sprint (was 55% positive)"
 
 ## Integration Options
 
-1. **Linear**: Create action items as tasks
-2. **Slack**: Post summary to team channel
-3. **Confluence**: Export formatted retrospective page
-4. **GitHub**: Create issues for technical debt items
-5. **Calendar**: Schedule action item check-ins
+1. **GitHub Issues**: アクションアイテムをIssuesとして作成
+2. **GitHub Projects V2**: レトロスペクティブアイテムをプロジェクトに追加
+3. **GitHub Discussions**: チームディスカッション投稿
+4. **GitHub Actions**: レトロスペクティブレポート自動生成
+5. **Slack**: チームチャンネルに概要投稿
+6. **GitHub Pages**: フォーマットされたレトロスペクティブページをエクスポート
+7. **Calendar**: アクションアイテムチェックインをスケジュール
+
+## GitHub Actions統合
+
+### 自動レトロスペクティブワークフロー
+```yaml
+# .github/workflows/retrospective.yml
+name: Automated Retrospective Analysis
+on:
+  schedule:
+    - cron: '0 16 * * 5'  # 毎週金曜日16時
+  workflow_dispatch:
+    inputs:
+      sprint_number:
+        description: 'Sprint/Milestone Number'
+        required: false
+
+jobs:
+  retrospective-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect Sprint Data
+        run: |
+          # Get closed issues from last sprint
+          gh issue list --state closed --milestone "${{ github.event.inputs.sprint_number || 'current' }}" --json number,title,closedAt,labels,assignees
+          
+          # Get merged PRs
+          gh pr list --state merged --json number,title,mergedAt,additions,deletions,reviewDecision
+          
+          # Get workflow runs
+          gh api /repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.created_at > "'$(date -d '2 weeks ago' --iso-8601)'")'
+
+      - name: Generate Retrospective Report
+        run: |
+          # Analyze data and generate insights
+          echo "## Sprint Retrospective Analysis" > retrospective.md
+          echo "Date: $(date)" >> retrospective.md
+          # Add analysis logic here
+
+      - name: Create Issues for Action Items
+        run: |
+          # Create GitHub Issues for identified action items
+          gh issue create --title "Retrospective Action: Improve CI/CD Pipeline" --body "Based on retrospective analysis..." --label "retrospective,improvement"
+
+      - name: Update Project Board
+        run: |
+          # Add retrospective items to project
+          gh project item-create --owner ${{ github.repository_owner }} --number 1 --title "Sprint Retrospective Completed"
+```
+
+### メトリクス収集スクリプト
+```bash
+#!/bin/bash
+# collect-metrics.sh - GitHub レトロスペクティブメトリクス収集
+
+REPO_OWNER="${1:-$(gh repo view --json owner --jq .owner.login)}"
+REPO_NAME="${2:-$(gh repo view --json name --jq .name)}"
+DAYS_BACK="${3:-14}"
+
+echo "Collecting retrospective metrics for $REPO_OWNER/$REPO_NAME (last $DAYS_BACK days)"
+
+# Issue metrics
+echo "## Issue Metrics"
+gh issue list --state closed --search "closed:>$(date -d "$DAYS_BACK days ago" --iso-8601)" --json number,title,closedAt,labels --jq '
+  group_by(.labels[].name) | 
+  map({label: .[0].labels[0].name, count: length}) |
+  sort_by(.count) | reverse'
+
+# PR metrics  
+echo "## Pull Request Metrics"
+gh pr list --state merged --search "merged:>$(date -d "$DAYS_BACK days ago" --iso-8601)" --json number,title,mergedAt,additions,deletions,comments --jq '
+  {
+    total_prs: length,
+    total_additions: map(.additions) | add,
+    total_deletions: map(.deletions) | add,
+    avg_comments: (map(.comments | length) | add / length)
+  }'
+
+# Actions metrics
+echo "## GitHub Actions Metrics"
+gh api "/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=100" --jq '
+  .workflow_runs[] | 
+  select(.created_at > "'$(date -d "$DAYS_BACK days ago" --iso-8601)'") |
+  {name: .name, status: .status, conclusion: .conclusion, run_started_at: .run_started_at}'
+```
 
 ## Best Practices
 
@@ -326,3 +420,5 @@ Trend: Improving from last sprint (was 55% positive)"
 5. **Follow-up**: Track action item completion
 6. **Celebrate Wins**: Acknowledge improvements
 7. **Safe Space**: Encourage honest feedback
+8. **Automate Collection**: Use GitHub Actions for consistent data gathering
+9. **Version Control Insights**: Store retrospective outputs in repository for tracking

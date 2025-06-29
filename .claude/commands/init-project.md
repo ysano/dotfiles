@@ -1,73 +1,73 @@
-# Initialize New Project
+# プロジェクト初期化コマンド
 
-Initialize new project with industry best practices, proper tooling, and framework-specific configurations.
+業界のベストプラクティス、適切なツール設定、フレームワーク固有の設定を用いて新しいプロジェクトを初期化します。
 
-## Instructions
+## 実行手順
 
-1. **Project Analysis and Setup**
-   - Parse the project type and framework from arguments: `$ARGUMENTS`
-   - If no arguments provided, analyze current directory and ask user for project type and framework
-   - Create project directory structure if needed
-   - Validate that the chosen framework is appropriate for the project type
+1. **プロジェクト分析とセットアップ**
+   - 引数からプロジェクトタイプとフレームワークを解析: `$ARGUMENTS`
+   - 引数が提供されていない場合、現在のディレクトリを分析し、ユーザーにプロジェクトタイプとフレームワークを確認
+   - 必要に応じてプロジェクトディレクトリ構造を作成
+   - 選択されたフレームワークがプロジェクトタイプに適切であることを検証
 
-2. **Base Project Structure**
-   - Create essential directories (src/, tests/, docs/, etc.)
-   - Initialize git repository with proper .gitignore for the project type
-   - Create README.md with project description and setup instructions
-   - Set up proper file structure based on project type and framework
+2. **基本プロジェクト構造**
+   - 必須ディレクトリの作成 (src/, tests/, docs/, etc.)
+   - プロジェクトタイプに適した.gitignoreでGitリポジトリを初期化
+   - プロジェクト説明とセットアップ手順を含むREADME.mdを作成
+   - プロジェクトタイプとフレームワークに基づく適切なファイル構造をセットアップ
 
-3. **Framework-Specific Configuration**
-   - **Web/React**: Set up React with TypeScript, Vite/Next.js, ESLint, Prettier
-   - **Web/Vue**: Configure Vue 3 with TypeScript, Vite, ESLint, Prettier
-   - **Web/Angular**: Set up Angular CLI project with TypeScript and testing
-   - **API/Express**: Create Express.js server with TypeScript, middleware, and routing
-   - **API/FastAPI**: Set up FastAPI with Python, Pydantic models, and async support
-   - **Mobile/React Native**: Configure React Native with navigation and development tools
-   - **Desktop/Electron**: Set up Electron with renderer and main process structure
-   - **CLI/Node**: Create Node.js CLI with commander.js and proper packaging
-   - **Library/NPM**: Set up library with TypeScript, rollup/webpack, and publishing config
+3. **フレームワーク固有の設定**
+   - **Web/React**: TypeScript、Vite/Next.js、ESLint、PrettierでReactをセットアップ
+   - **Web/Vue**: TypeScript、Vite、ESLint、PrettierでVue 3を設定
+   - **Web/Angular**: TypeScriptとテスト環境でAngular CLIプロジェクトをセットアップ
+   - **API/Express**: TypeScript、ミドルウェア、ルーティングでExpress.jsサーバーを作成
+   - **API/FastAPI**: Python、Pydanticモデル、非同期サポートでFastAPIをセットアップ
+   - **Mobile/React Native**: ナビゲーションと開発ツールでReact Nativeを設定
+   - **Desktop/Electron**: レンダラーとメインプロセス構造でElectronをセットアップ
+   - **CLI/Node**: commander.jsと適切なパッケージングでNode.js CLIを作成
+   - **Library/NPM**: TypeScript、rollup/webpack、公開設定でライブラリをセットアップ
 
-4. **Development Environment Setup**
-   - Configure package manager (npm, yarn, pnpm) with proper package.json
-   - Set up TypeScript configuration with strict mode and path mapping
-   - Configure linting with ESLint and language-specific rules
-   - Set up code formatting with Prettier and pre-commit hooks
-   - Add EditorConfig for consistent coding standards
+4. **開発環境セットアップ**
+   - 適切なpackage.jsonでパッケージマネージャー (npm, yarn, pnpm) を設定
+   - strictモードとパスマッピングでTypeScript設定をセットアップ
+   - ESLintと言語固有のルールでlintingを設定
+   - Prettierとpre-commitフックでコードフォーマッティングをセットアップ
+   - 一貫したコーディング基準のためのEditorConfigを追加
 
-5. **Testing Infrastructure**
-   - Install and configure testing framework (Jest, Vitest, Pytest, etc.)
-   - Set up test directory structure and example tests
-   - Configure code coverage reporting
-   - Add testing scripts to package.json/makefile
+5. **テストインフラストラクチャ**
+   - テストフレームワーク (Jest, Vitest, Pytest, etc.) のインストールと設定
+   - テストディレクトリ構造とサンプルテストのセットアップ
+   - コードカバレッジレポートの設定
+   - package.json/makefileにテストスクリプトを追加
 
-6. **Build and Development Tools**
-   - Configure build system (Vite, webpack, rollup, etc.)
-   - Set up development server with hot reloading
-   - Configure environment variable management
-   - Add build optimization and bundling
+6. **ビルドと開発ツール**
+   - ビルドシステム (Vite, webpack, rollup, etc.) の設定
+   - ホットリロード付き開発サーバーのセットアップ
+   - 環境変数管理の設定
+   - ビルド最適化とバンドリングの追加
 
-7. **CI/CD Pipeline**
-   - Create GitHub Actions workflow for testing and deployment
-   - Set up automated testing on pull requests
-   - Configure automated dependency updates with Dependabot
-   - Add status badges to README
+7. **CI/CDパイプライン**
+   - テストとデプロイメント用のGitHub Actionsワークフローを作成
+   - Pull Request時の自動テストをセットアップ
+   - Dependabotで自動依存関係更新を設定
+   - READMEにステータスバッジを追加
 
-8. **Documentation and Quality**
-   - Generate comprehensive README with installation and usage instructions
-   - Create CONTRIBUTING.md with development guidelines
-   - Set up API documentation generation (JSDoc, Sphinx, etc.)
-   - Add code quality badges and shields
+8. **ドキュメントと品質**
+   - インストールと使用方法を含む包括的なREADMEを生成
+   - 開発ガイドラインを含むCONTRIBUTING.mdを作成
+   - API文書生成をセットアップ (JSDoc, Sphinx, etc.)
+   - コード品質バッジとシールドを追加
 
-9. **Security and Best Practices**
-   - Configure security scanning with npm audit or similar
-   - Set up dependency vulnerability checking
-   - Add security headers for web applications
-   - Configure environment-specific security settings
+9. **セキュリティとベストプラクティス**
+   - npm audit等でセキュリティスキャンを設定
+   - 依存関係の脆弱性チェックをセットアップ
+   - Webアプリケーション用のセキュリティヘッダーを追加
+   - 環境固有のセキュリティ設定を構成
 
-10. **Project Validation**
-    - Verify all dependencies install correctly
-    - Run initial build to ensure configuration is working
-    - Execute test suite to validate testing setup
-    - Check linting and formatting rules are applied
-    - Validate that development server starts successfully
-    - Create initial commit with proper project structure
+10. **プロジェクト検証**
+    - すべての依存関係が正しくインストールされることを確認
+    - 初期ビルドを実行して設定が動作することを確認
+    - テストスイートを実行してテストセットアップを検証
+    - lintingとフォーマッティングルールが適用されることを確認
+    - 開発サーバーが正常に起動することを検証
+    - 適切なプロジェクト構造で初回commitを作成

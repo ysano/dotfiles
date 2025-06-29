@@ -1,26 +1,26 @@
-# Migration Assistant
+# 移行アシスタント
 
-Help teams migrate between GitHub Issues and Linear with comprehensive data preservation, validation, and rollback capabilities. This enterprise-ready command ensures safe, complete migrations.
+GitHub IssuesとLinearの間での包括的なデータ保持、検証、ロールバック機能を備えたチーム移行を支援。このエンタープライズ対応コマンドは安全で完全な移行を保証します。
 
 ## Instructions
 
-1. **Check Prerequisites**
-   - Verify GitHub CLI (`gh`) is installed and authenticated
-   - Check if Linear MCP server is connected
-   - Ensure sufficient permissions in both systems
-   - Confirm backup storage is available
+1. **前提条件の確認**
+   - GitHub CLI（`gh`）がインストールされ認証済みであることを確認
+   - Linear MCPサーバーが接続されているかチェック
+   - 両システムで十分な権限があることを確認
+   - バックアップストレージが利用可能であることを確認
 
-2. **Parse Migration Parameters**
-   - Extract action and options from: **$ARGUMENTS**
-   - Valid actions: plan, analyze, migrate, verify, rollback
-   - Determine source and target systems
-   - Set migration scope and filters
+2. **移行パラメータの解析**
+   - 以下からアクションとオプションを抽出: **$ARGUMENTS**
+   - 有効なアクション: plan, analyze, migrate, verify, rollback
+   - ソースとターゲットシステムを決定
+   - 移行範囲とフィルタを設定
 
-3. **Initialize Migration Environment**
-   - Create migration workspace directory
-   - Set up logging and audit trails
-   - Initialize checkpoint system
-   - Prepare rollback mechanisms
+3. **移行環境の初期化**
+   - 移行ワークスペースディレクトリを作成
+   - ログ記録と監査証跡を設定
+   - チェックポイントシステムを初期化
+   - ロールバック機構を準備
 
 4. **Execute Migration Action**
    Based on the selected action:
@@ -70,23 +70,23 @@ Help teams migrate between GitHub Issues and Linear with comprehensive data pres
 migration-assistant [action] [options]
 ```
 
-## Actions
-- `plan` - Create migration plan
-- `analyze` - Assess migration scope
-- `migrate` - Execute migration
-- `verify` - Validate migration results
-- `rollback` - Revert migration
+## アクション
+- `plan` - 移行プランの作成
+- `analyze` - 移行範囲の評価
+- `migrate` - 移行の実行
+- `verify` - 移行結果の検証
+- `rollback` - 移行のロールバック
 
-## Options
-- `--source <system>` - Source system (github/linear)
-- `--target <system>` - Target system (github/linear)
-- `--scope <items>` - Items to migrate (all/issues/prs/projects)
-- `--dry-run` - Simulate migration
-- `--parallel <n>` - Parallel processing threads
-- `--checkpoint` - Enable checkpoint recovery
-- `--mapping-file <path>` - Custom field mappings
-- `--preserve-ids` - Maintain reference IDs
-- `--archive-source` - Archive after migration
+## オプション
+- `--source <system>` - ソースシステム（github/linear）
+- `--target <system>` - ターゲットシステム（github/linear）
+- `--scope <items>` - 移行するアイテム（all/issues/prs/projects）
+- `--dry-run` - 移行のシミュレーション
+- `--parallel <n>` - 並列処理スレッド数
+- `--checkpoint` - チェックポイント回復を有効化
+- `--mapping-file <path>` - カスタムフィールドマッピング
+- `--preserve-ids` - 参照IDの維持
+- `--archive-source` - 移行後のアーカイブ
 
 ## Examples
 ```bash

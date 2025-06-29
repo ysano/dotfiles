@@ -1,76 +1,76 @@
-# Create Onboarding Guide
+# オンボーディングガイド作成
 
-Generate comprehensive getting-started guide for new developers to accelerate team member onboarding and reduce knowledge transfer burden.
+チームメンバーのオンボーディングを加速し、知識伝達の負担を減らすための新しい開発者向け包括的スタートガイドを生成します。
 
-## Instructions
+## 実行手順
 
-1. **Onboarding Requirements Analysis**
-   - Analyze current team structure and skill requirements
-   - Identify key knowledge areas and learning objectives
-   - Assess current onboarding challenges and pain points
-   - Define onboarding timeline and milestone expectations
-   - Document role-specific requirements and responsibilities
+1. **オンボーディング要件分析**
+   - 現在のチーム構造とスキル要件を分析
+   - 主要な知識領域と学習目標を特定
+   - 現在のオンボーディングの課題と問題点を評価
+   - オンボーディングのタイムラインとマイルストーン期待を定義
+   - 役割固有の要件と責任を文書化
 
-2. **Development Environment Setup Guide**
-   - Create comprehensive development environment setup instructions
-   - Document required tools, software, and system requirements
-   - Provide step-by-step installation and configuration guides
-   - Create environment validation and troubleshooting procedures
-   - Set up automated environment setup scripts and tools
+2. **開発環境セットアップガイド**
+   - 包括的な開発環境セットアップ手順を作成
+   - 必要なツール、ソフトウェア、システム要件を文書化
+   - ステップバイステップのインストールと設定ガイドを提供
+   - 環境検証とトラブルシューティング手順を作成
+   - 自動環境セットアップスクリプトとツールを設定
 
-3. **Project and Codebase Overview**
-   - Create high-level project overview and business context
-   - Document system architecture and technology stack
-   - Provide codebase structure and organization guide
-   - Create code navigation and exploration guidelines
-   - Document key modules, libraries, and frameworks used
+3. **プロジェクトとコードベース概要**
+   - 高レベルのプロジェクト概要とビジネスコンテキストを作成
+   - システムアーキテクチャと技術スタックを文書化
+   - コードベース構造と編成ガイドを提供
+   - コードナビゲーションと探索ガイドラインを作成
+   - 使用されている主要モジュール、ライブラリ、フレームワークを文書化
 
-4. **Development Workflow Documentation**
-   - Document version control workflows and branching strategies
-   - Create code review process and quality standards guide
-   - Document testing practices and requirements
-   - Provide deployment and release process overview
-   - Create issue tracking and project management workflow guide
+4. **開発ワークフロードキュメンテーション**
+   - バージョン管理ワークフローとブランチ戦略を文書化
+   - コードレビュープロセスと品質標準ガイドを作成
+   - テストプラクティスと要件を文書化
+   - デプロイメントとリリースプロセスの概要を提供
+   - 問題追跡とプロジェクト管理ワークフローガイドを作成
 
-5. **Team Communication and Collaboration**
-   - Document team communication channels and protocols
-   - Create meeting schedules and participation guidelines
-   - Provide team contact information and org chart
-   - Document collaboration tools and access procedures
-   - Create escalation procedures and support contacts
+5. **チームコミュニケーションとコラボレーション**
+   - チームコミュニケーションチャンネルとプロトコルを文書化
+   - 会議スケジュールと参加ガイドラインを作成
+   - チーム連絡先情報と組織図を提供
+   - コラボレーションツールとアクセス手順を文書化
+   - エスカレーション手順とサポート連絡先を作成
 
-6. **Learning Resources and Training Materials**
-   - Curate learning resources for project-specific technologies
-   - Create hands-on tutorials and coding exercises
-   - Provide links to documentation, wikis, and knowledge bases
-   - Create video tutorials and screen recordings
-   - Set up mentoring and buddy system procedures
+6. **学習リソースとトレーニング材料**
+   - プロジェクト固有技術の学習リソースを精選
+   - ハンズオンチュートリアルとコーディング演習を作成
+   - ドキュメント、Wiki、ナレッジベースへのリンクを提供
+   - ビデオチュートリアルとスクリーン録画を作成
+   - メンタリングとバディシステム手順を設定
 
-7. **First Tasks and Milestones**
-   - Create progressive difficulty task assignments
-   - Define learning milestones and checkpoints
-   - Provide "good first issues" and starter projects
-   - Create hands-on coding challenges and exercises
-   - Set up pair programming and shadowing opportunities
+7. **初期タスクとマイルストーン**
+   - 段階的難易度のタスク割り当てを作成
+   - 学習マイルストーンとチェックポイントを定義
+   - 「good first issues」とスタータープロジェクトを提供
+   - ハンズオンコーディングチャレンジと演習を作成
+   - ペアプログラミングとシャドーイングの機会を設定
 
-8. **Security and Compliance Training**
-   - Document security policies and access controls
-   - Create data handling and privacy guidelines
-   - Provide compliance training and certification requirements
-   - Document incident response and security procedures
-   - Create security best practices and guidelines
+8. **セキュリティとコンプライアンストレーニング**
+   - セキュリティポリシーとアクセス制御を文書化
+   - データ取り扱いとプライバシーガイドラインを作成
+   - コンプライアンストレーニングと認定要件を提供
+   - インシデント対応とセキュリティ手順を文書化
+   - セキュリティベストプラクティスとガイドラインを作成
 
-9. **Tools and Resources Access**
-   - Document required accounts and access requests
-   - Create tool-specific setup and usage guides
-   - Provide license and subscription information
-   - Document VPN and network access procedures
-   - Create troubleshooting guides for common access issues
+9. **ツールとリソースアクセス**
+   - 必要なアカウントとアクセスリクエストを文書化
+   - ツール固有のセットアップと使用ガイドを作成
+   - ライセンスとサブスクリプション情報を提供
+   - VPNとネットワークアクセス手順を文書化
+   - 一般的なアクセス問題のトラブルシューティングガイドを作成
 
-10. **Feedback and Continuous Improvement**
-    - Create onboarding feedback collection process
-    - Set up regular check-ins and progress reviews
-    - Document common questions and FAQ section
-    - Create onboarding metrics and success tracking
-    - Establish onboarding guide maintenance and update procedures
-    - Set up new hire success monitoring and support systems
+10. **フィードバックと継続的改善**
+    - オンボーディングフィードバック収集プロセスを作成
+    - 定期的なチェックインと進捗レビューを設定
+    - 一般的な質問とFAQセクションを文書化
+    - オンボーディングメトリクスと成功追跡を作成
+    - オンボーディングガイドの保守と更新手順を確立
+    - 新しい采用者の成功監視とサポートシステムを設定

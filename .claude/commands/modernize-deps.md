@@ -1,56 +1,56 @@
-# Modernize Dependencies Command
+# 依存関係近代化コマンド
 
-Systematically update and modernize project dependencies while maintaining stability and compatibility.
+安定性と互換性を維持しながら、プロジェクト依存関係を体系的に更新・近代化します。
 
-## Instructions
+## 実行手順
 
-Follow this approach to modernize dependencies: **$ARGUMENTS**
+依存関係を近代化するためのアプローチに従う: **$ARGUMENTS**
 
-1. **Dependency Audit**
+1. **依存関係監査**
    ```bash
-   # Check outdated packages
+   # 古いパッケージの確認
    npm outdated
    pip list --outdated
    composer outdated
    
-   # Security audit
+   # セキュリティ監査
    npm audit
    pip-audit
    ```
 
-2. **Update Strategy**
-   - Start with patch updates (1.2.3 → 1.2.4)
-   - Then minor updates (1.2.3 → 1.3.0)
-   - Finally major updates (1.2.3 → 2.0.0)
-   - Test thoroughly between each step
+2. **更新戦略**
+   - パッチ更新から開始（1.2.3 → 1.2.4）
+   - 次にマイナー更新（1.2.3 → 1.3.0）
+   - 最後にメジャー更新（1.2.3 → 2.0.0）
+   - 各ステップ間で徹底的にテスト
 
-3. **Automated Updates**
+3. **自動更新**
    ```bash
-   # Safe updates
+   # 安全な更新
    npm update
    pip install -U package-name
    
-   # Interactive updates
+   # インタラクティブ更新
    npx npm-check-updates -i
    ```
 
-4. **Breaking Changes Review**
-   - Read changelogs and migration guides
-   - Identify deprecated APIs
-   - Plan code changes needed
-   - Update tests and documentation
+4. **破壊的変更の確認**
+   - 変更履歴と移行ガイドの確認
+   - 廃止予定APIの特定
+   - 必要なコード変更の計画
+   - テストとドキュメントの更新
 
-5. **Testing and Validation**
+5. **テストと検証**
    ```bash
    npm test
    npm run build
    npm run lint
    ```
 
-6. **Documentation Updates**
-   - Update README.md
-   - Revise installation instructions
-   - Update API documentation
-   - Note breaking changes
+6. **ドキュメント更新**
+   - README.mdの更新
+   - インストール手順の改訂
+   - APIドキュメントの更新
+   - 破壊的変更の記録
 
-Remember to update dependencies incrementally, test thoroughly, and maintain backward compatibility where possible.
+依存関係は段階的に更新し、徹底的にテストし、可能な限り後方互換性を維持することを忘れない。

@@ -1,29 +1,29 @@
 # estimate-assistant
 
-Provide data-driven task estimation based on historical git data, code complexity, and team velocity.
+過去のgitデータ、コードの複雑性、チームベロシティに基づいたデータ駆動のタスク見積もりを提供します。
 
-## Purpose
-This command analyzes past commits, PR completion times, code complexity metrics, and team performance to provide accurate task estimates. It helps teams move beyond gut-feel estimates to data-backed predictions.
+## 目的
+このコマンドは過去のコミット、PR完了時間、コード複雑性メトリクス、チームパフォーマンスを分析して正確なタスク見積もりを提供します。チームが勘に基づく見積もりからデータに裏付けられた予測に移行するのを支援します。
 
-## Usage
+## 使用方法
 ```bash
-# Estimate a specific task based on description
-claude "Estimate task: Implement OAuth2 login flow with Google"
+# 説明に基づいて特定のタスクを見積もり
+claude "タスク見積もり: GoogleでOAuth2ログインフローを実装"
 
-# Analyze historical accuracy of estimates
-claude "Show estimation accuracy for the last 10 sprints"
+# 見積もりの過去の精度を分析
+claude "過去10スプリントの見積もり精度を表示"
 
-# Estimate based on code changes
-claude "Estimate effort for refactoring src/api/users module"
+# コード変更に基づいた見積もり
+claude "src/api/usersモジュールのリファクタリングの工数を見積もり"
 
-# Get team member specific estimates
-claude "How long would it take Alice to implement the payment webhook handler?"
+# チームメンバー固有の見積もりを取得
+claude "Aliceが支払いwebhookハンドラーを実装するのにどのくらいかかる？"
 ```
 
-## Instructions
+## 実行手順
 
-### 1. Gather Historical Data
-Collect data from git history and Linear:
+### 1. 過去データの収集
+git履歴とLinearからデータを収集：
 
 ```bash
 # Get commit history with timestamps and authors
@@ -358,16 +358,16 @@ if (historicalTasks.length < 10) {
 }
 
 // Handle new types of work
-const similarity = findSimilarTasks(description);
+const similarity = findSimilarIssues(description);
 if (similarity.maxScore < 0.5) {
-  console.warn("This appears to be a new type of task. Using conservative estimate.");
+  console.warn("This appears to be a new type of issue. Using conservative estimate.");
   // Apply uncertainty multiplier
 }
 
-// Handle missing Linear connection
-if (!linear.available) {
-  console.log("Using git history only for estimation");
-  // Use git-based estimation
+// Handle missing GitHub Projects connection
+if (!github.projects.available) {
+  console.log("Using git history and issues only for estimation");
+  // Use git and basic GitHub data estimation
 }
 ```
 
@@ -413,11 +413,107 @@ Final estimate: 5 story points
 5. Update tests and documentation (1 point)
 ```
 
+## GitHub Actions統合
+
+### 自動見積もりワークフロー
+```yaml
+# .github/workflows/estimation.yml
+name: Automated Issue Estimation
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+
+jobs:
+  estimate-issue:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'needs-estimate')
+    steps:
+      - name: Analyze Similar Issues
+        run: |
+          # Get similar issues based on labels and title
+          gh issue list --label "$(echo "${{ github.event.issue.labels }}" | jq -r '.[].name' | head -1)" --state closed --json number,title,createdAt,closedAt,labels
+          
+          # Calculate average completion time
+          SIMILAR_ISSUES=$(gh issue list --search "label:feature is:closed" --json createdAt,closedAt --jq '
+            map(select(.closedAt != null)) |
+            map(((.closedAt | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) - (.createdAt | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime)) / 86400) |
+            add / length
+          ')
+          echo "Average completion time: $SIMILAR_ISSUES days"
+
+      - name: Add Estimation Comment
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "
+          ## 🤖 Automated Estimation
+
+          Based on similar issues:
+          - **Estimated effort**: $SIMILAR_ISSUES days
+          - **Confidence**: Medium
+          - **Similar issues**: $(gh issue list --search 'label:feature is:closed' --limit 3 --json number,title --jq '.[].title' | paste -sd, -)
+
+          *This is an automated estimate. Please review and adjust as needed.*
+          "
+
+      - name: Update Project with Estimate
+        run: |
+          # Add to project with estimated effort
+          gh project item-create --owner ${{ github.repository_owner }} --number 1 --title "${{ github.event.issue.title }}"
+```
+
+### 見積もり精度追跡
+```yaml
+# .github/workflows/estimation-accuracy.yml
+name: Estimation Accuracy Tracking
+on:
+  issues:
+    types: [closed]
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly on Monday
+
+jobs:
+  track-accuracy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate Estimation Accuracy
+        run: |
+          # Get issues closed in last week with estimates
+          CLOSED_ISSUES=$(gh issue list --state closed --search "closed:>$(date -d '7 days ago' --iso-8601)" --json number,title,createdAt,closedAt,body)
+          
+          # Extract estimates from issue bodies and calculate accuracy
+          echo "$CLOSED_ISSUES" | jq -r '.[] | 
+            select(.body | test("Estimated effort.*([0-9]+)")) |
+            {
+              number: .number,
+              title: .title,
+              estimated: (.body | capture("Estimated effort.*(?<days>[0-9]+)") | .days | tonumber),
+              actual: (((.closedAt | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) - (.createdAt | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime)) / 86400)
+            }'
+
+      - name: Generate Accuracy Report
+        run: |
+          echo "## Weekly Estimation Accuracy Report" > accuracy_report.md
+          echo "Generated: $(date)" >> accuracy_report.md
+          echo "" >> accuracy_report.md
+          
+          # Add accuracy metrics
+          echo "### Metrics" >> accuracy_report.md
+          echo "- Issues analyzed: $ISSUE_COUNT" >> accuracy_report.md
+          echo "- Average accuracy: $ACCURACY%" >> accuracy_report.md
+          echo "- Estimation trend: $TREND" >> accuracy_report.md
+
+      - name: Create Accuracy Issue
+        run: |
+          gh issue create --title "Weekly Estimation Accuracy Report" --body-file accuracy_report.md --label "estimation,report"
+```
+
 ## Tips
 - Maintain historical data for at least 6 months
-- Re-calibrate estimates after each sprint
+- Re-calibrate estimates after each sprint/milestone
 - Track actual vs estimated for continuous improvement
 - Consider external factors (holidays, team changes)
-- Use pair programming multipliers for complex tasks
+- Use pair programming multipliers for complex issues
 - Document assumptions in estimates
-- Review estimates in retros
+- Review estimates in retrospectives
+- Leverage GitHub Actions for automated estimation
+- Use GitHub Projects V2 custom fields for tracking estimates

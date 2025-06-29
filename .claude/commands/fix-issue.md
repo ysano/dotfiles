@@ -1,85 +1,85 @@
-# Fix Issue Command
+# Issue修正コマンド
 
-Systematically analyze and fix GitHub issues using a comprehensive workflow that works across any repository.
+包括的なワークフローを使用して、あらゆるリポジトリで動作するGitHub issueを体系的に分析し、修正します。
 
-## Instructions
+## 実行手順
 
-Follow this structured approach to analyze and fix issues: **$ARGUMENTS**
+Issueを分析し修正するために以下の構造化されたアプローチに従ってください：**$ARGUMENTS**
 
-1. **Issue Analysis**
-   - Use `gh issue view $ARGUMENTS` to get complete issue details
-   - Read the issue description, comments, and any attached logs/screenshots
-   - Identify the type of issue (bug, feature request, enhancement, etc.)
-   - Understand the expected vs actual behavior
+1. **Issue分析**
+   - `gh issue view $ARGUMENTS`を使用して完全なissue詳細を取得する
+   - issueの説明、コメント、添付されたログ/スクリーンショットを読む
+   - issueのタイプを特定する（bug、機能リクエスト、改善など）
+   - 期待される動作と実際の動作を理解する
 
-2. **Environment Setup**
-   - Ensure you're on the correct branch (usually main/master)
-   - Pull latest changes: `git pull origin main`
-   - Create a new feature branch: `git checkout -b fix/issue-$ARGUMENTS`
+2. **環境セットアップ**
+   - 正しいbranchにいることを確認する（通常はmain/master）
+   - 最新の変更をpullする: `git pull origin main`
+   - 新しい機能 branchを作成する: `git checkout -b fix/issue-$ARGUMENTS`
 
-3. **Reproduce the Issue**
-   - Follow the steps to reproduce described in the issue
-   - Set up the development environment if needed
-   - Run the application/tests to confirm the issue exists
-   - Document the current behavior
+3. **Issueの再現**
+   - issueに記載された再現手順に従う
+   - 必要に応じて開発環境をセットアップする
+   - アプリケーション/テストを実行してissueの存在を確認する
+   - 現在の動作を文書化する
 
-4. **Root Cause Analysis**
-   - Search the codebase for relevant files and functions
-   - Use grep/search tools to locate the problematic code
-   - Analyze the code logic and identify the root cause
-   - Check for related issues or similar patterns
+4. **根本原因分析**
+   - コードベースで関連ファイルと関数を検索する
+   - grep/検索ツールを使用して問題のあるコードを特定する
+   - コードロジックを分析し、根本原因を特定する
+   - 関連issueや類似パターンを確認する
 
-5. **Solution Design**
-   - Design a fix that addresses the root cause, not just symptoms
-   - Consider edge cases and potential side effects
-   - Ensure the solution follows project conventions and patterns
-   - Plan for backward compatibility if needed
+5. **解決策の設計**
+   - 症状ではなく根本原因に対処する修正を設計する
+   - エッジケースと潜在的な副作用を考慮する
+   - 解決策がプロジェクトの規約とパターンに従うことを確認する
+   - 必要に応じて後方互換性を計画する
 
-6. **Implementation**
-   - Implement the fix with clean, readable code
-   - Follow the project's coding standards and style
-   - Add appropriate error handling and logging
-   - Keep changes minimal and focused
+6. **実装**
+   - 清潔で読みやすいコードで修正を実装する
+   - プロジェクトのコーディング標準とスタイルに従う
+   - 適切なエラー処理とログ出力を追加する
+   - 変更を最小限に絞り、集中させる
 
-7. **Testing Strategy**
-   - Write or update tests to cover the fix
-   - Ensure existing tests still pass
-   - Test edge cases and error conditions
-   - Run the full test suite to check for regressions
+7. **テスト戦略**
+   - 修正をカバーするテストを作成または更新する
+   - 既存のテストがまだ成功することを確認する
+   - エッジケースとエラー条件をテストする
+   - リグレッションを確認するために完全なテストスイートを実行する
 
-8. **Code Quality Checks**
-   - Run linting and formatting tools
-   - Perform static analysis if available
-   - Check for security implications
-   - Ensure performance isn't negatively impacted
+8. **コード品質チェック**
+   - lintingとフォーマットツールを実行する
+   - 利用可能な場合は静的解析を実行する
+   - セキュリティへの影響を確認する
+   - パフォーマンスが悪影響を受けないことを確認する
 
-9. **Documentation Updates**
-   - Update relevant documentation if needed
-   - Add or update code comments for clarity
-   - Update changelog if the project maintains one
-   - Document any breaking changes
+9. **ドキュメンテーション更新**
+   - 必要に応じて関連ドキュメンテーションを更新する
+   - 明確性のためにコードコメントを追加または更新する
+   - プロジェクトが維持している場合はchangelogを更新する
+   - 破壊的変更を文書化する
 
-10. **Commit and Push**
-    - Stage the changes: `git add .`
-    - Create a descriptive commit message following project conventions
-    - Example: `fix: resolve issue with user authentication timeout (#$ARGUMENTS)`
-    - Push the branch: `git push origin fix/issue-$ARGUMENTS`
+10. **CommitとPush**
+    - 変更をstageする: `git add .`
+    - プロジェクトの規約に従って記述的なcommitメッセージを作成する
+    - 例: `fix: resolve issue with user authentication timeout (#$ARGUMENTS)`
+    - branchをpushする: `git push origin fix/issue-$ARGUMENTS`
 
-11. **Create Pull Request**
-    - Use `gh pr create` to create a pull request
-    - Reference the issue in the PR description: "Fixes #$ARGUMENTS"
-    - Provide a clear description of the changes and testing performed
-    - Add appropriate labels and reviewers
+11. **Pull Request作成**
+    - `gh pr create`を使用してpull requestを作成する
+    - PR説明でissueを参照する: "Fixes #$ARGUMENTS"
+    - 変更と実行したテストの明確な説明を提供する
+    - 適切なlabelとreviewerを追加する
 
-12. **Follow-up**
-    - Monitor the PR for feedback and requested changes
-    - Address any review comments promptly
-    - Update the issue with progress and resolution
-    - Ensure CI/CD checks pass
+12. **フォローアップ**
+    - フィードバックと要求された変更にPRを監視する
+    - レビューコメントに迅速に対応する
+    - 進捗と解決状況でissueを更新する
+    - CI/CDチェックが成功することを確認する
 
-13. **Verification**
-    - Once merged, verify the fix in the main branch
-    - Close the issue if not automatically closed
-    - Monitor for any related issues or regressions
+13. **検証**
+    - merge後、main branchで修正を検証する
+    - 自動でクローズされない場合はissueをクローズする
+    - 関連issueやリグレッションを監視する
 
-Remember to communicate clearly in both code and comments, and always prioritize maintainable solutions over quick fixes.
+コードとコメントの両方で明確にコミュニケーションし、常に応急処置より保守可能な解決策を優先することを必ず実行してください。

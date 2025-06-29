@@ -1,116 +1,116 @@
-# Create Feature Command
+# 機能作成コマンド
 
-Implement new features following best practices for any codebase with comprehensive planning, development, and testing.
+包括的な計画、開発、テストを伴って、あらゆるコードベースのベストプラクティスに従って新機能を実装します。
 
-## Instructions
+## 実行手順
 
-Follow this systematic approach to create a new feature: **$ARGUMENTS**
+新機能を作成するために以下の体系的アプローチに従ってください：**$ARGUMENTS**
 
-1. **Feature Planning**
-   - Define the feature requirements and acceptance criteria
-   - Break down the feature into smaller, manageable tasks
-   - Identify affected components and potential impact areas
-   - Plan the API/interface design before implementation
+1. **機能計画**
+   - 機能要件と受け入れ基準を定義
+   - 機能を小さく管理可能なタスクに分割
+   - 影響を受けるコンポーネントと潜在的影響範囲を特定
+   - 実装前にAPI/インターフェース設計を計画
 
-2. **Research and Analysis**
-   - Study existing codebase patterns and conventions
-   - Identify similar features for consistency
-   - Research external dependencies or libraries needed
-   - Review any relevant documentation or specifications
+2. **調査と分析**
+   - 既存のコードベースパターンと規則を研究
+   - 一貫性のために類似機能を特定
+   - 必要な外部依存関係やライブラリを調査
+   - 関連するドキュメントや仕様をレビュー
 
-3. **Architecture Design**
-   - Design the feature architecture and data flow
-   - Plan database schema changes if needed
-   - Define API endpoints and contracts
-   - Consider scalability and performance implications
+3. **アーキテクチャ設計**
+   - 機能アーキテクチャとデータフローを設計
+   - 必要に応じてデータベーススキーマ変更を計画
+   - APIエンドポイントとコントラクトを定義
+   - スケーラビリティとパフォーマンスの影響を考慮
 
-4. **Environment Setup**
-   - Create a new feature branch: `git checkout -b feature/$ARGUMENTS`
-   - Ensure development environment is up to date
-   - Install any new dependencies required
-   - Set up feature flags if applicable
+4. **環境セットアップ**
+   - 新しいフィーチャーブランチを作成: `git checkout -b feature/$ARGUMENTS`
+   - 開発環境が最新であることを確認
+   - 必要な新しい依存関係をインストール
+   - 適用可能であればフィーチャーフラグを設定
 
-5. **Implementation Strategy**
-   - Start with core functionality and build incrementally
-   - Follow the project's coding standards and patterns
-   - Implement proper error handling and validation
-   - Use dependency injection and maintain loose coupling
+5. **実装戦略**
+   - コア機能から始めて段階的に構築
+   - プロジェクトのコーディング標準とパターンに従う
+   - 適切なエラーハンドリングと検証を実装
+   - 依存性注入を使用し、疎結合を維持
 
-6. **Database Changes (if applicable)**
-   - Create migration scripts for schema changes
-   - Ensure backward compatibility
-   - Plan for rollback scenarios
-   - Test migrations on sample data
+6. **データベース変更（該当する場合）**
+   - スキーマ変更用のマイグレーションスクリプトを作成
+   - 後方互換性を確保
+   - ロールバックシナリオを計画
+   - サンプルデータでマイグレーションをテスト
 
-7. **API Development**
-   - Implement API endpoints with proper HTTP status codes
-   - Add request/response validation
-   - Implement proper authentication and authorization
-   - Document API contracts and examples
+7. **API開発**
+   - 適切なHTTPステータスコードでAPIエンドポイントを実装
+   - リクエスト/レスポンス検証を追加
+   - 適切な認証と認可を実装
+   - APIコントラクトと例を文書化
 
-8. **Frontend Implementation (if applicable)**
-   - Create reusable components following project patterns
-   - Implement responsive design and accessibility
-   - Add proper state management
-   - Handle loading and error states
+8. **フロントエンド実装（該当する場合）**
+   - プロジェクトパターンに従って再利用可能なコンポーネントを作成
+   - レスポンシブデザインとアクセシビリティを実装
+   - 適切な状態管理を追加
+   - ローディングとエラー状態を処理
 
-9. **Testing Implementation**
-   - Write unit tests for core business logic
-   - Create integration tests for API endpoints
-   - Add end-to-end tests for user workflows
-   - Test error scenarios and edge cases
+9. **テスト実装**
+   - コアビジネスロジックのユニットテストを作成
+   - APIエンドポイントの統合テストを作成
+   - ユーザーワークフローのエンドツーエンドテストを追加
+   - エラーシナリオとエッジケースをテスト
 
-10. **Security Considerations**
-    - Implement proper input validation and sanitization
-    - Add authorization checks for sensitive operations
-    - Review for common security vulnerabilities
-    - Ensure data protection and privacy compliance
+10. **セキュリティ考慮事項**
+    - 適切な入力検証とサニタイゼーションを実装
+    - センシティブな操作の認可チェックを追加
+    - 一般的なセキュリティ脆弱性をレビュー
+    - データ保護とプライバシーコンプライアンスを確保
 
-11. **Performance Optimization**
-    - Optimize database queries and indexes
-    - Implement caching where appropriate
-    - Monitor memory usage and optimize algorithms
-    - Consider lazy loading and pagination
+11. **パフォーマンス最適化**
+    - データベースクエリとインデックスを最適化
+    - 適切な場所でキャッシュを実装
+    - メモリ使用量を監視しアルゴリズムを最適化
+    - 遅延ローディングとページネーションを考慮
 
-12. **Documentation**
-    - Add inline code documentation and comments
-    - Update API documentation
-    - Create user documentation if needed
-    - Update project README if applicable
+12. **ドキュメンテーション**
+    - インラインコードドキュメントとコメントを追加
+    - APIドキュメンテーションを更新
+    - 必要に応じてユーザードキュメンテーションを作成
+    - 該当する場合はプロジェクトREADMEを更新
 
-13. **Code Review Preparation**
-    - Run all tests and ensure they pass
-    - Run linting and formatting tools
-    - Check for code coverage and quality metrics
-    - Perform self-review of the changes
+13. **コードレビュー準備**
+    - すべてのテストを実行し成功することを確認
+    - リンティングとフォーマットツールを実行
+    - コードカバレッジと品質メトリクスを確認
+    - 変更内容のセルフレビューを実行
 
-14. **Integration Testing**
-    - Test feature integration with existing functionality
-    - Verify feature flags work correctly
-    - Test deployment and rollback procedures
-    - Validate monitoring and logging
+14. **統合テスト**
+    - 既存機能との機能統合をテスト
+    - フィーチャーフラグが正しく動作することを検証
+    - デプロイメントとロールバック手順をテスト
+    - 監視とログ記録を検証
 
-15. **Commit and Push**
-    - Create atomic commits with descriptive messages
-    - Follow conventional commit format if project uses it
-    - Push feature branch: `git push origin feature/$ARGUMENTS`
+15. **コミットとプッシュ**
+    - 説明的なメッセージで原子的コミットを作成
+    - プロジェクトが使用している場合は慣例コミット形式に従う
+    - フィーチャーブランチをプッシュ: `git push origin feature/$ARGUMENTS`
 
-16. **Pull Request Creation**
-    - Create PR with comprehensive description
-    - Include screenshots or demos if applicable
-    - Add appropriate labels and reviewers
-    - Link to any related issues or specifications
+16. **プルリクエスト作成**
+    - 包括的な説明でPRを作成
+    - 該当する場合はスクリーンショットやデモを含める
+    - 適切なラベルとレビューアーを追加
+    - 関連する問題や仕様にリンク
 
-17. **Quality Assurance**
-    - Coordinate with QA team for testing
-    - Address any bugs or issues found
-    - Verify accessibility and usability requirements
-    - Test on different environments and browsers
+17. **品質保証**
+    - テストのQAチームと調整
+    - 発見されたバグや問題を解決
+    - アクセシビリティとユーザビリティ要件を検証
+    - 異なる環境とブラウザでテスト
 
-18. **Deployment Planning**
-    - Plan feature rollout strategy
-    - Set up monitoring and alerting
-    - Prepare rollback procedures
-    - Schedule deployment and communication
+18. **デプロイメント計画**
+    - 機能ロールアウト戦略を計画
+    - 監視とアラートを設定
+    - ロールバック手順を準備
+    - デプロイメントとコミュニケーションをスケジュール
 
-Remember to maintain code quality, follow project conventions, and prioritize user experience throughout the development process.
+開発プロセスを通じてコード品質を維持し、プロジェクトの慣例に従い、ユーザーエクスペリエンスを優先することを忘れないでください。

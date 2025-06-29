@@ -1,194 +1,194 @@
-# Explain Code Command
+# コード解説コマンド
 
-Analyze and explain complex code sections in any programming language with clear, comprehensive explanations.
+あらゆるプログラミング言語の複雑なコード部分を、明確で包括的な説明で分析し、解説します。
 
-## Instructions
+## 実行手順
 
-Follow this systematic approach to explain code: **$ARGUMENTS**
+コードを解説するために以下の体系的アプローチに従ってください：**$ARGUMENTS**
 
-1. **Code Context Analysis**
-   - Identify the programming language and framework
-   - Understand the broader context and purpose of the code
-   - Identify the file location and its role in the project
-   - Review related imports, dependencies, and configurations
+1. **コードコンテキスト分析**
+   - プログラミング言語とフレームワークを特定する
+   - コードのより幅広いコンテキストと目的を理解する
+   - ファイルの場所とプロジェクト内での役割を特定する
+   - 関連するimport、依存関係、設定をレビューする
 
-2. **High-Level Overview**
-   - Provide a summary of what the code does
-   - Explain the main purpose and functionality
-   - Identify the problem the code is solving
-   - Describe how it fits into the larger system
+2. **高レベル概要**
+   - コードが何をするかの要約を提供する
+   - 主な目的と機能を説明する
+   - コードが解決している問題を特定する
+   - より大きなシステムにどのように適合しているか説明する
 
-3. **Code Structure Breakdown**
-   - Break down the code into logical sections
-   - Identify classes, functions, and methods
-   - Explain the overall architecture and design patterns
-   - Map out data flow and control flow
+3. **コード構造の分解**
+   - コードを論理的なセクションに分解する
+   - クラス、関数、メソッドを特定する
+   - 全体的なアーキテクチャと設計パターンを説明する
+   - データフローと制御フローをマッピングする
 
-4. **Line-by-Line Analysis**
-   - Explain complex or non-obvious lines of code
-   - Describe variable declarations and their purposes
-   - Explain function calls and their parameters
-   - Clarify conditional logic and loops
+4. **行単位分析**
+   - 複雑または自明でないコード行を説明する
+   - 変数宣言とその目的を説明する
+   - 関数呼び出しとそのパラメータを説明する
+   - 条件ロジックとループを明確化する
 
-5. **Algorithm and Logic Explanation**
-   - Describe the algorithm or approach being used
-   - Explain the logic behind complex calculations
-   - Break down nested conditions and loops
-   - Clarify recursive or asynchronous operations
+5. **アルゴリズムとロジック説明**
+   - 使用されているアルゴリズムやアプローチを説明する
+   - 複雑な計算の背後にあるロジックを説明する
+   - ネストした条件とループを分解する
+   - 再帰的または非同期操作を明確化する
 
-6. **Data Structures and Types**
-   - Explain data types and structures being used
-   - Describe how data is transformed or processed
-   - Explain object relationships and hierarchies
-   - Clarify input and output formats
+6. **データ構造と型**
+   - 使用されているデータ型と構造を説明する
+   - データがどのように変換または処理されるか説明する
+   - オブジェクトの関係と階層を説明する
+   - 入力と出力の形式を明確化する
 
-7. **Framework and Library Usage**
-   - Explain framework-specific patterns and conventions
-   - Describe library functions and their purposes
-   - Explain API calls and their expected responses
-   - Clarify configuration and setup code
+7. **フレームワークとライブラリの使用**
+   - フレームワーク固有のパターンと規約を説明する
+   - ライブラリ関数とその目的を説明する
+   - API呼び出しと期待されるレスポンスを説明する
+   - 設定とセットアップコードを明確化する
 
-8. **Error Handling and Edge Cases**
-   - Explain error handling mechanisms
-   - Describe exception handling and recovery
-   - Identify edge cases being handled
-   - Explain validation and defensive programming
+8. **エラー処理とエッジケース**
+   - エラー処理メカニズムを説明する
+   - 例外処理と復旧を説明する
+   - 処理されているエッジケースを特定する
+   - バリデーションと防御的プログラミングを説明する
 
-9. **Performance Considerations**
-   - Identify performance-critical sections
-   - Explain optimization techniques being used
-   - Describe complexity and scalability implications
-   - Point out potential bottlenecks or inefficiencies
+9. **パフォーマンスの考慮事項**
+   - パフォーマンス重要セクションを特定する
+   - 使用されている最適化技法を説明する
+   - 複雑性とスケーラビリティの影響を説明する
+   - 潜在的なボトルネックや非効率を指摘する
 
-10. **Security Implications**
-    - Identify security-related code sections
-    - Explain authentication and authorization logic
-    - Describe input validation and sanitization
-    - Point out potential security vulnerabilities
+10. **セキュリティへの影響**
+    - セキュリティ関連のコードセクションを特定する
+    - 認証と許可ロジックを説明する
+    - 入力検証とサニタイゼーションを説明する
+    - 潜在的なセキュリティ脆弱性を指摘する
 
-11. **Testing and Debugging**
-    - Explain how the code can be tested
-    - Identify debugging points and logging
-    - Describe mock data or test scenarios
-    - Explain test helpers and utilities
+11. **テストとデバッグ**
+    - コードをどのようにテストできるか説明する
+    - デバッグポイントとログ出力を特定する
+    - モックデータやテストシナリオを説明する
+    - テストヘルパーとユーティリティを説明する
 
-12. **Dependencies and Integrations**
-    - Explain external service integrations
-    - Describe database operations and queries
-    - Explain API interactions and protocols
-    - Clarify third-party library usage
+12. **依存関係と統合**
+    - 外部サービス統合を説明する
+    - データベース操作とクエリを説明する
+    - APIの相互作用とプロトコルを説明する
+    - サードパーティライブラリの使用を明確化する
 
-**Explanation Format Examples:**
+**解説フォーマットの例:**
 
-**For Complex Algorithms:**
+**複雑なアルゴリズムの場合:**
 ```
-This function implements a depth-first search algorithm:
+この関数は深さ優先探索アルゴリズムを実装しています:
 
-1. Line 1-3: Initialize a stack with the starting node and a visited set
-2. Line 4-8: Main loop - continue until stack is empty
-3. Line 9-11: Pop a node and check if it's the target
-4. Line 12-15: Add unvisited neighbors to the stack
-5. Line 16: Return null if target not found
+1. 1-3行目: 開始ノードとvisitedセットでスタックを初期化
+2. 4-8行目: メインループ - スタックが空になるまで継続
+3. 9-11行目: ノードをポップし、ターゲットかどうかチェック
+4. 12-15行目: 未訪問の隣接ノードをスタックに追加
+5. 16行目: ターゲットが見つからない場合はnullを返す
 
-Time Complexity: O(V + E) where V is vertices and E is edges
-Space Complexity: O(V) for the visited set and stack
-```
-
-**For API Integration Code:**
-```
-This code handles user authentication with a third-party service:
-
-1. Extract credentials from request headers
-2. Validate credential format and required fields
-3. Make API call to authentication service
-4. Handle response and extract user data
-5. Create session token and set cookies
-6. Return user profile or error response
-
-Error Handling: Catches network errors, invalid credentials, and service unavailability
-Security: Uses HTTPS, validates inputs, and sanitizes responses
+時間計算量: O(V + E) ここでVは頂点、Eはエッジ
+空間計算量: O(V) visitedセットとスタック用
 ```
 
-**For Database Operations:**
+**API統合コードの場合:**
 ```
-This function performs a complex database query with joins:
+このコードはサードパーティサービスでのユーザー認証を処理します:
 
-1. Build base query with primary table
-2. Add LEFT JOIN for related user data
-3. Apply WHERE conditions for filtering
-4. Add ORDER BY for consistent sorting
-5. Implement pagination with LIMIT/OFFSET
-6. Execute query and handle potential errors
-7. Transform raw results into domain objects
+1. リクエストヘッダーから認証情報を抽出
+2. 認証情報の形式と必須フィールドを検証
+3. 認証サービスへAPI呼び出しを実行
+4. レスポンスを処理し、ユーザーデータを抽出
+5. セッショントークンを作成し、cookieを設定
+6. ユーザープロファイルまたはエラーレスポンスを返す
 
-Performance Notes: Uses indexes on filtered columns, implements connection pooling
+エラー処理: ネットワークエラー、無効な認証情報、サービス不可をキャッチ
+セキュリティ: HTTPSを使用、入力検証、レスポンスのサニタイズ
 ```
 
-13. **Common Patterns and Idioms**
-    - Identify language-specific patterns and idioms
-    - Explain design patterns being implemented
-    - Describe architectural patterns in use
-    - Clarify naming conventions and code style
+**データベース操作の場合:**
+```
+この関数は結合を含む複雑なデータベースクエリを実行します:
 
-14. **Potential Improvements**
-    - Suggest code improvements and optimizations
-    - Identify possible refactoring opportunities
-    - Point out maintainability concerns
-    - Recommend best practices and standards
+1. プライマリテーブルでベースクエリを構築
+2. 関連ユーザーデータのためのLEFT JOINを追加
+3. フィルタリングのためのWHERE条件を適用
+4. 一貫したソートのためのORDER BYを追加
+5. LIMIT/OFFSETでページネーションを実装
+6. クエリを実行し、潜在的なエラーを処理
+7. 生の結果をドメインオブジェクトに変換
 
-15. **Related Code and Context**
-    - Reference related functions and classes
-    - Explain how this code interacts with other components
-    - Describe the calling context and usage patterns
-    - Point to relevant documentation and resources
+パフォーマンス備考: フィルタされた列のインデックスを使用、コネクションプーリングを実装
+```
 
-16. **Debugging and Troubleshooting**
-    - Explain how to debug issues in this code
-    - Identify common failure points
-    - Describe logging and monitoring approaches
-    - Suggest testing strategies
+13. **一般的なパターンと慣用句**
+    - 言語固有のパターンと慣用句を特定する
+    - 実装されている設計パターンを説明する
+    - 使用中のアーキテクチャパターンを説明する
+    - 命名規約とコードスタイルを明確化する
 
-**Language-Specific Considerations:**
+14. **潜在的な改善点**
+    - コードの改善と最適化を提案する
+    - リファクタリングの機会を特定する
+    - 保守性の懸念を指摘する
+    - ベストプラクティスと標準を推奨する
+
+15. **関連コードとコンテキスト**
+    - 関連関数とクラスを参照する
+    - このコードが他のコンポーネントとどのように相互作用するか説明する
+    - 呼び出しコンテキストと使用パターンを説明する
+    - 関連ドキュメンテーションとリソースを示す
+
+16. **デバッグとトラブルシューティング**
+    - このコードの問題をデバッグする方法を説明する
+    - 一般的な失敗ポイントを特定する
+    - ログ出力と監視アプローチを説明する
+    - テスト戦略を提案する
+
+**言語固有の考慮事項:**
 
 **JavaScript/TypeScript:**
-- Explain async/await and Promise handling
-- Describe closure and scope behavior
-- Clarify this binding and arrow functions
-- Explain event handling and callbacks
+- async/awaitとPromise処理を説明する
+- クロージャとスコープの動作を説明する
+- thisバインディングとアロー関数を明確化する
+- イベント処理とコールバックを説明する
 
 **Python:**
-- Explain list comprehensions and generators
-- Describe decorator usage and purpose
-- Clarify context managers and with statements
-- Explain class inheritance and method resolution
+- リスト内包表記とジェネレータを説明する
+- デコレータの使用と目的を説明する
+- コンテキストマネージャとwith文を明確化する
+- クラス継承とメソッド解決を説明する
 
 **Java:**
-- Explain generics and type parameters
-- Describe annotation usage and processing
-- Clarify stream operations and lambda expressions
-- Explain exception hierarchy and handling
+- ジェネリックスと型パラメータを説明する
+- アノテーションの使用と処理を説明する
+- ストリーム操作とラムダ式を明確化する
+- 例外階層と処理を説明する
 
 **C#:**
-- Explain LINQ queries and expressions
-- Describe async/await and Task handling
-- Clarify delegate and event usage
-- Explain nullable reference types
+- LINQクエリと式を説明する
+- async/awaitとTask処理を説明する
+- delegateとイベントの使用を明確化する
+- nullable参照型を説明する
 
 **Go:**
-- Explain goroutines and channel usage
-- Describe interface implementation
-- Clarify error handling patterns
-- Explain package structure and imports
+- goroutineとchannelの使用を説明する
+- インターフェース実装を説明する
+- エラー処理パターンを明確化する
+- パッケージ構造とimportを説明する
 
 **Rust:**
-- Explain ownership and borrowing
-- Describe lifetime annotations
-- Clarify pattern matching and Option/Result types
-- Explain trait implementations
+- 所有権と借用を説明する
+- ライフタイムアノテーションを説明する
+- パターンマッチングとOption/Result型を明確化する
+- trait実装を説明する
 
-Remember to:
-- Use clear, non-technical language when possible
-- Provide examples and analogies for complex concepts
-- Structure explanations logically from high-level to detailed
-- Include visual diagrams or flowcharts when helpful
-- Tailor the explanation level to the intended audience
+以下を必ず実行してください:
+- 可能な限り明確で非技術的な言葉を使用する
+- 複雑な概念には例や類推を提供する
+- 高レベルから詳細へと論理的に説明を構成する
+- 有用な場合は視覚的な図やフローチャートを含める
+- 意図された読者に合わせて説明レベルを調整する

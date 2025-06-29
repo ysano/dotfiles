@@ -1,75 +1,75 @@
-# Performance Audit Command
+# パフォーマンス監査コマンド
 
-Analyze any codebase for performance bottlenecks and optimization opportunities across different technology stacks.
+異なる技術スタックでのパフォーマンスボトルネックと最適化機会を特定するために、あらゆるコードベースを分析します。
 
-## Instructions
+## 実行手順
 
-Conduct a comprehensive performance audit following these steps:
+以下の手順に従って包括的なパフォーマンス監査を実施してください：
 
-1. **Technology Stack Analysis**
-   - Identify the primary language, framework, and runtime environment
-   - Review build tools and optimization configurations
-   - Check for performance monitoring tools already in place
+1. **技術スタック分析**
+   - 主要な言語、フレームワーク、ランタイム環境の特定
+   - ビルドツールと最適化設定のレビュー
+   - 既に導入されているパフォーマンス監視ツールのチェック
 
-2. **Code Performance Analysis**
-   - Identify inefficient algorithms and data structures
-   - Look for nested loops and O(n²) operations
-   - Check for unnecessary computations and redundant operations
-   - Review memory allocation patterns and potential leaks
+2. **コードパフォーマンス分析**
+   - 非効率なアルゴリズムとデータ構造の特定
+   - ネストしたループとO(n²)の操作の探索
+   - 不要な計算と冗長な操作のチェック
+   - メモリ割り当てパターンと潜在的なリークのレビュー
 
-3. **Database Performance**
-   - Analyze database queries for efficiency
-   - Check for missing indexes and slow queries
-   - Review connection pooling and database configuration
-   - Identify N+1 query problems and excessive database calls
+3. **データベースパフォーマンス**
+   - データベースクエリの効率性分析
+   - 欠落しているインデックスと低速クエリのチェック
+   - コネクションプールとデータベース設定のレビュー
+   - N+1クエリ問題と過度なデータベース呼び出しの特定
 
-4. **Frontend Performance (if applicable)**
-   - Analyze bundle size and chunk optimization
-   - Check for unused code and dependencies
-   - Review image optimization and lazy loading
-   - Examine render performance and re-render cycles
-   - Check for memory leaks in UI components
+4. **フロントエンドパフォーマンス（該当する場合）**
+   - バンドルサイズとチャンク最適化の分析
+   - 未使用コードと依存関係のチェック
+   - 画像最適化と遅延読み込みのレビュー
+   - レンダリングパフォーマンスと再レンダリングサイクルの検査
+   - UIコンポーネントのメモリリークのチェック
 
-5. **Network Performance**
-   - Review API call patterns and caching strategies
-   - Check for unnecessary network requests
-   - Analyze payload sizes and compression
-   - Examine CDN usage and static asset optimization
+5. **ネットワークパフォーマンス**
+   - API呼び出しパターンとキャッシュ戦略のレビュー
+   - 不要なネットワークリクエストのチェック
+   - ペイロードサイズと圧縮の分析
+   - CDN使用と静的アセット最適化の検査
 
-6. **Asynchronous Operations**
-   - Review async/await usage and promise handling
-   - Check for blocking operations and race conditions
-   - Analyze task queuing and background processing
-   - Identify opportunities for parallel execution
+6. **非同期操作**
+   - async/awaitの使用とPromiseハンドリングのレビュー
+   - ブロッキング操作と競合状態のチェック
+   - タスクキューとバックグラウンド処理の分析
+   - 並列実行の機会の特定
 
-7. **Memory Usage**
-   - Check for memory leaks and excessive memory consumption
-   - Review garbage collection patterns
-   - Analyze object lifecycle and cleanup
-   - Identify large objects and unnecessary data retention
+7. **メモリ使用量**
+   - メモリリークと過度なメモリ消費のチェック
+   - ガベージコレクションパターンのレビュー
+   - オブジェクトのライフサイクルとクリーンアップの分析
+   - 大きなオブジェクトと不要なデータ保持の特定
 
-8. **Build & Deployment Performance**
-   - Analyze build times and optimization opportunities
-   - Review dependency bundling and tree shaking
-   - Check for development vs production optimizations
-   - Examine deployment pipeline efficiency
+8. **ビルド・デプロイメントパフォーマンス**
+   - ビルド時間と最適化機会の分析
+   - 依存関係バンドルとtree shakingのレビュー
+   - 開発環境対本番環境の最適化のチェック
+   - デプロイメントパイプラインの効率性の検査
 
-9. **Performance Monitoring**
-   - Check existing performance metrics and monitoring
-   - Identify key performance indicators (KPIs) to track
-   - Review alerting and performance thresholds
-   - Suggest performance testing strategies
+9. **パフォーマンス監視**
+   - 既存のパフォーマンスメトリクスと監視のチェック
+   - 追跡すべき重要パフォーマンス指標（KPI）の特定
+   - アラートとパフォーマンス闾値のレビュー
+   - パフォーマンステスト戦略の提案
 
-10. **Benchmarking & Profiling**
-    - Run performance profiling tools appropriate for the stack
-    - Create benchmarks for critical code paths
-    - Measure before and after optimization impact
-    - Document performance baselines
+10. **ベンチマーク・プロファイリング**
+    - スタックに適したパフォーマンスプロファイリングツールの実行
+    - 重要なコードパスのベンチマーク作成
+    - 最適化前後の影響の測定
+    - パフォーマンスベースラインの文書化
 
-11. **Optimization Recommendations**
-    - Prioritize optimizations by impact and effort
-    - Provide specific code examples and alternatives
-    - Suggest architectural improvements for scalability
-    - Recommend appropriate performance tools and libraries
+11. **最適化推奨事項**
+    - 影響度と工数に基づく最適化の優先順位付け
+    - 具体的なコード例と代替案の提供
+    - スケーラビリティのためのアーキテクチャ改善の提案
+    - 適切なパフォーマンスツールとライブラリの推奨
 
-Include specific file paths, line numbers, and measurable metrics where possible. Focus on high-impact, low-effort optimizations first.
+可能な限り、具体的なファイルパス、行番号、測定可能なメトリクスを含めてください。高影響、低工数の最適化を最初に重視してください。

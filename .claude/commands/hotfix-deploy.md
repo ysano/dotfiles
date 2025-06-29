@@ -1,24 +1,24 @@
-# Hotfix Deploy Command
+# ホットフィックスデプロイコマンド
 
-Rapidly deploy critical hotfixes with proper safety measures and minimal downtime for any production system.
+適切な安全対策と最小限のダウンタイムで、あらゆる本番環境に重要なホットフィックスを迅速にデプロイします。
 
-## Instructions
+## 実行手順
 
-Follow this emergency hotfix deployment process: **$ARGUMENTS**
+この緊急ホットフィックスデプロイプロセスに従ってください: **$ARGUMENTS**
 
-1. **Emergency Assessment and Triage**
-   - Assess the severity and impact of the issue
-   - Determine if a hotfix is necessary or if it can wait
-   - Identify affected systems and user impact
-   - Estimate time sensitivity and business impact
-   - Document the incident and decision rationale
+1. **緊急事態評価とトリアージ**
+   - 問題の深刻度と影響を評価
+   - ホットフィックスが必要か、待つことができるかを判断
+   - 影響を受けるシステムとユーザーへの影響を特定
+   - 時間的緒急度とビジネス影響を估計
+   - インシデントと判断根拠を文書化
 
-2. **Incident Response Setup**
-   - Create incident tracking in your incident management system
-   - Set up war room or communication channel
-   - Notify stakeholders and on-call team members
-   - Establish clear communication protocols
-   - Document initial incident details and timeline
+2. **インシデント対応セットアップ**
+   - インシデント管理システムでインシデント追跡を作成
+   - ワールームまたはコミュニケーションチャンネルを設置
+   - ステークホルダーとオンコールチームメンバーに通知
+   - 明確なコミュニケーションプロトコルを確立
+   - 初期インシデント詳細とタイムラインを文書化
 
 3. **Branch and Environment Setup**
    ```bash
@@ -33,12 +33,12 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
    git checkout -b hotfix/critical-auth-fix
    ```
 
-4. **Rapid Development Process**
-   - Keep changes minimal and focused on the critical issue only
-   - Avoid refactoring, optimization, or unrelated improvements
-   - Use well-tested patterns and established approaches
-   - Add minimal logging for troubleshooting purposes
-   - Follow existing code conventions and patterns
+4. **迅速開発プロセス**
+   - 変更を最小限にし、重要な問題のみに焦点を合わせる
+   - リファクタリング、最適化、関連のない改善を避ける
+   - 十分にテストされたパターンと確立されたアプローチを使用
+   - トラブルシューティング目的で最小限のログを追加
+   - 既存のコード規約とパターンに従う
 
 5. **Accelerated Testing**
    ```bash
@@ -53,12 +53,12 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
    # [ ] Critical user flows remain functional
    ```
 
-6. **Fast-Track Code Review**
-   - Get expedited review from senior team member
-   - Focus review on security and correctness
-   - Use pair programming if available and time permits
-   - Document review decisions and rationale quickly
-   - Ensure proper approval process even under time pressure
+6. **迅速コードレビュー**
+   - シニアチームメンバーから迅速レビューを取得
+   - セキュリティと正確性に焦点を当ててレビュー
+   - 利用可能で時間が許す場合はペアプログラミングを使用
+   - レビューの決定と根拠を迅速に文書化
+   - 時間的プレッシャーの下でも適切な承認プロセスを確保
 
 7. **Version and Tagging**
    ```bash
@@ -141,19 +141,19 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
     ./validate-hotfix.sh
     ```
 
-11. **Real-Time Monitoring**
+11. **リアルタイム監視**
     ```bash
-    # Monitor key application metrics
+    # 重要なアプリケーションメトリクスを監視
     watch -n 10 'curl -s https://api.example.com/health | jq .'
     
-    # Monitor error rates and logs
+    # エラー率とログを監視
     tail -f /var/log/app/error.log | grep -i "auth"
     
-    # Track critical metrics:
-    # - Response times and latency
-    # - Error rates and exception counts
-    # - User authentication success rates
-    # - System resource usage (CPU, memory)
+    # 重要なメトリクスを追跡:
+    # - レスポンス時間とレイテンシ
+    # - エラー率と例外カウント
+    # - ユーザー認証成功率
+    # - システムリソース使用率（CPU、メモリ）
     ```
 
 12. **Post-Deployment Validation**
@@ -173,12 +173,12 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
     ./performance-check.sh
     ```
 
-13. **Communication and Status Updates**
-    - Provide regular status updates to stakeholders
-    - Use consistent communication channels
-    - Document deployment progress and results
-    - Update incident tracking systems
-    - Notify relevant teams of deployment completion
+13. **コミュニケーションとステータス更新**
+    - ステークホルダーに定期的なステータス更新を提供
+    - 一貫したコミュニケーションチャンネルを使用
+    - デプロイ進捗と結果を文書化
+    - インシデント追跡システムを更新
+    - 関連チームにデプロイ完了を通知
 
 14. **Rollback Procedures**
     ```bash
@@ -200,19 +200,19 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
     # 4. Communicate rollback status to team
     ```
 
-15. **Post-Deployment Monitoring Period**
-    - Monitor system for 2-4 hours after deployment
-    - Watch error rates and performance metrics closely
-    - Check user feedback and support ticket volume
-    - Validate that the hotfix resolves the original issue
-    - Document any issues or unexpected behaviors
+15. **デプロイ後監視期間**
+    - デプロイ後2-4時間システムを監視
+    - エラー率とパフォーマンスメトリクスを注意深く監視
+    - ユーザーフィードバックとサポートチケット量を確認
+    - ホットフィックスが元の問題を解決していることを検証
+    - 任意の問題や予期しない動作を文書化
 
-16. **Documentation and Incident Reporting**
-    - Document the complete hotfix process and timeline
-    - Record lessons learned and process improvements
-    - Update incident management systems with resolution
-    - Create post-incident review materials
-    - Share knowledge with team for future reference
+16. **文書化とインシデントレポート**
+    - 完全なホットフィックスプロセスとタイムラインを文書化
+    - 学んだ教訓とプロセス改善を記録
+    - 解決でインシデント管理システムを更新
+    - インシデント後レビュー資料を作成
+    - 将来の参考のためにチームと知識を共有
 
 17. **Merge Back to Main Branch**
     ```bash
@@ -227,22 +227,22 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
     git push origin --delete hotfix/critical-auth-fix
     ```
 
-18. **Post-Incident Activities**
-    - Schedule and conduct post-incident review meeting
-    - Update runbooks and emergency procedures
-    - Identify and implement process improvements
-    - Update monitoring and alerting configurations
-    - Plan preventive measures to avoid similar issues
+18. **インシデント後活動**
+    - インシデント後レビューミーティングをスケジュールし実施
+    - ランブックと緊急手順を更新
+    - プロセス改善を特定し実装
+    - 監視とアラート設定を更新
+    - 同様の問題を回避するための予防措置を計画
 
-**Hotfix Best Practices:**
+**ホットフィックスベストプラクティス:**
 
-- **Keep It Simple:** Make minimal changes focused only on the critical issue
-- **Test Thoroughly:** Maintain testing standards even under time pressure
-- **Communicate Clearly:** Keep all stakeholders informed throughout the process
-- **Monitor Closely:** Watch the fix carefully in production environment
-- **Document Everything:** Record all decisions and actions for post-incident review
-- **Plan for Rollback:** Always have a tested way to revert changes quickly
-- **Learn and Improve:** Use each incident to strengthen processes and procedures
+- **シンプルに保つ:** 重要な問題のみに焦点を当てた最小限の変更を行う
+- **徹底的にテスト:** 時間的プレッシャーの下でもテスト基準を維持
+- **明確にコミュニケーション:** プロセス全体を通してすべてのステークホルダーに情報を提供
+- **注意深く監視:** 本番環境で修正を注意深く監視
+- **すべてを文書化:** インシデント後レビューのためにすべての決定とアクションを記録
+- **ロールバックを計画:** 常に変更を迅速に元に戻すテスト済みの方法を用意
+- **学習と改善:** 各インシデントを使用してプロセスと手順を強化
 
 **Emergency Escalation Guidelines:**
 
@@ -259,10 +259,10 @@ INCIDENT_COMMANDER="+1-555-0126"
 # 60 minutes: Escalate to incident commander
 ```
 
-**Important Reminders:**
+**重要な注意事項:**
 
-- Hotfixes should only be used for genuine production emergencies
-- When in doubt about severity, follow the normal release process
-- Always prioritize system stability over speed of deployment
-- Maintain clear audit trails for all emergency changes
-- Regular drills help ensure team readiness for real emergencies
+- ホットフィックスは真の本番緊急事態のみに使用すべき
+- 深刻度に疑問がある場合は、通常のリリースプロセスに従う
+- 常にデプロイメントの速度よりシステムの安定性を優先
+- すべての緊急変更に明確な監査証跡を維持
+- 定期的な訓練は実際の緊急事態に対するチームの準備を確保するのに役立つ

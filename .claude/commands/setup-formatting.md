@@ -1,12 +1,12 @@
 # Setup Formatting Command
 
-Configure automatic code formatting tools for consistent code style across any project.
+任意のプロジェクトでコードスタイルを統一するための自動コードフォーマットツールを設定します。
 
-## Instructions
+## 手順
 
-Setup code formatting following these steps: **$ARGUMENTS**
+以下のステップに従ってコードフォーマットを設定してください： **$ARGUMENTS**
 
-1. **Language-Specific Tools**
+1. **言語固有のツール**
 
    **JavaScript/TypeScript:**
    ```bash
@@ -22,10 +22,10 @@ Setup code formatting following these steps: **$ARGUMENTS**
 
    **Java:**
    ```bash
-   # Google Java Format or Spotless plugin
+   # Google Java Format または Spotless plugin
    ```
 
-2. **Configuration Files**
+2. **設定ファイル**
 
    **.prettierrc:**
    ```json
@@ -38,12 +38,12 @@ Setup code formatting following these steps: **$ARGUMENTS**
    }
    ```
 
-3. **IDE Setup**
-   - Install formatter extensions
-   - Enable format on save
-   - Configure keyboard shortcuts
+3. **IDE設定**
+   - フォーマッター拡張機能をインストール
+   - 保存時フォーマットを有効化
+   - キーボードショートカットを設定
 
-4. **Scripts and Automation**
+4. **スクリプトと自動化**
    ```json
    {
      "scripts": {
@@ -59,4 +59,4 @@ Setup code formatting following these steps: **$ARGUMENTS**
    echo '{"*.{js,ts,tsx}": ["prettier --write", "eslint --fix"]}' > .lintstagedrc
    ```
 
-Remember to run formatting on entire codebase initially and configure team IDE settings consistently.
+最初にコードベース全体にフォーマットを実行し、チームのIDE設定を一貫して設定することを忘れないでください。

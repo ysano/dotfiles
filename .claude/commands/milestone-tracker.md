@@ -1,66 +1,66 @@
-# Milestone Tracker
+# マイルストーントラッカー
 
-Track project milestones, monitor deliverable progress, predict completion dates, and provide early warning for at-risk milestones using data from Linear, GitHub, and historical velocity.
+Linear、GitHub、過去のベロシティデータを使用して、プロジェクトのマイルストーンを追跡し、成果物の進捗を監視し、完了日を予測し、リスクのあるマイルストーンの早期警告を提供します。
 
-## Instructions
+## 実行手順
 
-1. **Check Available Tools**
-   - Verify Linear MCP server connection
-   - Check GitHub CLI availability
-   - Test git repository access
-   - Ensure required permissions
+1. **利用可能ツールのチェック**
+   - Linear MCPサーバー接続の検証
+   - GitHub CLIの利用可能性チェック
+   - gitリポジトリアクセスのテスト
+   - 必要な権限の確認
 
-2. **Gather Milestone Data**
-   - Query Linear for project milestones and roadmap items
-   - Fetch GitHub milestones and their associated issues
-   - Analyze git tags for historical release patterns
-   - Review project documentation for roadmap information
-   - Collect all active and upcoming milestones
+2. **マイルストーンデータの収集**
+   - プロジェクトのマイルストーンとロードマップアイテムのLinearクエリ
+   - GitHubマイルストーンと関連issueの取得
+   - 過去のリリースパターンのためのgitタグ分析
+   - ロードマップ情報のためのプロジェクトドキュメントレビュー
+   - すべてのアクティブおよび今後のマイルストーンの収集
 
-3. **Analyze Milestone Progress**
-   For each milestone:
-   - Count completed vs. total tasks
-   - Calculate percentage complete
-   - Measure velocity trends
-   - Identify blocking issues
-   - Track time remaining
+3. **マイルストーン進捗の分析**
+   各マイルストーンについて：
+   - 完了対全タスク数のカウント
+   - 完了率の計算
+   - ベロシティトレンドの測定
+   - ブロッキング問題の特定
+   - 残り時間の追跡
 
-4. **Perform Predictive Analysis**
-   - Calculate burn-down rate from historical data
-   - Project completion dates based on velocity
-   - Factor in team capacity and holidays
-   - Identify critical path items
-   - Assess confidence levels for predictions
+4. **予測分析の実行**
+   - 過去データからのバーンダウン率の計算
+   - ベロシティに基づく完了日の予測
+   - チームキャパシティと休日の考慮
+   - クリティカルパスアイテムの特定
+   - 予測の信頼レベルの評価
 
-5. **Risk Assessment**
-   Evaluate each milestone for:
-   - Schedule risk (falling behind)
-   - Scope risk (expanding requirements)
-   - Resource risk (team availability)
-   - Dependency risk (blocked by others)
-   - Technical risk (unknowns)
+5. **リスク評価**
+   各マイルストーンの評価：
+   - スケジュールリスク（遅れ）
+   - スコープリスク（要件の拡大）
+   - リソースリスク（チームの可用性）
+   - 依存関係リスク（他によるブロック）
+   - 技術リスク（未知の要素）
 
-6. **Generate Milestone Report**
-   Create comprehensive report showing:
-   - Milestone timeline visualization
-   - Progress indicators for each milestone
-   - Predicted completion dates with confidence
-   - Risk heat map
-   - Recommended actions for at-risk items
+6. **マイルストーンレポートの生成**
+   包括的レポートの作成：
+   - マイルストーンタイムラインの視覚化
+   - 各マイルストーンの進捗指標
+   - 信頼度付き予測完了日
+   - リスクヒートマップ
+   - リスクのあるアイテムの推奨アクション
 
-7. **Track Dependencies**
-   - Map inter-milestone dependencies
-   - Identify cross-team dependencies
-   - Highlight critical path
-   - Show dependency impact on schedule
+7. **依存関係の追跡**
+   - マイルストーン間依存関係のマッピング
+   - クロスチーム依存関係の特定
+   - クリティカルパスのハイライト
+   - スケジュールへの依存関係影響の表示
 
-8. **Provide Recommendations**
-   Based on analysis:
-   - Suggest scope adjustments
-   - Recommend resource reallocation
-   - Propose timeline changes
-   - Identify quick wins
-   - Highlight blockers needing attention
+8. **推奨事項の提供**
+   分析に基づいて：
+   - スコープ調整の提案
+   - リソースの再配分推奨
+   - タイムライン変更の提案
+   - クイックウィンの特定
+   - 注意が必要なブロッカーのハイライト
 
 ## Prerequisites
 - Git repository access
@@ -83,24 +83,30 @@ Track project milestones, monitor deliverable progress, predict completion dates
 
 #### Data Collection Sources
 ```
-Linear/Project Management:
-- Milestone definitions and due dates
-- Associated tasks and dependencies
-- Team assignments and capacity
-- Progress percentages
-- Blocker status
+GitHub Milestones:
+- マイルストーン定義と期限
+- 関連Issuesと進捗状況
+- Issuesのラベルと優先度
+- アサイン情報
+- ブロッカーステータス
 
-GitHub:
-- Milestone issue tracking
-- PR associations
-- Release tags and dates
-- Branch protection rules
+GitHub Projects V2:
+- プロジェクトボードの進捗状況
+- カスタムフィールドデータ
+- ステータスとワークフロー
+- チームアサインメント
+
+GitHub Repository:
+- マイルストーンissue追跡
+- PR関連付け
+- リリースタグと日付
+- ブランチ保護ルール
 
 Git History:
-- Commit velocity trends
-- Feature branch lifecycle
-- Release cadence patterns
-- Contributor availability
+- コミットベロシティトレンド
+- フィーチャーブランチライフサイクル
+- リリースケイデンスパターン
+- コントリビューターの利用可能性
 ```
 
 ### 3. Milestone Status Report
@@ -382,18 +388,199 @@ Confidence level: Low-Medium"
 4. **Risk Register** (Excel/Linear/Jira)
 5. **Calendar Integration** (ICS/Google/Outlook)
 
+## GitHub Actions統合
+
+### 自動マイルストーン監視ワークフロー
+```yaml
+# .github/workflows/milestone-tracking.yml
+name: Milestone Progress Tracking
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at 9 AM
+    - cron: '0 17 * * 5'  # Weekly report on Friday 5 PM
+  issues:
+    types: [closed, reopened]
+  workflow_dispatch:
+
+jobs:
+  milestone-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze Milestone Progress
+        run: |
+          # Get all active milestones
+          MILESTONES=$(gh api repos/${{ github.repository }}/milestones --jq '.[] | select(.state == "open")')
+          
+          echo "$MILESTONES" | jq -r '.[] | 
+            @base64' | while read milestone; do
+            MILESTONE_DATA=$(echo $milestone | base64 -d)
+            MILESTONE_NUMBER=$(echo "$MILESTONE_DATA" | jq -r '.number')
+            MILESTONE_TITLE=$(echo "$MILESTONE_DATA" | jq -r '.title')
+            DUE_DATE=$(echo "$MILESTONE_DATA" | jq -r '.due_on')
+            
+            # Get milestone issues
+            ISSUES=$(gh issue list --milestone "$MILESTONE_TITLE" --json number,state,title,labels)
+            TOTAL_ISSUES=$(echo "$ISSUES" | jq 'length')
+            CLOSED_ISSUES=$(echo "$ISSUES" | jq '[.[] | select(.state == "closed")] | length')
+            
+            if [ $TOTAL_ISSUES -gt 0 ]; then
+              COMPLETION_RATE=$((CLOSED_ISSUES * 100 / TOTAL_ISSUES))
+              echo "Milestone: $MILESTONE_TITLE - $COMPLETION_RATE% complete ($CLOSED_ISSUES/$TOTAL_ISSUES)"
+              
+              # Check if milestone is at risk
+              DAYS_UNTIL_DUE=$(( ( $(date -d "$DUE_DATE" +%s) - $(date +%s) ) / 86400 ))
+              if [ $COMPLETION_RATE -lt 70 ] && [ $DAYS_UNTIL_DUE -lt 14 ]; then
+                echo "⚠️ MILESTONE AT RISK: $MILESTONE_TITLE"
+                echo "RISK_MILESTONES=$MILESTONE_TITLE" >> $GITHUB_ENV
+              fi
+            fi
+          done
+
+      - name: Generate Milestone Report
+        run: |
+          echo "# 📋 Daily Milestone Status Report" > milestone_report.md
+          echo "Generated: $(date)" >> milestone_report.md
+          echo "" >> milestone_report.md
+          
+          # Add milestone progress for each active milestone
+          gh api repos/${{ github.repository }}/milestones --jq '.[] | select(.state == "open")' | \
+          jq -r '.title' | while read milestone; do
+            echo "## 🎯 $milestone" >> milestone_report.md
+            
+            ISSUES=$(gh issue list --milestone "$milestone" --json number,state,title,labels)
+            TOTAL=$(echo "$ISSUES" | jq 'length')
+            CLOSED=$(echo "$ISSUES" | jq '[.[] | select(.state == "closed")] | length')
+            BLOCKED=$(echo "$ISSUES" | jq '[.[] | select(.labels[]?.name == "blocked")] | length')
+            
+            echo "- **Progress**: $CLOSED/$TOTAL issues completed" >> milestone_report.md
+            echo "- **Blocked**: $BLOCKED issues" >> milestone_report.md
+            echo "" >> milestone_report.md
+          done
+
+      - name: Create Risk Alert Issue
+        if: env.RISK_MILESTONES != ''
+        run: |
+          gh issue create \
+            --title "🚨 Milestone Risk Alert: ${{ env.RISK_MILESTONES }}" \
+            --body "Milestone ${{ env.RISK_MILESTONES }} is at risk of missing its deadline. Please review and take corrective action." \
+            --label "milestone,risk,urgent" \
+            --assignee "@org/project-managers"
+
+      - name: Update Project Board
+        run: |
+          # Add milestone status to project board
+          gh project item-create --owner ${{ github.repository_owner }} --number 1 --title "Milestone Status: $(date +%Y-%m-%d)"
+
+      - name: Send Slack Notification
+        if: github.event.schedule == '0 17 * * 5'  # Weekly report
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data '{"text":"📊 Weekly Milestone Report is ready! Check GitHub for details."}' \
+              $SLACK_WEBHOOK_URL
+          fi
+```
+
+### マイルストーン予測分析
+```yaml
+# .github/workflows/milestone-prediction.yml
+name: Milestone Completion Prediction
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly on Monday
+  workflow_dispatch:
+
+jobs:
+  predict-completion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect Historical Data
+        run: |
+          # Get completed milestones for velocity analysis
+          COMPLETED_MILESTONES=$(gh api repos/${{ github.repository }}/milestones?state=closed&per_page=10)
+          
+          echo "$COMPLETED_MILESTONES" | jq -r '.[] | 
+            {
+              title: .title,
+              created: .created_at,
+              closed: .closed_at,
+              due: .due_on,
+              total_issues: (.closed_issues + .open_issues)
+            }' > historical_milestones.json
+
+      - name: Calculate Velocity Trends
+        run: |
+          # Calculate average milestone completion time
+          if [ -s historical_milestones.json ]; then
+            AVG_COMPLETION_DAYS=$(jq '[.[] | 
+              (((.closed_at | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) - 
+                (.created_at | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime)) / 86400)] | 
+              add / length' historical_milestones.json)
+            
+            echo "Historical average completion time: $AVG_COMPLETION_DAYS days"
+            echo "AVG_COMPLETION_DAYS=$AVG_COMPLETION_DAYS" >> $GITHUB_ENV
+          fi
+
+      - name: Predict Active Milestones
+        run: |
+          # For each active milestone, predict completion based on current progress
+          gh api repos/${{ github.repository }}/milestones --jq '.[] | select(.state == "open")' | \
+          jq -r '.number' | while read milestone_number; do
+            MILESTONE_DATA=$(gh api repos/${{ github.repository }}/milestones/$milestone_number)
+            MILESTONE_TITLE=$(echo "$MILESTONE_DATA" | jq -r '.title')
+            DUE_DATE=$(echo "$MILESTONE_DATA" | jq -r '.due_on')
+            
+            # Get current progress
+            ISSUES=$(gh issue list --milestone "$MILESTONE_TITLE" --json state)
+            TOTAL_ISSUES=$(echo "$ISSUES" | jq 'length')
+            CLOSED_ISSUES=$(echo "$ISSUES" | jq '[.[] | select(.state == "closed")] | length')
+            
+            if [ $TOTAL_ISSUES -gt 0 ]; then
+              COMPLETION_RATE=$(echo "scale=2; $CLOSED_ISSUES / $TOTAL_ISSUES" | bc)
+              REMAINING_WORK=$(echo "scale=2; 1 - $COMPLETION_RATE" | bc)
+              
+              # Predict completion date based on current velocity
+              PREDICTED_DAYS=$(echo "scale=0; $REMAINING_WORK * $AVG_COMPLETION_DAYS" | bc)
+              PREDICTED_DATE=$(date -d "+$PREDICTED_DAYS days" "+%Y-%m-%d")
+              
+              echo "📈 Prediction for $MILESTONE_TITLE:"
+              echo "  Current progress: $(echo "$COMPLETION_RATE * 100" | bc)%"
+              echo "  Predicted completion: $PREDICTED_DATE"
+              echo "  Original due date: $DUE_DATE"
+              
+              # Check if prediction exceeds due date
+              if [ $(date -d "$PREDICTED_DATE" +%s) -gt $(date -d "$DUE_DATE" +%s) ]; then
+                echo "  ⚠️ RISK: Predicted to exceed due date"
+              fi
+            fi
+          done
+```
+
 ## Automation Capabilities
 
-```
-"Set up automated milestone monitoring:
+### 自動マイルストーン監視設定
 
-1. Daily health checks at 9 AM
-2. Weekly trend reports on Fridays
-3. Alert when milestones go off-track
-4. Slack notifications for blockers
-5. Auto-create Linear tasks for risks
+```bash
+# Setup script for milestone automation
+#!/bin/bash
+echo "Setting up automated milestone monitoring:"
 
-Configure automation? [Y/N]"
+echo "1. ✅ Daily health checks at 9 AM"
+echo "2. ✅ Weekly trend reports on Fridays"  
+echo "3. ✅ Alert when milestones go off-track"
+echo "4. ✅ Slack notifications for blockers"
+echo "5. ✅ Auto-create GitHub Issues for risks"
+echo "6. ✅ Milestone prediction analysis"
+echo "7. ✅ Project board updates"
+
+echo "Configure automation? [Y/N]"
+read -r response
+if [[ $response == "Y" || $response == "y" ]]; then
+    echo "Automation configured successfully!"
+    echo "GitHub Actions workflows will be activated."
+fi
 ```
 
 ## Best Practices

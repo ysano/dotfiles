@@ -1,80 +1,80 @@
-# Add Mutation Testing
+# Mutation Testingの追加
 
-Set up mutation testing to verify test quality by introducing small code changes and ensuring tests catch these mutations.
+小さなコード変更を導入してテストがこれらの変更を検出することを確認し、テスト品質を検証するためのmutation testingを設定します。
 
-## Instructions
+## 実行手順
 
-1. **Mutation Testing Strategy Analysis**
-   - Analyze current test suite coverage and quality
-   - Identify critical code paths and business logic for mutation testing
-   - Assess existing testing infrastructure and CI/CD integration points
-   - Determine mutation testing scope and performance requirements
-   - Plan mutation testing integration with existing quality gates
+1. **Mutation Testing戦略の分析**
+   - 現在のテストスイートのカバレッジと品質の分析
+   - mutation testingの対象となる重要なコードパスとビジネスロジックの特定
+   - 既存のテストインフラとCI/CD統合ポイントの評価
+   - mutation testingの範囲とパフォーマンス要件の決定
+   - 既存の品質ゲートとのmutation testing統合の計画
 
-2. **Mutation Testing Tool Selection**
-   - Choose appropriate mutation testing framework:
-     - **JavaScript/TypeScript**: Stryker, Mutode
-     - **Java**: PIT (Pitest), Major
-     - **C#**: Stryker.NET, VisualMutator
-     - **Python**: mutmut, Cosmic Ray, MutPy
-     - **Go**: go-mutesting, mut
-     - **Rust**: mutagen, cargo-mutants
+2. **Mutation Testingツールの選択**
+   - 適切なmutation testingフレームワークの選択：
+     - **JavaScript/TypeScript**: Stryker、Mutode
+     - **Java**: PIT（Pitest）、Major
+     - **C#**: Stryker.NET、VisualMutator
+     - **Python**: mutmut、Cosmic Ray、MutPy
+     - **Go**: go-mutesting、mut
+     - **Rust**: mutagen、cargo-mutants
      - **PHP**: Infection
-   - Consider factors: language support, performance, CI integration, reporting
+   - 考慮要因：言語サポート、パフォーマンス、CI統合、レポート機能
 
-3. **Mutation Testing Configuration**
-   - Install and configure mutation testing framework
-   - Set up mutation testing configuration files and settings
-   - Configure mutation operators and strategies
-   - Set up file and directory inclusion/exclusion rules
-   - Configure performance and timeout settings
+3. **Mutation Testingの設定**
+   - mutation testingフレームワークのインストールと設定
+   - mutation testing設定ファイルと設定の構築
+   - mutation operatorと戦略の設定
+   - ファイルとディレクトリの包含/除外ルールの設定
+   - パフォーマンスとタイムアウト設定の構成
 
-4. **Mutation Operator Configuration**
-   - Configure arithmetic operator mutations (+, -, *, /, %)
-   - Set up relational operator mutations (<, >, <=, >=, ==, !=)
-   - Configure logical operator mutations (&&, ||, !)
-   - Set up conditional boundary mutations (< to <=, > to >=)
-   - Configure statement deletion and insertion mutations
+4. **Mutation Operatorの設定**
+   - 算術演算子mutation（+、-、*、/、%）の設定
+   - 関係演算子mutation（<、>、<=、>=、==、!=）の設定
+   - 論理演算子mutation（&&、||、!）の設定
+   - 条件境界mutation（<から<=、>から>=）の設定
+   - 文の削除と挿入mutationの設定
 
-5. **Test Execution and Performance**
-   - Configure mutation test execution strategy and parallelization
-   - Set up incremental mutation testing for large codebases
-   - Configure mutation testing timeouts and resource limits
-   - Set up mutation test caching and optimization
-   - Configure selective mutation testing for changed code
+5. **テスト実行とパフォーマンス**
+   - mutation test実行戦略と並列化の設定
+   - 大規模コードベースでの増分mutation testingの設定
+   - mutation testingタイムアウトとリソース制限の設定
+   - mutation testキャッシュと最適化の設定
+   - 変更されたコードに対する選択的mutation testingの設定
 
-6. **Quality Metrics and Thresholds**
-   - Set up mutation score calculation and reporting
-   - Configure mutation testing thresholds and quality gates
-   - Set up mutation survival analysis and reporting
-   - Configure test effectiveness metrics and tracking
-   - Set up mutation testing trend analysis
+6. **品質メトリクスと閾値**
+   - mutation scoreの計算とレポート機能の設定
+   - mutation testing閾値と品質ゲートの設定
+   - mutation生存分析とレポート機能の設定
+   - テスト効果メトリクスと追跡の設定
+   - mutation testingトレンド分析の設定
 
-7. **Integration with Testing Workflow**
-   - Integrate mutation testing with existing test suites
-   - Configure mutation testing execution order and dependencies
-   - Set up mutation testing in development and CI environments
-   - Configure mutation testing result integration with test reports
-   - Set up mutation testing feedback loops for developers
+7. **テストワークフローとの統合**
+   - 既存のテストスイートとのmutation testing統合
+   - mutation test実行順序と依存関係の設定
+   - 開発環境とCI環境でのmutation testingの設定
+   - テストレポートとのmutation testing結果統合の設定
+   - 開発者向けmutation testingフィードバックループの設定
 
-8. **CI/CD Pipeline Integration**
-   - Configure automated mutation testing in continuous integration
-   - Set up mutation testing scheduling and triggers
-   - Configure mutation testing result reporting and notifications
-   - Set up mutation testing performance monitoring
-   - Configure mutation testing deployment gates
+8. **CI/CDパイプライン統合**
+   - 継続的統合での自動mutation testingの設定
+   - mutation testingスケジュールとトリガーの設定
+   - mutation testing結果レポートと通知の設定
+   - mutation testingパフォーマンス監視の設定
+   - mutation testingデプロイメントゲートの設定
 
-9. **Result Analysis and Remediation**
-   - Set up mutation testing result analysis and visualization
-   - Configure surviving mutant analysis and categorization
-   - Set up test gap identification and remediation workflow
-   - Configure mutation testing regression tracking
-   - Set up automated test improvement recommendations
+9. **結果分析と修復**
+   - mutation testing結果分析と可視化の設定
+   - 生存mutantの分析と分類の設定
+   - テストギャップの特定と修復ワークフローの設定
+   - mutation testingリグレッション追跡の設定
+   - 自動テスト改善推奨事項の設定
 
-10. **Maintenance and Optimization**
-    - Create mutation testing maintenance and optimization procedures
-    - Set up mutation testing configuration version control
-    - Configure mutation testing performance optimization
-    - Document mutation testing best practices and guidelines
-    - Train team on mutation testing concepts and workflow
-    - Set up mutation testing tool updates and maintenance
+10. **メンテナンスと最適化**
+    - mutation testingメンテナンスと最適化手順の作成
+    - mutation testing設定のバージョン管理の設定
+    - mutation testingパフォーマンス最適化の設定
+    - mutation testingベストプラクティスとガイドラインの文書化
+    - チームへのmutation testing概念とワークフローの研修
+    - mutation testingツールの更新とメンテナンスの設定

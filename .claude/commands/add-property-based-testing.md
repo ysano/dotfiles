@@ -1,80 +1,80 @@
-# Add Property-Based Testing
+# プロパティベーステスト追加
 
-Set up property-based testing framework to automatically generate test cases and discover edge cases through automated test case generation.
+自動化されたテストケース生成を通じてエッジケースを発見するためのプロパティベーステストフレームワークを設定します。
 
-## Instructions
+## 実行手順
 
-1. **Property-Based Testing Analysis**
-   - Analyze current codebase to identify functions suitable for property-based testing
-   - Identify mathematical properties, invariants, and business rules to test
-   - Assess existing testing infrastructure and integration requirements
-   - Determine scope of property-based testing implementation
-   - Plan integration with existing unit and integration tests
+1. **プロパティベーステスト分析**
+   - プロパティベーステストに適した関数を特定するため現在のコードベースを分析
+   - テストすべき数学的性質、不変性、ビジネスルールの特定
+   - 既存のテストインフラと統合要件の評価
+   - プロパティベーステスト実装の範囲の決定
+   - 既存の単体テストと統合テストとの統合計画
 
-2. **Framework Selection and Installation**
-   - Choose appropriate property-based testing framework:
-     - **JavaScript/TypeScript**: fast-check, JSVerify
-     - **Python**: Hypothesis, QuickCheck
-     - **Java**: jqwik, QuickTheories
-     - **C#**: FsCheck, CsCheck
-     - **Rust**: proptest, quickcheck
-     - **Go**: gopter, quick
-   - Install framework and configure with existing test runner
-   - Set up framework integration with build system
+2. **フレームワーク選択とインストール**
+   - 適切なプロパティベーステストフレームワークの選択：
+     - **JavaScript/TypeScript**: fast-check、JSVerify
+     - **Python**: Hypothesis、QuickCheck
+     - **Java**: jqwik、QuickTheories
+     - **C#**: FsCheck、CsCheck
+     - **Rust**: proptest、quickcheck
+     - **Go**: gopter、quick
+   - フレームワークのインストールと既存のテストランナーとの設定
+   - ビルドシステムとのフレームワーク統合設定
 
-3. **Property Definition and Implementation**
-   - Define mathematical properties and invariants for core functions
-   - Implement property tests for data transformation functions
-   - Create property tests for API contract validation
-   - Set up property tests for business logic validation
-   - Define properties for data structure consistency
+3. **プロパティ定義と実装**
+   - コア関数の数学的性質と不変性の定義
+   - データ変換関数のpropertyテストの実装
+   - APIコントラクト検証のpropertyテストの作成
+   - ビジネスロジック検証のpropertyテストの設定
+   - データ構造一貫性のプロパティ定義
 
-4. **Test Data Generation**
-   - Configure generators for primitive data types
-   - Create custom generators for domain-specific objects
-   - Set up composite generators for complex data structures
-   - Configure generator constraints and boundaries
-   - Implement shrinking strategies for minimal failing examples
+4. **テストデータ生成**
+   - プリミティブデータ型のジェネレータ設定
+   - ドメイン固有オブジェクトのカスタムジェネレータ作成
+   - 複雑なデータ構造の複合ジェネレータ設定
+   - ジェネレータ制約と境界の設定
+   - 最小失敗例のための収縮戦略の実装
 
-5. **Property Test Categories**
-   - **Roundtrip Properties**: Serialize/deserialize, encode/decode operations
-   - **Invariant Properties**: Data structure consistency, business rule validation
-   - **Metamorphic Properties**: Equivalent operations, transformation consistency
-   - **Model-Based Properties**: State machine testing, system behavior validation
-   - **Oracle Properties**: Comparison with reference implementations
+5. **プロパティテストカテゴリ**
+   - **ラウンドトリッププロパティ**: シリアライズ/デシリアライズ、エンコード/デコード操作
+   - **不変プロパティ**: データ構造一貫性、ビジネスルール検証
+   - **変形プロパティ**: 同等操作、変換一貫性
+   - **モデルベースプロパティ**: ステートマシンテスト、システム動作検証
+   - **オラクルプロパティ**: 参照実装との比較
 
-6. **Integration with Existing Tests**
-   - Integrate property-based tests with existing test suites
-   - Configure test execution order and dependencies
-   - Set up property test reporting and coverage tracking
-   - Configure test timeout and resource management
-   - Implement property test categorization and tagging
+6. **既存テストとの統合**
+   - 既存のテストスイートとのプロパティベーステスト統合
+   - テスト実行順序と依存関係の設定
+   - プロパティテストレポートとカバレッジ追跡の設定
+   - テストタイムアウトとリソース管理の設定
+   - プロパティテスト分類とタグ付けの実装
 
-7. **Advanced Testing Strategies**
-   - Set up stateful property testing for complex systems
-   - Configure model-based testing for state machines
-   - Implement targeted property testing for known issues
-   - Set up regression property testing for bug prevention
-   - Configure performance property testing for algorithmic validation
+7. **高度なテスト戦略**
+   - 複雑なシステムのステートフルpropertyテストの設定
+   - ステートマシンのモデルベーステストの設定
+   - 既知の問題に対するターゲットpropertyテストの実装
+   - バグ予防のリグレッションpropertyテストの設定
+   - アルゴリズム検証のパフォーマンスpropertyテストの設定
 
-8. **Test Configuration and Tuning**
-   - Configure test case generation limits and timeouts
-   - Set up shrinking parameters and strategies
-   - Configure random seed management for reproducibility
-   - Set up test distribution and statistical analysis
-   - Configure parallel test execution and resource management
+8. **テスト設定とチューニング**
+   - テストケース生成制限とタイムアウトの設定
+   - 収縮パラメータと戦略の設定
+   - 再現性のためのランダムシード管理の設定
+   - テスト分布と統計分析の設定
+   - 並列テスト実行とリソース管理の設定
 
-9. **CI/CD Integration**
-   - Configure property-based tests in continuous integration
-   - Set up test result reporting and failure analysis
-   - Configure test execution policies and resource limits
-   - Set up automated property test maintenance
-   - Configure property test performance monitoring
+9. **CI/CD統合**
+   - 継続的統合でのproperty-based testの設定
+   - テスト結果レポートと失敗分析の設定
+   - テスト実行ポリシーとリソース制限の設定
+   - 自動propertyテストメンテナンスの設定
+   - propertyテストパフォーマンス監視の設定
 
-10. **Documentation and Team Training**
-    - Create comprehensive property-based testing documentation
-    - Document property definition patterns and best practices
-    - Create examples and templates for common property patterns
-    - Train team on property-based testing concepts and implementation
-    - Set up property test maintenance and evolution guidelines
-    - Document troubleshooting procedures for property test failures
+10. **ドキュメントとチーム研修**
+    - 包括的なproperty-based testingドキュメントの作成
+    - プロパティ定義パターンとベストプラクティスの文書化
+    - 一般的なプロパティパターンの例とテンプレートの作成
+    - チームへのproperty-based testing概念と実装の研修
+    - propertyテストメンテナンスと発展ガイドラインの設定
+    - propertyテスト失敗のトラブルシューティング手順の文書化

@@ -1,78 +1,78 @@
-# Create Architecture Documentation
+# アーキテクチャドキュメント作成
 
-Generate comprehensive system architecture diagrams and documentation to capture design decisions and system understanding.
+設計決定とシステム理解を捉える包括的なシステムアーキテクチャ図とドキュメントを生成します。
 
-## Instructions
+## 実行手順
 
-1. **Architecture Analysis and Discovery**
-   - Analyze current system architecture and component relationships
-   - Identify key architectural patterns and design decisions
-   - Document system boundaries, interfaces, and dependencies
-   - Assess data flow and communication patterns
-   - Identify architectural debt and improvement opportunities
+1. **アーキテクチャ分析と発見**
+   - 現在のシステムアーキテクチャとコンポーネント関係を分析
+   - 主要なアーキテクチャパターンと設計決定を特定
+   - システム境界、インターフェース、依存関係を文書化
+   - データフローとコミュニケーションパターンを評価
+   - アーキテクチャ的技術債務と改善機会を特定
 
-2. **Architecture Documentation Framework**
-   - Choose appropriate documentation framework and tools:
-     - **C4 Model**: Context, Containers, Components, Code diagrams
-     - **Arc42**: Comprehensive architecture documentation template
-     - **Architecture Decision Records (ADRs)**: Decision documentation
-     - **PlantUML/Mermaid**: Diagram-as-code documentation
-     - **Structurizr**: C4 model tooling and visualization
-     - **Draw.io/Lucidchart**: Visual diagramming tools
+2. **アーキテクチャドキュメンテーションフレームワーク**
+   - 適切なドキュメンテーションフレームワークとツールを選択：
+     - **C4 Model**: Context、Containers、Components、Code図
+     - **Arc42**: 包括的なアーキテクチャドキュメンテーションテンプレート
+     - **Architecture Decision Records (ADRs)**: 決定文書化
+     - **PlantUML/Mermaid**: Diagram-as-codeドキュメンテーション
+     - **Structurizr**: C4モデルツールと可視化
+     - **Draw.io/Lucidchart**: ビジュアル図式化ツール
 
-3. **System Context Documentation**
-   - Create high-level system context diagrams
-   - Document external systems and integrations
-   - Define system boundaries and responsibilities
-   - Document user personas and stakeholders
-   - Create system landscape and ecosystem overview
+3. **システムコンテキストドキュメンテーション**
+   - 高レベルのシステムコンテキスト図を作成
+   - 外部システムと統合を文書化
+   - システム境界と責任を定義
+   - ユーザーペルソナとステークホルダーを文書化
+   - システムランドスケープとエコシステムの概要を作成
 
-4. **Container and Service Architecture**
-   - Document container/service architecture and deployment view
-   - Create service dependency maps and communication patterns
-   - Document deployment architecture and infrastructure
-   - Define service boundaries and API contracts
-   - Document data persistence and storage architecture
+4. **コンテナとサービスアーキテクチャ**
+   - コンテナ/サービスアーキテクチャとデプロイメントビューを文書化
+   - サービス依存関係マップとコミュニケーションパターンを作成
+   - デプロイメントアーキテクチャとインフラストラクチャを文書化
+   - サービス境界とAPIコントラクトを定義
+   - データ永続化とストレージアーキテクチャを文書化
 
-5. **Component and Module Documentation**
-   - Create detailed component architecture diagrams
-   - Document internal module structure and relationships
-   - Define component responsibilities and interfaces
-   - Document design patterns and architectural styles
-   - Create code organization and package structure documentation
+5. **コンポーネントとモジュールドキュメンテーション**
+   - 詳細なコンポーネントアーキテクチャ図を作成
+   - 内部モジュール構造と関係を文書化
+   - コンポーネントの責任とインターフェースを定義
+   - 設計パターンとアーキテクチャスタイルを文書化
+   - コード編成とパッケージ構造ドキュメンテーションを作成
 
-6. **Data Architecture Documentation**
-   - Document data models and database schemas
-   - Create data flow diagrams and processing pipelines
-   - Document data storage strategies and technologies
-   - Define data governance and lifecycle management
-   - Create data integration and synchronization documentation
+6. **データアーキテクチャドキュメンテーション**
+   - データモデルとデータベーススキーマを文書化
+   - データフロー図と処理パイプラインを作成
+   - データストレージ戦略と技術を文書化
+   - データガバナンスとライフサイクル管理を定義
+   - データ統合と同期ドキュメンテーションを作成
 
-7. **Security and Compliance Architecture**
-   - Document security architecture and threat model
-   - Create authentication and authorization flow diagrams
-   - Document compliance requirements and controls
-   - Define security boundaries and trust zones
-   - Create incident response and security monitoring documentation
+7. **セキュリティとコンプライアンスアーキテクチャ**
+   - セキュリティアーキテクチャと脅威モデルを文書化
+   - 認証と認可フロー図を作成
+   - コンプライアンス要件と統制を文書化
+   - セキュリティ境界とトラストゾーンを定義
+   - インシデント対応とセキュリティ監視ドキュメンテーションを作成
 
-8. **Quality Attributes and Cross-Cutting Concerns**
-   - Document performance characteristics and scalability patterns
-   - Create reliability and availability architecture documentation
-   - Document monitoring and observability architecture
-   - Define maintainability and evolution strategies
-   - Create disaster recovery and business continuity documentation
+8. **品質属性と横断的関心事**
+   - パフォーマンス特性とスケーラビリティパターンを文書化
+   - 信頼性と可用性アーキテクチャドキュメンテーションを作成
+   - 監視と可観測性アーキテクチャを文書化
+   - 保守性と進化戦略を定義
+   - 災害復旧と事業継続ドキュメンテーションを作成
 
-9. **Architecture Decision Records (ADRs)**
-   - Create comprehensive ADR template and process
-   - Document historical architectural decisions and rationale
-   - Create decision tracking and review process
-   - Document trade-offs and alternatives considered
-   - Set up ADR maintenance and evolution procedures
+9. **アーキテクチャ決定記録（ADRs）**
+   - 包括的なADRテンプレートとプロセスを作成
+   - 過去のアーキテクチャ決定と根拠を文書化
+   - 決定追跡とレビュープロセスを作成
+   - 検討されたトレードオフと代替案を文書化
+   - ADR保守と進化手順を設定
 
-10. **Documentation Automation and Maintenance**
-    - Set up automated diagram generation from code annotations
-    - Configure documentation pipeline and publishing automation
-    - Set up documentation validation and consistency checking
-    - Create documentation review and approval process
-    - Train team on architecture documentation practices and tools
-    - Set up documentation versioning and change management
+10. **ドキュメンテーション自動化と保守**
+    - コード注釈からの自動図生成を設定
+    - ドキュメンテーションパイプラインと公開自動化を設定
+    - ドキュメンテーション検証と一貫性チェックを設定
+    - ドキュメンテーションレビューと承認プロセスを作成
+    - アーキテクチャドキュメンテーションプラクティスとツールについてチームをトレーニング
+    - ドキュメンテーションバージョニングと変更管理を設定

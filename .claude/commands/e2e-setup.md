@@ -1,25 +1,25 @@
 # End-to-End Testing Setup Command
 
-Set up comprehensive end-to-end testing infrastructure for any web application or service.
+任意のWebアプリケーションやサービス用の包括的なエンドツーエンドテストインフラストラクチャを設定します。
 
-## Instructions
+## 手順
 
-Follow this systematic approach to implement E2E testing: **$ARGUMENTS**
+E2Eテストを実装するための体系的なアプローチに従ってください： **$ARGUMENTS**
 
-1. **Technology Stack Assessment**
-   - Identify the application type (web app, mobile app, API service)
-   - Review existing testing infrastructure
-   - Determine target browsers and devices
-   - Assess current deployment and staging environments
+1. **技術スタック評価**
+   - アプリケーションタイプ（Webアプリ、モバイルアプリ、APIサービス）を特定
+   - 既存のテストインフラストラクチャを確認
+   - 対象ブラウザとデバイスを決定
+   - 現在のデプロイメントとステージング環境を評価
 
-2. **E2E Framework Selection**
-   - Choose appropriate E2E testing framework based on stack:
-     - **Playwright**: Modern, fast, supports multiple browsers
-     - **Cypress**: Developer-friendly, great debugging tools
-     - **Selenium WebDriver**: Cross-browser, mature ecosystem
-     - **Puppeteer**: Chrome-focused, good for performance testing
-     - **TestCafe**: No WebDriver needed, easy setup
-   - Consider team expertise and project requirements
+2. **E2Eフレームワーク選択**
+   - スタックに基づいて適切なE2Eテストフレームワークを選択：
+     - **Playwright**: モダンで高速、複数ブラウザサポート
+     - **Cypress**: 開発者フレンドリー、優れたデバッグツール
+     - **Selenium WebDriver**: クロスブラウザ、成熟したエコシステム
+     - **Puppeteer**: Chrome特化、パフォーマンステストに適している
+     - **TestCafe**: WebDriver不要、簡単セットアップ
+   - チームの専門知識とプロジェクト要件を考慮
 
 3. **Test Environment Setup**
    - Set up dedicated testing environments (staging, QA)
