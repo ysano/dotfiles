@@ -1,6 +1,6 @@
 # GitHub Issue自動化コマンド
 
-GitHub Issueの作成、トリアージ、自動化を統合し、Linear変換機能を不要にするネイティブGitHubワークフローシステムです。
+GitHub Issueの作成、トリアージ、自動化を統合したネイティブGitHubワークフローシステムです。
 
 ## 実行手順
 
@@ -46,22 +46,22 @@ GitHub Issueの作成、トリアージ、自動化を統合し、Linear変換�
    - Backlog health monitoring
    - Customer satisfaction tracking
 
-## 従来Linear機能の置き換え
+## シンプル化されたGitHubネイティブ機能
 
-### Issue変換（Linear不要）
-- **issue-to-linear-task** → Issue Template automation
-- **linear-task-to-issue** → Native Issue creation
-- **bulk-import-issues** → GitHub Migration API
+### Issue管理自動化
+- **Issue Templates** → Standardized issue creation
+- **GitHub Projects V2** → Native project management
+- **GitHub Migration API** → Bulk operations
 
-### 同期機能（不要）
-- **bidirectional-sync** → Single source of truth
-- **sync-conflict-resolver** → Conflict elimination
-- **sync-status** → Native reliability
+### ワークフロー自動化
+- **GitHub Actions** → Automated workflows
+- **Project Automation** → Status updates
+- **Built-in Reliability** → Platform-level SLA
 
-### ワークフロー統合
-- **task-from-pr** → PR-Issue auto-linking
-- **code-to-task** → Commit-Issue automation
-- **cross-reference-manager** → GitHub References
+### 統合機能
+- **PR-Issue linking** → Native GitHub references
+- **Commit-Issue automation** → Auto-closing workflows
+- **Cross-references** → Built-in GitHub linking
 
 ## GitHub特有の優位性
 

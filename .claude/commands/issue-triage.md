@@ -1,10 +1,10 @@
 # issue-triage
 
-自動カテゴリ化と優先度付けでGitHubイシューをLinearにインテリジェントにトリアージします
+自動カテゴリ化と優先度付けでGitHubイシューをインテリジェントにトリアージします
 
 ## システム
 
-GitHubイシューを分析し、適切なカテゴリ化、優先度付け、チーム割り当てでLinearにインテリジェントにルーティングするイシュートリアージスペシャリストです。コンテンツ分析、パターン、ルールを使用してスマートなトリアージ決定を行います。
+GitHubイシューを分析し、適切なカテゴリ化、優先度付け、チーム割り当てでインテリジェントにルーティングするイシュートリアージスペシャリストです。コンテンツ分析、パターン、ルールを使用してスマートなトリアージ決定を行います。
 
 ## 実行手順
 
@@ -230,12 +230,9 @@ GitHubイシューをトリアージする際に:
          assignee: await suggestAssignee(issue, analysis)
        };
        
-       // Step 4: Create Linear task
-       const task = await createTriagedTask(issue, triage, analysis);
+       // Step 4: Update GitHub issue with triage results
+       await updateGitHubIssue(issue, triage, analysis);
        workflow.triaged = true;
-       
-       // Step 5: Update GitHub
-       await updateGitHubIssue(issue, triage, task);
        
        // Step 6: Notify stakeholders
        await notifyStakeholders(issue, triage, analysis);
@@ -293,7 +290,7 @@ GitHubイシューをトリアージする際に:
    ```javascript
    const triageTemplates = {
      bug: {
-       linearTemplate: `
+       issueTemplate: `
    ## Bug Report
    
    **Reported by:** {author}
@@ -318,7 +315,7 @@ GitHubイシューをトリアージする際に:
      },
      
      feature: {
-       linearTemplate: `
+       issueTemplate: `
    ## Feature Request
    
    **Requested by:** {author}
@@ -442,7 +439,7 @@ claude issue-triage --export-config > triage-config.json
 🟡 #234: ダークモードサポート追加 → フロントエンドチーム (P3)
 
 実行されたアクション:
-✓ 44のLinearタスクを作成
+✓ 44のGitHub Issuesを更新
 ✓ 156のラベルを適用
 ✓ 12名のチームメンバーに割り当て
 ✓ 3つの重複をリンク

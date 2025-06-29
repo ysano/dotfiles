@@ -1,19 +1,19 @@
 # 移行アシスタント
 
-GitHub IssuesとLinearの間での包括的なデータ保持、検証、ロールバック機能を備えたチーム移行を支援。このエンタープライズ対応コマンドは安全で完全な移行を保証します。
+GitHub環境間でのプロジェクト移行、リポジトリ統合、チーム再編成を支援する包括的な移行ツール。Issues、Projects、Discussions、リポジトリ設定の安全で完全な移行を保証します。
 
 ## Instructions
 
 1. **前提条件の確認**
    - GitHub CLI（`gh`）がインストールされ認証済みであることを確認
-   - Linear MCPサーバーが接続されているかチェック
-   - 両システムで十分な権限があることを確認
+   - GitHub API接続とトークン権限を確認
+   - ソースとターゲットリポジトリの管理権限を確認
    - バックアップストレージが利用可能であることを確認
 
 2. **移行パラメータの解析**
    - 以下からアクションとオプションを抽出: **$ARGUMENTS**
    - 有効なアクション: plan, analyze, migrate, verify, rollback
-   - ソースとターゲットシステムを決定
+   - ソースとターゲットリポジトリを決定
    - 移行範囲とフィルタを設定
 
 3. **移行環境の初期化**
@@ -78,9 +78,9 @@ migration-assistant [action] [options]
 - `rollback` - 移行のロールバック
 
 ## オプション
-- `--source <system>` - ソースシステム（github/linear）
-- `--target <system>` - ターゲットシステム（github/linear）
-- `--scope <items>` - 移行するアイテム（all/issues/prs/projects）
+- `--source <repo>` - ソースリポジトリ（owner/repo）
+- `--target <repo>` - ターゲットリポジトリ（owner/repo）
+- `--scope <items>` - 移行するアイテム（all/issues/prs/projects/discussions/releases）
 - `--dry-run` - 移行のシミュレーション
 - `--parallel <n>` - 並列処理スレッド数
 - `--checkpoint` - チェックポイント回復を有効化
@@ -90,11 +90,11 @@ migration-assistant [action] [options]
 
 ## Examples
 ```bash
-# Plan GitHub to Linear migration
-migration-assistant plan --source github --target linear
+# Plan repository migration
+migration-assistant plan --source owner/old-repo --target owner/new-repo
 
 # Analyze migration scope
-migration-assistant analyze --scope all
+migration-assistant analyze --scope all --source owner/repo
 
 # Dry run migration
 migration-assistant migrate --dry-run --parallel 4
@@ -149,32 +149,30 @@ migration-assistant rollback --transaction-id 12345
 ## Data Mapping Configuration
 ```yaml
 mappings:
-  github_to_linear:
+  github_to_github:
     issue:
       title: title
-      body: description
-      state: status
+      body: body
+      state: state
       labels: labels
-      milestone: cycle
+      milestone: milestone
       assignees: assignees
     
+    project:
+      name: name
+      description: description
+      columns: columns
+      cards: items
+      
     custom_fields:
-      - source: "custom.priority"
-        target: "priority"
-        transform: "map_priority"
+      - source: "project.status"
+        target: "project_v2.status"
+        transform: "map_status"
       
     relationships:
-      - type: "parent-child"
-        source: "depends_on"
-        target: "parent"
-    
-  linear_to_github:
-    issue:
-      title: title
-      description: body
-      status: state
-      priority: labels
-      cycle: milestone
+      - type: "issue-project"
+        source: "project_card"
+        target: "project_item"
 ```
 
 ## Migration Safety Features
@@ -243,23 +241,31 @@ mappings:
 
 ## Common Migration Scenarios
 
-### GitHub Issues → Linear
-1. Map GitHub labels to Linear labels/projects
-2. Convert milestones to cycles
-3. Preserve issue numbers as references
-4. Migrate comments with user mapping
-5. Handle attachments and images
+### Repository Consolidation
+1. Merge multiple repositories into one
+2. Combine issues and preserve references
+3. Merge project boards and workflows
+4. Consolidate documentation and wikis
+5. Unify team permissions and settings
 
-### Linear → GitHub Issues
-1. Map Linear statuses to GitHub states
-2. Convert cycles to milestones
-3. Preserve Linear IDs in issue body
-4. Map Linear projects to labels
-5. Handle custom fields
+### Repository Splitting
+1. Extract specific components to new repos
+2. Filter issues by labels or components
+3. Split project boards by feature areas
+4. Preserve commit history for relevant files
+5. Update cross-references and links
 
-## Required MCP Servers
-- mcp-server-github
-- mcp-server-linear
+### Organization Migration
+1. Move repositories between organizations
+2. Transfer team memberships and permissions
+3. Migrate organization-level projects
+4. Update webhooks and integrations
+5. Preserve collaboration history
+
+## Required Dependencies
+- GitHub CLI (gh) with proper authentication
+- Git with repository access
+- GitHub API token with appropriate scopes
 
 ## Error Handling
 - Automatic retry with backoff
@@ -285,4 +291,4 @@ mappings:
 - Migration certification
 
 ## Notes
-This command creates a complete migration package including backups, logs, and documentation. The migration can be resumed from checkpoints in case of interruption. All migrations are reversible within the retention period.
+This command creates a complete GitHub migration package including backups, logs, and documentation. The migration can be resumed from checkpoints in case of interruption. All migrations are reversible within the retention period using GitHub's built-in features.

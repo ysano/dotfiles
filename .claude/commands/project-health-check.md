@@ -5,7 +5,7 @@
 ## 実行手順
 
 1. **ヘルスチェックの初期化**
-   - ツール接続の検証（Linear、GitHub）
+   - ツール接続の検証（GitHub）
    - 評価期間の定義（デフォルト：過去30日）
    - ヘルスチェック基準と闾値の設定
    - 評価すべき主要メトリクスの特定
@@ -42,7 +42,7 @@ npm audit --json
 npx license-checker --json
 ```
 
-#### Linear/タスク管理ヘルス
+#### GitHub Projects/タスク管理ヘルス
 ```
 1. スプリントベロシティトレンド
 2. サイクルタイム分析
@@ -194,16 +194,16 @@ Offer focused analysis options:
 
 ## Error Handling
 
-### Missing Linear Connection
+### Missing GitHub Projects Access
 ```
-"Linear MCP not connected. Health check will be limited to:
-- Git/GitHub metrics only
-- No sprint velocity or task metrics
-- Manual input required for team data
+"GitHub Projects access not available. Health check will be limited to:
+- Git repository metrics only
+- Basic GitHub Issues data
+- Manual input required for project data
 
 To enable full health analysis:
-1. Install Linear MCP server
-2. Configure with API credentials
+1. Ensure GitHub Projects V2 access
+2. Configure proper API permissions
 3. Re-run health check"
 ```
 
@@ -247,7 +247,7 @@ Allow users to define additional metrics:
 1. **Executive Summary** (PDF/Markdown)
 2. **Detailed Report** (HTML with charts)
 3. **Raw Metrics** (JSON/CSV)
-4. **Action Items** (Linear tasks/GitHub issues)
+4. **Action Items** (GitHub issues)
 5. **Monitoring Dashboard** (Grafana/Datadog format)
 
 ## Automation Suggestions
@@ -256,7 +256,7 @@ Allow users to define additional metrics:
 "Would you like me to:
 1. Schedule weekly health checks
 2. Set up alerts for critical metrics
-3. Create Linear tasks for action items
+3. Create GitHub issues for action items
 4. Generate PR templates with health criteria
 5. Configure CI/CD health gates"
 ```

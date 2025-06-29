@@ -1,6 +1,6 @@
 # GitHub ワークフロー自動化コマンド
 
-GitHub Actions、Webhooks、Project automationを統合したネイティブ自動化システムで、Linear同期の複雑性を排除します。
+GitHub Actions、Webhooks、Project automationを統合したネイティブ自動化システムで、シンプルなワークフローを実現します。
 
 ## 実行手順
 
@@ -46,18 +46,18 @@ GitHub Actions、Webhooks、Project automationを統合したネイティブ自�
    - Team performance insights
    - Predictive analytics for planning
 
-## 置き換えられるLinear機能
+## シンプル化されたGitHubネイティブ機能
 
-### 同期システム（完全除去）
-- **sync-automation-setup** → Native GitHub automation
-- **sync-status** → Built-in reliability monitoring
-- **sync-conflict-resolver** → Conflict-free architecture
-- **bidirectional-sync** → Single source of truth
+### 自動化ワークフロー
+- **GitHub Actions** → Native CI/CD automation
+- **Project Automation** → Built-in workflow management
+- **Issue Templates** → Standardized process
+- **PR Templates** → Consistent review workflow
 
-### 統合機能（シンプル化）
-- **sync-pr-to-task** → Native PR-Issue linking  
-- **sync-issues-to-linear** → Direct Issue management
-- **sync-linear-to-issues** → Eliminated redundancy
+### 統合機能
+- **PR-Issue linking** → Native GitHub references  
+- **Project Boards** → Direct project management
+- **Milestones** → Built-in progress tracking
 
 ## GitHub Actions活用例
 

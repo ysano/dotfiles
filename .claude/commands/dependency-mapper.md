@@ -1,14 +1,14 @@
 # dependency-mapper
 
-コードベースとLinearワークスペース全体のタスク依存関係を可視化・管理します。
+コードベースとGitHubリポジトリ全体のIssue依存関係を可視化・管理します。
 
 ## 目的
-このコマンドはコード依存関係、git履歴、Linearタスクを分析して視覚的な依存関係マップを作成します。ブロッカー、循環依存関係、効率的なプロジェクト実行のための最適なタスク順序を特定するのに役立ちます。
+このコマンドはコード依存関係、git履歴、GitHub Issuesを分析して視覚的な依存関係マップを作成します。ブロッカー、循環依存関係、効率的なプロジェクト実行のための最適なIssue順序を特定するのに役立ちます。
 
 ## 使用方法
 ```bash
-# 特定のLinearタスクの依存関係マップを表示
-claude "タスクLIN-123の依存関係マップを表示"
+# 特定のGitHub Issueの依存関係マップを表示
+claude "Issue #123の依存関係マップを表示"
 
 # モジュール内のコード依存関係を分析
 claude "src/authモジュールの依存関係をマップ"
@@ -16,8 +16,8 @@ claude "src/authモジュールの依存関係をマップ"
 # プロジェクト内の循環依存関係を検出
 claude "コードベースの循環依存関係をチェック"
 
-# タスク実行順序を生成
-claude "スプリントSPR-45のタスクを完了する最適な順序は？"
+# Issue実行順序を生成
+claude "マイルストーンv2.0のIssuesを完了する最適な順序は？"
 ```
 
 ## 実行手順
@@ -39,22 +39,23 @@ rg "^from \S+ import|^import \S+" --type py
 rg "TODO.*depends on|FIXME.*requires|NOTE.*needs" -i
 ```
 
-### 2. Linearからタスク依存関係を抽出
-タスク関係のためのLinearクエリ：
+### 2. GitHubからIssue依存関係を抽出
+Issue関係のためのGitHub APIクエリ：
 
 ```javascript
-// 依存関係を含むタスクを取得
-const task = await linear.getTask(taskId, {
-  include: ['blockedBy', 'blocks', 'parent', 'children']
+// 依存関係を含むIssueを取得
+const issue = await gh.getIssue(issueNumber, repo, {
+  include: ['linked_issues', 'project_items']
 });
 
-// タスク説明内の言及を検出
-const mentions = task.description.match(/(?:LIN-|#)\d+/g);
+// Issue説明内の言及を検出
+const mentions = issue.body.match(/#\d+|closes #\d+|fixes #\d+/gi);
 
-// 同じエピック/プロジェクトから関連タスクを取得
-const relatedTasks = await linear.searchTasks({
-  projectId: task.projectId,
-  includeArchived: false
+// 同じマイルストーン/プロジェクトから関連Issueを取得
+const relatedIssues = await gh.searchIssues({
+  milestone: issue.milestone?.title,
+  state: 'all',
+  repo: repo
 });
 ```
 
@@ -64,11 +65,11 @@ const relatedTasks = await linear.searchTasks({
 ```javascript
 class DependencyGraph {
   constructor() {
-    this.nodes = new Map(); // taskId -> task details
-    this.edges = new Map(); // taskId -> Set of dependent taskIds
+    this.nodes = new Map(); // issueNumber -> issue details
+    this.edges = new Map(); // issueNumber -> Set of dependent issueNumbers
   }
   
-  addDependency(from, to, type = 'blocks') {
+  addDependency(from, to, type = 'depends_on') {
     if (!this.edges.has(from)) {
       this.edges.set(from, new Set());
     }
@@ -153,39 +154,39 @@ class DependencyGraph {
 
 #### ASCIIツリービュー
 ```
-LIN-123: 認証システム
-├─ LIN-124: ユーザーモデル [DONE]
-├─ LIN-125: JWT実装 [IN PROGRESS]
-│  └─ LIN-126: トークンリフレッシュロジック [BLOCKED]
-└─ LIN-127: ログインエンドポイント [TODO]
-   ├─ LIN-128: レート制限 [TODO]
-   └─ LIN-129: 2FAサポート [TODO]
+#123: 認証システム
+├─ #124: ユーザーモデル [CLOSED]
+├─ #125: JWT実装 [IN PROGRESS]
+│  └─ #126: トークンリフレッシュロジック [BLOCKED]
+└─ #127: ログインエンドポイント [OPEN]
+   ├─ #128: レート制限 [OPEN]
+   └─ #129: 2FAサポート [OPEN]
 ```
 
 #### Mermaid図
 ```mermaid
 graph TD
-    LIN-123[認証システム] --> LIN-124[ユーザーモデル]
-    LIN-123 --> LIN-125[JWT実装]
-    LIN-123 --> LIN-127[ログインエンドポイント]
-    LIN-125 --> LIN-126[トークンリフレッシュロジック]
-    LIN-127 --> LIN-128[レート制限]
-    LIN-127 --> LIN-129[2FAサポート]
+    I123[認証システム] --> I124[ユーザーモデル]
+    I123 --> I125[JWT実装]
+    I123 --> I127[ログインエンドポイント]
+    I125 --> I126[トークンリフレッシュロジック]
+    I127 --> I128[レート制限]
+    I127 --> I129[2FAサポート]
     
-    style LIN-124 fill:#90EE90
-    style LIN-125 fill:#FFD700
-    style LIN-126 fill:#FF6B6B
+    style I124 fill:#90EE90
+    style I125 fill:#FFD700
+    style I126 fill:#FF6B6B
 ```
 
 #### 依存関係マトリックス
 ```
-         | LIN-123 | LIN-124 | LIN-125 | LIN-126 | LIN-127 |
+         |  #123   |  #124   |  #125   |  #126   |  #127   |
 ---------|---------|---------|---------|---------|---------|
-LIN-123  |    -    |    →    |    →    |         |    →    |
-LIN-124  |         |    -    |         |         |         |
-LIN-125  |         |    ←    |    -    |    →    |         |
-LIN-126  |         |         |    ←    |    -    |         |
-LIN-127  |    ←    |    ←    |         |         |    -    |
+ #123    |    -    |    →    |    →    |         |    →    |
+ #124    |         |    -    |         |         |         |
+ #125    |         |    ←    |    -    |    →    |         |
+ #126    |         |         |    ←    |    -    |         |
+ #127    |    ←    |    ←    |         |         |    -    |
 
 凡例: → 依存、← 依存先
 ```
@@ -202,7 +203,7 @@ async function analyzeFileDependencies(filePath) {
   const dependencies = {
     internal: [], // Project files
     external: [], // npm packages
-    tasks: []     // Related Linear tasks
+    issues: []    // Related GitHub issues
   };
   
   for (const imp of imports) {
@@ -212,9 +213,9 @@ async function analyzeFileDependencies(filePath) {
       dependencies.external.push(imp);
     }
     
-    // Check if file is mentioned in any task
-    const tasks = await linear.searchTasks(path.basename(filePath));
-    dependencies.tasks.push(...tasks);
+    // Check if file is mentioned in any issue
+    const issues = await gh.searchIssues(`"${path.basename(filePath)}"`, repo);
+    dependencies.issues.push(...issues);
   }
   
   return dependencies;
@@ -250,9 +251,9 @@ function calculateExecutionOrder(graph) {
 
 ### 7. エラーハンドリング
 ```javascript
-// Linearアクセスのチェック
-if (!linear.available) {
-  console.warn("Linear MCPが利用できません、コード分析のみ使用します");
+// GitHubアクセスのチェック
+if (!gh.available) {
+  console.warn("GitHub APIが利用できません、コード分析のみ使用します");
   // コードのみの分析にフォールバック
 }
 
@@ -265,12 +266,12 @@ if (cycles.length > 0) {
   });
 }
 
-// タスク存在の検証
-for (const taskId of mentionedTasks) {
+// Issue存在の検証
+for (const issueNumber of mentionedIssues) {
   try {
-    await linear.getTask(taskId);
+    await gh.getIssue(issueNumber, repo);
   } catch (error) {
-    console.warn(`タスク ${taskId} が見つからないかアクセスできません`);
+    console.warn(`Issue #${issueNumber} が見つからないかアクセスできません`);
   }
 }
 ```
@@ -278,7 +279,7 @@ for (const taskId of mentionedTasks) {
 ## Example Output
 
 ```
-Analyzing dependencies for Epic: Authentication System (LIN-123)
+Analyzing dependencies for Milestone: Authentication System (#123)
 
 📊 Dependency Graph:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -350,5 +351,5 @@ claude "Show tasks with longest dependency chains in current sprint"
 - Use consistent naming between code modules and tasks
 - Mark external dependencies (APIs, services) explicitly
 - Review dependency graphs in sprint planning
-- Keep critical path tasks assigned and monitored
-- Use dependency data for accurate sprint velocity
+- Keep critical path issues assigned and monitored
+- Use dependency data for accurate milestone planning

@@ -23,7 +23,7 @@ claude "Aliceが支払いwebhookハンドラーを実装するのにどのくら
 ## 実行手順
 
 ### 1. 過去データの収集
-git履歴とLinearからデータを収集：
+git履歴とGitHub Projects/Issuesからデータを収集：
 
 ```bash
 # Get commit history with timestamps and authors
@@ -76,16 +76,16 @@ function analyzeComplexity(filePath) {
 #### Time-Based Estimation
 ```javascript
 class HistoricalEstimator {
-  constructor(gitData, linearData) {
+  constructor(gitData, projectData) {
     this.gitData = gitData;
-    this.linearData = linearData;
+    this.projectData = projectData;
     this.authorVelocity = new Map();
     this.fileTypeMultipliers = new Map();
   }
   
   calculateAuthorVelocity(author) {
     const authorCommits = this.gitData.filter(c => c.author === author);
-    const taskCompletions = this.linearData.filter(t => 
+    const taskCompletions = this.projectData.filter(t => 
       t.assignee === author && t.completedAt
     );
     

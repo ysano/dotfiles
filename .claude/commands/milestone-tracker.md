@@ -1,17 +1,17 @@
 # マイルストーントラッカー
 
-Linear、GitHub、過去のベロシティデータを使用して、プロジェクトのマイルストーンを追跡し、成果物の進捗を監視し、完了日を予測し、リスクのあるマイルストーンの早期警告を提供します。
+GitHub Issues、Projects、過去のベロシティデータを使用して、プロジェクトのマイルストーンを追跡し、成果物の進捗を監視し、完了日を予測し、リスクのあるマイルストーンの早期警告を提供します。
 
 ## 実行手順
 
 1. **利用可能ツールのチェック**
-   - Linear MCPサーバー接続の検証
+   - GitHub APIアクセスの検証
    - GitHub CLIの利用可能性チェック
    - gitリポジトリアクセスのテスト
    - 必要な権限の確認
 
 2. **マイルストーンデータの収集**
-   - プロジェクトのマイルストーンとロードマップアイテムのLinearクエリ
+   - プロジェクトのマイルストーンとロードマップアイテムのGitHub APIクエリ
    - GitHubマイルストーンと関連issueの取得
    - 過去のリリースパターンのためのgitタグ分析
    - ロードマップ情報のためのプロジェクトドキュメントレビュー
@@ -19,7 +19,7 @@ Linear、GitHub、過去のベロシティデータを使用して、プロジ�
 
 3. **マイルストーン進捗の分析**
    各マイルストーンについて：
-   - 完了対全タスク数のカウント
+   - 完了対全Issue数のカウント
    - 完了率の計算
    - ベロシティトレンドの測定
    - ブロッキング問題の特定
@@ -64,7 +64,7 @@ Linear、GitHub、過去のベロシティデータを使用して、プロジ�
 
 ## Prerequisites
 - Git repository access
-- Linear MCP server connection (preferred)
+- GitHub API access with appropriate permissions
 - GitHub milestones or project boards
 - Historical velocity data
 
@@ -72,7 +72,7 @@ Linear、GitHub、過去のベロシティデータを使用して、プロジ�
 
 ### 1. Milestone Discovery
 ```
-1. Check Linear for project milestones/roadmap items
+1. Check GitHub for project milestones/roadmap items
 2. Scan GitHub for milestone definitions
 3. Analyze git tags for release history
 4. Review README/docs for project roadmap
@@ -316,11 +316,11 @@ gantt
 
 ### No Milestone Data
 ```
-"No milestones found in Linear or GitHub.
+"No milestones found in GitHub repository.
 
 To set up milestone tracking:
-1. Define milestones in Linear/GitHub
-2. Associate tasks with milestones
+1. Define milestones in GitHub
+2. Associate issues with milestones
 3. Set target completion dates
 
 Would you like me to:
@@ -385,7 +385,7 @@ Confidence level: Low-Medium"
 1. **Gantt Chart Export** (Mermaid/PNG/PDF)
 2. **Executive Dashboard** (HTML/PowerBI)
 3. **Status Updates** (Slack/Email/Confluence)
-4. **Risk Register** (Excel/Linear/Jira)
+4. **Risk Register** (Excel/GitHub Issues)
 5. **Calendar Integration** (ICS/Google/Outlook)
 
 ## GitHub Actions統合

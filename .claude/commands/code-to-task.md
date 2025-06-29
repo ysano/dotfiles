@@ -1,9 +1,9 @@
 # コードからタスクへ
 
-TODOコメント、FIXMEマーカー、非推奨コード、技術的負債を見つけてコード分析からLinearタスクを生成します。
+TODOコメント、FIXMEマーカー、非推奨コード、技術的負債を見つけてコード分析からGitHub Issuesを生成します。
 
 ## 目的
-このコマンドはコードベースをスキャンしてTODO/FIXMEコメント、技術的負債マーカー、非推奨コード、タスクとして追跡すべきその他の指標を探します。重要なコード改善が忘れられないよう、整理され優先順位付けされたLinearタスクを自動作成します。
+このコマンドはコードベースをスキャンしてTODO/FIXMEコメント、技術的負債マーカー、非推奨コード、タスクとして追跡すべきその他の指標を探します。重要なコード改善が忘れられないよう、整理され優先順位付けされたGitHub Issuesを自動作成します。
 
 ## Usage
 ```bash
@@ -11,7 +11,7 @@ TODOコメント、FIXMEマーカー、非推奨コード、技術的負債を�
 claude "Create tasks from all TODO comments in the codebase"
 
 # Scan specific directory or module
-claude "Find TODOs in src/api and create Linear tasks"
+claude "Find TODOs in src/api and create GitHub issues"
 
 # Create tasks from specific patterns
 claude "Create tasks for all deprecated functions"
@@ -279,27 +279,26 @@ class TechnicalDebtAnalyzer {
 }
 ```
 
-### 5. Create Linear Tasks
+### 5. Create GitHub Issues
 Convert findings into actionable tasks:
 
 ```javascript
-async function createLinearTasks(groupedTasks, options = {}) {
+async function createGitHubIssues(groupedTasks, options = {}) {
   const created = [];
   const skipped = [];
   
-  // Check for existing tasks to avoid duplicates
-  const existingTasks = await linear.searchTasks('TODO OR FIXME');
-  const existingTitles = new Set(existingTasks.map(t => t.title));
+  // Check for existing issues to avoid duplicates
+  const existingIssues = await gh.searchIssues('TODO OR FIXME', options.repo);
+  const existingTitles = new Set(existingIssues.map(i => i.title));
   
-  // Create parent task for large groups
-  if (options.createEpic && groupedTasks.length > 10) {
-    const epic = await linear.createTask({
-      title: `Technical Debt: ${options.module || 'Codebase'} Cleanup`,
-      description: `Parent task for ${groupedTasks.length} code improvements`,
-      priority: 2,
-      labels: ['technical-debt', 'code-quality']
+  // Create project for large groups
+  if (options.createProject && groupedTasks.length > 10) {
+    const project = await gh.createProject({
+      name: `Technical Debt: ${options.module || 'Codebase'} Cleanup`,
+      description: `Project for ${groupedTasks.length} code improvements`,
+      repository: options.repo
     });
-    options.parentId = epic.id;
+    options.projectId = project.id;
   }
   
   for (const task of groupedTasks) {
@@ -321,24 +320,29 @@ async function createLinearTasks(groupedTasks, options = {}) {
     };
     
     try {
-      const linearTask = await linear.createTask({
+      const githubIssue = await gh.createIssue({
         title: task.title,
-        description,
-        priority: priorityMap[task.priority] || 3,
+        body: description,
         labels: getLabelsForTask(task),
-        parentId: options.parentId,
-        estimate: estimateTaskSize(task)
-      });
+        milestone: options.milestone,
+        assignees: options.assignees || []
+      }, options.repo);
+      
+      // Add to project if exists
+      if (options.projectId) {
+        await gh.addIssueToProject(githubIssue.id, options.projectId);
+      }
       
       created.push({
-        linear: linearTask,
+        github: githubIssue,
         source: task
       });
       
       // Add code link as comment
-      await linear.createComment({
-        issueId: linearTask.id,
-        body: `📍 Code location: \`${task.file_path}:${task.line_number}\``
+      await gh.createComment({
+        issueNumber: githubIssue.number,
+        body: `📍 Code location: \`${task.file_path}:${task.line_number}\``,
+        repo: options.repo
       });
       
     } catch (error) {
@@ -447,19 +451,19 @@ try {
   }
 }
 
-// Handle Linear API limits
+// Handle GitHub API limits
 const rateLimiter = {
-  tasksCreated: 0,
+  issuesCreated: 0,
   resetTime: Date.now() + 3600000,
   
-  async createTask(taskData) {
-    if (this.tasksCreated >= 50) {
-      console.log('Rate limit approaching, batching remaining tasks...');
-      // Create single task with list of TODOs
-      return this.createBatchTask(remainingTasks);
+  async createIssue(issueData, repo) {
+    if (this.issuesCreated >= 100) {
+      console.log('Rate limit approaching, batching remaining issues...');
+      // Create single issue with list of TODOs
+      return this.createBatchIssue(remainingTasks, repo);
     }
-    this.tasksCreated++;
-    return linear.createTask(taskData);
+    this.issuesCreated++;
+    return gh.createIssue(issueData, repo);
   }
 };
 
@@ -526,9 +530,9 @@ Found 47 items across 23 files:
 📝 Task Creation Summary:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ Created 32 Linear tasks:
-   - Epic: "Q1 Technical Debt Cleanup" (LIN-456)
-   - 3 urgent security tasks
+✅ Created 32 GitHub issues:
+   - Project: "Q1 Technical Debt Cleanup" (#456)
+   - 3 urgent security issues
    - 10 high-priority fixes
    - 19 medium-priority improvements
 
@@ -548,8 +552,8 @@ Found 47 items across 23 files:
 3. Create coding standards to reduce future TODOs
 4. Set up pre-commit hook to limit new TODOs
 
-View all created tasks:
-https://linear.app/yourteam/project/q1-technical-debt-cleanup
+View all created issues:
+https://github.com/owner/repo/projects/1
 ```
 
 ## Advanced Features
@@ -577,7 +581,7 @@ claude "Generate weekly technical debt report and create tasks for new items"
 - Run regularly to prevent TODO accumulation
 - Use consistent comment formats across the team
 - Include author and date in TODOs
-- Link TODOs to existing Linear issues when possible
+- Link TODOs to existing GitHub issues when possible
 - Set up IDE snippets for properly formatted TODOs
-- Review and close completed TODO tasks
+- Review and close completed TODO issues
 - Use TODO comments as a quality gate in PR reviews
