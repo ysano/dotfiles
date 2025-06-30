@@ -86,6 +86,136 @@ rate_limit_check() {
     return 0  # OK to proceed
 }
 
+# OS Detection for notifications
+detect_os_type() {
+    case "$OSTYPE" in
+        darwin*)
+            echo "macos"
+            ;;
+        linux*)
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+                echo "wsl"
+            else
+                echo "linux"
+            fi
+            ;;
+        *)
+            echo "other"
+            ;;
+    esac
+}
+
+# Find PowerShell executable path for WSL
+find_powershell_path() {
+    local powershell_paths=(
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+        "/mnt/c/Windows/System32/powershell.exe"
+        "powershell.exe"
+    )
+    
+    for path in "${powershell_paths[@]}"; do
+        if [[ -f "$path" ]]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# Waiting notification (⌛) - Input required
+notify_waiting() {
+    local os_type=$(detect_os_type)
+    
+    case "$os_type" in
+        "macos")
+            # macOS: System sound + notification
+            if command -v afplay >/dev/null 2>&1; then
+                afplay /System/Library/Sounds/Glass.aiff 2>/dev/null &
+            fi
+            # Optional: Add Notification Center alert
+            osascript -e 'display notification "入力待ちです" with title "Claude Code" subtitle "⌛ Waiting"' 2>/dev/null &
+            ;;
+        "wsl")
+            # WSL: PowerShell beep notification sound
+            local powershell_path=$(find_powershell_path)
+            if [[ -n "$powershell_path" ]]; then
+                "$powershell_path" -Command "
+                [console]::beep(659, 100)
+                Start-Sleep -Milliseconds 50
+                [console]::beep(880, 150)
+                " 2>/dev/null &
+            else
+                echo -e "\a"
+                sleep 0.1
+                echo -e "\a"
+            fi
+            ;;
+        "linux")
+            # Linux: System sound or fallback
+            if command -v paplay >/dev/null 2>&1; then
+                paplay /usr/share/sounds/alsa/Side_Left.wav 2>/dev/null &
+            elif command -v notify-send >/dev/null 2>&1; then
+                notify-send "Claude Code" "⌛ 入力待ちです" 2>/dev/null &
+            else
+                echo -e "\a"
+                sleep 0.1
+                echo -e "\a"
+            fi
+            ;;
+        *)
+            # Fallback: Terminal bell
+            echo -e "\a"
+            sleep 0.1
+            echo -e "\a"
+            ;;
+    esac
+}
+
+# Complete notification (✅) - Task completed
+notify_complete() {
+    local os_type=$(detect_os_type)
+    
+    case "$os_type" in
+        "macos")
+            # macOS: Completion sound + notification
+            if command -v afplay >/dev/null 2>&1; then
+                afplay /System/Library/Sounds/Hero.aiff 2>/dev/null &
+            fi
+            # Optional: Add Notification Center alert
+            osascript -e 'display notification "処理が完了しました" with title "Claude Code" subtitle "✅ Complete"' 2>/dev/null &
+            ;;
+        "wsl")
+            # WSL: PowerShell completion sound (ascending melody)
+            local powershell_path=$(find_powershell_path)
+            if [[ -n "$powershell_path" ]]; then
+                "$powershell_path" -Command "
+                [console]::beep(523, 80)
+                [console]::beep(659, 80)
+                [console]::beep(783, 80)
+                [console]::beep(1046, 120)
+                " 2>/dev/null &
+            else
+                echo -e "\a"
+            fi
+            ;;
+        "linux")
+            # Linux: System sound or fallback
+            if command -v paplay >/dev/null 2>&1; then
+                paplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
+            elif command -v notify-send >/dev/null 2>&1; then
+                notify-send "Claude Code" "✅ 処理完了" 2>/dev/null &
+            else
+                echo -e "\a"
+            fi
+            ;;
+        *)
+            # Fallback: Terminal bell
+            echo -e "\a"
+            ;;
+    esac
+}
+
 # Enhanced notification function with better error handling
 notify_status_change() {
     # Skip notification if rate limited
@@ -98,29 +228,18 @@ notify_status_change() {
         return 0
     fi
     
-    # Audio notification with reduced frequency and better patterns
+    # Enhanced notification with OS-specific sounds and alerts
     case "$NEW_STATUS" in
         "✅")
-            # Process completed - gentle notification
-            if command -v paplay >/dev/null 2>&1; then
-                # Use system sound if available (Linux)
-                paplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
-            else
-                echo -e "\a"
-            fi
+            # Process completed - use enhanced completion notification
+            notify_complete
             ;;
         "⌛")
-            # Waiting for input - attention sound
-            if command -v paplay >/dev/null 2>&1; then
-                paplay /usr/share/sounds/alsa/Side_Left.wav 2>/dev/null &
-            else
-                echo -e "\a"
-                sleep 0.1
-                echo -e "\a"
-            fi
+            # Waiting for input - use enhanced input notification
+            notify_waiting
             ;;
         "⚡")
-            # Process started - brief notification
+            # Process started - simple notification (unchanged)
             echo -e "\a"
             ;;
     esac
