@@ -276,80 +276,80 @@ for (const issueNumber of mentionedIssues) {
 }
 ```
 
-## Example Output
+## 出力例
 
 ```
-Analyzing dependencies for Milestone: Authentication System (#123)
+マイルストーンの依存関係分析中: 認証システム (#123)
 
-📊 Dependency Graph:
+📊 依存関係グラフ:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-LIN-123: Authentication System [EPIC]
-├─ LIN-124: Create User Model ✅ [DONE]
-│  └─ Files: src/models/User.ts, src/schemas/user.sql
-├─ LIN-125: Implement JWT Service 🚧 [IN PROGRESS]
-│  ├─ Files: src/services/auth/jwt.ts
-│  ├─ Depends on: LIN-124
-│  └─ LIN-126: Add Token Refresh ⛔ [BLOCKED by LIN-125]
-└─ LIN-127: Create Login Endpoint 📋 [TODO]
-   ├─ Files: src/routes/auth/login.ts
-   ├─ Depends on: LIN-124, LIN-125
-   ├─ LIN-128: Add Rate Limiting 📋 [TODO]
-   └─ LIN-129: Implement 2FA 📋 [TODO]
+LIN-123: 認証システム [EPIC]
+├─ LIN-124: ユーザーモデル作成 ✅ [完了]
+│  └─ ファイル: src/models/User.ts, src/schemas/user.sql
+├─ LIN-125: JWTサービス実装 🚧 [進行中]
+│  ├─ ファイル: src/services/auth/jwt.ts
+│  ├─ 依存: LIN-124
+│  └─ LIN-126: トークンリフレッシュ追加 ⛔ [LIN-125によりブロック]
+└─ LIN-127: ログインエンドポイント作成 📋 [TODO]
+   ├─ ファイル: src/routes/auth/login.ts
+   ├─ 依存: LIN-124, LIN-125
+   ├─ LIN-128: レート制限追加 📋 [TODO]
+   └─ LIN-129: 2FA実装 📋 [TODO]
 
-🔄 Circular Dependencies: None found
+🔄 循環依存関係: 見つかりませんでした
 
-📈 Critical Path:
-1. LIN-124 (User Model) - 2 points ✅
-2. LIN-125 (JWT Service) - 3 points 🚧
-3. LIN-126 (Token Refresh) - 1 point ⛔
-4. LIN-127 (Login Endpoint) - 2 points 📋
-Total: 8 points on critical path
+📈 クリティカルパス:
+1. LIN-124 (ユーザーモデル) - 2ポイント ✅
+2. LIN-125 (JWTサービス) - 3ポイント 🚧
+3. LIN-126 (トークンリフレッシュ) - 1ポイント ⛔
+4. LIN-127 (ログインエンドポイント) - 2ポイント 📋
+合計: クリティカルパス上で8ポイント
 
-👥 Task Distribution:
-- Alice: LIN-125 (in progress), LIN-126 (blocked)
-- Bob: LIN-127 (ready to start)
-- Unassigned: LIN-128, LIN-129
+👥 タスク配分:
+- Alice: LIN-125 (進行中), LIN-126 (ブロック中)
+- Bob: LIN-127 (開始準備完了)
+- 未割り当て: LIN-128, LIN-129
 
-📁 File Dependencies:
+📁 ファイル依存関係:
 src/routes/auth/login.ts
-  └─ imports from:
+  └─ インポート元:
      ├─ src/models/User.ts (LIN-124) ✅
      ├─ src/services/auth/jwt.ts (LIN-125) 🚧
      └─ src/middleware/rateLimiter.ts (LIN-128) 📋
 
-⚡ Recommended Action:
-Priority should be completing LIN-125 to unblock 3 dependent tasks.
-Bob can start on LIN-124 prerequisite work while waiting.
+⚡ 推奨アクション:
+LIN-125の完了を優先して3つの依存タスクのブロックを解除すべきです。
+BobはLIN-124の前提作業を待機中に開始できます。
 ```
 
-## Advanced Features
+## 高度な機能
 
-### Impact Analysis
-Show what tasks are affected by changes:
+### 影響分析
+変更によって影響を受けるタスクを表示:
 ```bash
-# What tasks are impacted if we change User.ts?
-claude "Show impact analysis for changes to src/models/User.ts"
+# User.tsを変更した場合、どのタスクが影響を受けるか？
+claude "src/models/User.tsの変更による影響分析を表示"
 ```
 
-### Sprint Planning
-Optimize task order for sprint capacity:
+### スプリント計画
+スプリント容量を考慮したタスク順序の最適化:
 ```bash
-# Generate sprint plan considering dependencies
-claude "Plan sprint with 20 points capacity considering dependencies"
+# 依存関係を考慮して20ポイント容量のスプリントを計画
+claude "依存関係を考慮して20ポイント容量でスプリントを計画"
 ```
 
-### Risk Assessment
-Identify high-risk dependency chains:
+### リスク評価
+高リスクな依存関係チェーンを特定:
 ```bash
-# Find longest dependency chains
-claude "Show tasks with longest dependency chains in current sprint"
+# 最長の依存関係チェーンを見つける
+claude "現在のスプリントで最長の依存関係チェーンを持つタスクを表示"
 ```
 
-## Tips
-- Update dependencies as code evolves
-- Use consistent naming between code modules and tasks
-- Mark external dependencies (APIs, services) explicitly
-- Review dependency graphs in sprint planning
-- Keep critical path issues assigned and monitored
-- Use dependency data for accurate milestone planning
+## ヒント
+- コードの進化に合わせて依存関係を更新する
+- コードモジュールとタスクの間で一貫した命名を使用する
+- 外部依存関係（API、サービス）を明示的にマークする
+- スプリント計画時に依存関係グラフを確認する
+- クリティカルパスのIssueを割り当てて監視する
+- 正確なマイルストーン計画に依存関係データを使用する

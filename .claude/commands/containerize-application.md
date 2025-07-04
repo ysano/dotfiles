@@ -11,66 +11,66 @@
    - 最適化のためのマルチステージビルド戦略の計画
    - セキュリティ要件とコンプライアンス要件の評価
 
-2. **Dockerfile Creation and Optimization**
-   - Create comprehensive Dockerfile with multi-stage builds
-   - Select minimal base images (Alpine, distroless, or slim variants)
-   - Configure proper layer caching and build optimization
-   - Implement security best practices (non-root user, minimal attack surface)
-   - Set up proper file permissions and ownership
+2. **Dockerfileの作成と最適化**
+   - マルチステージビルドを含む包括的なDockerfileの作成
+   - 最小限のベースイメージ（Alpine、distroless、または slim バリアント）の選択
+   - 適切なレイヤーキャッシュとビルド最適化の設定
+   - セキュリティベストプラクティスの実装（非rootユーザー、最小の攻撃面）
+   - 適切なファイル権限と所有権の設定
 
-3. **Build Process Configuration**
-   - Configure .dockerignore file to exclude unnecessary files
-   - Set up build arguments and environment variables
-   - Implement build-time dependency installation and cleanup
-   - Configure application bundling and asset optimization
-   - Set up proper build context and file structure
+3. **ビルドプロセス設定**
+   - 不要なファイルを除外する.dockerignoreファイルの設定
+   - ビルド引数と環境変数の設定
+   - ビルド時の依存関係インストールとクリーンアップの実装
+   - アプリケーションのバンドルとアセット最適化の設定
+   - 適切なビルドコンテキストとファイル構造の設定
 
-4. **Runtime Configuration**
-   - Configure application startup and health checks
-   - Set up proper signal handling and graceful shutdown
-   - Configure logging and output redirection
-   - Set up environment-specific configuration management
-   - Configure resource limits and performance tuning
+4. **ランタイム設定**
+   - アプリケーションの起動とヘルスチェックの設定
+   - 適切なシグナルハンドリングと優雅な終了の設定
+   - ログとアウトプットリダイレクションの設定
+   - 環境固有の設定管理の設定
+   - リソース制限とパフォーマンスチューニングの設定
 
-5. **Security Hardening**
-   - Run application as non-root user with minimal privileges
-   - Configure security scanning and vulnerability assessment
-   - Implement secrets management and secure credential handling
-   - Set up network security and firewall rules
-   - Configure security policies and access controls
+5. **セキュリティ強化**
+   - 最小権限の非rootユーザーでのアプリケーション実行
+   - セキュリティスキャンと脆弱性評価の設定
+   - シークレット管理と安全な認証情報処理の実装
+   - ネットワークセキュリティとファイアウォールルールの設定
+   - セキュリティポリシーとアクセス制御の設定
 
-6. **Docker Compose Configuration**
-   - Create docker-compose.yml for local development
-   - Configure service dependencies and networking
-   - Set up volume mounting and data persistence
-   - Configure environment variables and secrets
-   - Set up development vs production configurations
+6. **Docker Compose設定**
+   - ローカル開発用docker-compose.ymlの作成
+   - サービス依存関係とネットワーキングの設定
+   - ボリュームマウントとデータ永続化の設定
+   - 環境変数とシークレットの設定
+   - 開発環境と本番環境の設定の分離
 
-7. **Container Orchestration Preparation**
-   - Prepare configurations for Kubernetes deployment
-   - Create deployment manifests and service definitions
-   - Configure ingress and load balancing
-   - Set up persistent volumes and storage classes
-   - Configure auto-scaling and resource management
+7. **コンテナオーケストレーション準備**
+   - Kubernetesデプロイメント用設定の準備
+   - デプロイメントマニフェストとサービス定義の作成
+   - イングレスとロードバランシングの設定
+   - 永続ボリュームとストレージクラスの設定
+   - 自動スケーリングとリソース管理の設定
 
-8. **Monitoring and Observability**
-   - Configure application metrics and health endpoints
-   - Set up logging aggregation and centralized logging
-   - Configure distributed tracing and monitoring
-   - Set up alerting and notification systems
-   - Configure performance monitoring and profiling
+8. **監視と可観測性**
+   - アプリケーションメトリクスとヘルスエンドポイントの設定
+   - ログ集約と集中ログの設定
+   - 分散トレーシングと監視の設定
+   - アラートと通知システムの設定
+   - パフォーマンス監視とプロファイリングの設定
 
-9. **CI/CD Integration**
-   - Configure automated Docker image building
-   - Set up image scanning and security validation
-   - Configure image registry and artifact management
-   - Set up automated deployment pipelines
-   - Configure rollback and blue-green deployment strategies
+9. **CI/CD統合**
+   - 自動DockerイメージビルドのConfigure
+   - イメージスキャンとセキュリティ検証の設定
+   - イメージレジストリとアーティファクト管理の設定
+   - 自動デプロイメントパイプラインの設定
+   - ロールバックとブルーグリーンデプロイメント戦略の設定
 
-10. **Testing and Validation**
-    - Test container builds and functionality
-    - Validate security configurations and compliance
-    - Test deployment in different environments
-    - Validate performance and resource utilization
-    - Test backup and disaster recovery procedures
-    - Create documentation for container deployment and management
+10. **テストと検証**
+    - コンテナビルドと機能のテスト
+    - セキュリティ設定とコンプライアンスの検証
+    - 異なる環境でのデプロイメントのテスト
+    - パフォーマンスとリソース使用量の検証
+    - バックアップと災害復旧手順のテスト
+    - コンテナデプロイメントと管理のドキュメント作成

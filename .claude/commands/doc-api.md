@@ -1,4 +1,4 @@
-# API Documentation Generator Command
+# APIドキュメント生成コマンド
 
 任意のプログラミング言語とフレームワーク用のコードから包括的なAPIドキュメントを生成します。
 
@@ -21,21 +21,21 @@ APIドキュメント作成の体系的なアプローチに従ってくださ�
      - **Redoc**: 代替OpenAPIレンダラー
      - **API Blueprint**: MarkdownベースAPIドキュメント
 
-3. **API Specification Generation**
+3. **API仕様生成**
    
-   **For REST APIs with OpenAPI:**
+   **OpenAPIを使用したREST API用:**
    ```yaml
    openapi: 3.0.0
    info:
      title: $ARGUMENTS API
      version: 1.0.0
-     description: Comprehensive API for $ARGUMENTS
+     description: $ARGUMENTS用包括的API
    servers:
      - url: https://api.example.com/v1
    paths:
      /users:
        get:
-         summary: List users
+         summary: ユーザー一覧取得
          parameters:
            - name: page
              in: query
@@ -43,7 +43,7 @@ APIドキュメント作成の体系的なアプローチに従ってくださ�
                type: integer
          responses:
            '200':
-             description: Successful response
+             description: 成功レスポンス
              content:
                application/json:
                  schema:
@@ -63,45 +63,45 @@ APIドキュメント作成の体系的なアプローチに従ってくださ�
              type: string
    ```
 
-4. **Endpoint Documentation**
-   - Document all HTTP methods (GET, POST, PUT, DELETE, PATCH)
-   - Specify request parameters (path, query, header, body)
-   - Define response schemas and status codes
-   - Include error responses and error codes
-   - Document authentication and authorization requirements
+4. **エンドポイントドキュメント**
+   - すべてのHTTPメソッド（GET、POST、PUT、DELETE、PATCH）を文書化
+   - リクエストパラメータ（パス、クエリ、ヘッダー、ボディ）を指定
+   - レスポンススキーマとステータスコードを定義
+   - エラーレスポンスとエラーコードを含める
+   - 認証と認可要件を文書化
 
-5. **Request/Response Examples**
-   - Provide realistic request examples for each endpoint
-   - Include sample response data with proper formatting
-   - Show different response scenarios (success, error, edge cases)
-   - Document content types and encoding
+5. **リクエスト/レスポンス例**
+   - 各エンドポイントの現実的なリクエスト例を提供
+   - 適切な形式のサンプルレスポンスデータを含める
+   - 異なるレスポンスシナリオ（成功、エラー、エッジケース）を表示
+   - コンテンツタイプとエンコーディングを文書化
 
-6. **Authentication Documentation**
-   - Document authentication methods (API keys, JWT, OAuth)
-   - Explain authorization scopes and permissions
-   - Provide authentication examples and token formats
-   - Document session management and refresh token flows
+6. **認証ドキュメント**
+   - 認証方法（APIキー、JWT、OAuth）を文書化
+   - 認可スコープと権限を説明
+   - 認証例とトークン形式を提供
+   - セッション管理とリフレッシュトークンフローを文書化
 
-7. **Data Model Documentation**
-   - Define all data schemas and models
-   - Document field types, constraints, and validation rules
-   - Include relationships between entities
-   - Provide example data structures
+7. **データモデルドキュメント**
+   - すべてのデータスキーマとモデルを定義
+   - フィールドタイプ、制約、検証ルールを文書化
+   - エンティティ間の関係を含める
+   - データ構造の例を提供
 
-8. **Error Handling Documentation**
-   - Document all possible error responses
-   - Explain error codes and their meanings
-   - Provide troubleshooting guidance
-   - Include rate limiting and throttling information
+8. **エラーハンドリングドキュメント**
+   - すべての可能なエラーレスポンスを文書化
+   - エラーコードとその意味を説明
+   - トラブルシューティングガイダンスを提供
+   - レート制限とスロットリング情報を含める
 
-9. **Interactive Documentation Setup**
+9. **インタラクティブドキュメント設定**
    
-   **Swagger UI Integration:**
+   **Swagger UI統合:**
    ```html
    <!DOCTYPE html>
    <html>
    <head>
-     <title>API Documentation</title>
+     <title>APIドキュメント</title>
      <link rel="stylesheet" type="text/css" href="./swagger-ui-bundle.css" />
    </head>
    <body>
@@ -117,17 +117,17 @@ APIドキュメント作成の体系的なアプローチに従ってくださ�
    </html>
    ```
 
-10. **Code Annotation and Comments**
-    - Add inline documentation to API handlers
-    - Use framework-specific annotation tools:
-      - **Java**: @ApiOperation, @ApiParam (Swagger annotations)
-      - **Python**: Docstrings with FastAPI or Flask-RESTX
-      - **Node.js**: JSDoc comments with swagger-jsdoc
-      - **C#**: XML documentation comments
+10. **コード注釈とコメント**
+    - APIハンドラーにインラインドキュメントを追加
+    - フレームワーク固有の注釈ツールを使用:
+      - **Java**: @ApiOperation, @ApiParam (Swagger注釈)
+      - **Python**: FastAPIまたはFlask-RESTXでのDocstrings
+      - **Node.js**: swagger-jsdocでのJSDocコメント
+      - **C#**: XMLドキュメントコメント
 
-11. **Automated Documentation Generation**
+11. **自動ドキュメント生成**
     
-    **For Node.js/Express:**
+    **Node.js/Express用:**
     ```javascript
     const swaggerJsdoc = require('swagger-jsdoc');
     const swaggerUi = require('swagger-ui-express');
@@ -136,7 +136,7 @@ APIドキュメント作成の体系的なアプローチに従ってくださ�
       definition: {
         openapi: '3.0.0',
         info: {
-          title: 'API Documentation',
+          title: 'APIドキュメント',
           version: '1.0.0',
         },
       },
@@ -147,49 +147,49 @@ APIドキュメント作成の体系的なアプローチに従ってくださ�
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
     ```
 
-12. **Testing Integration**
-    - Generate API test collections from documentation
-    - Include test scripts and validation rules
-    - Set up automated API testing
-    - Document test scenarios and expected outcomes
+12. **テスト統合**
+    - ドキュメントからAPIテストコレクションを生成
+    - テストスクリプトと検証ルールを含める
+    - 自動APIテストを設定
+    - テストシナリオと期待される結果を文書化
 
-13. **Version Management**
-    - Document API versioning strategy
-    - Maintain documentation for multiple API versions
-    - Document deprecation timelines and migration guides
-    - Track breaking changes between versions
+13. **バージョン管理**
+    - APIバージョニング戦略を文書化
+    - 複数のAPIバージョンのドキュメントを維持
+    - 非推奨タイムラインと移行ガイドを文書化
+    - バージョン間の破壊的変更を追跡
 
-14. **Performance Documentation**
-    - Document rate limits and throttling policies
-    - Include performance benchmarks and SLAs
-    - Document caching strategies and headers
-    - Explain pagination and filtering options
+14. **パフォーマンスドキュメント**
+    - レート制限とスロットリングポリシーを文書化
+    - パフォーマンスベンチマークとSLAを含める
+    - キャッシュ戦略とヘッダーを文書化
+    - ページネーションとフィルタリングオプションを説明
 
-15. **SDK and Client Library Documentation**
-    - Generate client libraries from API specifications
-    - Document SDK usage and examples
-    - Provide quickstart guides for different languages
-    - Include integration examples and best practices
+15. **SDKとクライアントライブラリドキュメント**
+    - API仕様からクライアントライブラリを生成
+    - SDK使用法と例を文書化
+    - 異なる言語のクイックスタートガイドを提供
+    - 統合例とベストプラクティスを含める
 
-16. **Environment-Specific Documentation**
-    - Document different environments (dev, staging, prod)
-    - Include environment-specific endpoints and configurations
-    - Document deployment and configuration requirements
-    - Provide environment setup instructions
+16. **環境固有ドキュメント**
+    - 異なる環境（開発、ステージング、本番）を文書化
+    - 環境固有のエンドポイントと設定を含める
+    - デプロイメントと設定要件を文書化
+    - 環境設定手順を提供
 
-17. **Security Documentation**
-    - Document security best practices
-    - Include CORS and CSP policies
-    - Document input validation and sanitization
-    - Explain security headers and their purposes
+17. **セキュリティドキュメント**
+    - セキュリティベストプラクティスを文書化
+    - CORSとCSPポリシーを含める
+    - 入力検証とサニタイゼーションを文書化
+    - セキュリティヘッダーとその目的を説明
 
-18. **Maintenance and Updates**
-    - Set up automated documentation updates
-    - Create processes for keeping documentation current
-    - Review and validate documentation regularly
-    - Integrate documentation reviews into development workflow
+18. **メンテナンスと更新**
+    - 自動ドキュメント更新を設定
+    - ドキュメントを最新に保つプロセスを作成
+    - ドキュメントを定期的にレビューし検証
+    - 開発ワークフローにドキュメントレビューを統合
 
-**Framework-Specific Examples:**
+**フレームワーク固有の例:**
 
 **FastAPI (Python):**
 ```python
@@ -205,7 +205,7 @@ class User(BaseModel):
 
 @app.get("/users/{user_id}", response_model=User)
 async def get_user(user_id: int):
-    """Get a user by ID."""
+    """IDでユーザーを取得。"""
     return {"id": user_id, "name": "John", "email": "john@example.com"}
 ```
 
@@ -216,12 +216,12 @@ async def get_user(user_id: int):
 public class UserController {
     
     @GetMapping("/users/{id}")
-    @ApiOperation(value = "Get user by ID")
+    @ApiOperation(value = "IDでユーザーを取得")
     public ResponseEntity<User> getUser(
-        @PathVariable @ApiParam("User ID") Long id) {
-        // Implementation
+        @PathVariable @ApiParam("ユーザーID") Long id) {
+        // 実装
     }
 }
 ```
 
-Remember to keep documentation up-to-date with code changes and make it easily accessible to both internal teams and external consumers.
+ドキュメントをコード変更に合わせて最新に保ち、内部チームと外部利用者の両方が簡単にアクセスできるようにすることを忘れないでください。

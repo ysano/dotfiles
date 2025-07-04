@@ -39,8 +39,8 @@ git log --pretty=format: --name-only --since="6 months ago" | sort | uniq -c | s
 git shortlog -sn --since="6 months ago"
 ```
 
-### 2. Calculate Code Complexity Metrics
-Analyze code characteristics:
+### 2. コード複雑性メトリクスの計算
+コードの特性を分析：
 
 ```javascript
 function analyzeComplexity(filePath) {
@@ -52,28 +52,28 @@ function analyzeComplexity(filePath) {
     similarFiles: []
   };
   
-  // Count lines of code
+  // コード行数をカウント
   const content = readFile(filePath);
   metrics.lines = content.split('\n').length;
   
-  // Cyclomatic complexity (simplified)
+  // サイクロマティック複雑度（簡易版）
   const conditions = content.match(/if\s*\(|while\s*\(|for\s*\(|case\s+|\?\s*:/g);
   metrics.cyclomaticComplexity = (conditions?.length || 0) + 1;
   
-  // Count imports/dependencies
+  // インポート/依存関係のカウント
   const imports = content.match(/import.*from|require\(/g);
   metrics.dependencies = imports?.length || 0;
   
-  // Find similar files by structure
+  // 構造が類似したファイルを検索
   metrics.similarFiles = findSimilarFiles(filePath);
   
   return metrics;
 }
 ```
 
-### 3. Build Estimation Models
+### 3. 見積もりモデルの構築
 
-#### Time-Based Estimation
+#### 時間ベースの見積もり
 ```javascript
 class HistoricalEstimator {
   constructor(gitData, projectData) {
@@ -89,14 +89,14 @@ class HistoricalEstimator {
       t.assignee === author && t.completedAt
     );
     
-    // Lines of code per day
+    // 1日あたりのコード行数
     const totalLines = authorCommits.reduce((sum, c) => 
       sum + c.additions + c.deletions, 0
     );
     const totalDays = this.calculateWorkDays(authorCommits);
     const linesPerDay = totalLines / totalDays;
     
-    // Story points per sprint
+    // スプリントあたりのストーリーポイント
     const pointsCompleted = taskCompletions.reduce((sum, t) => 
       sum + (t.estimate || 0), 0
     );
@@ -112,28 +112,28 @@ class HistoricalEstimator {
   }
   
   estimateTask(description, assignee = null) {
-    // Extract key features from description
+    // 説明から主要な特徴を抽出
     const features = this.extractFeatures(description);
     
-    // Find similar completed tasks
+    // 類似した完了タスクを検索
     const similarTasks = this.findSimilarTasks(features);
     
-    // Base estimate from similar tasks
+    // 類似タスクからベース見積もりを算出
     let baseEstimate = this.calculateMedianEstimate(similarTasks);
     
-    // Adjust for complexity indicators
+    // 複雑度指標に基づく調整
     const complexityMultiplier = this.calculateComplexityMultiplier(features);
     baseEstimate *= complexityMultiplier;
     
-    // Adjust for assignee if specified
+    // 担当者が指定されている場合の調整
     if (assignee) {
       const velocity = this.calculateAuthorVelocity(assignee);
       const teamAvgVelocity = this.calculateTeamAverageVelocity();
       const velocityRatio = velocity.pointsPerSprint / teamAvgVelocity;
-      baseEstimate *= (2 - velocityRatio); // Faster devs get lower estimates
+      baseEstimate *= (2 - velocityRatio); // 高速な開発者は低い見積もりを取得
     }
     
-    // Add confidence interval
+    // 信頼区間を追加
     const confidence = this.calculateConfidence(similarTasks.length, features);
     
     return {
@@ -150,7 +150,7 @@ class HistoricalEstimator {
 }
 ```
 
-#### Pattern Recognition
+#### パターン認識
 ```javascript
 function extractFeatures(taskDescription) {
   const features = {
@@ -165,14 +165,14 @@ function extractFeatures(taskDescription) {
     hasDatabase: false
   };
   
-  // Keywords that indicate complexity
+  // 複雑度を示すキーワード
   const complexityKeywords = {
     high: ['refactor', 'migrate', 'redesign', 'optimize', 'architecture'],
     medium: ['implement', 'add', 'create', 'update', 'integrate'],
     low: ['fix', 'adjust', 'tweak', 'change', 'modify']
   };
   
-  // Detect task type
+  // タスクタイプの検出
   if (taskDescription.match(/bug|fix|repair|broken/i)) {
     features.type = 'bug';
   } else if (taskDescription.match(/refactor|cleanup|optimize/i)) {
@@ -181,13 +181,13 @@ function extractFeatures(taskDescription) {
     features.type = 'test';
   }
   
-  // Detect components
+  // コンポーネントの検出
   features.hasUI = /UI|frontend|component|view|page/i.test(taskDescription);
   features.hasAPI = /API|endpoint|route|REST|GraphQL/i.test(taskDescription);
   features.hasDatabase = /database|DB|migration|schema|query/i.test(taskDescription);
   features.hasTests = /test|spec|TDD|coverage/i.test(taskDescription);
   
-  // Extract file types mentioned
+  // 言及されたファイルタイプを抽出
   const fileTypeMatches = taskDescription.match(/\.(js|ts|jsx|tsx|py|java|go|rb|css|scss)/g);
   if (fileTypeMatches) {
     features.fileTypes = [...new Set(fileTypeMatches)];
@@ -197,13 +197,13 @@ function extractFeatures(taskDescription) {
 }
 ```
 
-### 4. Velocity Tracking
-Track team and individual performance:
+### 4. ベロシティトラッキング
+チームと個人のパフォーマンスを追跡：
 
 ```javascript
 class VelocityTracker {
   async analyzeVelocity(timeframe = '3 months') {
-    // Get completed tasks with estimates and actual time
+    // 見積もりと実際の時間を含む完了タスクを取得
     const completedTasks = await this.getCompletedTasks(timeframe);
     
     const analysis = {
@@ -218,7 +218,7 @@ class VelocityTracker {
       taskTypes: new Map()
     };
     
-    // Group by sprint
+    // スプリントごとにグループ化
     const tasksBySprint = this.groupBySprint(completedTasks);
     
     for (const [sprint, tasks] of tasksBySprint) {
@@ -233,7 +233,7 @@ class VelocityTracker {
       });
     }
     
-    // Individual velocity
+    // 個人のベロシティ
     const tasksByAssignee = this.groupBy(completedTasks, 'assignee');
     for (const [assignee, tasks] of tasksByAssignee) {
       analysis.individuals.set(assignee, {
@@ -249,38 +249,38 @@ class VelocityTracker {
 }
 ```
 
-### 5. Machine Learning Estimation
-Use historical patterns for prediction:
+### 5. 機械学習による見積もり
+過去のパターンを予測に活用：
 
 ```javascript
 class MLEstimator {
   trainModel(historicalTasks) {
-    // Feature extraction
+    // 特徴抽出
     const features = historicalTasks.map(task => ({
-      // Text features
+      // テキスト特徴
       titleLength: task.title.length,
       descriptionLength: task.description.length,
       hasAcceptanceCriteria: task.description.includes('Acceptance'),
       
-      // Code features
+      // コード特徴
       filesChanged: task.linkedPR?.filesChanged || 0,
       linesAdded: task.linkedPR?.additions || 0,
       linesDeleted: task.linkedPR?.deletions || 0,
       
-      // Task features
+      // タスク特徴
       labels: task.labels.length,
       hasDesignDoc: task.attachments?.some(a => a.title.includes('design')),
       dependencies: task.blockedBy?.length || 0,
       
-      // Historical features
+      // 履歴特徴
       assigneeAvgVelocity: this.getAssigneeVelocity(task.assignee),
       teamLoad: this.getTeamLoad(task.createdAt),
       
-      // Target
+      // ターゲット
       actualEffort: task.actualPoints || task.estimate
     }));
     
-    // Simple linear regression (in practice, use a proper ML library)
+    // 単純な線形回帰（実際には適切なMLライブラリを使用）
     return this.fitLinearModel(features);
   }
   
@@ -288,7 +288,7 @@ class MLEstimator {
     const features = this.extractTaskFeatures(taskDescription, context);
     const prediction = this.model.predict(features);
     
-    // Add uncertainty based on feature similarity
+    // 特徴の類似度に基づく不確実性を追加
     const similarityScore = this.calculateSimilarity(features);
     const uncertainty = 1 - similarityScore;
     
@@ -301,116 +301,116 @@ class MLEstimator {
 }
 ```
 
-### 6. Estimation Report Format
+### 6. 見積もりレポート形式
 
 ```markdown
-## Task Estimation Report
+## タスク見積もりレポート
 
-**Task:** Implement OAuth2 login flow with Google
-**Date:** 2024-01-15
+**タスク:** GoogleでのOAuth2ログインフローの実装
+**日付:** 2024-01-15
 
-### Estimate: 5 Story Points (±2)
-**Confidence:** 78%
-**Estimated Hours:** 15-25 hours
+### 見積もり: 5 ストーリーポイント (±2)
+**信頼度:** 78%
+**推定時間:** 15-25時間
 
-### Analysis Breakdown
+### 分析内訳
 
-#### Similar Completed Tasks:
-1. "Implement GitHub OAuth integration" - 5 points (actual: 6)
-2. "Add Facebook login" - 4 points (actual: 4)  
-3. "Setup SAML SSO" - 8 points (actual: 7)
+#### 類似した完了タスク:
+1. "GitHub OAuth統合の実装" - 5ポイント（実際: 6）
+2. "Facebookログイン追加" - 4ポイント（実際: 4）
+3. "SAML SSO設定" - 8ポイント（実際: 7）
 
-#### Complexity Factors:
-- **Authentication Flow** (+1 point): OAuth2 requires multiple redirects
-- **External API** (+1 point): Google API integration
-- **Security** (+1 point): Token storage and validation
-- **Testing** (-0.5 points): Similar tests already exist
+#### 複雑度要因:
+- **認証フロー** (+1ポイント): OAuth2は複数のリダイレクトが必要
+- **外部API** (+1ポイント): Google API統合
+- **セキュリティ** (+1ポイント): トークン保存と検証
+- **テスト** (-0.5ポイント): 類似のテストが既に存在
 
-#### Historical Data:
-- Team average for auth features: 4.8 points
-- Last 5 auth tasks accuracy: 85%
-- Assignee velocity: 1.2x team average
+#### 履歴データ:
+- 認証機能のチーム平均: 4.8ポイント
+- 過去5つの認証タスクの精度: 85%
+- 担当者のベロシティ: チーム平均の1.2倍
 
-#### Risk Factors:
-⚠️ Google API changes frequently
-⚠️ No existing OAuth2 infrastructure
-✅ Team has OAuth experience
-✅ Good documentation available
+#### リスク要因:
+⚠️ Google APIは頻繁に変更される
+⚠️ 既存のOAuth2インフラストラクチャが存在しない
+✅ チームにOAuth経験がある
+✅ 良好なドキュメントが利用可能
 
-### Recommendations:
-1. Allocate 1 point for initial Google API setup
-2. Include time for security review
-3. Plan for integration tests with mock OAuth server
-4. Consider pairing with team member who did GitHub OAuth
+### 推奨事項:
+1. 初期Google API設定に1ポイント割り当て
+2. セキュリティレビューの時間を含める
+3. モックOAuthサーバーでの統合テストを計画
+4. GitHub OAuthを担当したチームメンバーとのペアリングを検討
 
-### Sprint Planning:
-- Can be completed in one sprint
-- Best paired with other auth-related tasks
-- Should not be last task in sprint (risk buffer)
+### スプリント計画:
+- 1スプリントで完了可能
+- 他の認証関連タスクと組み合わせることが最適
+- スプリントの最後のタスクにすべきではない（リスクバッファ）
 ```
 
-### 7. Error Handling
+### 7. エラーハンドリング
 ```javascript
-// Handle missing historical data
+// 履歴データが不足している場合の処理
 if (historicalTasks.length < 10) {
-  console.warn("Limited historical data. Estimates may be less accurate.");
-  // Fall back to rule-based estimation
+  console.warn("履歴データが限られています。見積もりの精度が低くなる可能性があります。");
+  // ルールベースの見積もりにフォールバック
 }
 
-// Handle new types of work
+// 新しいタイプの作業の処理
 const similarity = findSimilarIssues(description);
 if (similarity.maxScore < 0.5) {
-  console.warn("This appears to be a new type of issue. Using conservative estimate.");
-  // Apply uncertainty multiplier
+  console.warn("これは新しいタイプのIssueのようです。保守的な見積もりを使用します。");
+  // 不確実性乗数を適用
 }
 
-// Handle missing GitHub Projects connection
+// GitHub Projects接続が不足している場合の処理
 if (!github.projects.available) {
-  console.log("Using git history and issues only for estimation");
-  // Use git and basic GitHub data estimation
+  console.log("見積もりにはgit履歴とissuesのみを使用します");
+  // gitと基本的なGitHubデータによる見積もりを使用
 }
 ```
 
-## Example Output
+## 出力例
 
 ```
-Analyzing task: "Refactor user authentication to use JWT tokens"
+タスク分析中: "ユーザー認証をJWTトークンを使用するようにリファクタリング"
 
-📊 Historical Analysis:
-- Found 23 similar authentication tasks
-- Average completion: 4.2 story points
-- Accuracy rate: 82%
+📊 履歴分析:
+- 23件の類似認証タスクを発見
+- 平均完了: 4.2ストーリーポイント
+- 精度率: 82%
 
-🧮 Estimation Calculation:
-Base estimate: 4 points (from similar tasks)
-Adjustments:
-  +1 point - Refactoring (higher complexity)
-  +0.5 points - Security implications  
-  -0.5 points - Existing test coverage
+🧮 見積もり計算:
+ベース見積もり: 4ポイント（類似タスクから）
+調整:
+  +1ポイント - リファクタリング（高い複雑度）
+  +0.5ポイント - セキュリティ影響
+  -0.5ポイント - 既存のテストカバレッジ
   
-Final estimate: 5 story points
+最終見積もり: 5ストーリーポイント
 
-📈 Confidence Analysis:
-- High similarity to previous tasks (85%)
-- Good historical data (23 samples)
-- Confidence: 78%
+📈 信頼度分析:
+- 過去のタスクとの高い類似性（85%）
+- 良好な履歴データ（23サンプル）
+- 信頼度: 78%
 
-👥 Team Insights:
-- Alice: Completed 3 similar tasks (avg 4.3 points)
-- Bob: Strong in refactoring (20% faster than average)
-- Recommended assignee: Bob
+👥 チーム洞察:
+- Alice: 3件の類似タスクを完了（平均4.3ポイント）
+- Bob: リファクタリングに強い（平均より20%高速）
+- 推奨担当者: Bob
 
-⏱️ Time Estimates:
-- Optimistic: 12 hours (3 points)
-- Realistic: 20 hours (5 points)
-- Pessimistic: 32 hours (8 points)
+⏱️ 時間見積もり:
+- 楽観的: 12時間（3ポイント）
+- 現実的: 20時間（5ポイント）
+- 悲観的: 32時間（8ポイント）
 
-📝 Breakdown:
-1. Analyze current auth system (0.5 points)
-2. Design JWT token structure (0.5 points)
-3. Implement JWT service (1.5 points)
-4. Refactor auth middleware (1.5 points)
-5. Update tests and documentation (1 point)
+📝 内訳:
+1. 現在の認証システムの分析（0.5ポイント）
+2. JWTトークン構造の設計（0.5ポイント）
+3. JWTサービスの実装（1.5ポイント）
+4. 認証ミドルウェアのリファクタリング（1.5ポイント）
+5. テストとドキュメントの更新（1ポイント）
 ```
 
 ## GitHub Actions統合
@@ -507,13 +507,13 @@ jobs:
           gh issue create --title "Weekly Estimation Accuracy Report" --body-file accuracy_report.md --label "estimation,report"
 ```
 
-## Tips
-- Maintain historical data for at least 6 months
-- Re-calibrate estimates after each sprint/milestone
-- Track actual vs estimated for continuous improvement
-- Consider external factors (holidays, team changes)
-- Use pair programming multipliers for complex issues
-- Document assumptions in estimates
-- Review estimates in retrospectives
-- Leverage GitHub Actions for automated estimation
-- Use GitHub Projects V2 custom fields for tracking estimates
+## ヒント
+- 最低6ヶ月間の履歴データを維持する
+- 各スプリント/マイルストーン後に見積もりを再調整する
+- 継続的改善のために実際vs見積もりを追跡する
+- 外部要因（休日、チーム変更）を考慮する
+- 複雑なIssueにはペアプログラミング乗数を使用する
+- 見積もりの前提を文書化する
+- レトロスペクティブで見積もりをレビューする
+- 自動見積もりにGitHub Actionsを活用する
+- 見積もり追跡にGitHub Projects V2のカスタムフィールドを使用する

@@ -1,4 +1,4 @@
-# Migration Guide Generator Command
+# マイグレーションガイド生成コマンド
 
 依存関係、フレームワーク、アーキテクチャ変更のアップグレード用の包括的なマイグレーションガイドを作成します。
 
@@ -19,58 +19,58 @@
    - 互換性要件と制約を評価
    - パフォーマンスとセキュリティの影響を評価
 
-3. **Prerequisites and Requirements**
-   - Document system requirements for the target version
-   - List required tools and dependencies
-   - Specify minimum versions and compatibility requirements
-   - Identify necessary skills and team preparation
-   - Outline infrastructure and environment needs
+3. **前提条件と要件**
+   - ターゲットバージョンのシステム要件を文書化
+   - 必要なツールと依存関係をリストアップ
+   - 最小バージョンと互換性要件を明確化
+   - 必要なスキルとチーム準備を特定
+   - インフラストラクチャと環境ニーズを概説
 
-4. **Pre-Migration Preparation**
-   - Create comprehensive backup strategies
-   - Set up development and testing environments
-   - Document current system state and configurations
-   - Establish rollback procedures and contingency plans
-   - Create migration timeline and milestones
+4. **マイグレーション前準備**
+   - 包括的なバックアップ戦略を作成
+   - 開発とテスト環境を設定
+   - 現在のシステム状態と設定を文書化
+   - ロールバック手順と緊急時計画を確立
+   - マイグレーションのタイムラインとマイルストーンを作成
 
-5. **Step-by-Step Migration Process**
+5. **段階的マイグレーションプロセス**
    
-   **Example for Framework Upgrade:**
+   **フレームワークアップグレードの例:**
    ```markdown
-   ## Step 1: Environment Setup
-   1. Update development environment
-   2. Install new framework version
-   3. Update build tools and dependencies
-   4. Configure IDE and tooling
+   ## ステップ1: 環境設定
+   1. 開発環境の更新
+   2. 新しいフレームワークバージョンのインストール
+   3. ビルドツールと依存関係の更新
+   4. IDEとツールの設定
    
-   ## Step 2: Dependencies Update
-   1. Update package.json/requirements.txt
-   2. Resolve dependency conflicts
-   3. Update related libraries
-   4. Test compatibility
+   ## ステップ2: 依存関係の更新
+   1. package.json/requirements.txtの更新
+   2. 依存関係の競合解決
+   3. 関連ライブラリの更新
+   4. 互換性テスト
    
-   ## Step 3: Code Migration
-   1. Update import statements
-   2. Replace deprecated APIs
-   3. Update configuration files
-   4. Modify build scripts
+   ## ステップ3: コードマイグレーション
+   1. インポート文の更新
+   2. 非推奨APIの置換
+   3. 設定ファイルの更新
+   4. ビルドスクリプトの修正
    ```
 
-6. **Breaking Changes Documentation**
-   - List all breaking changes with examples
-   - Provide before/after code comparisons
-   - Explain the rationale behind changes
-   - Offer alternative approaches for removed features
+6. **破壊的変更の文書化**
+   - 例付きで全ての破壊的変更をリストアップ
+   - 変更前後のコード比較を提供
+   - 変更の根拠を説明
+   - 削除された機能の代替アプローチを提案
 
-   **Example Breaking Change:**
+   **破壊的変更の例:**
    ```markdown
-   ### Removed: `oldMethod()`
-   **Before:**
+   ### 削除: `oldMethod()`
+   **変更前:**
    ```javascript
    const result = library.oldMethod(param1, param2);
    ```
    
-   **After:**
+   **変更後:**
    ```javascript
    const result = library.newMethod({ 
      param1: param1, 
@@ -78,158 +78,158 @@
    });
    ```
    
-   **Rationale:** Improved type safety and extensibility
+   **根拠:** 型安全性と拡張性の向上
    ```
 
-7. **Configuration Changes**
-   - Document configuration file updates
-   - Explain new configuration options
-   - Provide configuration migration scripts
-   - Show environment-specific configurations
+7. **設定変更**
+   - 設定ファイルの更新を文書化
+   - 新しい設定オプションを説明
+   - 設定マイグレーションスクリプトを提供
+   - 環境固有の設定を表示
 
-8. **Database Migration (if applicable)**
-   - Create database schema migration scripts
-   - Document data transformation requirements
-   - Provide backup and restore procedures
-   - Test migration with sample data
-   - Plan for zero-downtime migrations
+8. **データベースマイグレーション（該当する場合）**
+   - データベーススキーママイグレーションスクリプトを作成
+   - データ変換要件を文書化
+   - バックアップと復元手順を提供
+   - サンプルデータでマイグレーションをテスト
+   - ゼロダウンタイムマイグレーションを計画
 
-9. **Testing Strategy**
-   - Update existing tests for new APIs
-   - Create migration-specific test cases
-   - Implement integration and E2E tests
-   - Set up performance and load testing
-   - Document test scenarios and expected outcomes
+9. **テスト戦略**
+   - 新しいAPI用に既存テストを更新
+   - マイグレーション固有のテストケースを作成
+   - 統合とE2Eテストを実装
+   - パフォーマンステストと負荷テストを設定
+   - テストシナリオと期待される結果を文書化
 
-10. **Performance Considerations**
-    - Document performance changes and optimizations
-    - Provide benchmarking guidelines
-    - Identify potential performance regressions
-    - Suggest monitoring and alerting updates
-    - Include memory and resource usage changes
+10. **パフォーマンス考慮事項**
+    - パフォーマンス変更と最適化を文書化
+    - ベンチマークガイドラインを提供
+    - 潜在的なパフォーマンス回帰を特定
+    - 監視とアラートの更新を提案
+    - メモリとリソース使用量の変更を含める
 
-11. **Security Updates**
-    - Document security improvements and changes
-    - Update authentication and authorization code
-    - Review and update security configurations
-    - Update dependency security scanning
-    - Document new security best practices
+11. **セキュリティ更新**
+    - セキュリティ改善と変更を文書化
+    - 認証と許可コードを更新
+    - セキュリティ設定をレビューし更新
+    - 依存関係セキュリティスキャンを更新
+    - 新しいセキュリティベストプラクティスを文書化
 
-12. **Deployment Strategy**
-    - Plan phased rollout approach
-    - Create deployment scripts and automation
-    - Set up monitoring and health checks
-    - Plan for blue-green or canary deployments
-    - Document rollback procedures
+12. **デプロイメント戦略**
+    - 段階的ロールアウトアプローチを計画
+    - デプロイメントスクリプトと自動化を作成
+    - 監視とヘルスチェックを設定
+    - ブルーグリーンやカナリアデプロイメントを計画
+    - ロールバック手順を文書化
 
-13. **Common Issues and Troubleshooting**
+13. **一般的な問題とトラブルシューティング**
     
     ```markdown
-    ## Common Migration Issues
+    ## 一般的なマイグレーション問題
     
-    ### Issue: Import/Module Resolution Errors
-    **Symptoms:** Cannot resolve module 'old-package'
-    **Solution:** 
-    1. Update import statements to new package names
-    2. Check package.json for correct dependencies
-    3. Clear node_modules and reinstall
+    ### 問題: インポート/モジュール解決エラー
+    **症状:** Cannot resolve module 'old-package'
+    **解決方法:** 
+    1. インポート文を新しいパッケージ名に更新
+    2. package.jsonで正しい依存関係を確認
+    3. node_modulesをクリアして再インストール
     
-    ### Issue: API Method Not Found
-    **Symptoms:** TypeError: oldMethod is not a function
-    **Solution:** Replace with new API as documented in step 3
+    ### 問題: APIメソッドが見つからない
+    **症状:** TypeError: oldMethod is not a function
+    **解決方法:** ステップ3で文書化された新しいAPIで置換
     ```
 
-14. **Team Communication and Training**
-    - Create team training materials
-    - Schedule knowledge sharing sessions
-    - Document new development workflows
-    - Update coding standards and guidelines
-    - Create quick reference guides
+14. **チームコミュニケーションとトレーニング**
+    - チームトレーニング資料を作成
+    - 知識共有セッションをスケジュール
+    - 新しい開発ワークフローを文書化
+    - コーディング標準とガイドラインを更新
+    - クイックリファレンスガイドを作成
 
-15. **Tools and Automation**
-    - Provide migration scripts and utilities
-    - Create code transformation tools (codemods)
-    - Set up automated compatibility checks
-    - Implement CI/CD pipeline updates
-    - Create validation and verification tools
+15. **ツールと自動化**
+    - マイグレーションスクリプトとユーティリティを提供
+    - コード変換ツール（codemods）を作成
+    - 自動互換性チェックを設定
+    - CI/CDパイプライン更新を実装
+    - 検証と確認ツールを作成
 
-16. **Timeline and Milestones**
+16. **タイムラインとマイルストーン**
     
     ```markdown
-    ## Migration Timeline
+    ## マイグレーションタイムライン
     
-    ### Phase 1: Preparation (Week 1-2)
-    - [ ] Environment setup
-    - [ ] Team training
-    - [ ] Development environment migration
+    ### フェーズ1: 準備（第1-2週）
+    - [ ] 環境設定
+    - [ ] チームトレーニング
+    - [ ] 開発環境マイグレーション
     
-    ### Phase 2: Development (Week 3-6)
-    - [ ] Core application migration
-    - [ ] Testing and validation
-    - [ ] Performance optimization
+    ### フェーズ2: 開発（第3-6週）
+    - [ ] コアアプリケーションマイグレーション
+    - [ ] テストと検証
+    - [ ] パフォーマンス最適化
     
-    ### Phase 3: Deployment (Week 7-8)
-    - [ ] Staging deployment
-    - [ ] Production deployment
-    - [ ] Monitoring and support
+    ### フェーズ3: デプロイメント（第7-8週）
+    - [ ] ステージングデプロイメント
+    - [ ] 本番デプロイメント
+    - [ ] 監視とサポート
     ```
 
-17. **Risk Mitigation**
-    - Identify potential migration risks
-    - Create contingency plans for each risk
-    - Document escalation procedures
-    - Plan for extended timeline scenarios
-    - Prepare communication for stakeholders
+17. **リスク緩和**
+    - 潜在的なマイグレーションリスクを特定
+    - 各リスクの緊急時計画を作成
+    - エスカレーション手順を文書化
+    - タイムライン延長シナリオを計画
+    - ステークホルダーへのコミュニケーションを準備
 
-18. **Post-Migration Tasks**
-    - Clean up deprecated code and configurations
-    - Update documentation and README files
-    - Review and optimize new implementation
-    - Conduct post-migration retrospective
-    - Plan for future maintenance and updates
+18. **マイグレーション後タスク**
+    - 非推奨コードと設定をクリーンアップ
+    - ドキュメントとREADMEファイルを更新
+    - 新しい実装をレビューし最適化
+    - マイグレーション後のレトロスペクティブを実施
+    - 将来のメンテナンスと更新を計画
 
-19. **Validation and Testing**
-    - Create comprehensive test plans
-    - Document acceptance criteria
-    - Set up automated regression testing
-    - Plan user acceptance testing
-    - Implement monitoring and alerting
+19. **検証とテスト**
+    - 包括的なテスト計画を作成
+    - 受け入れ基準を文書化
+    - 自動リグレッションテストを設定
+    - ユーザー受け入れテストを計画
+    - 監視とアラートを実装
 
-20. **Documentation Updates**
-    - Update API documentation
-    - Revise development guides
-    - Update deployment documentation
-    - Create troubleshooting guides
-    - Update team onboarding materials
+20. **ドキュメント更新**
+    - APIドキュメントを更新
+    - 開発ガイドを改訂
+    - デプロイメントドキュメントを更新
+    - トラブルシューティングガイドを作成
+    - チームオンボーディング資料を更新
 
-**Migration Types and Specific Considerations:**
+**マイグレーションタイプと固有の考慮事項:**
 
-**Framework Migration (React 17 → 18):**
-- Update React and ReactDOM imports
-- Replace deprecated lifecycle methods
-- Update testing library methods
-- Handle concurrent features and Suspense
+**フレームワークマイグレーション（React 17 → 18）:**
+- ReactとReactDOMのインポートを更新
+- 非推奨ライフサイクルメソッドを置換
+- テストライブラリメソッドを更新
+- 並行機能とSuspenseを処理
 
-**Database Migration (MySQL → PostgreSQL):**
-- Convert SQL syntax differences
-- Update data types and constraints
-- Migrate stored procedures to functions
-- Update ORM configurations
+**データベースマイグレーション（MySQL → PostgreSQL）:**
+- SQL構文の違いを変換
+- データタイプと制約を更新
+- ストアドプロシージャを関数に移行
+- ORM設定を更新
 
-**Cloud Migration (On-premise → AWS):**
-- Containerize applications
-- Update CI/CD pipelines
-- Configure cloud services
-- Implement infrastructure as code
+**クラウドマイグレーション（オンプレミス → AWS）:**
+- アプリケーションのコンテナ化
+- CI/CDパイプラインを更新
+- クラウドサービスを設定
+- Infrastructure as Codeを実装
 
-**Architecture Migration (Monolith → Microservices):**
-- Identify service boundaries
-- Implement inter-service communication
-- Set up service discovery
-- Plan data consistency strategies
+**アーキテクチャマイグレーション（モノリス → マイクロサービス）:**
+- サービス境界を特定
+- サービス間通信を実装
+- サービスディスカバリを設定
+- データ一貫性戦略を計画
 
-Remember to:
-- Test thoroughly in non-production environments first
-- Communicate progress and issues regularly
-- Document lessons learned for future migrations
-- Keep the migration guide updated based on real experiences
+必ず実行してください:
+- 最初に非本番環境で徹底的にテスト
+- 進捗と問題を定期的にコミュニケーション
+- 将来のマイグレーションのために学んだ教訓を文書化
+- 実際の経験に基づいてマイグレーションガイドを更新し続ける

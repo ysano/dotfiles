@@ -62,26 +62,26 @@ GitHub Issues、Projects、過去のベロシティデータを使用して、�
    - クイックウィンの特定
    - 注意が必要なブロッカーのハイライト
 
-## Prerequisites
-- Git repository access
-- GitHub API access with appropriate permissions
-- GitHub milestones or project boards
-- Historical velocity data
+## 前提条件
+- Gitリポジトリアクセス
+- 適切な権限を持つGitHub APIアクセス
+- GitHubマイルストーンまたはプロジェクトボード
+- 過去のベロシティデータ
 
-## Command Flow
+## コマンドフロー
 
-### 1. Milestone Discovery
+### 1. マイルストーン発見
 ```
-1. Check GitHub for project milestones/roadmap items
-2. Scan GitHub for milestone definitions
-3. Analyze git tags for release history
-4. Review README/docs for project roadmap
-5. Ask user for additional context if needed
+1. プロジェクトマイルストーン/ロードマップアイテムのGitHubチェック
+2. マイルストーン定義のGitHubスキャン
+3. リリース履歴のgitタグ分析
+4. プロジェクトロードマップのREADME/ドキュメントレビュー
+5. 必要に応じてユーザーに追加コンテキストを要求
 ```
 
-### 2. Comprehensive Milestone Analysis
+### 2. 包括的マイルストーン分析
 
-#### Data Collection Sources
+#### データ収集ソース
 ```
 GitHub Milestones:
 - マイルストーン定義と期限
@@ -583,11 +583,11 @@ if [[ $response == "Y" || $response == "y" ]]; then
 fi
 ```
 
-## Best Practices
+## ベストプラクティス
 
-1. **Update Frequently**: Daily progress updates improve predictions
-2. **Track Dependencies**: Most delays come from dependencies
-3. **Buffer Realistically**: Use historical data for buffers
-4. **Communicate Early**: Flag risks as soon as detected
-5. **Focus on Critical Path**: Not all tasks equally impact timeline
-6. **Learn from History**: Analyze past milestone performance
+1. **頻繁な更新**: 日々の進捗更新により予測が向上
+2. **依存関係の追跡**: ほとんどの遅れは依存関係から発生
+3. **現実的なバッファ**: 履歴データをバッファに使用
+4. **早期コミュニケーション**: 検出次第リスクをフラグ
+5. **クリティカルパスに集中**: すべてのタスクがタイムラインに等しく影響するわけではない
+6. **歴史から学ぶ**: 過去のマイルストーン性能を分析
