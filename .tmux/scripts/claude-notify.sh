@@ -105,6 +105,60 @@ detect_os_type() {
     esac
 }
 
+# macOS notification cleanup function
+cleanup_macos_notifications() {
+    if command -v terminal-notifier >/dev/null 2>&1; then
+        # Remove old notifications from the same group
+        terminal-notifier -remove "claude-code-waiting" 2>/dev/null
+        terminal-notifier -remove "claude-code-complete" 2>/dev/null
+        terminal-notifier -remove "claude-code-busy" 2>/dev/null
+    fi
+}
+
+# Check if Do Not Disturb is enabled on macOS
+is_dnd_enabled() {
+    if [ "$(uname)" = "Darwin" ]; then
+        # Check Do Not Disturb status via plutil
+        local dnd_status=$(plutil -extract dnd_prefs.userPref.enabled xml1 ~/Library/Preferences/com.apple.ncprefs.plist -o - 2>/dev/null | grep -o '<true/>' | head -1)
+        if [ "$dnd_status" = "<true/>" ]; then
+            return 0  # DND is enabled
+        fi
+    fi
+    return 1  # DND is disabled or not macOS
+}
+
+# Smart notification function that respects user preferences
+send_notification_smart() {
+    local title="$1"
+    local subtitle="$2"
+    local message="$3"
+    local sound="$4"
+    local group="$5"
+    
+    if command -v terminal-notifier >/dev/null 2>&1; then
+        # Check if DND is enabled and user wants to respect it
+        if is_dnd_enabled && [ "${CLAUDE_RESPECT_DND:-true}" = "true" ]; then
+            # Send notification without sound if DND is enabled
+            terminal-notifier \
+                -title "$title" \
+                -subtitle "$subtitle" \
+                -message "$message" \
+                -group "$group" \
+                -sender "com.apple.Terminal" 2>/dev/null &
+        else
+            # Send full notification with sound
+            terminal-notifier \
+                -title "$title" \
+                -subtitle "$subtitle" \
+                -message "$message" \
+                -sound "$sound" \
+                -group "$group" \
+                -sender "com.apple.Terminal" \
+                -ignoreDnD 2>/dev/null &
+        fi
+    fi
+}
+
 # Find PowerShell executable path for WSL
 find_powershell_path() {
     local powershell_paths=(
@@ -129,12 +183,20 @@ notify_waiting() {
     
     case "$os_type" in
         "macos")
-            # macOS: System sound + notification
+            # macOS: Cleanup old notifications first
+            cleanup_macos_notifications
+            
+            # macOS: System sound + terminal-notifier
             if command -v afplay >/dev/null 2>&1; then
                 afplay /System/Library/Sounds/Glass.aiff 2>/dev/null &
             fi
-            # Optional: Add Notification Center alert
-            osascript -e 'display notification "入力待ちです" with title "Claude Code" subtitle "⌛ Waiting"' 2>/dev/null &
+            # Enhanced notification with terminal-notifier
+            if command -v terminal-notifier >/dev/null 2>&1; then
+                send_notification_smart "Claude Code" "⌛ Waiting" "入力待ちです" "Glass" "claude-code-waiting"
+            else
+                # Fallback to osascript if terminal-notifier not available
+                osascript -e 'display notification "入力待ちです" with title "Claude Code" subtitle "⌛ Waiting"' 2>/dev/null &
+            fi
             ;;
         "wsl")
             # WSL: PowerShell beep notification sound
@@ -178,12 +240,20 @@ notify_complete() {
     
     case "$os_type" in
         "macos")
-            # macOS: Completion sound + notification
+            # macOS: Cleanup old notifications first
+            cleanup_macos_notifications
+            
+            # macOS: Completion sound + terminal-notifier
             if command -v afplay >/dev/null 2>&1; then
                 afplay /System/Library/Sounds/Hero.aiff 2>/dev/null &
             fi
-            # Optional: Add Notification Center alert
-            osascript -e 'display notification "処理が完了しました" with title "Claude Code" subtitle "✅ Complete"' 2>/dev/null &
+            # Enhanced notification with terminal-notifier
+            if command -v terminal-notifier >/dev/null 2>&1; then
+                send_notification_smart "Claude Code" "✅ Complete" "処理が完了しました" "Hero" "claude-code-complete"
+            else
+                # Fallback to osascript if terminal-notifier not available
+                osascript -e 'display notification "処理が完了しました" with title "Claude Code" subtitle "✅ Complete"' 2>/dev/null &
+            fi
             ;;
         "wsl")
             # WSL: PowerShell completion sound (ascending melody)
@@ -239,8 +309,18 @@ notify_status_change() {
             notify_waiting
             ;;
         "⚡")
-            # Process started - simple notification (unchanged)
-            echo -e "\a"
+            # Process started - enhanced notification for macOS
+            local os_type=$(detect_os_type)
+            if [ "$os_type" = "macos" ]; then
+                cleanup_macos_notifications
+                if command -v terminal-notifier >/dev/null 2>&1; then
+                    send_notification_smart "Claude Code" "⚡ Busy" "処理中です" "Ping" "claude-code-busy"
+                else
+                    echo -e "\a"
+                fi
+            else
+                echo -e "\a"
+            fi
             ;;
     esac
 }
