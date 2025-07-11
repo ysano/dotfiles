@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!/usr/bin/env zsh
 files=(.zshrc .zprofile .gitconfig .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
 dirs=(.zsh .emacs.d .tmux)
 dotfiles=dotfiles

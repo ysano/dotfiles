@@ -49,6 +49,37 @@ zinit times
 unset ZSH_CMD_CACHE ZSH_OS_TYPE ZSH_IS_WSL
 ```
 
+### Git Worktree管理（Claude Code複数起動対応）
+```bash
+# Git Worktree機能のテスト
+./test_git_worktree.zsh
+
+# 新しいworktreeを作成
+gwt create <branch-name> [base-branch]
+
+# worktree一覧表示
+gwt list
+
+# インタラクティブなworktree切り替え（fzf対応）
+gwt switch
+
+# worktreeを削除
+gwt remove <worktree-name>
+
+# メンテナンス・クリーンアップ
+gwt clean
+
+# ヘルプ表示
+gwt help
+
+# 短縮エイリアス
+gw       # gwt（最短）
+gwc      # gwt create
+gwl      # gwt list  
+gws      # gwt switch
+gwr      # gwt remove
+```
+
 ## アーキテクチャ概要
 
 ### Emacs設定 (~2,500行)

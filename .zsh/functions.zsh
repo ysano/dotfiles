@@ -28,3 +28,6 @@ fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
 
 # for func in $^fpath/*(N-.x:t); autoload $func
 ### managed by Zinit
+
+# Git Worktree管理コマンド (Claude Code対応)
+source "$HOME/.zsh/git-worktree.zsh"
