@@ -1,0 +1,97 @@
+# Git Worktree管理ツール設定ファイル（サンプル）
+# 使用方法: このファイルを ~/.config/gwt/config.yml にコピーして編集してください
+# 詳細: gwt help
+
+# エディタ設定
+editor:
+  default: "auto"               # auto, cursor, code, emacs
+  auto_detect: true             # 利用可能なエディタを自動検出
+  
+  # Cursor設定
+  cursor:
+    args: ["--new-window"]      # 起動時の引数
+    wait: false                 # コマンド完了を待機しない
+  
+  # VS Code設定
+  code:
+    args: ["--new-window"]
+    wait: false
+  
+  # Emacs設定
+  emacs:
+    mode: "client"              # client, nw, gui
+    server_timeout: 5           # emacsclient接続タイムアウト（秒）
+    fallback_to_direct: true    # サーバー接続失敗時の直接起動
+
+# tmux統合設定
+tmux:
+  default_action: "window"      # window, split-h, split-v, session
+  auto_detect: true             # tmuxセッション内かを自動検出
+  naming_pattern: "gwt-{branch}" # ウィンドウ名パターン
+
+# Claude Code統合設定
+integration:
+  claude_code: true             # Claude Code最適化を有効化
+  auto_cd: true                 # worktree作成時の自動移動
+
+# GitHub統合設定
+github:
+  auto_push: true               # PR作成前の自動プッシュ
+  default_base: "main"          # デフォルトベースブランチ
+  open_browser: true            # PR作成後にブラウザを開く
+
+# 環境ファイル管理設定
+environment:
+  auto_setup: true              # worktree作成時に環境ファイルを自動セットアップ
+  auto_port_assignment: true    # ポート番号の自動調整
+  backup_existing: true         # 既存ファイルをバックアップ
+  
+  # 検出対象パターン（優先順位順）
+  patterns:
+    - ".env.development.example"
+    - ".env.local.example"
+    - ".env.staging.example"
+    - ".env.test.example"
+    - ".env.production.example"
+    - ".env.example"
+  
+  # ポート設定
+  port_range:
+    start: 3000                 # ポート範囲開始
+    end: 9999                   # ポート範囲終了
+    increment: 100              # 初期増分値
+  
+  # 除外パターン
+  exclude_patterns:
+    - "node_modules/**"
+    - ".git/**"
+    - "dist/**"
+    - "build/**"
+    - "coverage/**"
+
+# 高度な設定
+advanced:
+  # デバッグモード
+  debug: false                  # デバッグ出力を有効化
+  
+  # パフォーマンス設定
+  cache_duration: 300           # キャッシュ保持時間（秒）
+  parallel_limit: 4             # 並列実行時の最大同時プロセス数
+  
+  # 安全性設定
+  confirm_destructive: true     # 破壊的操作の確認プロンプト
+  backup_before_modify: true    # 変更前のバックアップ作成
+
+# プロジェクト固有設定のサンプル
+# 特定のリポジトリで異なる設定を使いたい場合:
+# ~/.config/gwt/project-overrides.yml を作成し、
+# リポジトリ名をキーとして設定を上書き可能
+#
+# 例:
+# my-frontend-project:
+#   environment:
+#     port_range:
+#       start: 8000
+#       increment: 10
+#   editor:
+#     default: "cursor"

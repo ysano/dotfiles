@@ -1155,13 +1155,21 @@ function _gwt_load_config() {
 function _gwt_init_config() {
     local config_dir="$HOME/.config/gwt"
     local config_file="$config_dir/config.yml"
+    local dotfiles_example="$HOME/.dotfiles/.config/gwt/config.yml.example"
     
     # 設定ディレクトリを作成
     mkdir -p "$config_dir"
     
     # 設定ファイルが存在しない場合は作成
     if [[ ! -f "$config_file" ]]; then
-        cat > "$config_file" << 'EOF'
+        # dotfilesのサンプルファイルが存在する場合はそれを使用
+        if [[ -f "$dotfiles_example" ]]; then
+            cp "$dotfiles_example" "$config_file"
+            echo "✅ dotfilesのサンプルから設定ファイルを作成しました: $config_file"
+            echo "💡 設定を編集: gwt config edit"
+        else
+            # フォールバック: 基本設定をインライン生成
+            cat > "$config_file" << 'EOF'
 # Git Worktree管理ツール設定ファイル
 # 詳細: gwt help
 
@@ -1195,8 +1203,40 @@ github:
   auto_push: true
   default_base: "main"
   open_browser: true
+
+# 環境ファイル管理設定
+environment:
+  auto_setup: true              # worktree作成時に環境ファイルを自動セットアップ
+  auto_port_assignment: true    # ポート番号の自動調整
+  backup_existing: true         # 既存ファイルをバックアップ
+  
+  # 検出対象パターン（優先順位順）
+  patterns:
+    - ".env.development.example"
+    - ".env.local.example"
+    - ".env.staging.example"
+    - ".env.test.example"
+    - ".env.production.example"
+    - ".env.example"
+  
+  # ポート設定
+  port_range:
+    start: 3000
+    end: 9999
+    increment: 100              # 初期増分値
+  
+  # 除外パターン
+  exclude_patterns:
+    - "node_modules/**"
+    - ".git/**"
+    - "dist/**"
+    - "build/**"
 EOF
-        echo "✅ 設定ファイルを作成しました: $config_file"
+            echo "✅ 基本設定ファイルを作成しました: $config_file"
+            echo "💡 完全な設定例は dotfiles/.config/gwt/config.yml.example を参照"
+        fi
+    else
+        echo "ℹ️  設定ファイルは既に存在します: $config_file"
     fi
 }
 
