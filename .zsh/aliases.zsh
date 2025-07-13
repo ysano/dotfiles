@@ -18,24 +18,15 @@ alias rm='nocorrect rm -i'
 # Enhanced File Operations
 # ================================
 
-# Basic listing
+# ================================
+# Basic File Listing Aliases
+# ================================
+
+# Core aliases - simple and reliable
 alias ll='ls -l'
 alias la='ls -a'
-alias lsd='ls -ld *(-/DN)'  # List only directories and symbolic links to directories
-alias lsa='ls -ld .*'       # List only hidden files
-
-# Enhanced listings with modern tools
-if has_command exa; then
-    alias ls='exa --color=auto'
-    alias ll='exa -l --color=auto'
-    alias la='exa -la --color=auto'
-    alias lt='exa --tree --color=auto'
-elif has_command lsd; then
-    alias ls='lsd --color=auto'
-    alias ll='lsd -l --color=auto'
-    alias la='lsd -la --color=auto'
-    alias lt='lsd --tree --color=auto'
-fi
+alias lsdir='ls -ld *(-/DN)'  # List only directories and symbolic links to directories
+alias lsa='ls -ld .*'         # List only hidden files
 
 # ================================
 # Navigation Enhancement
@@ -183,15 +174,19 @@ setup_colors() {
         xterm*|rxvt*|urxvt*|linux*|vt*|screen*|tmux*)
             # Enable colors for common commands
             if [[ "$TERM" != "dumb" ]]; then
-                # Only override if not using modern alternatives
+                # Grep colors (only if modern alternatives not available)
                 if ! has_command rg && ! has_command ag; then
                     alias grep='grep --color=auto'
                     alias fgrep='fgrep --color=auto'
                     alias egrep='egrep --color=auto'
                 fi
                 
-                # ls colors (if not using exa/lsd)
-                if ! has_command exa && ! has_command lsd; then
+                # ls colors - use environment variables instead of aliases
+                if is_macos; then
+                    export CLICOLOR=1
+                    export LSCOLORS="ExGxFxdaCxDaDahbadacec"
+                else
+                    export LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32'
                     alias ls='ls --color=auto'
                 fi
             fi
@@ -199,6 +194,7 @@ setup_colors() {
         dumb)
             # Ensure no color output for dumb terminals
             unalias grep fgrep egrep ls 2>/dev/null
+            unset CLICOLOR LSCOLORS LS_COLORS
             ;;
     esac
 }
@@ -267,16 +263,50 @@ load_os_aliases() {
 load_os_aliases
 
 # ================================
-# Validation
+# Validation and Testing
 # ================================
+
+# Test core aliases function
+test_core_aliases() {
+    echo "Testing core aliases..."
+    
+    # Test ll alias
+    if alias ll >/dev/null 2>&1; then
+        echo "  ✓ ll alias defined: $(alias ll)"
+        if ll --help >/dev/null 2>&1 || [[ $? -eq 1 ]]; then
+            echo "  ✓ ll command works"
+        else
+            echo "  ✗ ll command failed"
+        fi
+    else
+        echo "  ✗ ll alias not defined"
+    fi
+    
+    # Test la alias
+    if alias la >/dev/null 2>&1; then
+        echo "  ✓ la alias defined: $(alias la)"
+    else
+        echo "  ✗ la alias not defined"
+    fi
+    
+    # Check color settings
+    if is_macos; then
+        [[ -n "$CLICOLOR" ]] && echo "  ✓ CLICOLOR set" || echo "  ✗ CLICOLOR not set"
+        [[ -n "$LSCOLORS" ]] && echo "  ✓ LSCOLORS set" || echo "  ✗ LSCOLORS not set"
+    else
+        [[ -n "$LS_COLORS" ]] && echo "  ✓ LS_COLORS set" || echo "  ✗ LS_COLORS not set"
+    fi
+}
 
 # Validate aliases in debug mode
 if [[ -n "${ZSH_DEBUG:-}" ]]; then
     echo "Aliases loaded successfully"
     echo "Available modern tools:"
-    for tool in exa lsd bat fd rg ag htop duf procs; do
+    for tool in bat fd rg ag htop duf procs; do
         if has_command "$tool"; then
             echo "  ✓ $tool"
         fi
     done
+    echo ""
+    test_core_aliases
 fi

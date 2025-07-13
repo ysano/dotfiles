@@ -75,8 +75,8 @@ has_command() {
         return ${ZSH_CMD_CACHE[$cmd]}
     fi
     
-    # Check command existence
-    if command -v "$cmd" >/dev/null 2>&1; then
+    # Check for actual executable (not aliases/functions)
+    if type -p "$cmd" >/dev/null 2>&1; then
         ZSH_CMD_CACHE[$cmd]=0
         return 0
     else
