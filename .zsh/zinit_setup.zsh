@@ -89,8 +89,8 @@ setup_omz_libraries() {
     zinit snippet OMZL::key-bindings.zsh  
     zinit snippet OMZL::completion.zsh
     
-    # Git plugin (always useful)
-    zinit snippet OMZP::git/git.plugin.zsh
+    # Git plugin (commented out due to gwt alias conflict with custom git-worktree.zsh)
+    # zinit snippet OMZP::git/git.plugin.zsh
 }
 
 # ================================
@@ -234,7 +234,7 @@ setup_theme() {
 # ================================
 
 setup_custom_files() {
-    # Load custom configuration files through Zinit for better management
+    # Load custom configuration files (最後に読み込んでalias競合を解決)
     local custom_files=(
         "$HOME/.zsh/aliases.zsh"
         "$HOME/.zsh/functions.zsh"
@@ -242,7 +242,7 @@ setup_custom_files() {
     
     for file in $custom_files; do
         if [[ -f "$file" ]]; then
-            zinit load "$file"
+            source "$file"
         fi
     done
 }
@@ -294,11 +294,11 @@ main() {
     # Theme
     setup_theme
     
-    # Custom files
-    setup_custom_files
-    
     # Performance optimization
     optimize_zinit
+    
+    # Custom files (最後に読み込んでalias競合を解決)
+    setup_custom_files
     
     # Debug output
     if [[ -n "${ZSH_DEBUG:-}" ]]; then
