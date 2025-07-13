@@ -26,6 +26,12 @@ source "$HOME/.zsh/keybindings_custom.zsh"
 source "$HOME/.zsh/functions.zsh"
 source "$HOME/.zsh/aliases.zsh"
 
+# Git Worktree custom commands (after aliases to override conflicts)
+source "$HOME/.zsh/git-worktree.zsh"
+
+# Final override for gwt command (ensure our custom function takes precedence)
+unalias gwt gwta gwtls gwtmv gwtrm 2>/dev/null || true
+
 # 6. Local Settings (if exists)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
