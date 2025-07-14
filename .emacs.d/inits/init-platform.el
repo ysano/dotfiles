@@ -46,7 +46,26 @@
 (when (eq system-type 'darwin)
   ;; macOS Option key as Meta
   (when window-system
-    (setq mac-option-modifier 'meta)))
+    (setq mac-option-modifier 'meta))
+  
+  ;; Terminal mode Meta/Alt key support
+  (unless window-system
+    ;; Enable proper Meta key handling in terminal
+    (setq meta-prefix-char nil)
+    ;; Ensure Meta sequences are properly recognized
+    (define-key input-decode-map "\e[1;9A" [M-up])
+    (define-key input-decode-map "\e[1;9B" [M-down])
+    (define-key input-decode-map "\e[1;9C" [M-right])
+    (define-key input-decode-map "\e[1;9D" [M-left])
+    ;; Add more Meta key combinations as needed
+    (define-key input-decode-map "\ef" [M-f])
+    (define-key input-decode-map "\eb" [M-b])
+    (define-key input-decode-map "\ed" [M-d])
+    (define-key input-decode-map "\e<" [M-<])
+    (define-key input-decode-map "\e>" [M->])
+    ;; Ensure tmux doesn't interfere with Meta keys
+    (when (getenv "TMUX")
+      (message "Running in tmux - Meta keys configured"))))
 
 ;; --------------------------------
 ;; Linux / Unix
