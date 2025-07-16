@@ -42,24 +42,25 @@ if has_command bat; then
     alias cat='bat --style=auto'
 fi
 
-if has_command fd; then
-    alias find='fd'
-fi
+# Modern find replacement disabled
+# if has_command fd; then
+#     alias find='fd'
+# fi
 
 # ================================
 # Text Processing
 # ================================
 
-# Enhanced grep (with fallbacks)
-if has_command rg; then
-    alias grep='rg'
-    alias egrep='rg'
-elif has_command ag; then
-    alias grep='ag'
-    alias egrep='ag'
-else
-    alias grep='egrep'
-fi
+# Enhanced grep (with fallbacks) - disabled modern replacements
+# if has_command rg; then
+#     alias grep='rg'
+#     alias egrep='rg'
+# elif has_command ag; then
+#     alias grep='ag'
+#     alias egrep='ag'
+# else
+#     alias grep='egrep'
+# fi
 
 # Global aliases for piping
 alias -g M='| more'
