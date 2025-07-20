@@ -1,0 +1,415 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths:
+      - '.tmux/claude/**'
+      - '.tmux/tests/**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '.tmux/claude/**'
+      - '.tmux/tests/**'
+
+env:
+  CLAUDE_VOICE_HOME: ${{ github.workspace }}/.tmux/claude
+
+jobs:
+  code-style:
+    name: Code Style and Standards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt
+
+      - name: Shell Script Linting
+        run: |
+          echo "🔍 Running ShellCheck on all shell scripts..."
+          
+          # Find all shell scripts
+          find .tmux/claude -name "*.sh" -type f > scripts.txt
+          find .tmux/tests -name "*.sh" -type f >> scripts.txt
+          
+          # Run shellcheck
+          shellcheck_failed=0
+          while IFS= read -r script; do
+            echo "Checking $script..."
+            if ! shellcheck -e SC1090,SC1091 "$script"; then
+              shellcheck_failed=1
+            fi
+          done < scripts.txt
+          
+          if [ $shellcheck_failed -eq 1 ]; then
+            echo "❌ ShellCheck found issues"
+            exit 1
+          else
+            echo "✅ All shell scripts pass ShellCheck"
+          fi
+
+      - name: Shell Script Formatting
+        run: |
+          echo "📝 Checking shell script formatting..."
+          
+          formatting_issues=0
+          while IFS= read -r script; do
+            echo "Checking format of $script..."
+            
+            # Check if shfmt would make changes
+            if ! shfmt -d -i 4 -ci "$script"; then
+              echo "❌ Formatting issues in $script"
+              formatting_issues=1
+            fi
+          done < scripts.txt
+          
+          if [ $formatting_issues -eq 1 ]; then
+            echo "❌ Shell script formatting issues found"
+            echo "Run 'shfmt -w -i 4 -ci *.sh' to fix formatting"
+            exit 1
+          else
+            echo "✅ All shell scripts are properly formatted"
+          fi
+
+      - name: YAML Validation
+        run: |
+          echo "📋 Validating YAML files..."
+          
+          sudo apt-get install -y yamllint python3-yaml
+          
+          yaml_failed=0
+          
+          # Find YAML files
+          find .tmux/claude -name "*.yml" -o -name "*.yaml" | while read -r yaml_file; do
+            echo "Validating $yaml_file..."
+            
+            # YAML syntax check
+            if ! python3 -c "import yaml; yaml.safe_load(open('$yaml_file'))"; then
+              echo "❌ YAML syntax error in $yaml_file"
+              yaml_failed=1
+            fi
+            
+            # YAML style check
+            if ! yamllint -d relaxed "$yaml_file"; then
+              echo "❌ YAML style issues in $yaml_file"
+              yaml_failed=1
+            fi
+          done
+          
+          if [ $yaml_failed -eq 1 ]; then
+            echo "❌ YAML validation failed"
+            exit 1
+          else
+            echo "✅ All YAML files are valid"
+          fi
+
+  complexity-analysis:
+    name: Code Complexity Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Function Complexity Analysis
+        run: |
+          echo "📊 Analyzing function complexity..."
+          
+          complexity_issues=0
+          
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            echo "Analyzing $script..."
+            
+            # Count lines per function
+            awk '
+            /^[a-zA-Z_][a-zA-Z0-9_]*\(\)/ { 
+              if (func_name) {
+                lines = NR - func_start
+                if (lines > 50) {
+                  print "⚠️  Function " func_name " in " FILENAME " is " lines " lines (>50)"
+                  exit 1
+                }
+              }
+              func_name = $1
+              func_start = NR
+            }
+            END {
+              if (func_name) {
+                lines = NR - func_start
+                if (lines > 50) {
+                  print "⚠️  Function " func_name " in " FILENAME " is " lines " lines (>50)"
+                  exit 1
+                }
+              }
+            }' "$script" || complexity_issues=1
+          done
+          
+          if [ $complexity_issues -eq 1 ]; then
+            echo "❌ Function complexity issues found"
+            exit 1
+          else
+            echo "✅ Function complexity is acceptable"
+          fi
+
+      - name: Cyclomatic Complexity
+        run: |
+          echo "🔄 Checking cyclomatic complexity..."
+          
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            echo "Checking $script..."
+            
+            # Count control flow statements per function
+            awk '
+            /^[a-zA-Z_][a-zA-Z0-9_]*\(\)/ { 
+              if (func_name && complexity > 10) {
+                print "⚠️  Function " func_name " has high complexity: " complexity
+                exit 1
+              }
+              func_name = $1
+              complexity = 1  # Base complexity
+            }
+            /if|while|for|case|&&|\|\|/ { complexity++ }
+            END {
+              if (func_name && complexity > 10) {
+                print "⚠️  Function " func_name " has high complexity: " complexity
+                exit 1
+              }
+            }' "$script" || {
+              echo "❌ High cyclomatic complexity found in $script"
+              exit 1
+            }
+          done
+
+  documentation-check:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Function Documentation Check
+        run: |
+          echo "📚 Checking function documentation..."
+          
+          doc_issues=0
+          
+          find .tmux/claude/core -name "*.sh" -type f | while read -r script; do
+            echo "Checking documentation in $script..."
+            
+            # Find functions without documentation
+            awk '
+            /^[a-zA-Z_][a-zA-Z0-9_]*\(\)/ {
+              func_name = $1
+              func_line = NR
+              
+              # Check if previous lines contain comments
+              has_doc = 0
+              for (i = 1; i <= 5; i++) {
+                if ((func_line - i) in comments) {
+                  has_doc = 1
+                  break
+                }
+              }
+              
+              if (!has_doc) {
+                print "⚠️  Function " func_name " lacks documentation"
+                exit 1
+              }
+            }
+            /^#/ { comments[NR] = 1 }
+            ' "$script" || doc_issues=1
+          done
+          
+          if [ $doc_issues -eq 1 ]; then
+            echo "❌ Documentation issues found"
+            exit 1
+          else
+            echo "✅ Function documentation is adequate"
+          fi
+
+      - name: README and Documentation Completeness
+        run: |
+          echo "📖 Checking documentation completeness..."
+          
+          # Check for required documentation files
+          required_docs=(
+            ".tmux/ARCHITECTURE.md"
+            ".tmux/WSL-INTEGRATION-GUIDE.md"
+          )
+          
+          missing_docs=0
+          for doc in "${required_docs[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "❌ Missing required documentation: $doc"
+              missing_docs=1
+            else
+              echo "✅ Found: $doc"
+            fi
+          done
+          
+          if [ $missing_docs -eq 1 ]; then
+            echo "❌ Required documentation is missing"
+            exit 1
+          fi
+
+  security-patterns:
+    name: Security Pattern Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dangerous Pattern Detection
+        run: |
+          echo "🔒 Scanning for dangerous patterns..."
+          
+          security_issues=0
+          
+          # Check for eval usage
+          if find .tmux/claude -name "*.sh" -exec grep -Hn "eval" {} \; | grep -v "# "; then
+            echo "❌ Found eval usage - potential security risk"
+            security_issues=1
+          fi
+          
+          # Check for unquoted variables in commands
+          if find .tmux/claude -name "*.sh" -exec grep -Hn '\$[A-Za-z_][A-Za-z0-9_]*[^"]' {} \; | grep -E "(rm|mv|cp|chmod)" | head -5; then
+            echo "⚠️  Found potentially unquoted variables in dangerous commands"
+            security_issues=1
+          fi
+          
+          # Check for hardcoded paths
+          if find .tmux/claude -name "*.sh" -exec grep -Hn "^[^#]*\/tmp\/[^$]" {} \; | head -5; then
+            echo "⚠️  Found hardcoded temp paths - potential security risk"
+            security_issues=1
+          fi
+          
+          if [ $security_issues -eq 1 ]; then
+            echo "❌ Security pattern issues found"
+            exit 1
+          else
+            echo "✅ No dangerous security patterns detected"
+          fi
+
+      - name: Input Validation Check
+        run: |
+          echo "🛡️  Checking input validation patterns..."
+          
+          validation_issues=0
+          
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            echo "Checking input validation in $script..."
+            
+            # Look for functions that take parameters but don't validate them
+            awk '
+            /^[a-zA-Z_][a-zA-Z0-9_]*\(\)/ {
+              func_name = $1
+              in_function = 1
+              has_validation = 0
+              param_usage = 0
+              next
+            }
+            in_function && /^\}/ {
+              if (param_usage > 0 && has_validation == 0) {
+                print "⚠️  Function " func_name " uses parameters without validation"
+                exit 1
+              }
+              in_function = 0
+            }
+            in_function && /\$[1-9]/ { param_usage++ }
+            in_function && /\[\[.*-[nz]|\[\[.*=/ { has_validation++ }
+            ' "$script" || validation_issues=1
+          done
+          
+          if [ $validation_issues -eq 1 ]; then
+            echo "❌ Input validation issues found"
+            exit 1
+          else
+            echo "✅ Input validation patterns look good"
+          fi
+
+  performance-patterns:
+    name: Performance Pattern Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Performance Anti-pattern Detection
+        run: |
+          echo "⚡ Checking for performance anti-patterns..."
+          
+          perf_issues=0
+          
+          # Check for command substitution in loops
+          if find .tmux/claude -name "*.sh" -exec grep -A5 -B5 "for.*in" {} \; | grep -E "\$\(|\`"; then
+            echo "⚠️  Found command substitution in loops - potential performance issue"
+            perf_issues=1
+          fi
+          
+          # Check for repeated file operations
+          if find .tmux/claude -name "*.sh" -exec grep -Hn "cat.*|.*while\|while.*cat" {} \; | head -3; then
+            echo "⚠️  Found potentially inefficient file processing patterns"
+            perf_issues=1
+          fi
+          
+          # Check for unnecessary subprocess creation
+          if find .tmux/claude -name "*.sh" -exec grep -Hn "echo.*|.*grep\|grep.*echo" {} \; | head -3; then
+            echo "⚠️  Found potentially unnecessary subprocess creation"
+            perf_issues=1
+          fi
+          
+          if [ $perf_issues -eq 1 ]; then
+            echo "⚠️  Performance pattern issues found - review recommended"
+            # Don't fail the build for performance warnings
+          else
+            echo "✅ No obvious performance anti-patterns detected"
+          fi
+
+  code-metrics:
+    name: Code Metrics Collection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Collect Code Metrics
+        run: |
+          echo "📈 Collecting code metrics..."
+          
+          total_lines=0
+          total_functions=0
+          total_files=0
+          
+          echo "## Code Metrics Report" > metrics.md
+          echo "" >> metrics.md
+          
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            lines=$(wc -l < "$script")
+            functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() *{" "$script" || echo 0)
+            
+            echo "- $script: $lines lines, $functions functions" >> metrics.md
+            
+            total_lines=$((total_lines + lines))
+            total_functions=$((total_functions + functions))
+            total_files=$((total_files + 1))
+          done
+          
+          echo "" >> metrics.md
+          echo "### Summary" >> metrics.md
+          echo "- Total files: $(find .tmux/claude -name "*.sh" -type f | wc -l)" >> metrics.md
+          echo "- Total lines: $(find .tmux/claude -name "*.sh" -type f -exec wc -l {} + | tail -1 | awk '{print $1}')" >> metrics.md
+          echo "- Total functions: $(find .tmux/claude -name "*.sh" -type f -exec grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() *{" {} + | awk '{sum+=$1} END {print sum}')" >> metrics.md
+          echo "- Average lines per file: $(find .tmux/claude -name "*.sh" -type f -exec wc -l {} + | tail -1 | awk -v files="$(find .tmux/claude -name "*.sh" -type f | wc -l)" '{print int($1/files)}')" >> metrics.md
+          
+          echo "Code metrics collected:"
+          cat metrics.md
+
+      - name: Upload Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-metrics
+          path: metrics.md
+          retention-days: 30

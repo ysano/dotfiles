@@ -2,44 +2,19 @@
 # Universal Voice System - クロスプラットフォーム音声出力統合
 # WSL, macOS, Linux対応の統一音声インターフェース
 
+# === 音声エンジンレジストリの初期化 ===
+init_universal_voice() {
+    # レジストリが初期化されていない場合は初期化
+    if [[ ${#VOICE_ENGINES[@]} -eq 0 ]]; then
+        source "$(dirname "${BASH_SOURCE[0]}")/voice_engine_registry.sh"
+        init_voice_engine_registry
+    fi
+}
+
 # === 音声エンジンの検出と選択 ===
 detect_voice_engine() {
-    local os_type=$(uname)
-    
-    # WSL環境の詳細検出
-    if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
-        # WSL音声エンジンの利用可能性チェック
-        if source "$(dirname "${BASH_SOURCE[0]}")/wsl_voice_engine.sh" && [[ "$(check_windows_speech)" == "available" ]]; then
-            echo "wsl_powershell"
-            return 0
-        else
-            echo "simple_fallback"
-            return 0
-        fi
-    fi
-    
-    # プラットフォーム別の音声エンジン選択
-    case "$os_type" in
-        "Darwin")
-            if command -v osascript >/dev/null 2>&1; then
-                echo "osascript"
-            else
-                echo "simple_fallback"
-            fi
-            ;;
-        "Linux")
-            if command -v espeak >/dev/null 2>&1; then
-                echo "espeak"
-            elif command -v festival >/dev/null 2>&1; then
-                echo "festival"
-            else
-                echo "simple_fallback"
-            fi
-            ;;
-        *)
-            echo "simple_fallback"
-            ;;
-    esac
+    init_universal_voice
+    select_best_engine
 }
 
 # === 統合音声出力関数 ===
@@ -50,39 +25,8 @@ universal_speak() {
     
     log "DEBUG" "Universal speak: engine=$engine, voice=$voice_setting"
     
-    case "$engine" in
-        "wsl_powershell")
-            # WSL PowerShell音声合成
-            source "$(dirname "${BASH_SOURCE[0]}")/wsl_voice_engine.sh"
-            wsl_speak "$text" "$voice_setting"
-            ;;
-        "osascript")
-            # macOS音声合成
-            local voice_name="Kyoko"
-            if [[ "$voice_setting" != "auto" ]]; then
-                voice_name="$voice_setting"
-            fi
-            osascript -e "say \"$text\" using \"$voice_name\""
-            ;;
-        "espeak")
-            # Linux espeak
-            espeak -v ja "$text" 2>/dev/null || espeak "$text"
-            ;;
-        "festival")
-            # Linux festival
-            echo "$text" | festival --tts
-            ;;
-        "simple_fallback")
-            # シンプルなテキスト出力フォールバック
-            echo "[VOICE] $text"
-            log "INFO" "Voice output (text): $text"
-            ;;
-        *)
-            log "ERROR" "Unknown voice engine: $engine"
-            echo "[VOICE] $text"
-            return 1
-            ;;
-    esac
+    init_universal_voice
+    execute_voice_engine "$engine" "$text" "$voice_setting"
 }
 
 # === 非同期音声出力 ===
@@ -167,50 +111,9 @@ diagnose_universal_voice() {
         echo "Environment: WSL"
     fi
     
-    # 検出された音声エンジン
-    local engine=$(detect_voice_engine)
-    echo "Selected Voice Engine: $engine"
-    
     echo ""
-    echo "Available Voice Engines:"
-    
-    # WSL PowerShell
-    if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
-        if source "$(dirname "${BASH_SOURCE[0]}")/wsl_voice_engine.sh" 2>/dev/null && [[ "$(check_windows_speech 2>/dev/null)" == "available" ]]; then
-            echo "  ✅ WSL PowerShell Speech"
-        else
-            echo "  ❌ WSL PowerShell Speech"
-        fi
-    fi
-    
-    # macOS osascript
-    if [[ "$os_type" == "Darwin" ]]; then
-        if command -v osascript >/dev/null 2>&1; then
-            echo "  ✅ macOS osascript"
-        else
-            echo "  ❌ macOS osascript"
-        fi
-    fi
-    
-    # Linux音声エンジン
-    if [[ "$os_type" == "Linux" ]]; then
-        if command -v espeak >/dev/null 2>&1; then
-            echo "  ✅ Linux espeak"
-        else
-            echo "  ❌ Linux espeak"
-        fi
-        
-        if command -v festival >/dev/null 2>&1; then
-            echo "  ✅ Linux festival"
-        else
-            echo "  ❌ Linux festival"
-        fi
-    fi
-    
-    echo "  ✅ Simple text fallback (always available)"
-    
-    echo ""
-    echo "=== End Diagnostics ==="
+    init_universal_voice
+    diagnose_engine_registry
 }
 
 # === テスト関数 ===
