@@ -303,10 +303,24 @@ notify_status_change() {
         "✅")
             # Process completed - use enhanced completion notification
             notify_complete
+            
+            # Optional: Auto-trigger Claude Voice summary on completion
+            if [ "${CLAUDE_VOICE_AUTO_SUMMARY:-false}" = "true" ] && [ "${CLAUDE_VOICE_ON_COMPLETE:-true}" = "true" ]; then
+                # Phase 1 Fix: Execute voice in foreground with proper session management
+                # Use osascript to ensure desktop audio session access
+                osascript -e 'do shell script "~/.tmux/claude/bin/claude-voice brief 20 Kyoko"' &
+            fi
             ;;
         "⌛")
             # Waiting for input - use enhanced input notification
             notify_waiting
+            
+            # Optional: Auto-trigger Claude Voice summary on input waiting
+            if [ "${CLAUDE_VOICE_AUTO_SUMMARY:-false}" = "true" ] && [ "${CLAUDE_VOICE_ON_WAITING:-true}" = "true" ]; then
+                # Phase 1 Fix: Execute voice in foreground with proper session management
+                # Use osascript to ensure desktop audio session access
+                osascript -e 'do shell script "~/.tmux/claude/bin/claude-voice brief 15 Kyoko"' &
+            fi
             ;;
         "⚡")
             # Process started - enhanced notification for macOS
@@ -321,11 +335,19 @@ notify_status_change() {
             else
                 echo -e "\a"
             fi
+            
+            # Optional: Auto-trigger Claude Voice summary on busy start (usually not needed)
+            if [ "${CLAUDE_VOICE_AUTO_SUMMARY:-false}" = "true" ] && [ "${CLAUDE_VOICE_ON_BUSY:-false}" = "true" ]; then
+                # Phase 1 Fix: Execute voice in foreground with proper session management
+                # Use osascript to ensure desktop audio session access
+                osascript -e 'do shell script "~/.tmux/claude/bin/claude-voice brief 10 Kyoko"' &
+            fi
             ;;
     esac
 }
 
 # Only notify for meaningful status changes (non-empty states)
-if [ -n "$OLD_STATUS" ] && [ -n "$NEW_STATUS" ] && [ "$OLD_STATUS" != "$NEW_STATUS" ]; then
+# Allow notifications when OLD_STATUS is empty (initial state) but NEW_STATUS is meaningful
+if [ -n "$NEW_STATUS" ] && [ "$OLD_STATUS" != "$NEW_STATUS" ]; then
     notify_status_change
 fi
