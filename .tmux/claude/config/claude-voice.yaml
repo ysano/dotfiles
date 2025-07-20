@@ -1,0 +1,118 @@
+# Claude Voice Integration Configuration
+# ハイブリッド統合アーキテクチャ - 主設定ファイル
+
+# === Integration Settings ===
+integration:
+  enabled: true
+  mode: "smart"  # minimal, smart, full
+  strict_mode: false
+  auto_reload_config: true
+  
+# === Voice Settings ===
+voice:
+  # Manual trigger settings
+  manual:
+    mode: "brief"        # brief, detailed, technical
+    lines: 25
+    model: "auto"        # auto, phi4-mini:latest, orca-mini:latest
+    voice: "Kyoko"
+    
+  # Auto-completion settings  
+  auto_complete:
+    enabled: true
+    mode: "brief"
+    lines: 15
+    model: "auto"
+    voice: "Kyoko"
+    
+  # Auto-waiting settings
+  auto_waiting:
+    enabled: true
+    mode: "brief" 
+    lines: 10
+    model: "auto"
+    voice: "Kyoko"
+
+# === Audio System ===
+audio:
+  system_integration: "osascript"  # direct, osascript, wrapper
+  fallback_behavior: "graceful"    # graceful, strict, silent
+  max_concurrent_voices: 1
+  voice_timeout: 30
+  respect_dnd: true
+  volume_control: "system"         # system, custom
+  
+# === AI/LLM Settings ===
+llm:
+  provider: "ollama"               # ollama, openai, anthropic
+  ollama:
+    url: "http://localhost:11434"
+    timeout: 30
+    max_retries: 3
+    default_model: "phi4-mini:latest"
+    fallback_model: "orca-mini:latest"
+    
+# === Performance ===
+performance:
+  startup_delay: 0                 # seconds
+  cache_enabled: true
+  cache_ttl: 300                   # seconds
+  background_processing: true
+  rate_limiting:
+    enabled: true
+    max_requests_per_minute: 10
+    
+# === Logging ===
+logging:
+  level: "INFO"                    # DEBUG, INFO, WARN, ERROR
+  file: "~/.tmux/claude/logs/claude-voice.log"
+  max_file_size: "10MB"
+  rotate_files: true
+  retention_days: 7
+  
+  # Component-specific logging
+  components:
+    integration: true
+    voice_actions: true
+    audio_system: false
+    llm_requests: false
+    
+# === Security ===
+security:
+  allow_external_commands: false
+  sandbox_mode: true
+  max_text_length: 5000
+  sanitize_input: true
+  
+# === Experimental Features ===
+experimental:
+  enabled: false
+  features:
+    realtime_monitoring: false
+    context_awareness: false
+    multi_language_support: false
+    voice_customization: false
+    
+# === User Interface ===
+ui:
+  notifications:
+    welcome_message: true
+    status_updates: true
+    error_reporting: true
+    
+  tmux_integration:
+    status_bar_indicator: true
+    key_binding_hints: false
+    visual_feedback: true
+    
+# === Environment Specific ===
+environments:
+  development:
+    debug_mode: true
+    verbose_logging: true
+    test_mode_enabled: true
+    
+  production:
+    debug_mode: false
+    performance_monitoring: true
+    error_reporting: true

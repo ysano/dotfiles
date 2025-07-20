@@ -10,12 +10,15 @@ debug_log() {
     [ "$CLAUDE_STATUS_DEBUG" = "1" ] && echo "[DEBUG] $1" >&2
 }
 
-# State icons
-declare -A STATE_ICONS=(
-    ["Busy"]="⚡"
-    ["Waiting"]="⌛"
-    ["Idle"]="✅"
-)
+# State icons (bash 3.x compatible)
+get_state_icon() {
+    case "$1" in
+        "Busy") echo "⚡" ;;
+        "Waiting") echo "⌛" ;;
+        "Idle") echo "✅" ;;
+        *) echo "" ;;
+    esac
+}
 
 debug_log "Starting Claude status detection for window $WINDOW_ID, pane $PANE_ID"
 
@@ -122,7 +125,7 @@ STATUS=$(detect_claude_status "$TERMINAL_OUTPUT")
 debug_log "Detected status: $STATUS"
 
 # Step 7: Output the appropriate icon
-STATUS_ICON="${STATE_ICONS[$STATUS]}"
+STATUS_ICON=$(get_state_icon "$STATUS")
 if [ -n "$STATUS_ICON" ]; then
     echo "$STATUS_ICON"
 else

@@ -350,6 +350,342 @@ show_stats() {
     done
 }
 
+# 健全性チェックの実行
+run_health_check() {
+    echo "=== Claude Voice Health Check ==="
+    echo ""
+    
+    local health_score=0
+    local total_checks=0
+    local issues=()
+    
+    # 設定マネージャーの読み込み
+    if [[ -f "$CLAUDE_VOICE_HOME/core/integration.sh" ]]; then
+        source "$CLAUDE_VOICE_HOME/core/integration.sh" >/dev/null 2>&1
+    fi
+    
+    echo "1. Configuration Health..."
+    ((total_checks++))
+    
+    if [[ -f "$CLAUDE_VOICE_HOME/config/claude-voice.yaml" ]]; then
+        echo "   ✅ YAML configuration file exists"
+        
+        # YAML構文チェック
+        if command -v yq >/dev/null 2>&1; then
+            if yq eval '.' "$CLAUDE_VOICE_HOME/config/claude-voice.yaml" >/dev/null 2>&1; then
+                echo "   ✅ YAML syntax is valid"
+                ((health_score++))
+            else
+                echo "   ❌ YAML syntax errors detected"
+                issues+=("yaml_syntax")
+            fi
+        else
+            echo "   ⚠️  yq not available for YAML validation"
+            ((health_score += 0.5))
+        fi
+    else
+        echo "   ❌ Configuration file missing"
+        issues+=("config_missing")
+    fi
+    
+    echo ""
+    echo "2. Integration Layer Health..."
+    ((total_checks++))
+    
+    if declare -f get_integration_status >/dev/null 2>&1; then
+        local integration_status=$(get_integration_status)
+        case "$integration_status" in
+            "fully_functional")
+                echo "   ✅ Integration layer: Fully functional"
+                ((health_score++))
+                ;;
+            "degraded")
+                echo "   ⚠️  Integration layer: Degraded functionality"
+                issues+=("integration_degraded")
+                ((health_score += 0.5))
+                ;;
+            *)
+                echo "   ❌ Integration layer: Disabled or non-functional"
+                issues+=("integration_failed")
+                ;;
+        esac
+    else
+        echo "   ❌ Integration layer not accessible"
+        issues+=("integration_missing")
+    fi
+    
+    echo ""
+    echo "3. Audio System Health..."
+    ((total_checks++))
+    
+    local os_type=$(detect_os)
+    case "$os_type" in
+        "darwin")
+            if command -v say >/dev/null 2>&1; then
+                echo "   ✅ macOS say command available"
+                
+                if osascript -e 'get volume settings' >/dev/null 2>&1; then
+                    echo "   ✅ Audio session accessible"
+                    ((health_score++))
+                else
+                    echo "   ❌ Audio session not accessible"
+                    issues+=("audio_session_failed")
+                fi
+            else
+                echo "   ❌ macOS say command not available"
+                issues+=("say_command_missing")
+            fi
+            ;;
+        *)
+            echo "   ⚠️  Audio system check not implemented for $os_type"
+            ((health_score += 0.5))
+            ;;
+    esac
+    
+    echo ""
+    echo "4. LLM Integration Health..."
+    ((total_checks++))
+    
+    if check_ollama_health >/dev/null 2>&1; then
+        echo "   ✅ Ollama connection successful"
+        ((health_score++))
+    else
+        echo "   ❌ Ollama connection failed"
+        issues+=("ollama_failed")
+    fi
+    
+    echo ""
+    echo "5. File System Health..."
+    ((total_checks++))
+    
+    local required_dirs=("$CLAUDE_VOICE_HOME/core" "$CLAUDE_VOICE_HOME/config" "$CLAUDE_VOICE_HOME/logs")
+    local missing_dirs=()
+    
+    for dir in "${required_dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            missing_dirs+=("$dir")
+        fi
+    done
+    
+    if [[ ${#missing_dirs[@]} -eq 0 ]]; then
+        echo "   ✅ All required directories exist"
+        ((health_score++))
+    else
+        echo "   ❌ Missing directories: ${missing_dirs[*]}"
+        issues+=("missing_directories")
+    fi
+    
+    # 結果の表示
+    echo ""
+    echo "=== Health Check Results ==="
+    local health_percentage=$(( (health_score * 100) / total_checks ))
+    echo "Overall Health Score: $health_score/$total_checks ($health_percentage%)"
+    
+    if [[ ${#issues[@]} -eq 0 ]]; then
+        echo "🎉 System is healthy!"
+        return 0
+    else
+        echo ""
+        echo "⚠️  Issues detected:"
+        for issue in "${issues[@]}"; do
+            case "$issue" in
+                "yaml_syntax")
+                    echo "  - YAML configuration has syntax errors"
+                    echo "    Fix: Run 'claude-voice --repair-configuration'"
+                    ;;
+                "config_missing")
+                    echo "  - Configuration file missing"
+                    echo "    Fix: Run 'claude-voice config-reset'"
+                    ;;
+                "integration_degraded")
+                    echo "  - Integration layer has reduced functionality"
+                    echo "    Fix: Check dependencies and run 'claude-voice --integration-test'"
+                    ;;
+                "audio_session_failed")
+                    echo "  - Audio session not accessible"
+                    echo "    Fix: Check system audio settings and permissions"
+                    ;;
+                "ollama_failed")
+                    echo "  - Ollama LLM service not available"
+                    echo "    Fix: Start Ollama service or check connection"
+                    ;;
+                *)
+                    echo "  - $issue"
+                    ;;
+            esac
+        done
+        
+        if [[ $health_percentage -lt 50 ]]; then
+            return 2  # Critical health issues
+        else
+            return 1  # Minor health issues
+        fi
+    fi
+}
+
+# 統合テストの実行
+run_integration_test() {
+    echo "=== Claude Voice Integration Test ==="
+    echo ""
+    
+    local test_passed=0
+    local test_total=0
+    
+    echo "Testing complete integration workflow..."
+    echo ""
+    
+    # テスト1: 設定システム
+    echo "1. Configuration System Test..."
+    ((test_total++))
+    
+    if [[ -f "$CLAUDE_VOICE_HOME/core/config_manager.sh" ]]; then
+        if "$CLAUDE_VOICE_HOME/core/config_manager.sh" validate >/dev/null 2>&1; then
+            echo "   ✅ Configuration system working"
+            ((test_passed++))
+        else
+            echo "   ❌ Configuration system failed"
+        fi
+    else
+        echo "   ❌ Configuration manager not found"
+    fi
+    
+    # テスト2: 統合レイヤー
+    echo "2. Integration Layer Test..."
+    ((test_total++))
+    
+    if [[ -f "$CLAUDE_VOICE_HOME/core/integration.sh" ]]; then
+        if "$CLAUDE_VOICE_HOME/core/integration.sh" test >/dev/null 2>&1; then
+            echo "   ✅ Integration layer working"
+            ((test_passed++))
+        else
+            echo "   ❌ Integration layer failed"
+        fi
+    else
+        echo "   ❌ Integration script not found"
+    fi
+    
+    # テスト3: tmux統合
+    echo "3. tmux Integration Test..."
+    ((test_total++))
+    
+    if [[ -n "${TMUX:-}" ]]; then
+        if tmux list-keys | grep -q "C-v"; then
+            echo "   ✅ tmux key bindings configured"
+            ((test_passed++))
+        else
+            echo "   ❌ tmux key bindings not found"
+        fi
+    else
+        echo "   ⚠️  Not running in tmux session"
+    fi
+    
+    # テスト4: エンドツーエンドテスト（簡易版）
+    echo "4. End-to-End Test (dry run)..."
+    ((test_total++))
+    
+    if [[ -x "$CLAUDE_VOICE_HOME/bin/claude-voice" ]]; then
+        if "$CLAUDE_VOICE_HOME/bin/claude-voice" --help >/dev/null 2>&1; then
+            echo "   ✅ End-to-end path accessible"
+            ((test_passed++))
+        else
+            echo "   ❌ End-to-end execution failed"
+        fi
+    else
+        echo "   ❌ Claude Voice binary not executable"
+    fi
+    
+    # 結果表示
+    echo ""
+    echo "Integration Test Results: $test_passed/$test_total tests passed"
+    
+    if [[ $test_passed -eq $test_total ]]; then
+        echo "🎉 All integration tests passed!"
+        return 0
+    else
+        echo "❌ Some integration tests failed"
+        return 1
+    fi
+}
+
+# 設定修復機能
+repair_configuration() {
+    echo "=== Claude Voice Configuration Repair ==="
+    echo ""
+    
+    local repairs_made=0
+    
+    # 1. ディレクトリ構造の修復
+    echo "1. Checking directory structure..."
+    local required_dirs=(
+        "$CLAUDE_VOICE_HOME/core"
+        "$CLAUDE_VOICE_HOME/config" 
+        "$CLAUDE_VOICE_HOME/logs"
+        "$CLAUDE_VOICE_HOME/bin"
+    )
+    
+    for dir in "${required_dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            echo "   Creating missing directory: $dir"
+            mkdir -p "$dir"
+            ((repairs_made++))
+        fi
+    done
+    
+    # 2. 設定ファイルの修復
+    echo "2. Checking configuration files..."
+    
+    if [[ ! -f "$CLAUDE_VOICE_HOME/config/claude-voice.yaml" ]]; then
+        echo "   Creating default YAML configuration..."
+        if [[ -f "$CLAUDE_VOICE_HOME/core/config_manager.sh" ]]; then
+            "$CLAUDE_VOICE_HOME/core/config_manager.sh" init
+            ((repairs_made++))
+        fi
+    fi
+    
+    # 3. 実行権限の修復
+    echo "3. Checking executable permissions..."
+    local executable_files=(
+        "$CLAUDE_VOICE_HOME/bin/claude-voice"
+        "$CLAUDE_VOICE_HOME/core/integration.sh"
+        "$CLAUDE_VOICE_HOME/core/config_manager.sh"
+        "$CLAUDE_VOICE_HOME/session-hook.sh"
+        "$CLAUDE_VOICE_HOME/voice-trigger.sh"
+    )
+    
+    for file in "${executable_files[@]}"; do
+        if [[ -f "$file" ]] && [[ ! -x "$file" ]]; then
+            echo "   Setting executable permission: $file"
+            chmod +x "$file"
+            ((repairs_made++))
+        fi
+    done
+    
+    # 4. ログファイルの初期化
+    echo "4. Initializing log files..."
+    local log_files=(
+        "$CLAUDE_VOICE_HOME/logs/claude-voice.log"
+        "$CLAUDE_VOICE_HOME/logs/integration.log"
+    )
+    
+    for log_file in "${log_files[@]}"; do
+        if [[ ! -f "$log_file" ]]; then
+            echo "   Creating log file: $log_file"
+            touch "$log_file"
+            ((repairs_made++))
+        fi
+    done
+    
+    echo ""
+    if [[ $repairs_made -gt 0 ]]; then
+        echo "✅ Configuration repair completed: $repairs_made repairs made"
+        echo "   Run 'claude-voice --health-check' to verify the repairs"
+    else
+        echo "✅ No repairs needed - configuration appears healthy"
+    fi
+    
+    return 0
+}
+
 # システムテストの実行
 run_system_test() {
     echo "=== Claude Voice システムテスト ==="
@@ -552,6 +888,15 @@ case "${1:-main}" in
         ;;
     "--test"|"test")
         run_system_test
+        ;;
+    "--health-check"|"health-check")
+        run_health_check
+        ;;
+    "--integration-test"|"integration-test")  
+        run_integration_test
+        ;;
+    "--repair-configuration"|"repair-configuration")
+        repair_configuration
         ;;
     "--config"|"config")
         manage_config "${2:-show}"
