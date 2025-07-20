@@ -9,7 +9,7 @@ readonly PROVIDER_CLAUDE="claude"
 readonly PROVIDER_SIMPLE="simple"
 
 # デフォルト設定
-DEFAULT_OLLAMA_API="http://localhost:11434"
+DEFAULT_OLLAMA_API="http://172.29.80.1:11434"
 DEFAULT_TIMEOUT=30
 DEFAULT_MAX_RETRIES=3
 
@@ -34,7 +34,7 @@ check_ollama_health() {
     fi
 }
 
-# 利用可能なOllamaモデルの取得
+# 利用可能なOllamaモデルの取得（フィルター付き）
 get_available_ollama_models() {
     local api_url="${1:-$(get_config "llm.ollama.api_url" "$DEFAULT_OLLAMA_API")}"
     
@@ -42,12 +42,16 @@ get_available_ollama_models() {
         local models_json=$(curl -s "$api_url/api/tags" 2>/dev/null)
         
         if validate_json "$models_json"; then
+            local all_models=""
             if has_command jq; then
-                echo "$models_json" | jq -r '.models[].name' 2>/dev/null
+                all_models=$(echo "$models_json" | jq -r '.models[].name' 2>/dev/null)
             else
                 # jqが利用できない場合の簡易パース
-                echo "$models_json" | grep -o '"name":"[^"]*"' | cut -d'"' -f4
+                all_models=$(echo "$models_json" | grep -o '"name":"[^"]*"' | cut -d'"' -f4)
             fi
+            
+            # coder, code, embedを含むモデルを除外
+            echo "$all_models" | grep -v -E "(coder|embed|codellama)" | grep -v "^$"
         else
             log "ERROR" "Invalid JSON response from Ollama models API"
             return 1
@@ -56,6 +60,49 @@ get_available_ollama_models() {
         log "WARN" "Ollama not available for model listing"
         return 1
     fi
+}
+
+# モデルサイズの推定（パラメータ数ベース）
+estimate_model_size() {
+    local model="$1"
+    
+    # モデル名から軽量性を推定（小さいほど軽量）
+    case "$model" in
+        *"mini"*|*"tiny"*|*"1b"*) echo "1" ;;
+        *"3b"*|*"small"*) echo "3" ;;
+        *"7b"*|*"medium"*) echo "7" ;;
+        *"13b"*|*"large"*) echo "13" ;;
+        *"70b"*|*"xl"*) echo "70" ;;
+        *) echo "10" ;;  # 不明な場合は中程度と仮定
+    esac
+}
+
+# 推奨軽量モデルのインストール促進
+suggest_lightweight_models() {
+    log "INFO" "Recommending lightweight models for installation:"
+    echo "推奨軽量モデル（インストールコマンド）:"
+    echo "  ollama pull phi4-mini:latest"
+    echo "  ollama pull orca-mini:latest"
+    echo ""
+    echo "これらのモデルは高速でリソース使用量が少ないため、tmux環境に最適です。"
+}
+
+# 最軽量モデルの選択
+select_lightest_available() {
+    local available_models="$1"
+    local lightest_model=""
+    local lightest_size=999
+    
+    while IFS= read -r model; do
+        [[ -z "$model" ]] && continue
+        local size=$(estimate_model_size "$model")
+        if [[ $size -lt $lightest_size ]]; then
+            lightest_size=$size
+            lightest_model="$model"
+        fi
+    done <<< "$available_models"
+    
+    echo "$lightest_model"
 }
 
 # 最適なモデルの選択
@@ -80,17 +127,17 @@ select_best_model() {
         return 0
     fi
     
-    # タスクタイプに基づく優先順位
+    # 軽量・高速モデルを優先
     local priority_models=()
     case "$task_type" in
         "coding"|"technical")
-            priority_models=("qwen2.5-coder:latest" "qwen2.5-coder:3b" "phi4-mini:latest" "orca-mini:latest")
+            priority_models=("phi4-mini:latest" "orca-mini:latest" "qwen2.5-coder:3b")
             ;;
         "summary"|"general")
-            priority_models=("phi4-mini:latest" "orca-mini:latest" "qwen2.5:3b" "qwen2.5:latest")
+            priority_models=("phi4-mini:latest" "orca-mini:latest")
             ;;
         *)
-            priority_models=("phi4-mini:latest" "orca-mini:latest" "qwen2.5:3b")
+            priority_models=("phi4-mini:latest" "orca-mini:latest")
             ;;
     esac
     
@@ -103,11 +150,15 @@ select_best_model() {
         fi
     done
     
-    # 最初に利用可能なモデルを使用
-    local first_model=$(echo "$available_models" | head -1)
-    if [[ -n "$first_model" ]]; then
-        log "DEBUG" "Using first available model: $first_model"
-        echo "$first_model"
+    # 推奨モデルが見つからない場合、インストールを促進
+    log "WARN" "Recommended lightweight models not found"
+    suggest_lightweight_models
+    
+    # 既存モデルから最軽量のものを選択
+    local lightest_model=$(select_lightest_available "$available_models")
+    if [[ -n "$lightest_model" ]]; then
+        log "INFO" "Using lightest available model: $lightest_model"
+        echo "$lightest_model"
         return 0
     fi
     

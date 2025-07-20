@@ -13,9 +13,19 @@ check_windows_dependencies() {
         missing_deps+=("PowerShell (Windows PowerShell or PowerShell Core)")
     fi
     
-    # WSL環境の確認
+    # WSL環境の確認と強化された検出
     if [[ -z "${WSL_DISTRO_NAME:-}" ]] && ! grep -qi microsoft /proc/version 2>/dev/null; then
-        log "WARN" "Not running in WSL environment"
+        log "WARN" "Not running in WSL environment - some features may not work"
+        return 1
+    fi
+    
+    # WSL2の確認
+    if grep -qi "WSL2" /proc/version 2>/dev/null; then
+        log "DEBUG" "Running in WSL2 environment"
+        export WSL_VERSION="2"
+    else
+        log "DEBUG" "Running in WSL1 environment"
+        export WSL_VERSION="1"
     fi
     
     # Windows側への接続確認
@@ -43,25 +53,47 @@ check_windows_dependencies() {
 find_powershell_path() {
     log "DEBUG" "Searching for PowerShell executable"
     
-    # 検索パスの優先順位
+    # 検索パスの優先順位（WSL用に拡張）
     local powershell_paths=(
-        # PowerShell Core (推奨)
+        # PowerShell Core (推奨) - 複数バージョン対応
         "/mnt/c/Program Files/PowerShell/7/pwsh.exe"
         "/mnt/c/Program Files/PowerShell/6/pwsh.exe"
-        # Windows PowerShell
+        # Windows PowerShell (システムデフォルト)
         "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
         "/mnt/c/Windows/System32/powershell.exe"
         "/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe"
-        # WSL Path経由
+        # ユーザーディレクトリのPowerShell
+        "/mnt/c/Users/*/AppData/Local/Microsoft/PowerShell/*/pwsh.exe"
+        # WSL Path経由（Windows PATH統合）
         "powershell.exe"
         "pwsh.exe"
+        # Windows Store版PowerShell
+        "/mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps/pwsh.exe"
+        "/mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps/powershell.exe"
     )
     
     for path in "${powershell_paths[@]}"; do
-        if [[ -f "$path" ]] || command -v "$path" >/dev/null 2>&1; then
-            log "DEBUG" "Found PowerShell at: $path"
-            echo "$path"
-            return 0
+        # ワイルドカード展開
+        if [[ "$path" == *"*"* ]]; then
+            # ワイルドカードパスの展開と検索
+            for expanded_path in $path; do
+                if [[ -f "$expanded_path" ]] && [[ -x "$expanded_path" ]]; then
+                    log "DEBUG" "Found PowerShell at: $expanded_path"
+                    echo "$expanded_path"
+                    return 0
+                fi
+            done
+        else
+            # 通常のパス検索
+            if [[ -f "$path" ]] && [[ -x "$path" ]]; then
+                log "DEBUG" "Found PowerShell at: $path"
+                echo "$path"
+                return 0
+            elif command -v "$path" >/dev/null 2>&1; then
+                log "DEBUG" "Found PowerShell via command: $path"
+                echo "$path"
+                return 0
+            fi
         fi
     done
     
@@ -127,7 +159,27 @@ select_japanese_voice() {
     echo "Microsoft Haruka Desktop"
 }
 
-# 音声合成実行
+# === Windows固有の音声合成 ===
+speak_windows() {
+    local text="$1"
+    local voice="${2:-auto}"
+    
+    # WSL環境での音声合成
+    if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
+        # WSLユニバーサル音声システムを使用
+        if source "$CLAUDE_HOME/core/universal_voice.sh" 2>/dev/null; then
+            universal_speak "$text" "$voice"
+            return $?
+        fi
+    fi
+    
+    # フォールバック: テキスト出力
+    log "WARN" "Windows native speech synthesis not available"
+    echo "[VOICE] $text"
+    return 1
+}
+
+# 音声合成実行（後方互換性のため保持）
 speak_text() {
     local text="$1"
     local voice="${2:-$(get_config "audio.default_voice" "auto")}"
@@ -136,74 +188,9 @@ speak_text() {
     
     log "DEBUG" "Speaking text on Windows: voice=$voice, rate=$rate"
     
-    # 依存関係チェック
-    if ! check_windows_dependencies; then
-        log "ERROR" "Cannot speak: missing dependencies"
-        return 1
-    fi
-    
-    local powershell_path=$(find_powershell_path)
-    
-    # テキストの前処理
-    local processed_text=$(preprocess_speech_text "$text")
-    
-    # 音声の選択
-    local target_voice="$voice"
-    if [[ "$voice" == "auto" ]] || [[ -z "$voice" ]]; then
-        target_voice=$(select_japanese_voice)
-    fi
-    
-    # レートの正規化（-10 to 10）
-    local normalized_rate="$rate"
-    if [[ $rate -gt 10 ]]; then
-        normalized_rate=10
-    elif [[ $rate -lt -10 ]]; then
-        normalized_rate=-10
-    fi
-    
-    # PowerShell 音声合成スクリプト
-    local tts_script="
-try {
-    Add-Type -AssemblyName System.Speech
-    \$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
-    
-    # 音声の設定
-    try {
-        \$synth.SelectVoice('$target_voice')
-        Write-Host \"Using voice: $target_voice\"
-    } catch {
-        Write-Host \"Voice '$target_voice' not found, using default\"
-    }
-    
-    # レートの設定
-    \$synth.Rate = $normalized_rate
-    
-    # 音声合成の実行
-    \$synth.Speak('$processed_text')
-    \$synth.Dispose()
-    
-    Write-Host \"Speech synthesis completed successfully\"
-    exit 0
-} catch {
-    Write-Host \"Error: \$(\$_.Exception.Message)\"
-    exit 1
-}
-"
-    
-    # 実行とエラーハンドリング
-    local start_time=$(start_timer)
-    
-    if "$powershell_path" -Command "$tts_script" 2>/dev/null; then
-        local duration=$(end_timer "$start_time")
-        log "INFO" "Speech synthesis completed on Windows (${duration}s)"
-        return 0
-    else
-        log "ERROR" "Windows speech synthesis failed"
-        
-        # フォールバック: シンプルなビープ音
-        windows_beep_fallback "$processed_text"
-        return 1
-    fi
+    # 新しいWindows音声システムを呼び出し
+    speak_windows "$text" "$voice"
+    return $?
 }
 
 # 音声テキストの前処理（Windows向け）
@@ -566,6 +553,185 @@ test_windows_functions() {
     echo "Windows/WSL functions test completed"
 }
 
+# WSL クリップボード統合機能
+wsl_clipboard_copy() {
+    local text="$1"
+    
+    if command -v clip.exe >/dev/null 2>&1; then
+        echo -n "$text" | clip.exe
+        log "DEBUG" "Text copied to Windows clipboard via clip.exe"
+        return 0
+    elif command -v powershell.exe >/dev/null 2>&1; then
+        echo -n "$text" | powershell.exe -Command "Set-Clipboard -Value (Get-Content -Raw)"
+        log "DEBUG" "Text copied to Windows clipboard via PowerShell"
+        return 0
+    else
+        log "WARN" "No clipboard integration available"
+        return 1
+    fi
+}
+
+# WSL クリップボードからの貼り付け
+wsl_clipboard_paste() {
+    if command -v powershell.exe >/dev/null 2>&1; then
+        powershell.exe -Command "Get-Clipboard" 2>/dev/null | sed 's/\r$//'
+        return 0
+    else
+        log "WARN" "No clipboard paste capability available"
+        return 1
+    fi
+}
+
+# WSL固有のシステム情報取得
+get_wsl_info() {
+    local info_type="${1:-all}"
+    
+    case "$info_type" in
+        "version")
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+                echo "$WSL_DISTRO_NAME"
+            elif grep -qi "WSL2" /proc/version 2>/dev/null; then
+                echo "WSL2"
+            elif grep -qi microsoft /proc/version 2>/dev/null; then
+                echo "WSL1"
+            else
+                echo "Not WSL"
+            fi
+            ;;
+        "windows_build")
+            if command -v cmd.exe >/dev/null 2>&1; then
+                cmd.exe /c "ver" 2>/dev/null | grep -oP "Version \K[0-9]+\.[0-9]+\.[0-9]+" || echo "Unknown"
+            else
+                echo "Unknown"
+            fi
+            ;;
+        "memory")
+            # WSL固有のメモリ情報
+            if [[ -f /proc/meminfo ]]; then
+                awk '/MemTotal:/ {total=$2} /MemAvailable:/ {avail=$2} END {printf "%.1fGB/%.1fGB", (total-avail)/1024/1024, total/1024/1024}' /proc/meminfo
+            fi
+            ;;
+        "all")
+            echo "WSL Version: $(get_wsl_info version)"
+            echo "Windows Build: $(get_wsl_info windows_build)"
+            echo "Memory Usage: $(get_wsl_info memory)"
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
+                echo "Distribution: $WSL_DISTRO_NAME"
+            fi
+            ;;
+    esac
+}
+
+# WSL環境最適化
+optimize_wsl_environment() {
+    log "INFO" "Optimizing WSL environment for Claude Voice"
+    
+    # WSL固有の環境変数設定
+    export CLAUDE_WSL_MODE="true"
+    export CLAUDE_AUDIO_BACKEND="windows"
+    
+    # Windows側アプリケーションパスの確認
+    if [[ -d "/mnt/c/Windows/System32" ]]; then
+        export WINDOWS_SYSTEM32="/mnt/c/Windows/System32"
+        log "DEBUG" "Windows System32 path detected: $WINDOWS_SYSTEM32"
+    fi
+    
+    # PowerShellの事前キャッシュ
+    local powershell_path=$(find_powershell_path)
+    if [[ -n "$powershell_path" ]]; then
+        export CLAUDE_POWERSHELL_PATH="$powershell_path"
+        log "DEBUG" "PowerShell path cached: $CLAUDE_POWERSHELL_PATH"
+    fi
+    
+    # WSL用の音量設定（Windows側）
+    if [[ -n "$powershell_path" ]]; then
+        # Windows側の音量確認
+        local windows_volume=$(get_system_volume "output")
+        log "DEBUG" "Windows system volume: $windows_volume%"
+    fi
+    
+    log "INFO" "WSL environment optimization completed"
+}
+
+# WSL環境でのフォールバック通知（PowerShell不可時）
+wsl_fallback_notification() {
+    local text="$1"
+    local max_length=100
+    
+    log "INFO" "WSL fallback notification mode"
+    
+    # テキストの短縮
+    if [[ ${#text} -gt $max_length ]]; then
+        text="${text:0:$max_length}..."
+    fi
+    
+    # ターミナルビープ音（複数回）
+    local beep_count=3
+    if echo "$text" | grep -qi "error\|エラー\|failed\|失敗"; then
+        beep_count=5  # エラーの場合は多めに
+    elif echo "$text" | grep -qi "complete\|完了\|success\|成功"; then
+        beep_count=2  # 成功の場合は少なめに
+    fi
+    
+    for ((i=1; i<=beep_count; i++)); do
+        echo -e '\a'
+        sleep 0.2
+    done
+    
+    # tmux用の表示通知
+    if command -v tmux >/dev/null 2>&1 && [[ -n "${TMUX:-}" ]]; then
+        tmux display-message "🔊 Claude Voice (WSL): $text"
+    fi
+    
+    # コンソール出力
+    echo "🔊 Claude Voice Notification: $text"
+    
+    # ログ出力
+    log "INFO" "Fallback notification sent: $text"
+    
+    return 0
+}
+
+# WSL環境での簡易システム情報取得（PowerShell不要版）
+get_wsl_simple_info() {
+    echo "WSL Distribution: ${WSL_DISTRO_NAME:-$(lsb_release -si 2>/dev/null || echo "Unknown")}"
+    echo "WSL Version: $(grep -qi "WSL2" /proc/version 2>/dev/null && echo "WSL2" || echo "WSL1")"
+    echo "Memory: $(free -h | awk 'NR==2{printf "%s/%s", $3, $2}')"
+    echo "Uptime: $(uptime -p 2>/dev/null || echo "Unknown")"
+}
+
+# WSL用の軽量テスト（PowerShell不要）
+test_wsl_basic_functions() {
+    echo "=== WSL基本機能テスト ==="
+    
+    # WSL環境検出
+    if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+        echo "✅ WSL環境検出"
+    else
+        echo "❌ WSL環境検出"
+    fi
+    
+    # 基本コマンド確認
+    if command -v tmux >/dev/null 2>&1; then
+        echo "✅ tmux利用可能"
+    else
+        echo "❌ tmux利用不可"
+    fi
+    
+    # ファイルシステムアクセス
+    if [[ -d "/mnt/c" ]]; then
+        echo "✅ Windows Cドライブアクセス可能"
+    else
+        echo "❌ Windows Cドライブアクセス不可"
+    fi
+    
+    # フォールバック通知テスト
+    echo "🔊 フォールバック通知をテスト中..."
+    wsl_fallback_notification "WSL環境での通知テストです"
+    
+    echo "WSL基本機能テスト完了"
+}
+
 # このスクリプトが直接実行された場合のテスト
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # 基本モジュールの読み込み
@@ -573,5 +739,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     source "$SCRIPT_DIR/core/base.sh"
     
     claude_voice_init true
-    test_windows_functions
+    optimize_wsl_environment
+    
+    # PowerShell利用可能性に応じたテスト
+    if check_windows_dependencies 2>/dev/null; then
+        echo "PowerShell利用可能 - フルテスト実行"
+        test_windows_functions
+    else
+        echo "PowerShell利用不可 - 基本テスト実行"
+        test_wsl_basic_functions
+    fi
 fi
