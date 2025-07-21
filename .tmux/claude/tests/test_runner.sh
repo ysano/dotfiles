@@ -185,8 +185,46 @@ run_single_test() {
 
     log_test "INFO" "$test_file 実行中..."
 
-    # テスト実行（タイムアウト付き）
-    if timeout 120 bash "$test_path" >>"$TEST_REPORT_FILE" 2>&1; then
+    # テスト実行（クロスプラットフォーム対応）
+    # macOSには標準でtimeoutコマンドがないため、プラットフォーム固有の実装を使用
+    local test_result=0
+    case "$(uname -s)" in
+        "Darwin")
+            # macOS: バックグラウンド実行とkillによるタイムアウト
+            (
+                bash "$test_path" >>"$TEST_REPORT_FILE" 2>&1 &
+                local test_pid=$!
+                sleep 120 && kill -9 $test_pid 2>/dev/null &
+                local timeout_pid=$!
+                wait $test_pid
+                local exit_code=$?
+                kill -9 $timeout_pid 2>/dev/null
+                exit $exit_code
+            )
+            test_result=$?
+            ;;
+        "Linux"|"MINGW"*|"CYGWIN"*|"MSYS"*)
+            # Linux/Windows: timeoutコマンドまたはgtimeoutを試行
+            if command -v timeout >/dev/null 2>&1; then
+                timeout 120 bash "$test_path" >>"$TEST_REPORT_FILE" 2>&1
+                test_result=$?
+            elif command -v gtimeout >/dev/null 2>&1; then
+                gtimeout 120 bash "$test_path" >>"$TEST_REPORT_FILE" 2>&1
+                test_result=$?
+            else
+                # フォールバック: タイムアウトなしで実行
+                bash "$test_path" >>"$TEST_REPORT_FILE" 2>&1
+                test_result=$?
+            fi
+            ;;
+        *)
+            # その他のOS: タイムアウトなしで実行
+            bash "$test_path" >>"$TEST_REPORT_FILE" 2>&1
+            test_result=$?
+            ;;
+    esac
+
+    if [[ $test_result -eq 0 ]]; then
         log_test "PASS" "$test_file"
         return 0
     else
@@ -232,9 +270,29 @@ run_performance_tests() {
     for module in "${modules[@]}"; do
         local module_path="$CORE_DIR/$module"
         if [[ -f "$module_path" ]]; then
-            local start_time=$(date +%s%3N)
+            # クロスプラットフォーム対応のタイムスタンプ取得
+            local start_time
+            local end_time
+            case "$(uname -s)" in
+                "Darwin")
+                    # macOS: 秒単位のタイムスタンプ * 1000でミリ秒相当
+                    start_time=$(($(date +%s) * 1000))
+                    ;;
+                *)
+                    # Linux/その他: ミリ秒精度
+                    start_time=$(date +%s%3N)
+                    ;;
+            esac
+            
             if source "$module_path" 2>/dev/null; then
-                local end_time=$(date +%s%3N)
+                case "$(uname -s)" in
+                    "Darwin")
+                        end_time=$(($(date +%s) * 1000))
+                        ;;
+                    *)
+                        end_time=$(date +%s%3N)
+                        ;;
+                esac
                 local duration=$((end_time - start_time))
                 log_test "INFO" "$module 読み込み時間: ${duration}ms"
             else

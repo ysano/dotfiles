@@ -332,3 +332,157 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             ;;
     esac
 fi
+
+# 使用パターン分析機能
+analyze_usage_patterns() {
+    local stats_file="${1:-"$CLAUDE_VOICE_HOME/logs/usage_stats.jsonl"}"
+    
+    if [[ ! -f "$stats_file" ]]; then
+        log "WARN" "統計ファイルが見つかりません: $stats_file"
+        return 1
+    fi
+    
+    log "INFO" "使用パターン分析を実行中..."
+    
+    # 基本的な使用パターン分析
+    echo ""
+    echo "📈 使用パターン分析結果:"
+    
+    # 最も使用されているモデル
+    local most_used_model=$(grep '"model"' "$stats_file" | grep -v '"auto"' | sort | uniq -c | sort -nr | head -1 | awk '{print $2}' | tr -d '",')
+    if [[ -n "$most_used_model" ]]; then
+        echo "  最頻使用モデル: $most_used_model"
+    fi
+    
+    # 平均処理時間の推移
+    local avg_duration=$(grep '"success":"true"' "$stats_file" | grep '"duration"' | sed 's/.*"duration": *\([0-9.]*\).*/\1/' | awk '{sum+=$1; count++} END {if(count>0) printf("%.2f", sum/count); else print "0"}')
+    echo "  平均処理時間: ${avg_duration}秒"
+    
+    # 最近の処理時間の傾向
+    local recent_avg=$(tail -10 "$stats_file" | grep '"success":"true"' | grep '"duration"' | sed 's/.*"duration": *\([0-9.]*\).*/\1/' | awk '{sum+=$1; count++} END {if(count>0) printf("%.2f", sum/count); else print "0"}')
+    echo "  最近10回の平均: ${recent_avg}秒"
+    
+    # 成功率
+    local total_uses=$(wc -l <"$stats_file")
+    local successful_uses=$(grep '"success":"true"' "$stats_file" | wc -l)
+    local success_rate=0
+    if [[ $total_uses -gt 0 ]]; then
+        success_rate=$(echo "scale=1; $successful_uses * 100 / $total_uses" | bc 2>/dev/null || echo "0")
+    fi
+    echo "  成功率: ${success_rate}%"
+    
+    # パフォーマンス推奨事項
+    echo ""
+    echo "💡 推奨事項:"
+    if [[ $(echo "$avg_duration > 20" | bc -l 2>/dev/null || echo "0") -eq 1 ]]; then
+        echo "  ⚠️  平均処理時間が20秒を超えています。gemma2:2bモデルの使用を推奨します"
+    elif [[ $(echo "$avg_duration < 15" | bc -l 2>/dev/null || echo "1") -eq 1 ]]; then
+        echo "  ✅ パフォーマンスは良好です"
+    fi
+    
+    echo ""
+    log "INFO" "パターン分析完了"
+}
+
+# === 統計サマリー計算機能 ===
+
+# 統計サマリーの計算
+calculate_stats_summary() {
+    local stats_file="${1:-$CLAUDE_VOICE_HOME/logs/usage_stats.jsonl}"
+    
+    log "DEBUG" "統計サマリー計算開始: $stats_file"
+    
+    if [[ ! -f "$stats_file" ]]; then
+        echo "統計ファイルが見つかりません: $stats_file"
+        return 1
+    fi
+    
+    local total_operations=$(wc -l < "$stats_file" 2>/dev/null || echo "0")
+    local successful_operations=$(grep '"success": true' "$stats_file" 2>/dev/null | wc -l)
+    local failed_operations=$(grep '"success": false' "$stats_file" 2>/dev/null | wc -l)
+    
+    echo "=== Claude Voice 統計サマリー ==="
+    echo "総実行回数: $total_operations"
+    echo "成功: $successful_operations"
+    echo "失敗: $failed_operations"
+    
+    if [[ $total_operations -gt 0 ]]; then
+        local success_rate=$((successful_operations * 100 / total_operations))
+        echo "成功率: ${success_rate}%"
+        
+        # 平均実行時間の計算
+        local avg_duration=$(grep -o '"duration": [0-9]*' "$stats_file" 2>/dev/null | \
+            awk -F': ' '{sum+=$2; count++} END {if(count>0) print int(sum/count); else print 0}')
+        echo "平均実行時間: ${avg_duration}秒"
+        
+        # 最も使用されるモデル
+        local top_model=$(grep -o '"model": "[^"]*"' "$stats_file" 2>/dev/null | \
+            sort | uniq -c | sort -nr | head -1 | awk '{print $2}' | tr -d '"')
+        echo "最頻使用モデル: ${top_model:-"不明"}"
+        
+        # 最も使用される要約タイプ
+        local top_summary_type=$(grep -o '"summary_type": "[^"]*"' "$stats_file" 2>/dev/null | \
+            sort | uniq -c | sort -nr | head -1 | awk '{print $2}' | tr -d '"')
+        echo "最頻要約タイプ: ${top_summary_type:-"不明"}"
+    else
+        echo "成功率: 0%"
+    fi
+    
+    log "DEBUG" "統計サマリー計算完了"
+    return 0
+}
+
+# 統計出力のフォーマット
+format_stats_output() {
+    local format="${1:-text}" # text, json, csv
+    local stats_file="${2:-$CLAUDE_VOICE_HOME/logs/usage_stats.jsonl}"
+    
+    case "$format" in
+        "json")
+            format_stats_as_json "$stats_file"
+            ;;
+        "csv")
+            format_stats_as_csv "$stats_file"
+            ;;
+        "text"|*)
+            format_stats_as_text "$stats_file"
+            ;;
+    esac
+}
+
+# テキスト形式での統計出力
+format_stats_as_text() {
+    local stats_file="$1"
+    calculate_stats_summary "$stats_file"
+}
+
+# JSON形式での統計出力
+format_stats_as_json() {
+    local stats_file="$1"
+    echo "{"
+    echo '  "claude_voice_stats": {'
+    if [[ -f "$stats_file" ]]; then
+        local total=$(wc -l < "$stats_file" 2>/dev/null || echo "0")
+        local success=$(grep '"success": true' "$stats_file" 2>/dev/null | wc -l)
+        echo "    \"total_operations\": $total,"
+        echo "    \"successful_operations\": $success,"
+        echo "    \"failed_operations\": $((total - success))"
+    else
+        echo "    \"total_operations\": 0,"
+        echo "    \"successful_operations\": 0,"
+        echo "    \"failed_operations\": 0"
+    fi
+    echo '  }'
+    echo "}"
+}
+
+# CSV形式での統計出力
+format_stats_as_csv() {
+    local stats_file="$1"
+    echo "timestamp,operation,summary_type,model,os_type,duration,success"
+    if [[ -f "$stats_file" ]]; then
+        while IFS= read -r line; do
+            echo "$line" | jq -r '[.timestamp, .operation, .summary_type, .model, .os_type, .duration, .success] | @csv' 2>/dev/null || echo "$line"
+        done < "$stats_file"
+    fi
+}

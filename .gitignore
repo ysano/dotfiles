@@ -189,6 +189,9 @@ CLAUDE_WORKFLOWS_TEST_RESULTS.md
 # tmux related
 .tmux/cache/
 .tmux/status/.last_cleanup
+.tmux/claude/logs/claude-voice.log
+.tmux/claude/logs/integration.log
+.tmux/claude/logs/performance.log
 
 # Additional undo-tree files
 *.~undo-tree~

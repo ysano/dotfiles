@@ -1,207 +1,268 @@
 #!/bin/bash
-# Universal Voice System - クロスプラットフォーム音声出力統合
-# WSL, macOS, Linux対応の統一音声インターフェース
+# Universal Voice System for tmux Claude Integration
+# WSL改善をmacOS環境に適用した統一音声システム
 
-# === 音声エンジンレジストリの初期化 ===
-init_universal_voice() {
-    # レジストリが初期化されていない場合は初期化
-    if [[ ${#VOICE_ENGINES[@]} -eq 0 ]]; then
-        source "$(dirname "${BASH_SOURCE[0]}")/voice_engine_registry.sh"
-        init_voice_engine_registry
-    fi
-}
-
-# === 音声エンジンの検出と選択 ===
+# 音声エンジンの検出
 detect_voice_engine() {
-    init_universal_voice
-    select_best_engine
-}
-
-# === 統合音声出力関数 ===
-universal_speak() {
-    local text="$1"
-    local voice_setting="${2:-auto}"
-    local engine="${3:-$(detect_voice_engine)}"
-
-    log "DEBUG" "Universal speak: engine=$engine, voice=$voice_setting"
-
-    init_universal_voice
-    execute_voice_engine "$engine" "$text" "$voice_setting"
-}
-
-# === 非同期音声出力 ===
-universal_speak_async() {
-    local text="$1"
-    local voice_setting="${2:-auto}"
-    local timeout="${3:-30}"
-    local max_concurrent="${4:-1}"
-
-    log "DEBUG" "Starting async universal speech synthesis"
-
-    # 並行音声出力の制限
-    limit_concurrent_voices "$max_concurrent"
-
-    # バックグラウンドで音声出力
-    (
-        timeout "$timeout" universal_speak "$text" "$voice_setting" 2>/dev/null
-        local exit_code=$?
-        if [[ $exit_code -eq 124 ]]; then
-            log "WARN" "Universal speech synthesis timed out after ${timeout}s"
-        elif [[ $exit_code -ne 0 ]]; then
-            log "WARN" "Universal speech synthesis failed with exit code $exit_code"
-        fi
-    ) &
-
-    local bg_pid=$!
-    log "DEBUG" "Universal speech synthesis started in background (PID: $bg_pid)"
-
-    return 0
-}
-
-# === 並行音声プロセス制限 ===
-limit_concurrent_voices() {
-    local max_processes="${1:-1}"
-
-    # 様々な音声プロセスの検出パターン
-    local voice_patterns=(
-        "powershell.*Speech"
-        "osascript.*say"
-        "espeak"
-        "festival.*tts"
-    )
-
-    local total_count=0
-    local pids_to_kill=()
-
-    # 各パターンでプロセスを検索
-    for pattern in "${voice_patterns[@]}"; do
-        local pids=($(pgrep -f "$pattern" 2>/dev/null))
-        total_count=$((total_count + ${#pids[@]}))
-
-        # 制限を超えた場合のPIDを収集
-        if [[ $total_count -gt $max_processes ]]; then
-            local excess=$((total_count - max_processes))
-            for ((i = 0; i < excess && i < ${#pids[@]}; i++)); do
-                pids_to_kill+=("${pids[i]}")
-            done
-        fi
-    done
-
-    # 余分なプロセスを終了
-    for pid in "${pids_to_kill[@]}"; do
-        kill "$pid" 2>/dev/null
-        log "DEBUG" "Terminated voice process: $pid"
-    done
-
-    if [[ ${#pids_to_kill[@]} -gt 0 ]]; then
-        sleep 0.5
-    fi
-}
-
-# === 音声システム診断 ===
-diagnose_universal_voice() {
-    echo "=== Universal Voice System Diagnostics ==="
-    echo ""
-
-    # 環境検出
-    local os_type=$(uname)
-    echo "Operating System: $os_type"
-
-    if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
-        echo "Environment: WSL"
-    fi
-
-    echo ""
-    init_universal_voice
-    diagnose_engine_registry
-}
-
-# === テスト関数 ===
-test_universal_voice() {
-    echo "Testing Universal Voice System..."
-    echo ""
-
-    # 診断実行
-    diagnose_universal_voice
-    echo ""
-
-    # 音声テスト
-    local engine=$(detect_voice_engine)
-    echo "Testing with engine: $engine"
-    echo ""
-
-    echo "Testing Japanese speech..."
-    if universal_speak "ユニバーサル音声システムのテストです。日本語の読み上げが動作しています。"; then
-        echo "✅ Japanese speech test: PASSED"
-    else
-        echo "❌ Japanese speech test: FAILED"
-    fi
-
-    echo ""
-    echo "Testing English speech..."
-    if universal_speak "This is a test of the universal voice system. Cross-platform speech synthesis is working."; then
-        echo "✅ English speech test: PASSED"
-    else
-        echo "❌ English speech test: FAILED"
-    fi
-
-    echo ""
-    echo "Testing async speech..."
-    universal_speak_async "非同期音声テストです。バックグラウンドで再生されています。"
-    echo "✅ Async speech test: INITIATED"
-
-    echo ""
-    echo "Universal Voice System test completed"
-}
-
-# === このスクリプトが直接実行された場合 ===
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # 基本モジュールの読み込み
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-    if [[ -f "$SCRIPT_DIR/base.sh" ]]; then
-        source "$SCRIPT_DIR/base.sh"
-        claude_voice_init true
-    else
-        # スタンドアロン実行時の簡易ログ関数
-        log() {
-            local level="$1"
-            local message="$2"
-            echo "[$level] $message" >&2
-        }
-    fi
-
-    # コマンドライン引数の処理
-    case "${1:-test}" in
-        "test")
-            test_universal_voice
-            ;;
-        "diagnose")
-            diagnose_universal_voice
-            ;;
-        "speak")
-            if [[ -n "$2" ]]; then
-                universal_speak "$2" "${3:-auto}"
+    local os_type="$(uname)"
+    
+    case "$os_type" in
+        "Darwin")
+            if command -v say >/dev/null 2>&1; then
+                echo "macos_say"
             else
-                echo "Usage: $0 speak <text> [voice]"
-                exit 1
+                echo "none"
             fi
             ;;
-        "async")
-            if [[ -n "$2" ]]; then
-                universal_speak_async "$2" "${3:-auto}"
-                echo "Async speech initiated"
+        "Linux")
+            if grep -qi microsoft /proc/version 2>/dev/null || [[ -n "$WSL_DISTRO_NAME" ]]; then
+                # WSL環境
+                if command -v powershell.exe >/dev/null 2>&1; then
+                    echo "wsl_powershell"
+                elif command -v espeak >/dev/null 2>&1; then
+                    echo "linux_espeak"
+                else
+                    echo "none"
+                fi
             else
-                echo "Usage: $0 async <text> [voice]"
-                exit 1
+                # 純粋なLinux環境
+                if command -v espeak >/dev/null 2>&1; then
+                    echo "linux_espeak"
+                elif command -v festival >/dev/null 2>&1; then
+                    echo "linux_festival"
+                else
+                    echo "none"
+                fi
             fi
             ;;
         *)
-            echo "Usage: $0 {test|diagnose|speak|async}"
-            echo "  test     - Run comprehensive tests"
-            echo "  diagnose - Show system diagnostics"
-            echo "  speak    - Test speech synthesis"
-            echo "  async    - Test async speech synthesis"
+            echo "none"
+            ;;
+    esac
+}
+
+# macOS Focus Mode / Do Not Disturb の高度な検出
+check_macos_focus_mode() {
+    if [[ "$(uname)" != "Darwin" ]]; then
+        return 0  # macOS以外では制限しない
+    fi
+    
+    # macOS Focus Mode検出の改善版
+    if command -v shortcuts >/dev/null 2>&1; then
+        local focus_mode=$(shortcuts run "Get Focus Mode" 2>/dev/null || echo "none")
+        
+        case "$focus_mode" in
+            "Do Not Disturb"|"Work"|"Sleep"|"Personal")
+                return 1  # 音声出力を抑制
+                ;;
+            *)
+                return 0  # 音声出力を許可
+                ;;
+        esac
+    fi
+    
+    # フォールバック: 従来のDNDチェック
+    local dnd_status=$(plutil -extract dnd_prefs.userPref.enabled xml1 \
+        "$HOME/Library/Preferences/com.apple.ncprefs.plist" 2>/dev/null | \
+        grep -o "<true/>")
+        
+    if [[ -n "$dnd_status" ]]; then
+        return 1  # DNDが有効
+    else
+        return 0  # DNDが無効
+    fi
+}
+
+# 音声デバイスの智的選択（macOS）
+select_macos_audio_device() {
+    # BlackHole等の仮想デバイスを検出
+    local default_output=$(system_profiler SPAudioDataType 2>/dev/null | \
+        grep -A1 "Default.*Output.*Device.*Yes" | \
+        grep "Manufacturer" | head -1)
+    
+    if echo "$default_output" | grep -qi "existential\|blackhole\|soundflower"; then
+        # 仮想デバイスの場合は物理デバイスにフォールバック
+        echo "MacBook Proのスピーカー"
+    else
+        echo "auto"  # デフォルトデバイスを使用
+    fi
+}
+
+# 並行音声プロセスの制限（macOS）
+limit_concurrent_voices_macos() {
+    local max_processes="${1:-2}"
+    
+    # macOSの音声プロセス検出
+    local say_pids=($(pgrep -f "^say " 2>/dev/null))
+    local afplay_pids=($(pgrep -f "^afplay " 2>/dev/null))
+    
+    local total_count=$((${#say_pids[@]} + ${#afplay_pids[@]}))
+    
+    if [[ $total_count -gt $max_processes ]]; then
+        # 古いプロセスを優先終了
+        for pid in "${say_pids[@]:0:$((total_count - max_processes))}"; do
+            kill "$pid" 2>/dev/null
+        done
+    fi
+}
+
+# ユニバーサル音声出力メイン関数
+universal_speak() {
+    local text="$1"
+    local voice_setting="${2:-auto}"
+    local speed="${3:-200}"
+    local max_length="${4:-300}"
+    local engine="${5:-$(detect_voice_engine)}"
+    
+    # テキスト長制限
+    if [[ ${#text} -gt $max_length ]]; then
+        text="${text:0:$max_length}..."
+    fi
+    
+    # Focus Mode / DND チェック
+    if ! check_macos_focus_mode; then
+        echo "[VOICE] Focus mode active - speech suppressed" >&2
+        return 0
+    fi
+    
+    case "$engine" in
+        "macos_say")
+            # 並行プロセス制限
+            limit_concurrent_voices_macos 2
+            
+            # デバイス選択
+            local audio_device=$(select_macos_audio_device)
+            
+            # 音声設定の最適化
+            local voice_name="Kyoko"
+            [[ "$voice_setting" != "auto" ]] && voice_name="$voice_setting"
+            
+            # 非同期実行 with timeout
+            {
+                if [[ "$audio_device" == "auto" ]]; then
+                    say -v "$voice_name" -r "$speed" "$text"
+                else
+                    say -v "$voice_name" -r "$speed" -a "$audio_device" "$text"
+                fi
+            } &
+            
+            # プロセス完了待機（最大30秒）
+            local say_pid=$!
+            local timeout_count=0
+            while kill -0 "$say_pid" 2>/dev/null && [[ $timeout_count -lt 30 ]]; do
+                sleep 1
+                ((timeout_count++))
+            done
+            
+            # タイムアウト時は強制終了
+            if [[ $timeout_count -ge 30 ]]; then
+                kill "$say_pid" 2>/dev/null
+                echo "[VOICE] Speech timeout - process terminated" >&2
+                return 1
+            fi
+            ;;
+            
+        "wsl_powershell")
+            # WSL PowerShell音声合成
+            powershell.exe -Command "Add-Type -AssemblyName System.Speech; \
+                \$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; \
+                \$synth.Rate = $((speed / 25)); \
+                \$synth.Speak('$text')" 2>/dev/null &
+            ;;
+            
+        "linux_espeak")
+            # Linux espeak
+            espeak -s "$speed" "$text" 2>/dev/null &
+            ;;
+            
+        "linux_festival")
+            # Linux festival
+            echo "$text" | festival --tts 2>/dev/null &
+            ;;
+            
+        "none")
+            echo "[VOICE] No suitable voice engine available" >&2
+            return 1
+            ;;
+            
+        *)
+            echo "[VOICE] Unknown voice engine: $engine" >&2
+            return 1
+            ;;
+    esac
+    
+    return 0
+}
+
+# 音声エンジンのテスト
+test_voice_engine() {
+    local engine="${1:-$(detect_voice_engine)}"
+    
+    echo "Testing voice engine: $engine"
+    
+    if universal_speak "音声システムテスト完了" "Kyoko" "200" "100" "$engine"; then
+        echo "✅ Voice engine test passed: $engine"
+        return 0
+    else
+        echo "❌ Voice engine test failed: $engine"
+        return 1
+    fi
+}
+
+# 利用可能音声エンジンの一覧
+list_available_engines() {
+    echo "Available voice engines:"
+    
+    local current_engine=$(detect_voice_engine)
+    echo "  Current: $current_engine"
+    
+    if [[ "$(uname)" == "Darwin" ]]; then
+        if command -v say >/dev/null 2>&1; then
+            echo "  ✅ macos_say"
+            echo "    Available voices:"
+            say -v "?" | grep -E "(Kyoko|Alex|Victoria)" | head -3 | sed 's/^/      /'
+        else
+            echo "  ❌ macos_say (not available)"
+        fi
+    fi
+    
+    if grep -qi microsoft /proc/version 2>/dev/null || [[ -n "$WSL_DISTRO_NAME" ]]; then
+        if command -v powershell.exe >/dev/null 2>&1; then
+            echo "  ✅ wsl_powershell"
+        else
+            echo "  ❌ wsl_powershell (not available)"
+        fi
+    fi
+    
+    if command -v espeak >/dev/null 2>&1; then
+        echo "  ✅ linux_espeak"
+    else
+        echo "  ❌ linux_espeak (not available)"
+    fi
+}
+
+# CLIインターフェース
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    case "${1:-}" in
+        "test")
+            test_voice_engine "$2"
+            ;;
+        "list")
+            list_available_engines
+            ;;
+        "speak")
+            shift
+            universal_speak "$@"
+            ;;
+        "detect")
+            detect_voice_engine
+            ;;
+        *)
+            echo "Usage: $0 {test|list|speak|detect}"
+            echo "  test [engine]     - Test voice engine"
+            echo "  list              - List available engines"
+            echo "  speak <text>      - Speak text using universal system"
+            echo "  detect            - Detect current voice engine"
             exit 1
             ;;
     esac

@@ -203,22 +203,22 @@ execute_full_voice_action() {
 
     case "$action_type" in
         "manual")
-            voice_mode=$(get_integration_config "manual_voice_mode" "brief")
-            voice_lines=$(get_integration_config "manual_voice_lines" "25")
+            voice_mode="brief"
+            voice_lines="25"
             ;;
         "auto_complete")
-            voice_mode=$(get_integration_config "auto_complete_voice_mode" "brief")
-            voice_lines=$(get_integration_config "auto_complete_voice_lines" "15")
+            voice_mode="brief"
+            voice_lines="15"
             ;;
         "auto_waiting")
-            voice_mode=$(get_integration_config "auto_waiting_voice_mode" "brief")
-            voice_lines=$(get_integration_config "auto_waiting_voice_lines" "10")
+            voice_mode="brief"
+            voice_lines="10"
             ;;
     esac
 
     # Claude Voice の安全な実行
     local claude_voice_bin="$CLAUDE_HOME/bin/claude-voice"
-    local voice_model=$(get_integration_config "voice_model" "auto")
+    local voice_model="auto"
 
     log_integration "INFO" "Executing full voice action: $voice_mode $voice_lines lines"
 

@@ -14,8 +14,9 @@ run_health_check() {
     local issues=()
 
     # 設定マネージャーの読み込み（オプション）
-    if [[ -f "$CLAUDE_VOICE_HOME/core/integration.sh" ]]; then
-        source "$CLAUDE_VOICE_HOME/core/integration.sh" >/dev/null 2>&1
+    # テストモードでは外部モジュール読み込みをスキップ
+    if [[ -z "${CLAUDE_VOICE_TEST_MODE:-}" ]] && [[ -f "$CLAUDE_VOICE_HOME/core/integration.sh" ]]; then
+        source "$CLAUDE_VOICE_HOME/core/integration.sh" >/dev/null 2>&1 || true
     fi
 
     # 1. 設定ファイルのヘルスチェック
@@ -55,12 +56,12 @@ run_health_check() {
     ((total_checks++))
 
     # 結果の表示
-    display_health_results "$health_score" "$total_checks" issues[@]
+    display_health_results "$health_score" "$total_checks" issues
 }
 
 # 設定ファイルのヘルスチェック
 check_configuration_health() {
-    local -n issues_ref=$1
+    local issues_array_name=$1
     local score=0
 
     echo "1. Configuration Health..."
@@ -76,7 +77,7 @@ check_configuration_health() {
                 score=1
             else
                 echo "   ❌ YAML syntax errors detected"
-                issues_ref+=("yaml_syntax")
+                eval "${issues_array_name}+=(\"yaml_syntax\")"
                 score=0
             fi
         else
@@ -85,7 +86,7 @@ check_configuration_health() {
         fi
     else
         echo "   ❌ Configuration file missing"
-        issues_ref+=("config_missing")
+        eval "${issues_array_name}+=(\"config_missing\")"
         score=0
     fi
 
@@ -105,7 +106,7 @@ check_configuration_health() {
 
 # 統合レイヤーのヘルスチェック
 check_integration_health() {
-    local -n issues_ref=$1
+    local issues_array_name=$1
     local score=0
 
     echo "2. Integration Layer Health..."
@@ -120,18 +121,18 @@ check_integration_health() {
                 ;;
             "degraded")
                 echo "   ⚠️  Integration layer: Degraded functionality"
-                issues_ref+=("integration_degraded")
+                eval "${issues_array_name}+=(\"integration_degraded\")"
                 score=0
                 ;;
             *)
                 echo "   ❌ Integration layer: Disabled or non-functional"
-                issues_ref+=("integration_failed")
+                eval "${issues_array_name}+=(\"integration_failed\")"
                 score=0
                 ;;
         esac
     else
         echo "   ❌ Integration layer not accessible"
-        issues_ref+=("integration_missing")
+        eval "${issues_array_name}+=(\"integration_missing\")"
         score=0
     fi
 
@@ -145,7 +146,7 @@ check_integration_health() {
         fi
     else
         echo "   ❌ tmux command not available"
-        issues_ref+=("tmux_missing")
+        eval "${issues_array_name}+=(\"tmux_missing\")"
         score=0
     fi
 
@@ -155,7 +156,7 @@ check_integration_health() {
 
 # 音声システムのヘルスチェック
 check_audio_health() {
-    local -n issues_ref=$1
+    local issues_array_name=$1
     local score=0
     local audio_engines_available=0
     local total_engines=0
@@ -175,11 +176,11 @@ check_audio_health() {
                     echo "   ✅ Audio session accessible"
                 else
                     echo "   ❌ Audio session not accessible"
-                    issues_ref+=("audio_session_failed")
+                    eval "${issues_array_name}+=(\"audio_session_failed\")"
                 fi
             else
                 echo "   ❌ macOS osascript not available"
-                issues_ref+=("osascript_missing")
+                eval "${issues_array_name}+=(\"osascript_missing\")"
             fi
             ;;
         "windows" | "linux")
@@ -197,12 +198,12 @@ check_audio_health() {
                             ((audio_engines_available++))
                         else
                             echo "   ❌ WSL PowerShell Speech not available"
-                            issues_ref+=("wsl_speech_failed")
+                            eval "${issues_array_name}+=(\"wsl_speech_failed\")"
                         fi
                     fi
                 else
                     echo "   ❌ WSL voice engine not found"
-                    issues_ref+=("wsl_engine_missing")
+                    eval "${issues_array_name}+=(\"wsl_engine_missing\")"
                 fi
             fi
 
@@ -226,7 +227,7 @@ check_audio_health() {
             ;;
         *)
             echo "   ⚠️  Unknown OS type: $os_type"
-            issues_ref+=("unknown_os")
+            eval "${issues_array_name}+=(\"unknown_os\")"
             ;;
     esac
 
@@ -244,7 +245,7 @@ check_audio_health() {
         fi
     else
         echo "   ❌ Voice engine registry not found"
-        issues_ref+=("voice_registry_missing")
+        eval "${issues_array_name}+=(\"voice_registry_missing\")"
     fi
 
     # スコア計算
@@ -260,7 +261,7 @@ check_audio_health() {
 
 # LLM統合のヘルスチェック
 check_llm_health() {
-    local -n issues_ref=$1
+    local issues_array_name=$1
     local score=0
 
     echo "4. LLM Integration Health..."
@@ -272,7 +273,7 @@ check_llm_health() {
             score=1
         else
             echo "   ❌ Ollama connection failed"
-            issues_ref+=("ollama_failed")
+            eval "${issues_array_name}+=(\"ollama_failed\")"
             score=0
         fi
     else
@@ -288,12 +289,12 @@ check_llm_health() {
                 echo "   ℹ️  Available models: $models"
             else
                 echo "   ❌ Ollama API not accessible"
-                issues_ref+=("ollama_api_failed")
+                eval "${issues_array_name}+=(\"ollama_api_failed\")"
                 score=0
             fi
         else
             echo "   ❌ curl command not available for Ollama check"
-            issues_ref+=("curl_missing")
+            eval "${issues_array_name}+=(\"curl_missing\")"
             score=0
         fi
     fi
@@ -303,7 +304,7 @@ check_llm_health() {
         echo "   ✅ LLM manager available"
     else
         echo "   ❌ LLM manager not found"
-        issues_ref+=("llm_manager_missing")
+        eval "${issues_array_name}+=(\"llm_manager_missing\")"
         score=0
     fi
 
@@ -313,7 +314,7 @@ check_llm_health() {
 
 # ファイルシステムのヘルスチェック
 check_filesystem_health() {
-    local -n issues_ref=$1
+    local issues_array_name=$1
     local score=0
     local checks_passed=0
     local total_checks=0
@@ -342,7 +343,7 @@ check_filesystem_health() {
         echo "   ✅ All required directories exist"
     else
         echo "   ❌ Missing directories: ${missing_dirs[*]}"
-        issues_ref+=("missing_directories")
+        eval "${issues_array_name}+=(\"missing_directories\")"
     fi
 
     # 必要なファイルの確認
@@ -366,7 +367,7 @@ check_filesystem_health() {
         echo "   ✅ All core files exist"
     else
         echo "   ❌ Missing files: ${missing_files[*]}"
-        issues_ref+=("missing_files")
+        eval "${issues_array_name}+=(\"missing_files\")"
     fi
 
     # 権限の確認
@@ -377,7 +378,7 @@ check_filesystem_health() {
             ((checks_passed++))
         else
             echo "   ❌ Main executable lacks execute permission"
-            issues_ref+=("permission_error")
+            eval "${issues_array_name}+=(\"permission_error\")"
         fi
     fi
 
@@ -394,7 +395,7 @@ check_filesystem_health() {
 
 # 依存関係のヘルスチェック
 check_dependencies_health() {
-    local -n issues_ref=$1
+    local issues_array_name=$1
     local score=0
     local deps_available=0
     local total_deps=0
@@ -410,7 +411,7 @@ check_dependencies_health() {
             ((deps_available++))
         else
             echo "   ❌ $dep not available"
-            issues_ref+=("missing_${dep}")
+            eval "${issues_array_name}+=(\"missing_${dep}\")"
         fi
     done
 
@@ -436,7 +437,7 @@ check_dependencies_health() {
                 ((deps_available++))
             else
                 echo "   ❌ osascript not available (macOS)"
-                issues_ref+=("missing_osascript")
+                eval "${issues_array_name}+=(\"missing_osascript\")"
             fi
             ;;
         "windows" | "linux")
@@ -447,7 +448,7 @@ check_dependencies_health() {
                     ((deps_available++))
                 else
                     echo "   ❌ PowerShell not available (WSL)"
-                    issues_ref+=("missing_powershell")
+                    eval "${issues_array_name}+=(\"missing_powershell\")"
                 fi
             fi
             ;;
@@ -468,19 +469,22 @@ check_dependencies_health() {
 display_health_results() {
     local health_score=$1
     local total_checks=$2
-    local -n issues_ref=$3
+    local issues_array_name=$3
+    
+    # 配列参照の安全な方法
+    eval "local issues_array=(\"\${${issues_array_name}[@]}\")"
 
     echo "=== Health Check Results ==="
     local health_percentage=$(((health_score * 100) / total_checks))
     echo "Overall Health Score: $health_score/$total_checks ($health_percentage%)"
 
-    if [[ ${#issues_ref[@]} -eq 0 ]]; then
+    if [[ ${#issues_array[@]} -eq 0 ]]; then
         echo "🎉 System is healthy!"
         return 0
     else
         echo ""
         echo "⚠️  Issues detected:"
-        for issue in "${issues_ref[@]}"; do
+        for issue in "${issues_array[@]}"; do
             provide_issue_guidance "$issue"
         done
 

@@ -282,9 +282,15 @@ validate_legacy_config() {
     done
 
     # 値の形式確認
-    check_config_value "$config_file" "timeout" '^[0-9]+$' "数値" errors
-    check_config_value "$config_file" "max_retries" '^[0-9]+$' "数値" errors
-    check_config_value "$config_file" "volume" '^[0-9]+$' "数値(0-100)" errors
+    if ! check_config_value_safe "$config_file" "timeout" '^[0-9]+$' "数値" errors; then
+        ((errors++))
+    fi
+    if ! check_config_value_safe "$config_file" "max_retries" '^[0-9]+$' "数値" errors; then
+        ((errors++))
+    fi
+    if ! check_config_value_safe "$config_file" "volume" '^[0-9]+$' "数値(0-100)" errors; then
+        ((errors++))
+    fi
 
     # 結果の表示
     echo ""
@@ -346,7 +352,27 @@ validate_yaml_config() {
     fi
 }
 
-# 設定値の確認
+# 設定値の確認（安全版）
+check_config_value_safe() {
+    local config_file="$1"
+    local key="$2"
+    local pattern="$3"
+    local description="$4"
+    local errors_var="$5"
+
+    local value=$(grep "^$key=" "$config_file" 2>/dev/null | cut -d'=' -f2-)
+
+    if [[ -n "$value" ]]; then
+        if [[ ! "$value" =~ $pattern ]]; then
+            echo "❌ エラー: $key の値が不正です (期待: $description, 実際: $value)"
+            # 呼び出し元でエラー数をインクリメント
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# 設定値の確認（レガシー版 - 互換性のため残す）
 check_config_value() {
     local config_file="$1"
     local key="$2"
@@ -359,9 +385,15 @@ check_config_value() {
     if [[ -n "$value" ]]; then
         if [[ ! "$value" =~ $pattern ]]; then
             echo "❌ エラー: $key の値が不正です (期待: $description, 実際: $value)"
-            local errors=${!errors_var}
-            ((errors++))
-            eval "$errors_var=$errors"
+            # 動的変数参照を安全な方法で実装
+            case "$errors_var" in
+                "errors")
+                    ((errors++))
+                    ;;
+                *)
+                    echo "警告: 不明なエラー変数: $errors_var"
+                    ;;
+            esac
         fi
     fi
 }

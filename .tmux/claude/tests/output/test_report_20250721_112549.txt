@@ -1,6 +1,0 @@
-=== Claude Voice Test Suite ===
-開始時刻: 2025年  7月 21日 月曜日 11:25:49 JST
-
-[0;34mℹ️  INFO[0m: テスト環境初期化完了
-[0;34mℹ️  INFO[0m: CLAUDE_VOICE_HOME: /home/user/.tmux/claude
-[0;34mℹ️  INFO[0m: テストレポート: /home/user/.tmux/claude/tests/output/test_report_20250721_112549.txt

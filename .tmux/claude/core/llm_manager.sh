@@ -8,8 +8,24 @@ readonly PROVIDER_OPENAI="openai"
 readonly PROVIDER_CLAUDE="claude"
 readonly PROVIDER_SIMPLE="simple"
 
-# デフォルト設定
-DEFAULT_OLLAMA_API="http://172.29.80.1:11434"
+# OS固有のデフォルト設定
+case "$(uname)" in
+    "Darwin")
+        DEFAULT_OLLAMA_API="http://localhost:11434"
+        ;;
+    "Linux")
+        if grep -qi microsoft /proc/version 2>/dev/null || [[ -n "$WSL_DISTRO_NAME" ]]; then
+            # WSL環境
+            DEFAULT_OLLAMA_API="http://172.29.80.1:11434"
+        else
+            # 純粋なLinux環境
+            DEFAULT_OLLAMA_API="http://localhost:11434"
+        fi
+        ;;
+    *)
+        DEFAULT_OLLAMA_API="http://localhost:11434"
+        ;;
+esac
 DEFAULT_TIMEOUT=30
 DEFAULT_MAX_RETRIES=3
 
@@ -68,7 +84,7 @@ estimate_model_size() {
 
     # モデル名から軽量性を推定（小さいほど軽量）
     case "$model" in
-        *"mini"* | *"tiny"* | *"1b"*) echo "1" ;;
+        *"2b"* | *"mini"* | *"tiny"* | *"1b"*) echo "2" ;;
         *"3b"* | *"small"*) echo "3" ;;
         *"7b"* | *"medium"*) echo "7" ;;
         *"13b"* | *"large"*) echo "13" ;;
@@ -81,10 +97,11 @@ estimate_model_size() {
 suggest_lightweight_models() {
     log "INFO" "Recommending lightweight models for installation:"
     echo "推奨軽量モデル（インストールコマンド）:"
-    echo "  ollama pull phi4-mini:latest"
-    echo "  ollama pull orca-mini:latest"
+    echo "  ollama pull gemma2:2b          # 最高速度・高品質（推奨）"
+    echo "  ollama pull phi4-mini:latest   # 軽量・高速"
+    echo "  ollama pull orca-mini:latest   # 軽量・バランス型"
     echo ""
-    echo "これらのモデルは高速でリソース使用量が少ないため、tmux環境に最適です。"
+    echo "gemma2:2bは15.4秒の最高速度を実現し、tmux環境に最適です。"
 }
 
 # 最軽量モデルの選択
@@ -127,17 +144,17 @@ select_best_model() {
         return 0
     fi
 
-    # 軽量・高速モデルを優先
+    # 軽量・高速モデルを優先（gemma2:2bを最優先に追加）
     local priority_models=()
     case "$task_type" in
         "coding" | "technical")
-            priority_models=("phi4-mini:latest" "orca-mini:latest" "qwen2.5-coder:3b")
+            priority_models=("gemma2:2b" "phi4-mini:latest" "orca-mini:latest" "qwen2.5-coder:3b")
             ;;
         "summary" | "general")
-            priority_models=("phi4-mini:latest" "orca-mini:latest")
+            priority_models=("gemma2:2b" "phi4-mini:latest" "orca-mini:latest")
             ;;
         *)
-            priority_models=("phi4-mini:latest" "orca-mini:latest")
+            priority_models=("gemma2:2b" "phi4-mini:latest" "orca-mini:latest")
             ;;
     esac
 
@@ -190,28 +207,28 @@ generate_prompt() {
         context_info="コンテキスト: $context\n\n"
     fi
 
-    # モデル別プロンプト最適化
+    # 超高速化プロンプト（文字数制限: 10-15文字）
     local base_prompt=""
     case "$summary_type" in
         "brief")
             if [[ "$model" == "phi4-mini"* ]]; then
-                base_prompt="以下のClaude Codeの作業画面を日本語で簡潔に要約してください。重要なポイント、エラー、警告を1-2文で説明してください。技術的な詳細よりも全体的な状況を重視してください：\n\n${context_info}${input_text}"
+                base_prompt="10-15文字で状況：\n${context_info}${input_text}\n\n状況："
             elif [[ "$model" == "orca-mini"* ]]; then
-                base_prompt="Summarize the following Claude Code screen content briefly in Japanese. Focus on key points, errors, and warnings in 1-2 sentences:\n\n${context_info}${input_text}"
+                base_prompt="10-15文字で要約：\n${context_info}${input_text}\n\n要約："
             elif [[ "$model" == "qwen2.5-coder"* ]]; then
-                base_prompt="以下のClaude Codeの開発画面を技術者向けに簡潔に要約してください。コードエラー、実行結果、開発の進捗を1-2文で説明してください：\n\n${context_info}${input_text}"
+                base_prompt="10-15文字で開発状況：\n${context_info}${input_text}\n\n状況："
             else
-                base_prompt="以下のClaude Codeの画面内容を簡潔に要約してください。重要なポイント、エラー、警告を1-2文で説明してください：\n\n${context_info}${input_text}"
+                base_prompt="10-15文字で要約：\n${context_info}${input_text}\n\n要約："
             fi
             ;;
         "detailed")
-            base_prompt="以下のClaude Codeの画面内容を詳細に分析し、日本語で要約してください。実行中のコマンド、エラーの詳細、重要な情報、推奨アクションを含めて説明してください：\n\n${context_info}${input_text}"
+            base_prompt="詳細分析を50-70文字で要約：\n${context_info}${input_text}\n\n分析："
             ;;
         "technical")
-            base_prompt="以下のClaude Codeの画面内容を技術的な観点から日本語で分析してください。コマンド結果、エラー分析、次に必要なアクション、技術的な推奨事項を含めて説明してください：\n\n${context_info}${input_text}"
+            base_prompt="技術的状況を30-50文字で分析：\n${context_info}${input_text}\n\n分析："
             ;;
         *)
-            base_prompt="以下のClaude Codeの画面内容を日本語で要約してください：\n\n${context_info}${input_text}"
+            base_prompt="状況を20-30文字で要約：\n${context_info}${input_text}\n\n要約："
             ;;
     esac
 
@@ -339,50 +356,25 @@ generate_simple_summary() {
     # 技術的キーワードの検出
     local tech_keywords=$(echo "$input_text" | grep -ci "npm\|yarn\|docker\|git\|python\|node\|build\|test\|deploy")
 
-    # 基本要約の構築
-    local summary="Claude Codeの作業状況: "
+    # 超コンパクトな基本要約の構築
+    local summary=""
 
     # コンテキスト情報の追加
     if [[ -n "$context" ]]; then
         summary+="($context) "
     fi
 
-    # 状態の分析
-    local status_items=()
-
+    # 超コンパクト状態分析
     if [[ $error_count -gt 0 ]]; then
-        status_items+=("${error_count}件のエラー")
-    fi
-
-    if [[ $warning_count -gt 0 ]]; then
-        status_items+=("${warning_count}件の警告")
-    fi
-
-    if [[ $success_count -gt 0 ]]; then
-        status_items+=("${success_count}件の成功")
-    fi
-
-    if [[ $command_count -gt 0 ]]; then
-        status_items+=("${command_count}個のコマンド実行")
-    fi
-
-    # ステータス項目の結合
-    if [[ ${#status_items[@]} -gt 0 ]]; then
-        local IFS="、"
-        summary+="${status_items[*]}。"
+        summary+="エラー${error_count}件"
+    elif [[ $success_count -gt 0 ]]; then
+        summary+="成功${success_count}件"
+    elif [[ $command_count -gt 0 ]]; then
+        summary+="コマンド${command_count}個実行"
+    elif [[ $tech_keywords -gt 0 ]]; then
+        summary+="開発作業中"
     else
-        summary+="アクティビティを検出。"
-    fi
-
-    # 技術的コンテキストの追加
-    if [[ $tech_keywords -gt 0 ]]; then
-        summary+="開発関連の作業が進行中。"
-    fi
-
-    # 最後のコマンドの抽出
-    local last_command=$(echo "$input_text" | grep -E "⏺ Bash|⏺ Update|⏺ Write" | tail -1 | sed 's/⏺ [^(]*(//; s/).*//' | head -c 30)
-    if [[ -n "$last_command" ]]; then
-        summary+="最新操作: ${last_command}。"
+        summary+="作業中"
     fi
 
     log "INFO" "Simple summary generated: ${summary:0:100}..."

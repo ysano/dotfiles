@@ -213,6 +213,6 @@ test_interface() {
     local operation="$2"
     shift 2
     
-    echo "Testing ${interface_type}::${operation} with args: $@"
+    echo "Testing ${interface_type}::${operation} with args: $*"
     call_"$interface_type" "$operation" "$@"
 }

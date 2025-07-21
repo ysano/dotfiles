@@ -87,7 +87,9 @@ install-tools:
 shellcheck:
 	@echo "$(CYAN)📋 ShellCheck解析を実行中...$(NC)"
 	@SHELLCHECK_CMD=""; \
-	if command -v shellcheck >/dev/null 2>&1; then \
+	if command -v /opt/homebrew/bin/shellcheck >/dev/null 2>&1; then \
+		SHELLCHECK_CMD="/opt/homebrew/bin/shellcheck"; \
+	elif command -v shellcheck >/dev/null 2>&1; then \
 		SHELLCHECK_CMD="shellcheck"; \
 	elif [ -x ~/.local/bin/shellcheck ]; then \
 		SHELLCHECK_CMD="$$HOME/.local/bin/shellcheck"; \

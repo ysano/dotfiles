@@ -236,7 +236,7 @@ display_text_output() {
 display_completion_notification() {
     local summary_type="$1"
 
-    echo "✅ 処理完了 ($summary_type要約)"
+    echo "✅ 処理完了 (${summary_type}要約)"
     log "INFO" "Execution completed successfully"
 }
 
@@ -544,7 +544,8 @@ log() {
     local level="$1"
     local message="$2"
 
-    if command -v logger >/dev/null 2>&1; then
+    # テストモード or logger利用可能な場合は出力
+    if [[ "${CLAUDE_VOICE_TEST_MODE:-false}" == "true" ]] || command -v logger >/dev/null 2>&1; then
         echo "[$level] $message" >&2
     fi
 }

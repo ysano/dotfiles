@@ -1,6 +1,13 @@
 #!/bin/bash
-# Claude Voice - macOS specific functions
+# Claude Voice - macOS specific functions  
 # macOS固有の音声・通知機能
+# WSL改善統合版 - ユニバーサル音声システム統合
+
+# ユニバーサル音声システムの読み込み
+UNIVERSAL_VOICE_SCRIPT="$HOME/.tmux/claude/core/universal_voice.sh"
+if [[ -f "$UNIVERSAL_VOICE_SCRIPT" ]]; then
+    source "$UNIVERSAL_VOICE_SCRIPT"
+fi
 
 # macOS固有の依存関係チェック
 check_macos_dependencies() {
@@ -34,7 +41,8 @@ check_macos_dependencies() {
 get_audio_devices() {
     log "DEBUG" "Getting macOS default audio output concept"
 
-    # システムのデフォルト出力を使用（具体的なデバイス名ではなく概念）
+    # macOSではsayコマンドがシステムデフォルト出力を使用するため
+    # 単純にsystem_defaultを返す
     echo "system_default"
 }
 
@@ -75,6 +83,18 @@ normalize_device_name() {
             # Use system default - no explicit device specification
             # This allows macOS to route through user's configured default output
             echo ""
+            ;;
+        "speaker_fallback")
+            # BlackHole や仮想デバイス使用時の実際スピーカーへのフォールバック
+            # Try to find actual speakers/headphones
+            local physical_devices=$(say -a '?' 2>&1 | grep -E "(Built-in|Internal|Speakers|Headphones)" | head -1 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//')
+            if [[ -n "$physical_devices" ]]; then
+                log "DEBUG" "Using physical audio device: $physical_devices"
+                echo "$physical_devices"
+            else
+                log "WARN" "No physical audio device found, using system default"
+                echo ""
+            fi
             ;;
         "alert_device")
             # For alert sounds, ensure we use the alert volume routing
@@ -151,6 +171,21 @@ speak_text() {
 
     log "DEBUG" "Executing: say ${say_args[*]} \"$processed_text\""
 
+    # タイムアウト制限（20秒でタイムアウト）
+    local timeout_duration=20
+    
+    # macOS用のタイムアウト実装（brew install coreutils でインストールされる gtimeout を優先）
+    local timeout_cmd=""
+    if has_command gtimeout; then
+        timeout_cmd="gtimeout"
+    elif has_command timeout; then
+        timeout_cmd="timeout"
+    else
+        # フォールバック: タイムアウトなしで実行（タイムアウト機能を無効化）
+        timeout_cmd=""
+        log "WARN" "No timeout command available, speech may run without time limit"
+    fi
+
     # Phase 2 Fix: Ensure proper audio session access for background processes
     if [[ -n "${TMUX:-}" ]] && [[ "${CLAUDE_VOICE_BACKGROUND_MODE:-false}" == "true" ]]; then
         # When running in tmux background mode, use osascript for audio session access
@@ -161,40 +196,91 @@ speak_text() {
         done
         say_command="$say_command $(printf '%q' "$processed_text")"
 
-        log "DEBUG" "Background mode: using osascript for audio session access"
-        if osascript -e "do shell script \"$say_command\"" 2>/dev/null; then
-            local duration=$(end_timer "$start_time")
-            log "INFO" "Speech synthesis completed via osascript (${duration}s)"
-            return 0
+        log "DEBUG" "Background mode: using osascript for audio session access (timeout: ${timeout_duration}s)"
+        if [[ -n "$timeout_cmd" ]]; then
+            if "$timeout_cmd" "$timeout_duration" osascript -e "do shell script \"$say_command\"" 2>/dev/null; then
+                local duration=$(end_timer "$start_time")
+                log "INFO" "Speech synthesis completed via osascript (${duration}s)"
+                return 0
+            elif [[ $? -eq 124 ]]; then
+                log "WARN" "Speech synthesis timed out after ${timeout_duration}s (osascript)"
+                return 1
+            fi
+        else
+            # フォールバック: タイムアウトなしで実行
+            if osascript -e "do shell script \"$say_command\"" 2>/dev/null; then
+                local duration=$(end_timer "$start_time")
+                log "INFO" "Speech synthesis completed via osascript (${duration}s)"
+                return 0
+            fi
         fi
     fi
 
-    # Standard execution path
-    if say "${say_args[@]}" "$processed_text"; then
-        local duration=$(end_timer "$start_time")
-        log "INFO" "Speech synthesis completed (${duration}s)"
-        return 0
+    # Standard execution path with timeout
+    if [[ -n "$timeout_cmd" ]]; then
+        if "$timeout_cmd" "$timeout_duration" say "${say_args[@]}" "$processed_text"; then
+            local duration=$(end_timer "$start_time")
+            log "INFO" "Speech synthesis completed (${duration}s)"
+            return 0
+        elif [[ $? -eq 124 ]]; then
+            log "WARN" "Speech synthesis timed out after ${timeout_duration}s (say)"
+            return 1
+        else
+            # エラーの場合、最小限の引数で再試行
+            log "WARN" "Speech failed, retrying with minimal arguments"
+            log "DEBUG" "Fallback: say -v \"$voice\" \"$processed_text\""
+            if "$timeout_cmd" "$timeout_duration" say -v "$voice" "$processed_text"; then
+                local duration=$(end_timer "$start_time")
+                log "INFO" "Speech synthesis completed with fallback (${duration}s)"
+                return 0
+            elif [[ $? -eq 124 ]]; then
+                log "WARN" "Speech synthesis fallback timed out after ${timeout_duration}s"
+                return 1
+            fi
+
+            # Final fallback: osascript execution
+            log "WARN" "Standard say failed, trying osascript fallback"
+            local escaped_text=$(printf '%s\n' "$processed_text" | sed 's/[[\.*^$()+?{|]/\\&/g')
+            if "$timeout_cmd" "$timeout_duration" osascript -e "say \"$escaped_text\" using \"$voice\"" 2>/dev/null; then
+                local duration=$(end_timer "$start_time")
+                log "INFO" "Speech synthesis completed via osascript fallback (${duration}s)"
+                return 0
+            elif [[ $? -eq 124 ]]; then
+                log "WARN" "Speech synthesis osascript fallback timed out after ${timeout_duration}s"
+                return 1
+            fi
+
+            log "ERROR" "Speech synthesis failed"
+            return 1
+        fi
     else
-        # エラーの場合、最小限の引数で再試行
-        log "WARN" "Speech failed, retrying with minimal arguments"
-        log "DEBUG" "Fallback: say -v \"$voice\" \"$processed_text\""
-        if say -v "$voice" "$processed_text"; then
+        # タイムアウトコマンドが利用できない場合の通常実行
+        if say "${say_args[@]}" "$processed_text"; then
             local duration=$(end_timer "$start_time")
-            log "INFO" "Speech synthesis completed with fallback (${duration}s)"
+            log "INFO" "Speech synthesis completed (${duration}s)"
             return 0
-        fi
+        else
+            # エラーの場合、最小限の引数で再試行
+            log "WARN" "Speech failed, retrying with minimal arguments"
+            log "DEBUG" "Fallback: say -v \"$voice\" \"$processed_text\""
+            if say -v "$voice" "$processed_text"; then
+                local duration=$(end_timer "$start_time")
+                log "INFO" "Speech synthesis completed with fallback (${duration}s)"
+                return 0
+            fi
 
-        # Final fallback: osascript execution
-        log "WARN" "Standard say failed, trying osascript fallback"
-        local escaped_text=$(printf '%s\n' "$processed_text" | sed 's/[[\.*^$()+?{|]/\\&/g')
-        if osascript -e "say \"$escaped_text\" using \"$voice\"" 2>/dev/null; then
-            local duration=$(end_timer "$start_time")
-            log "INFO" "Speech synthesis completed via osascript fallback (${duration}s)"
-            return 0
-        fi
+            # Final fallback: osascript execution
+            log "WARN" "Standard say failed, trying osascript fallback"
+            local escaped_text=$(printf '%s\n' "$processed_text" | sed 's/[[\.*^$()+?{|]/\\&/g')
+            if osascript -e "say \"$escaped_text\" using \"$voice\"" 2>/dev/null; then
+                local duration=$(end_timer "$start_time")
+                log "INFO" "Speech synthesis completed via osascript fallback (${duration}s)"
+                return 0
+            fi
 
-        log "ERROR" "Speech synthesis failed"
-        return 1
+            log "ERROR" "Speech synthesis failed"
+            return 1
+        fi
     fi
 }
 
@@ -216,8 +302,8 @@ preprocess_speech_text() {
     # URL の簡略化
     processed=$(echo "$processed" | sed 's|https\?://[^ ]*|URL|g')
 
-    # 長すぎるテキストの短縮
-    local max_length=$(get_config "audio.max_speech_length" "500")
+    # 長すぎるテキストの短縮（パフォーマンス改善）
+    local max_length=$(get_config "audio.max_speech_length" "300")  # 500→300文字に短縮
     if [[ ${#processed} -gt $max_length ]]; then
         processed="${processed:0:$max_length}。以下省略。"
     fi
