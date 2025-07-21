@@ -18,7 +18,7 @@ CURRENT_LOG_LEVEL=${CLAUDE_LOG_LEVEL:-$LOG_LEVEL_INFO}
 log() {
     local level="$1"
     local message="$2"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp=$(/bin/date '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "$(printf '%(%Y-%m-%d %H:%M:%S)T' -1)")
     local level_num
     
     case "$level" in
@@ -35,7 +35,13 @@ log() {
     fi
     
     # ログディレクトリの確保
-    mkdir -p "$CLAUDE_VOICE_HOME/logs"
+    if [[ ! -d "$CLAUDE_VOICE_HOME/logs" ]]; then
+        /bin/mkdir -p "$CLAUDE_VOICE_HOME/logs" 2>/dev/null || {
+            # フォールバック: ディレクトリ作成失敗時は標準エラー出力のみ
+            echo "[$level] $message" >&2
+            return 1
+        }
+    fi
     
     # ログファイルへの出力
     echo "[$timestamp] [$level] $message" >> "$CLAUDE_VOICE_HOME/logs/claude-voice.log"
@@ -181,19 +187,63 @@ end_timer() {
     fi
 }
 
-# エラーハンドリング用のトラップ設定
+# エラーハンドリング用のトラップ設定（改良版）
 setup_error_handling() {
-    set -eE  # エラー時に即座に終了
-    trap 'handle_error $? $LINENO' ERR
+    # 統合エラーハンドラーが利用可能な場合は詳細なトラップを設定
+    if declare -f report_error >/dev/null 2>&1; then
+        set -eE
+        trap 'integrated_handle_error $? $LINENO' ERR
+        log "DEBUG" "Integrated error handling enabled"
+    else
+        # フォールバック: 基本的なエラーハンドリング
+        set -eE
+        trap 'handle_error $? $LINENO' ERR
+        log "DEBUG" "Basic error handling enabled"
+    fi
 }
 
-# エラーハンドラー
+# 統合エラーハンドラー
+integrated_handle_error() {
+    local exit_code="$1"
+    local line_number="$2"
+    
+    # トラップを一時的に無効化（無限ループ防止）
+    trap - ERR
+    
+    # エラー処理中フラグをチェック
+    if [[ "${CLAUDE_ERROR_HANDLING:-false}" == "true" ]]; then
+        return
+    fi
+    
+    export CLAUDE_ERROR_HANDLING="true"
+    
+    local script_name="${BASH_SOURCE[1]##*/}"
+    local function_name="${FUNCNAME[1]:-main}"
+    
+    report_error "SCRIPT_ERROR" "$script_name" "$function_name" "Script failed at line $line_number" "exit_code:$exit_code"
+    
+    export CLAUDE_ERROR_HANDLING="false"
+    
+    # トラップを再設定
+    trap 'integrated_handle_error $? $LINENO' ERR
+}
+
+# 基本エラーハンドラー（フォールバック）
 handle_error() {
     local exit_code="$1"
     local line_number="$2"
     local script_name="${BASH_SOURCE[1]##*/}"
     
+    # 無限ループ防止
+    if [[ "${CLAUDE_ERROR_HANDLING:-false}" == "true" ]]; then
+        return
+    fi
+    
+    export CLAUDE_ERROR_HANDLING="true"
+    
     log "ERROR" "Script $script_name failed at line $line_number with exit code $exit_code"
+    
+    export CLAUDE_ERROR_HANDLING="false"
     
     # スタックトレースの出力（デバッグモード時）
     if [[ "${DEBUG_MODE:-false}" == "true" ]]; then

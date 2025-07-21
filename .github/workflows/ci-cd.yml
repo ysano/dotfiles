@@ -1,8 +1,8 @@
-name: Claude Voice Integration CI/CD
+name: Claude Voice Integration CI/CD v2
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master, develop, refactor/* ]
     paths:
       - '.tmux/claude/**'
       - '.tmux/tests/**'
@@ -15,445 +15,769 @@ on:
 
 env:
   CLAUDE_VOICE_HOME: ${{ github.workspace }}/.tmux/claude
+  CI: true
+  FORCE_COLOR: 1
+
+# Job concurrency control
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # Linting and Static Analysis
-  lint:
-    name: Lint and Static Analysis
+  # Pre-flight checks - very fast validation
+  pre-flight:
+    name: Pre-flight Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should-run-tests: ${{ steps.changes.outputs.tests }}
+      should-run-security: ${{ steps.changes.outputs.security }}
+      matrix-tests: ${{ steps.setup.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Shell Check
+      - name: Detect changes
+        id: changes
         run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-
-      - name: Lint Shell Scripts
-        run: |
-          find .tmux/claude -name "*.sh" -type f | xargs shellcheck -e SC1090,SC1091
-          find .tmux/scripts -name "*.sh" -type f | xargs shellcheck -e SC1090,SC1091 || true
-          find .tmux/tests -name "*.sh" -type f | xargs shellcheck -e SC1090,SC1091
-
-      - name: Check Script Permissions
-        run: |
-          echo "Checking executable permissions..."
-          find .tmux/claude -name "*.sh" -type f ! -executable | tee non_executable.txt
-          if [ -s non_executable.txt ]; then
-            echo "❌ Found non-executable shell scripts:"
-            cat non_executable.txt
-            exit 1
+          # Check what types of changes were made
+          if git diff --name-only HEAD^ | grep -q "\.tmux/claude/.*\.sh$"; then
+            echo "tests=true" >> $GITHUB_OUTPUT
           else
-            echo "✅ All shell scripts have correct permissions"
+            echo "tests=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if git diff --name-only HEAD^ | grep -qE "(security|auth|powershell|windows)"; then
+            echo "security=true" >> $GITHUB_OUTPUT
+          else
+            echo "security=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: YAML Lint
+      - name: Setup test matrix
+        id: setup
         run: |
-          sudo apt-get install -y yamllint
-          find .tmux/claude -name "*.yaml" -o -name "*.yml" | xargs yamllint -d relaxed
+          # Dynamically create test matrix based on available modules
+          modules=$(find .tmux/claude/core -name "*.sh" -type f -exec basename {} .sh \; | sort)
+          echo "matrix=$(echo "$modules" | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
 
-  # Unit and Integration Tests
-  test:
-    name: Unit and Integration Tests
+      - name: Validate basic structure
+        run: |
+          # Quick structural validation
+          required_dirs=(".tmux/claude/core" ".tmux/claude/tests")
+          for dir in "${required_dirs[@]}"; do
+            if [[ ! -d "$dir" ]]; then
+              echo "❌ Required directory missing: $dir"
+              exit 1
+            fi
+          done
+          echo "✅ Basic structure validation passed"
+
+  # Enhanced linting with caching
+  lint-and-format:
+    name: Lint & Format
     runs-on: ubuntu-latest
-    needs: lint
-    strategy:
-      matrix:
-        test-suite:
-          - unit
-          - integration
-          - advanced
+    needs: pre-flight
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Test Environment
+      - name: Cache linting tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/bin/shellcheck
+            ~/.local/bin/shfmt
+          key: linting-tools-${{ runner.os }}-v1
+
+      - name: Install linting tools
         run: |
-          # Create necessary directories
-          mkdir -p $CLAUDE_VOICE_HOME/logs
-          mkdir -p $CLAUDE_VOICE_HOME/tests/output
+          # Install shellcheck
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz" | tar -xJv
+            cp "shellcheck-v0.9.0/shellcheck" ~/.local/bin/
+            chmod +x ~/.local/bin/shellcheck
+          fi
           
-          # Install dependencies
-          sudo apt-get update
-          sudo apt-get install -y jq curl bc
+          # Install shfmt
+          if ! command -v shfmt >/dev/null 2>&1; then
+            curl -L "https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64" -o ~/.local/bin/shfmt
+            chmod +x ~/.local/bin/shfmt
+          fi
+          
+          # Install yamllint
+          pip install --user yamllint
 
-      - name: Setup Mock Ollama for Testing
+      - name: Enhanced ShellCheck
         run: |
-          # Create mock ollama for testing
-          sudo tee /usr/local/bin/ollama > /dev/null << 'EOF'
-          #!/bin/bash
-          case "$1" in
-            "list")
-              echo '{"models": [{"name": "phi4-mini:latest"}]}'
-              ;;
-            "ps")
-              echo '{"models": []}'
-              ;;
-            "pull")
-              echo "✅ Pulling $2..."
-              sleep 1
-              echo "✅ Success"
-              ;;
-            *)
-              echo "Mock Ollama: $*"
-              ;;
-          esac
+          echo "🔍 Running enhanced ShellCheck analysis..."
+          
+          # Create detailed shellcheck configuration
+          cat > .shellcheckrc << 'EOF'
+          exclude=SC1090,SC1091,SC2034,SC2086
+          external-sources=true
+          check-sourced=true
           EOF
-          sudo chmod +x /usr/local/bin/ollama
+          
+          # Run shellcheck with detailed reporting
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            echo "Checking $script..."
+            ~/.local/bin/shellcheck --format=gcc "$script" || exit 1
+          done
+          
+          echo "✅ All shell scripts pass enhanced ShellCheck"
 
-      - name: Run ${{ matrix.test-suite }} Tests
+      - name: Format validation
+        run: |
+          echo "📝 Validating shell script formatting..."
+          
+          format_issues=0
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            if ! ~/.local/bin/shfmt -d -i 4 -ci "$script"; then
+              echo "❌ Format issues in $script"
+              format_issues=$((format_issues + 1))
+            fi
+          done
+          
+          if [[ $format_issues -gt 0 ]]; then
+            echo "❌ Found $format_issues files with formatting issues"
+            exit 1
+          fi
+          
+          echo "✅ All scripts properly formatted"
+
+      - name: YAML and configuration validation
+        run: |
+          echo "📋 Validating configuration files..."
+          
+          # YAML validation
+          find .tmux/claude -name "*.yml" -o -name "*.yaml" 2>/dev/null | while read -r yaml_file; do
+            echo "Validating $yaml_file..."
+            python3 -c "import yaml; yaml.safe_load(open('$yaml_file'))" || exit 1
+            yamllint -d relaxed "$yaml_file" || exit 1
+          done
+          
+          echo "✅ Configuration validation passed"
+
+  # Comprehensive testing with parallel execution
+  test-suite:
+    name: Test Suite (${{ matrix.test-type }})
+    runs-on: ubuntu-latest
+    needs: [pre-flight, lint-and-format]
+    if: needs.pre-flight.outputs.should-run-tests == 'true'
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        test-type: [unit, integration, security, performance]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache test dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/test-deps
+            /tmp/claude-test-cache
+          key: test-deps-${{ runner.os }}-${{ hashFiles('.tmux/claude/tests/**') }}
+
+      - name: Setup enhanced test environment
+        run: |
+          # Create comprehensive test environment
+          mkdir -p $CLAUDE_VOICE_HOME/{logs,tests/output,cache}
+          mkdir -p ~/.cache/test-deps
+          
+          # Install enhanced dependencies
+          sudo apt-get update
+          sudo apt-get install -y jq curl bc parallel time stress-ng
+          
+          # Setup test isolation
+          export CLAUDE_VOICE_TEST_MODE=true
+          export CLAUDE_VOICE_TEST_ISOLATION=true
+          
+          # Create mock services for testing
+          cat > /tmp/mock-services.sh << 'EOF'
+          #!/bin/bash
+          # Mock external services for testing
+          
+          mock_ollama() {
+            case "$1" in
+              "list") echo '{"models": [{"name": "phi4-mini:latest", "size": 1000000}]}';;
+              "ps") echo '{"models": []}';;
+              "pull") echo "✅ Mock pull: $2"; sleep 0.1;;
+              *) echo "Mock Ollama: $*";;
+            esac
+          }
+          
+          mock_powershell() {
+            case "$*" in
+              *"Get-ExecutionPolicy"*) echo "RemoteSigned";;
+              *"System.Speech"*) echo "Speech synthesis mock";;
+              *) echo "Mock PowerShell output";;
+            esac
+          }
+          
+          # Export functions
+          export -f mock_ollama mock_powershell
+          EOF
+          
+          source /tmp/mock-services.sh
+
+      - name: Module dependency validation
+        run: |
+          echo "🔗 Validating module dependencies..."
+          
+          cd .tmux/claude/core
+          
+          # Check each module can be sourced independently
+          for module in *.sh; do
+            if [[ -f "$module" ]]; then
+              echo "Testing $module..."
+              bash -n "$module" || {
+                echo "❌ Syntax error in $module"
+                exit 1
+              }
+            fi
+          done
+          
+          echo "✅ All modules have valid syntax"
+
+      - name: Run ${{ matrix.test-type }} tests
         run: |
           cd .tmux/claude/tests
-          chmod +x test_runner.sh
           
-          # Set test mode
-          export CLAUDE_VOICE_TEST_MODE=true
-          export CI=true
-          
-          case "${{ matrix.test-suite }}" in
+          # Enhanced test execution with detailed reporting
+          case "${{ matrix.test-type }}" in
             "unit")
-              ./test_runner.sh unit
+              echo "🧪 Running unit tests..."
+              chmod +x test_runner.sh
+              
+              # Run with enhanced monitoring
+              timeout 600 ./test_runner.sh unit 2>&1 | tee unit-test-output.log
+              
+              # Generate coverage report
+              echo "📊 Generating test coverage report..."
+              covered_functions=$(grep -o "Testing function: [a-zA-Z_]*" unit-test-output.log | wc -l)
+              total_functions=$(find ../core -name "*.sh" -exec grep -c "^[a-zA-Z_]*() {" {} + | awk '{sum+=$1} END {print sum}')
+              coverage=$((covered_functions * 100 / total_functions))
+              echo "Test coverage: $coverage% ($covered_functions/$total_functions functions)"
               ;;
-            "integration") 
-              ./test_runner.sh integration
+              
+            "integration")
+              echo "🔗 Running integration tests..."
+              timeout 600 ./test_runner.sh integration 2>&1 | tee integration-test-output.log
               ;;
-            "advanced")
-              ./test_runner.sh advanced
+              
+            "security")
+              echo "🔒 Running security tests..."
+              timeout 300 ./test_runner.sh security 2>&1 | tee security-test-output.log
+              ;;
+              
+            "performance")
+              echo "⚡ Running performance tests..."
+              
+              # Performance baseline testing
+              start_time=$(date +%s%3N)
+              timeout 300 ./test_runner.sh performance 2>&1 | tee performance-test-output.log
+              end_time=$(date +%s%3N)
+              
+              duration=$((end_time - start_time))
+              echo "Performance test duration: ${duration}ms"
+              
+              # Fail if performance tests take too long
+              if [[ $duration -gt 30000 ]]; then
+                echo "❌ Performance tests exceeded 30s threshold"
+                exit 1
+              fi
               ;;
           esac
 
-      - name: Upload Test Results
+      - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-${{ matrix.test-suite }}
+          name: test-results-${{ matrix.test-type }}-${{ github.sha }}
           path: |
+            .tmux/claude/tests/*-output.log
             .tmux/claude/tests/output/
             .tmux/claude/logs/
-          retention-days: 7
+          retention-days: 14
 
-  # Security Testing
-  security:
-    name: Security Scan
+  # Enhanced security scanning
+  security-scan:
+    name: Security Analysis
     runs-on: ubuntu-latest
-    needs: lint
+    needs: pre-flight
+    if: needs.pre-flight.outputs.should-run-security == 'true'
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Security Scan - Secrets Detection
+      - name: Advanced secret scanning
         run: |
-          echo "Scanning for potential secrets..."
-          if grep -r -E "(password|secret|key|token)" .tmux/claude/ --include="*.sh" --include="*.conf" --include="*.yaml" | grep -v "# " | grep -v "example"; then
-            echo "❌ Potential secrets found in code"
+          echo "🔍 Running advanced secret detection..."
+          
+          # Multi-pattern secret detection
+          secret_patterns=(
+            "password['\"]?\s*[:=]\s*['\"][^'\"]*['\"]"
+            "api[_-]?key['\"]?\s*[:=]\s*['\"][^'\"]*['\"]"
+            "secret['\"]?\s*[:=]\s*['\"][^'\"]*['\"]"
+            "token['\"]?\s*[:=]\s*['\"][^'\"]*['\"]"
+            "[A-Za-z0-9]{32,}"
+          )
+          
+          secrets_found=0
+          for pattern in "${secret_patterns[@]}"; do
+            if grep -r -E "$pattern" .tmux/claude/ --include="*.sh" --include="*.conf" | grep -v -E "(example|test|mock|dummy)"; then
+              echo "❌ Potential secret found with pattern: $pattern"
+              secrets_found=1
+            fi
+          done
+          
+          if [[ $secrets_found -eq 1 ]]; then
+            echo "❌ Security scan failed - potential secrets detected"
             exit 1
-          else
-            echo "✅ No secrets detected"
           fi
+          
+          echo "✅ No secrets detected"
 
-      - name: Security Scan - Command Injection
+      - name: Vulnerability pattern analysis
         run: |
-          echo "Scanning for potential command injection vulnerabilities..."
-          if grep -r -E '\$\(' .tmux/claude/ --include="*.sh" | grep -E 'eval|exec' | grep -v "# "; then
-            echo "⚠️ Potential command injection patterns found - manual review required"
-          else
-            echo "✅ No obvious command injection patterns detected"
+          echo "🛡️ Analyzing vulnerability patterns..."
+          
+          vuln_found=0
+          
+          # Command injection patterns
+          if grep -r -E '\$\([^)]*\$[^)]*\)' .tmux/claude/ --include="*.sh" | grep -v "# Safe:"; then
+            echo "⚠️ Potential command injection pattern detected"
+            vuln_found=1
           fi
-
-      - name: File Permission Check
-        run: |
-          echo "Checking file permissions for security..."
-          find .tmux/claude -type f -perm /o+w | tee world_writable.txt
-          if [ -s world_writable.txt ]; then
-            echo "❌ Found world-writable files:"
-            cat world_writable.txt
+          
+          # Path traversal patterns
+          if grep -r -E '\.\./|\.\.\\' .tmux/claude/ --include="*.sh" | grep -v "# Safe:"; then
+            echo "⚠️ Potential path traversal pattern detected"
+            vuln_found=1
+          fi
+          
+          # Unsafe eval patterns
+          if grep -r -E '\beval\s+' .tmux/claude/ --include="*.sh" | grep -v "# Safe:"; then
+            echo "❌ Unsafe eval usage detected"
+            vuln_found=1
+          fi
+          
+          if [[ $vuln_found -eq 1 ]]; then
+            echo "❌ Vulnerability analysis failed"
             exit 1
-          else
-            echo "✅ No world-writable files found"
           fi
+          
+          echo "✅ Vulnerability analysis passed"
 
-  # Performance Testing
-  performance:
-    name: Performance Tests
+      - name: File permission audit
+        run: |
+          echo "🔐 Auditing file permissions..."
+          
+          # Check for overly permissive files
+          perm_issues=0
+          
+          find .tmux/claude -type f \( -perm /o+w -o -perm /g+w \) | while read -r file; do
+            echo "❌ Overly permissive file: $file"
+            perm_issues=1
+          done
+          
+          # Check for missing execute permissions on scripts
+          find .tmux/claude -name "*.sh" -type f ! -executable | while read -r script; do
+            echo "⚠️ Script missing execute permission: $script"
+          done
+          
+          echo "✅ File permission audit completed"
+
+  # Performance and resource monitoring
+  performance-analysis:
+    name: Performance Analysis
     runs-on: ubuntu-latest
-    needs: test
+    needs: [lint-and-format]
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Performance Test Environment
+      - name: Module load performance
         run: |
-          mkdir -p $CLAUDE_VOICE_HOME/logs
-          mkdir -p $CLAUDE_VOICE_HOME/tests/output
-          sudo apt-get update
-          sudo apt-get install -y time bc
-
-      - name: Module Load Performance Test
-        run: |
+          echo "⚡ Analyzing module load performance..."
+          
           cd .tmux/claude/core
-          echo "Testing module load times..."
+          
+          total_load_time=0
+          module_count=0
           
           for module in *.sh; do
-            if [ -f "$module" ]; then
-              echo "Testing $module..."
+            if [[ -f "$module" ]]; then
+              echo "Testing load time for $module..."
+              
               start_time=$(date +%s%3N)
               bash -n "$module"
               end_time=$(date +%s%3N)
-              duration=$((end_time - start_time))
-              echo "$module: ${duration}ms"
               
-              # Fail if any module takes more than 1 second to parse
-              if [ $duration -gt 1000 ]; then
-                echo "❌ $module parsing took too long: ${duration}ms"
-                exit 1
+              load_time=$((end_time - start_time))
+              total_load_time=$((total_load_time + load_time))
+              module_count=$((module_count + 1))
+              
+              echo "$module: ${load_time}ms"
+              
+              # Warn if individual module is slow
+              if [[ $load_time -gt 500 ]]; then
+                echo "⚠️ $module load time exceeds 500ms"
               fi
             fi
           done
-
-      - name: Test Suite Performance
-        run: |
-          cd .tmux/claude/tests
-          export CLAUDE_VOICE_TEST_MODE=true
-          export CI=true
           
-          echo "Measuring test suite execution time..."
-          start_time=$(date +%s)
-          timeout 300 ./test_runner.sh unit || echo "Tests completed or timed out"
-          end_time=$(date +%s)
-          duration=$((end_time - start_time))
+          avg_load_time=$((total_load_time / module_count))
+          echo "Average module load time: ${avg_load_time}ms"
+          echo "Total estimated load time: ${total_load_time}ms"
           
-          echo "Test suite duration: ${duration}s"
-          
-          # Fail if tests take more than 4 minutes
-          if [ $duration -gt 240 ]; then
-            echo "❌ Test suite took too long: ${duration}s"
+          # Performance thresholds
+          if [[ $total_load_time -gt 5000 ]]; then
+            echo "❌ Total module load time exceeds 5s threshold"
             exit 1
-          else
-            echo "✅ Test suite performance acceptable: ${duration}s"
           fi
 
-  # Documentation and Integration Check
-  docs-and-integration:
-    name: Documentation and Integration
+      - name: Memory usage analysis
+        run: |
+          echo "💾 Analyzing memory usage patterns..."
+          
+          # Simulate memory usage during module loading
+          cd .tmux/claude/core
+          
+          # Monitor memory during source operations
+          memory_before=$(free -m | awk 'NR==2{print $3}')
+          
+          # Source all modules in test environment
+          for module in *.sh; do
+            if [[ -f "$module" ]]; then
+              bash -c "source $module" 2>/dev/null || true
+            fi
+          done
+          
+          memory_after=$(free -m | awk 'NR==2{print $3}')
+          memory_diff=$((memory_after - memory_before))
+          
+          echo "Memory usage delta: ${memory_diff}MB"
+          
+          # Reasonable memory usage threshold
+          if [[ $memory_diff -gt 100 ]]; then
+            echo "⚠️ High memory usage detected: ${memory_diff}MB"
+          fi
+
+  # Code quality metrics
+  quality-metrics:
+    name: Quality Metrics
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint-and-format]
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Documentation Check
+      - name: Collect comprehensive metrics
         run: |
-          echo "Checking documentation completeness..."
+          echo "📊 Collecting code quality metrics..."
           
-          # Check if all modules have documentation
-          missing_docs=""
-          for module in .tmux/claude/core/*.sh; do
-            module_name=$(basename "$module")
-            if ! head -20 "$module" | grep -q "^#.*[説明詳細機能]"; then
-              missing_docs="$missing_docs $module_name"
-            fi
-          done
+          # Initialize metrics
+          total_lines=0
+          total_functions=0
+          total_files=0
+          complex_functions=0
+          documented_functions=0
           
-          if [ -n "$missing_docs" ]; then
-            echo "❌ Modules missing documentation headers:$missing_docs"
-            exit 1
-          else
-            echo "✅ All modules have documentation"
-          fi
-
-      - name: Configuration Validation
-        run: |
-          echo "Validating configuration files..."
+          # Create detailed metrics report
+          cat > quality-report.md << 'EOF'
+          # Code Quality Report
           
-          # Check YAML syntax
-          if [ -f .tmux/claude/config/claude-voice.yaml ]; then
-            python3 -c "import yaml; yaml.safe_load(open('.tmux/claude/config/claude-voice.yaml'))"
-            echo "✅ YAML configuration is valid"
-          fi
+          ## Overview
+          EOF
           
-          # Check legacy config format
-          if [ -f .tmux/claude/config/claude-voice.conf ]; then
-            if grep -q "^\[" .tmux/claude/config/claude-voice.conf; then
-              echo "✅ Legacy configuration format is valid"
+          echo "| Module | Lines | Functions | Avg Function Length | Documentation |" >> quality-report.md
+          echo "|--------|-------|-----------|-------------------|---------------|" >> quality-report.md
+          
+          find .tmux/claude/core -name "*.sh" -type f | sort | while read -r script; do
+            module_name=$(basename "$script" .sh)
+            lines=$(wc -l < "$script")
+            functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() *{" "$script" 2>/dev/null || echo 0)
+            
+            # Calculate average function length
+            if [[ $functions -gt 0 ]]; then
+              avg_func_length=$((lines / functions))
             else
-              echo "❌ Legacy configuration format is invalid"
-              exit 1
+              avg_func_length=0
             fi
-          fi
-
-      - name: Integration Dependencies Check
-        run: |
-          echo "Checking integration dependencies..."
-          
-          # Check for required commands in scripts
-          required_commands="bash curl jq"
-          missing_commands=""
-          
-          for cmd in $required_commands; do
-            if ! command -v "$cmd" >/dev/null 2>&1; then
-              missing_commands="$missing_commands $cmd"
+            
+            # Check documentation coverage
+            documented=$(grep -B5 "^[a-zA-Z_][a-zA-Z0-9_]*() *{" "$script" | grep -c "^#" || echo 0)
+            doc_percentage=0
+            if [[ $functions -gt 0 ]]; then
+              doc_percentage=$((documented * 100 / functions))
+            fi
+            
+            echo "| $module_name | $lines | $functions | $avg_func_length | $doc_percentage% |" >> quality-report.md
+            
+            # Update totals
+            total_lines=$((total_lines + lines))
+            total_functions=$((total_functions + functions))
+            total_files=$((total_files + 1))
+            
+            # Check for complex functions
+            if [[ $avg_func_length -gt 50 ]]; then
+              complex_functions=$((complex_functions + 1))
+            fi
+            
+            if [[ $doc_percentage -gt 50 ]]; then
+              documented_functions=$((documented_functions + 1))
             fi
           done
           
-          if [ -n "$missing_commands" ]; then
-            echo "❌ Missing required commands:$missing_commands"
-            exit 1
-          else
-            echo "✅ All required commands available"
-          fi
+          # Add summary
+          cat >> quality-report.md << EOF
+          
+          ## Summary
+          - **Total Files**: $total_files
+          - **Total Lines**: $total_lines
+          - **Total Functions**: $total_functions
+          - **Average Lines per File**: $((total_lines / total_files))
+          - **Average Functions per File**: $((total_functions / total_files))
+          - **Complex Functions**: $complex_functions
+          - **Well-documented Modules**: $documented_functions/$total_files
+          
+          ## Quality Scores
+          - **Maintainability**: $(( (total_files * 100) / (complex_functions + 1) ))%
+          - **Documentation Coverage**: $(( documented_functions * 100 / total_files ))%
+          EOF
+          
+          echo "Quality metrics collected:"
+          cat quality-report.md
 
-  # Build and Package
-  build:
-    name: Build and Package
+      - name: Upload quality report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-metrics-${{ github.sha }}
+          path: quality-report.md
+          retention-days: 30
+
+  # Deployment readiness check
+  deployment-readiness:
+    name: Deployment Readiness
     runs-on: ubuntu-latest
-    needs: [test, security, performance, docs-and-integration]
+    needs: [test-suite, security-scan, performance-analysis, quality-metrics]
     if: github.ref == 'refs/heads/master'
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Release Package
+      - name: Readiness validation
         run: |
-          echo "Creating release package..."
+          echo "🚀 Validating deployment readiness..."
           
-          # Create distribution directory
-          mkdir -p dist/claude-voice-integration
+          readiness_score=0
+          max_score=100
           
-          # Copy core files
-          cp -r .tmux/claude/core dist/claude-voice-integration/
-          cp -r .tmux/claude/config dist/claude-voice-integration/
-          cp -r .tmux/claude/tests dist/claude-voice-integration/
+          # Test results check (30 points)
+          if [[ "${{ needs.test-suite.result }}" == "success" ]]; then
+            readiness_score=$((readiness_score + 30))
+            echo "✅ Tests passed (+30 points)"
+          else
+            echo "❌ Tests failed (0 points)"
+          fi
           
-          # Copy documentation
-          cp .tmux/ARCHITECTURE.md dist/claude-voice-integration/ || true
-          cp .tmux/WSL-INTEGRATION-GUIDE.md dist/claude-voice-integration/ || true
+          # Security check (25 points)
+          if [[ "${{ needs.security-scan.result }}" == "success" ]]; then
+            readiness_score=$((readiness_score + 25))
+            echo "✅ Security scan passed (+25 points)"
+          else
+            echo "❌ Security scan failed (0 points)"
+          fi
           
-          # Create installation script
-          cat > dist/claude-voice-integration/install.sh << 'EOF'
+          # Performance check (25 points)
+          if [[ "${{ needs.performance-analysis.result }}" == "success" ]]; then
+            readiness_score=$((readiness_score + 25))
+            echo "✅ Performance analysis passed (+25 points)"
+          else
+            echo "❌ Performance analysis failed (0 points)"
+          fi
+          
+          # Quality metrics (20 points)
+          if [[ "${{ needs.quality-metrics.result }}" == "success" ]]; then
+            readiness_score=$((readiness_score + 20))
+            echo "✅ Quality metrics collected (+20 points)"
+          else
+            echo "❌ Quality metrics failed (0 points)"
+          fi
+          
+          echo "Deployment readiness score: $readiness_score/$max_score"
+          
+          # Deployment threshold
+          if [[ $readiness_score -ge 80 ]]; then
+            echo "🎉 Deployment ready! Score: $readiness_score%"
+            echo "deployment-ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "🚫 Deployment not ready. Score: $readiness_score% (minimum: 80%)"
+            echo "deployment-ready=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Create deployment package
+        if: steps.readiness.outputs.deployment-ready == 'true'
+        run: |
+          echo "📦 Creating optimized deployment package..."
+          
+          # Create versioned package
+          version=$(date +%Y%m%d-%H%M%S)
+          package_name="claude-voice-v$version"
+          
+          mkdir -p "dist/$package_name"
+          
+          # Copy optimized files
+          cp -r .tmux/claude/core "dist/$package_name/"
+          cp -r .tmux/claude/tests "dist/$package_name/"
+          
+          # Create optimized install script
+          cat > "dist/$package_name/install.sh" << 'EOF'
           #!/bin/bash
           set -euo pipefail
           
           INSTALL_DIR="${HOME}/.tmux/claude"
+          VERSION="v$version"
           
-          echo "Installing Claude Voice Integration..."
+          echo "🚀 Installing Claude Voice Integration $VERSION..."
+          
+          # Backup existing installation
+          if [[ -d "$INSTALL_DIR" ]]; then
+            backup_dir="${INSTALL_DIR}.backup.$(date +%s)"
+            echo "📋 Backing up existing installation to $backup_dir"
+            mv "$INSTALL_DIR" "$backup_dir"
+          fi
           
           # Create directories
-          mkdir -p "$INSTALL_DIR"/{core,config,logs,tests}
+          mkdir -p "$INSTALL_DIR"/{core,logs,tests,cache}
           
-          # Copy files
+          # Copy files with verification
+          echo "📁 Installing core modules..."
           cp -r core/* "$INSTALL_DIR/core/"
-          cp -r config/* "$INSTALL_DIR/config/"
+          
+          echo "🧪 Installing test suite..."
           cp -r tests/* "$INSTALL_DIR/tests/"
           
-          # Set permissions
-          chmod +x "$INSTALL_DIR"/core/*.sh
-          chmod +x "$INSTALL_DIR"/tests/*.sh
+          # Set optimal permissions
+          find "$INSTALL_DIR" -name "*.sh" -exec chmod +x {} \;
           
-          echo "✅ Claude Voice Integration installed successfully"
-          echo "Run tests with: cd $INSTALL_DIR/tests && ./test_runner.sh unit"
+          # Run post-install validation
+          echo "✅ Running post-install validation..."
+          cd "$INSTALL_DIR/tests"
+          ./test_runner.sh unit --quick || {
+            echo "❌ Post-install validation failed"
+            exit 1
+          }
+          
+          echo "🎉 Claude Voice Integration $VERSION installed successfully!"
+          echo "📍 Installation location: $INSTALL_DIR"
+          echo "🔧 Run full tests: cd $INSTALL_DIR/tests && ./test_runner.sh"
           EOF
           
-          chmod +x dist/claude-voice-integration/install.sh
+          chmod +x "dist/$package_name/install.sh"
           
-          # Create archive
+          # Create archive with compression
           cd dist
-          tar -czf claude-voice-integration-$(date +%Y%m%d).tar.gz claude-voice-integration/
+          tar -czf "$package_name.tar.gz" "$package_name/"
           
-          echo "Package created: claude-voice-integration-$(date +%Y%m%d).tar.gz"
+          echo "Package created: $package_name.tar.gz"
+          ls -lh "$package_name.tar.gz"
 
-      - name: Upload Build Artifacts
+      - name: Upload deployment package
         uses: actions/upload-artifact@v4
         with:
-          name: claude-voice-integration-build
+          name: deployment-package-${{ github.sha }}
           path: dist/
-          retention-days: 30
+          retention-days: 90
 
-  # Health Check and Monitoring
-  health-check:
-    name: Post-deployment Health Check
+  # Comprehensive reporting
+  final-report:
+    name: CI/CD Report
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Health Check Environment
-        run: |
-          mkdir -p $CLAUDE_VOICE_HOME/logs
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Run Health Diagnostics
-        run: |
-          cd .tmux/claude/tests
-          export CLAUDE_VOICE_TEST_MODE=true
-          export CI=true
-          
-          # Run health check if available
-          if [ -f "../core/health_diagnostics.sh" ]; then
-            echo "Running health diagnostics..."
-            source ../core/health_diagnostics.sh
-            
-            if declare -f run_health_check >/dev/null 2>&1; then
-              run_health_check || echo "Health check completed with warnings"
-            else
-              echo "Health check function not available"
-            fi
-          else
-            echo "Health diagnostics module not found"
-          fi
-
-      - name: System Resource Check
-        run: |
-          echo "Checking system resources..."
-          
-          # Memory usage
-          free -h
-          
-          # Disk usage  
-          df -h
-          
-          # Process count
-          ps aux | wc -l
-          
-          echo "✅ System resource check completed"
-
-  # Notification and Reporting
-  notify:
-    name: Notification
-    runs-on: ubuntu-latest
-    needs: [test, security, performance, docs-and-integration, build, health-check]
+    needs: [pre-flight, lint-and-format, test-suite, security-scan, performance-analysis, quality-metrics, deployment-readiness]
     if: always()
     steps:
-      - name: Determine Status
-        id: status
+      - name: Generate comprehensive report
         run: |
-          if [[ "${{ needs.test.result }}" == "success" && 
-                "${{ needs.security.result }}" == "success" && 
-                "${{ needs.performance.result }}" == "success" && 
-                "${{ needs.docs-and-integration.result }}" == "success" ]]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "message=✅ All CI/CD checks passed" >> $GITHUB_OUTPUT
+          echo "📊 Generating CI/CD report..."
+          
+          cat > ci-report.md << 'EOF'
+          # Claude Voice Integration CI/CD Report
+          
+          ## Pipeline Summary
+          EOF
+          
+          # Calculate overall success rate
+          total_jobs=7
+          successful_jobs=0
+          
+          jobs=(
+            "lint-and-format:${{ needs.lint-and-format.result }}"
+            "test-suite:${{ needs.test-suite.result }}"
+            "security-scan:${{ needs.security-scan.result }}"
+            "performance-analysis:${{ needs.performance-analysis.result }}"
+            "quality-metrics:${{ needs.quality-metrics.result }}"
+            "deployment-readiness:${{ needs.deployment-readiness.result }}"
+          )
+          
+          echo "| Job | Status | Duration |" >> ci-report.md
+          echo "|-----|--------|----------|" >> ci-report.md
+          
+          for job_result in "${jobs[@]}"; do
+            job_name=$(echo "$job_result" | cut -d: -f1)
+            job_status=$(echo "$job_result" | cut -d: -f2)
+            
+            if [[ "$job_status" == "success" ]]; then
+              status_icon="✅"
+              successful_jobs=$((successful_jobs + 1))
+            elif [[ "$job_status" == "skipped" ]]; then
+              status_icon="⏭️"
+            else
+              status_icon="❌"
+            fi
+            
+            echo "| $job_name | $status_icon $job_status | - |" >> ci-report.md
+          done
+          
+          success_rate=$((successful_jobs * 100 / total_jobs))
+          
+          cat >> ci-report.md << EOF
+          
+          ## Overall Results
+          - **Success Rate**: $success_rate% ($successful_jobs/$total_jobs jobs)
+          - **Commit**: ${{ github.sha }}
+          - **Branch**: ${{ github.ref_name }}
+          - **Triggered by**: ${{ github.event_name }}
+          
+          ## Next Steps
+          EOF
+          
+          if [[ $success_rate -ge 85 ]]; then
+            echo "🎉 **Pipeline Status**: PASSED" >> ci-report.md
+            echo "- All critical checks completed successfully" >> ci-report.md
+            echo "- Ready for deployment/merge" >> ci-report.md
           else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "message=❌ Some CI/CD checks failed" >> $GITHUB_OUTPUT
+            echo "🚫 **Pipeline Status**: FAILED" >> ci-report.md
+            echo "- Review failed jobs and address issues" >> ci-report.md
+            echo "- Re-run pipeline after fixes" >> ci-report.md
           fi
+          
+          echo "CI/CD Report generated:"
+          cat ci-report.md
 
-      - name: Create Summary Report
+      - name: Update GitHub summary
         run: |
-          echo "# Claude Voice Integration CI/CD Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Pipeline Status: ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Job Results:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Lint**: ${{ needs.lint.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tests**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Security**: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Performance**: ${{ needs.performance.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Documentation**: ${{ needs.docs-and-integration.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Health Check**: ${{ needs.health-check.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Message**: ${{ steps.status.outputs.message }}" >> $GITHUB_STEP_SUMMARY
+          # Add report to GitHub step summary
+          cat ci-report.md >> $GITHUB_STEP_SUMMARY

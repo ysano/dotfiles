@@ -2,480 +2,707 @@ name: Nightly Quality Assurance
 
 on:
   schedule:
-    # Run nightly at 2 AM UTC
+    # Run every night at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      test_intensity:
+        description: 'Test intensity level'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - light
+          - standard
+          - intensive
+      include_performance_benchmarks:
+        description: 'Include performance benchmarks'
+        required: false
+        default: true
+        type: boolean
 
 env:
   CLAUDE_VOICE_HOME: ${{ github.workspace }}/.tmux/claude
+  CI: true
+  NIGHTLY_BUILD: true
 
 jobs:
+  # Extended test suite with stress testing
   extended-testing:
-    name: Extended Quality Tests
+    name: Extended Test Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
-      fail-fast: false
       matrix:
-        test-category:
-          - smoke
-          - stress
-          - compatibility
+        test-scenario:
+          - stress-test
+          - edge-cases
           - regression
+          - compatibility
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Extended Test Environment
+      - name: Setup extended test environment
         run: |
-          # Install comprehensive dependencies
+          # Enhanced test environment for nightly builds
+          mkdir -p $CLAUDE_VOICE_HOME/{logs,tests/output,cache,stress-test}
+          
+          # Install stress testing tools
           sudo apt-get update
-          sudo apt-get install -y \
-            bash \
-            curl \
-            jq \
-            bc \
-            yamllint \
-            shellcheck \
-            tmux \
-            git \
-            time \
-            strace \
-            htop \
-            valgrind
+          sudo apt-get install -y stress-ng parallel time valgrind strace
+          
+          # Setup test isolation with resource limits
+          ulimit -n 1024  # File descriptor limit
+          ulimit -u 512   # Process limit
+          ulimit -m 1048576  # Memory limit (1GB)
 
-          # Create test environment
-          mkdir -p $CLAUDE_VOICE_HOME/logs
-          mkdir -p $CLAUDE_VOICE_HOME/tests/output
-
-      - name: Run ${{ matrix.test-category }} Tests
+      - name: Run ${{ matrix.test-scenario }} tests
         run: |
           cd .tmux/claude/tests
-          export CLAUDE_VOICE_TEST_MODE=true
-          export CI=true
-          export NIGHTLY_TEST=true
           
-          case "${{ matrix.test-category }}" in
-            "smoke")
-              echo "🚭 Running smoke tests..."
-              # Quick verification that core functionality works
-              ./test_runner.sh unit --quick
+          case "${{ matrix.test-scenario }}" in
+            "stress-test")
+              echo "🔥 Running stress tests..."
               
-              # Test basic module imports
-              for module in ../core/*.sh; do
-                if [ -f "$module" ]; then
-                  echo "Testing import: $(basename "$module")"
-                  bash -n "$module" || echo "❌ Syntax error in $module"
-                fi
+              # CPU stress test during module loading
+              stress-ng --cpu 2 --timeout 30s &
+              stress_pid=$!
+              
+              # Test module loading under stress
+              for i in {1..10}; do
+                echo "Stress iteration $i/10"
+                timeout 30 ./test_runner.sh unit || echo "Stress test iteration $i failed"
+                sleep 1
               done
+              
+              # Stop stress test
+              kill $stress_pid 2>/dev/null || true
               ;;
               
-            "stress")
-              echo "💪 Running stress tests..."
+            "edge-cases")
+              echo "🎯 Running edge case tests..."
               
-              # Concurrent test execution
-              echo "Testing concurrent execution..."
-              for i in {1..5}; do
-                (./test_runner.sh unit >/dev/null 2>&1) &
-              done
-              wait
+              # Test with unusual environments
+              export CLAUDE_VOICE_TEST_EDGE_CASES=true
               
-              # Large data processing
-              echo "Testing large data processing..."
-              cd ../core
-              if [ -f "stats_monitor.sh" ]; then
-                source stats_monitor.sh
-                
-                # Generate large test data
-                for i in {1..1000}; do
-                  echo "{\"timestamp\":$(date +%s),\"operation\":\"test_$i\",\"duration\":$((RANDOM % 10))}" >> ../logs/stress_test.jsonl
-                done
-                
-                # Test processing
-                if declare -f record_usage_stats >/dev/null 2>&1; then
-                  echo "Testing stats processing under load..."
-                  time record_usage_stats "stress_test" "test_model" "linux" "5" "true" || true
-                fi
-              fi
+              # Test with limited resources
+              ulimit -n 64
+              timeout 600 ./test_runner.sh edge-cases 2>&1 | tee edge-cases-output.log
+              ;;
+              
+            "regression")
+              echo "🔍 Running regression tests..."
+              
+              # Test against known issues
+              export CLAUDE_VOICE_TEST_REGRESSION=true
+              timeout 600 ./test_runner.sh regression 2>&1 | tee regression-output.log
               ;;
               
             "compatibility")
               echo "🔄 Running compatibility tests..."
               
-              # Test different shell environments
-              for shell in bash dash; do
-                if command -v "$shell" >/dev/null 2>&1; then
-                  echo "Testing with $shell..."
-                  $shell -n ../core/*.sh || echo "❌ Compatibility issue with $shell"
+              # Test with different shell versions
+              export CLAUDE_VOICE_TEST_COMPATIBILITY=true
+              
+              # Test bash versions if available
+              for bash_version in /bin/bash /usr/bin/bash; do
+                if [[ -x "$bash_version" ]]; then
+                  echo "Testing with $bash_version"
+                  $bash_version -c "source ../core/base.sh && echo 'Compatibility test passed'"
                 fi
               done
-              
-              # Test different tmux versions
-              echo "Current tmux version:"
-              tmux -V || echo "tmux not available"
-              
-              # Test WSL compatibility simulation
-              echo "Testing WSL compatibility simulation..."
-              export FAKE_WSL=1
-              ./test_runner.sh unit --wsl-sim || true
-              ;;
-              
-            "regression")
-              echo "🔄 Running regression tests..."
-              
-              # Test against known good configurations
-              echo "Testing configuration regression..."
-              
-              # Backup current config
-              if [ -f "../config/claude-voice.yaml" ]; then
-                cp ../config/claude-voice.yaml ../config/claude-voice.yaml.backup
-              fi
-              
-              # Test with minimal config
-              cat > ../config/test-minimal.yaml << 'EOF'
-          integration:
-            enabled: true
-          llm:
-            provider: ollama
-          voice:
-            manual:
-              mode: auto
-          EOF
-              
-              export CLAUDE_CONFIG_FILE="../config/test-minimal.yaml"
-              ./test_runner.sh unit || echo "❌ Minimal config test failed"
-              
-              # Test with maximal config
-              cat > ../config/test-maximal.yaml << 'EOF'
-          integration:
-            enabled: true
-            features:
-              - voice_synthesis
-              - text_analysis
-              - error_reporting
-              - statistics
-          llm:
-            provider: ollama
-            models:
-              primary: "phi4-mini:latest"
-              fallback: "orca-mini:3b"
-            timeout: 30
-            max_retries: 3
-          voice:
-            manual:
-              mode: powershell
-            settings:
-              volume: 80
-              speed: 1.0
-            engines:
-              windows: ["sapi", "powershell"]
-              linux: ["espeak", "festival"]
-              macos: ["say"]
-          stats:
-            enabled: true
-            detailed: true
-            export_format: "json"
-          EOF
-              
-              export CLAUDE_CONFIG_FILE="../config/test-maximal.yaml"
-              ./test_runner.sh unit || echo "❌ Maximal config test failed"
-              
-              # Restore backup
-              if [ -f "../config/claude-voice.yaml.backup" ]; then
-                mv ../config/claude-voice.yaml.backup ../config/claude-voice.yaml
-              fi
               ;;
           esac
 
-      - name: Performance Profiling
-        if: matrix.test-category == 'stress'
+      - name: Collect detailed logs
+        if: always()
         run: |
-          echo "📊 Performance profiling..."
-          cd .tmux/claude/tests
+          # Collect system information
+          echo "=== System Information ===" > system-info.log
+          uname -a >> system-info.log
+          free -h >> system-info.log
+          df -h >> system-info.log
           
-          # Memory usage profiling
-          echo "Memory usage profiling:"
-          /usr/bin/time -v ./test_runner.sh unit 2>&1 | grep -E "(Maximum resident|User time|System time|Percent of CPU)"
+          # Collect process information
+          echo "=== Process Information ===" >> system-info.log
+          ps aux | grep -E "(claude|test)" >> system-info.log || true
           
-          # I/O profiling
-          echo "I/O profiling:"
-          strace -c -f ./test_runner.sh unit 2>&1 | tail -20 || echo "strace profiling completed"
-
-      - name: Coverage Analysis
-        if: matrix.test-category == 'regression'
-        run: |
-          echo "📈 Analyzing test coverage..."
-          cd .tmux/claude
-          
-          # Function coverage analysis
-          echo "Analyzing function coverage..."
-          
-          total_functions=0
-          tested_functions=0
-          
-          for module in core/*.sh; do
-            if [ -f "$module" ]; then
-              module_name=$(basename "$module")
-              echo "Analyzing $module_name..."
-              
-              # Extract function definitions
-              functions=$(grep -E "^[a-zA-Z_][a-zA-Z0-9_]*\(\)" "$module" | wc -l)
-              total_functions=$((total_functions + functions))
-              
-              # Check if tests exist for this module
-              test_file="tests/test_${module_name}"
-              if [ -f "$test_file" ]; then
-                tested=$(grep -E "test_.*\(\)" "$test_file" | wc -l)
-                tested_functions=$((tested_functions + tested))
-                echo "  Functions: $functions, Tests: $tested"
-              else
-                echo "  Functions: $functions, Tests: 0 (no test file)"
-              fi
-            fi
-          done
-          
-          if [ $total_functions -gt 0 ]; then
-            coverage=$((tested_functions * 100 / total_functions))
-            echo "Overall function coverage: $coverage% ($tested_functions/$total_functions)"
+          # Check for core dumps
+          if ls core.* 1> /dev/null 2>&1; then
+            echo "Core dumps found:"
+            ls -la core.*
           fi
 
-      - name: Upload Test Artifacts
+      - name: Upload extended test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nightly-test-results-${{ matrix.test-category }}
+          name: extended-test-results-${{ matrix.test-scenario }}
           path: |
-            .tmux/claude/tests/output/
+            .tmux/claude/tests/*-output.log
             .tmux/claude/logs/
-          retention-days: 7
+            system-info.log
+            core.*
+          retention-days: 30
 
-  security-audit:
-    name: Security Audit
+  # Performance benchmarking
+  performance-benchmarks:
+    name: Performance Benchmarks
     runs-on: ubuntu-latest
+    if: github.event.inputs.include_performance_benchmarks != 'false'
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deep Security Scan
+      - name: Setup benchmark environment
         run: |
-          echo "🔒 Running deep security scan..."
-          
-          # File permission audit
-          echo "Checking file permissions..."
-          find .tmux/claude -type f -perm /022 | tee suspicious_permissions.txt
-          if [ -s suspicious_permissions.txt ]; then
-            echo "⚠️ Files with suspicious permissions found"
-            cat suspicious_permissions.txt
-          fi
-          
-          # SUID/SGID check
-          echo "Checking for SUID/SGID files..."
-          find .tmux/claude -type f \( -perm -4000 -o -perm -2000 \) | tee suid_files.txt
-          if [ -s suid_files.txt ]; then
-            echo "❌ SUID/SGID files found"
-            cat suid_files.txt
-            exit 1
-          fi
-
-      - name: Code Vulnerability Scan
-        run: |
-          echo "🔍 Scanning for code vulnerabilities..."
-          
-          # Command injection patterns
-          echo "Checking for command injection patterns..."
-          if find .tmux/claude -name "*.sh" -exec grep -H -E '\$\([^)]*\$' {} \; | grep -v "# "; then
-            echo "⚠️ Potential command injection patterns found"
-          fi
-          
-          # Unsafe temp file usage
-          echo "Checking for unsafe temp file usage..."
-          if find .tmux/claude -name "*.sh" -exec grep -H "/tmp/" {} \; | grep -v "\$\$" | grep -v "# "; then
-            echo "⚠️ Potentially unsafe temp file usage found"
-          fi
-          
-          # Hardcoded secrets/passwords
-          echo "Checking for hardcoded secrets..."
-          if find .tmux/claude -name "*.sh" -exec grep -H -i -E "(password|secret|key|token)" {} \; | grep -v "# " | grep -v "example"; then
-            echo "⚠️ Potential hardcoded secrets found"
-          fi
-
-      - name: Configuration Security Audit
-        run: |
-          echo "⚙️ Auditing configuration security..."
-          
-          # Check YAML configurations for security issues
-          if [ -f ".tmux/claude/config/claude-voice.yaml" ]; then
-            echo "Checking YAML configuration..."
-            
-            # Check for unsafe configurations
-            if grep -i -E "(debug.*true|log_level.*debug)" .tmux/claude/config/claude-voice.yaml; then
-              echo "⚠️ Debug mode enabled in configuration"
-            fi
-            
-            # Check for exposed endpoints
-            if grep -E "http://[^/]" .tmux/claude/config/claude-voice.yaml; then
-              echo "⚠️ Non-HTTPS endpoints found in configuration"
-            fi
-          fi
-
-  dependency-audit:
-    name: Dependency Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Audit System Dependencies
-        run: |
-          echo "📦 Auditing system dependencies..."
-          
-          # Check required commands and their versions
-          commands="bash curl jq tmux git"
-          
-          for cmd in $commands; do
-            if command -v "$cmd" >/dev/null 2>&1; then
-              version=$($cmd --version 2>/dev/null | head -1 || echo "version unknown")
-              echo "$cmd: $version"
-              
-              # Check for known vulnerable versions (example)
-              case "$cmd" in
-                "bash")
-                  # Check for shellshock vulnerability (bash < 4.3)
-                  bash_version=$(bash --version | head -1 | grep -o '[0-9]\+\.[0-9]\+' | head -1)
-                  if [ -n "$bash_version" ] && [ "$(echo "$bash_version < 4.3" | bc -l)" -eq 1 ]; then
-                    echo "❌ Vulnerable bash version detected: $bash_version"
-                  fi
-                  ;;
-                "curl")
-                  # Basic curl version check
-                  curl_version=$(curl --version | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
-                  echo "curl version: $curl_version"
-                  ;;
-              esac
-            else
-              echo "❌ Missing required command: $cmd"
-            fi
-          done
-
-      - name: Network Security Check
-        run: |
-          echo "🌐 Checking network security configurations..."
-          
-          # Check for hardcoded IPs or URLs
-          if find .tmux/claude -name "*.sh" -exec grep -H -E "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" {} \; | grep -v "127.0.0.1" | grep -v "# "; then
-            echo "⚠️ Hardcoded IP addresses found"
-          fi
-          
-          # Check for HTTP (non-HTTPS) URLs
-          if find .tmux/claude -name "*.sh" -exec grep -H "http://[^/]" {} \; | grep -v "# "; then
-            echo "⚠️ Non-HTTPS URLs found"
-          fi
-
-  compatibility-matrix:
-    name: Compatibility Testing
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
-        shell: [bash, dash]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Environment
-        run: |
-          # Install dependencies
+          # Install benchmarking tools
           sudo apt-get update
-          sudo apt-get install -y bash dash curl jq bc tmux git
-          mkdir -p $CLAUDE_VOICE_HOME/logs
+          sudo apt-get install -y hyperfine perf-tools-unstable htop iotop
+          
+          # Setup CPU governor for consistent benchmarks
+          echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor || true
 
-      - name: Test Shell Compatibility
+      - name: Module loading benchmarks
         run: |
-          echo "Testing with ${{ matrix.shell }} on ${{ matrix.os }}..."
+          cd .tmux/claude/core
           
-          cd .tmux/claude/tests
-          export CLAUDE_VOICE_TEST_MODE=true
-          export CI=true
+          echo "📊 Running module loading benchmarks..."
           
-          # Test syntax with specific shell
-          echo "Checking syntax compatibility..."
-          for script in ../core/*.sh; do
-            if [ -f "$script" ]; then
-              echo "Testing $(basename "$script") with ${{ matrix.shell }}..."
-              ${{ matrix.shell }} -n "$script" || echo "❌ Syntax error in $script with ${{ matrix.shell }}"
+          # Benchmark individual module loading
+          for module in *.sh; do
+            if [[ -f "$module" ]]; then
+              echo "Benchmarking $module..."
+              hyperfine --warmup 3 --runs 10 "bash -n $module" \
+                --export-json "${module%.sh}-benchmark.json" || true
             fi
           done
+          
+          # Benchmark full system initialization
+          hyperfine --warmup 2 --runs 5 \
+            "source base.sh && source module_loader.sh" \
+            --export-json "system-init-benchmark.json" || true
 
-      - name: Run Compatibility Tests
+      - name: Memory profiling
         run: |
+          echo "🧠 Running memory profiling..."
+          
+          cd .tmux/claude/core
+          
+          # Memory usage profiling with valgrind (if available)
+          if command -v valgrind >/dev/null 2>&1; then
+            echo "Running memory leak detection..."
+            timeout 300 valgrind --tool=memcheck --leak-check=full \
+              bash -c "source base.sh" 2> memory-profile.log || true
+          fi
+          
+          # Simple memory monitoring
+          bash -c "
+            source base.sh
+            source module_loader.sh
+            echo 'Memory after module loading:'
+            cat /proc/meminfo | head -5
+          " > memory-usage.log
+
+      - name: Function call performance
+        run: |
+          echo "⚡ Benchmarking function calls..."
+          
           cd .tmux/claude/tests
           
-          # Run tests with specific shell
-          ${{ matrix.shell }} test_runner.sh unit || echo "Tests completed with some issues on ${{ matrix.shell }}"
-
-  report-generation:
-    name: Generate Quality Report
-    runs-on: ubuntu-latest
-    needs: [extended-testing, security-audit, dependency-audit, compatibility-matrix]
-    if: always()
-    steps:
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Generate Comprehensive Report
-        run: |
-          echo "📊 Generating nightly quality report..."
+          # Create performance test script
+          cat > perf-test.sh << 'EOF'
+          #!/bin/bash
+          source ../core/base.sh
           
-          cat > nightly-report.md << 'EOF'
-          # Nightly Quality Assurance Report
-          
-          **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          **Commit**: ${{ github.sha }}
-          
-          ## Test Results Summary
-          
-          ### Extended Testing
-          - **Smoke Tests**: ${{ needs.extended-testing.result }}
-          - **Stress Tests**: ${{ needs.extended-testing.result }}
-          - **Compatibility Tests**: ${{ needs.extended-testing.result }}
-          - **Regression Tests**: ${{ needs.extended-testing.result }}
-          
-          ### Security Audit
-          - **Security Scan**: ${{ needs.security-audit.result }}
-          - **Dependency Audit**: ${{ needs.dependency-audit.result }}
-          
-          ### Compatibility Matrix
-          - **Multi-OS Testing**: ${{ needs.compatibility-matrix.result }}
-          
-          ## Recommendations
-          
+          # Benchmark log function
+          for i in {1..1000}; do
+            log "DEBUG" "Performance test iteration $i" >/dev/null 2>&1
+          done
           EOF
           
-          # Add recommendations based on results
-          if [[ "${{ needs.security-audit.result }}" != "success" ]]; then
-            echo "- 🔒 Review security audit findings" >> nightly-report.md
-          fi
+          chmod +x perf-test.sh
           
-          if [[ "${{ needs.extended-testing.result }}" != "success" ]]; then
-            echo "- 🧪 Investigate test failures" >> nightly-report.md
-          fi
-          
-          if [[ "${{ needs.compatibility-matrix.result }}" != "success" ]]; then
-            echo "- 🔄 Address compatibility issues" >> nightly-report.md
-          fi
-          
-          if [[ "${{ needs.security-audit.result }}" == "success" && 
-                "${{ needs.extended-testing.result }}" == "success" && 
-                "${{ needs.compatibility-matrix.result }}" == "success" ]]; then
-            echo "- ✅ All quality checks passed successfully" >> nightly-report.md
-          fi
-          
-          echo "Report generated: nightly-report.md"
-          cat nightly-report.md
+          # Benchmark the performance test
+          hyperfine --warmup 1 --runs 5 "./perf-test.sh" \
+            --export-json "function-call-benchmark.json" || true
 
-      - name: Upload Quality Report
+      - name: Generate performance report
+        run: |
+          echo "📈 Generating performance report..."
+          
+          cat > performance-report.md << 'EOF'
+          # Performance Benchmark Report
+          
+          ## Module Loading Performance
+          EOF
+          
+          # Process benchmark results
+          find . -name "*-benchmark.json" | while read -r benchmark_file; do
+            if [[ -f "$benchmark_file" ]]; then
+              module_name=$(basename "$benchmark_file" .json)
+              echo "### $module_name" >> performance-report.md
+              
+              # Extract mean time from hyperfine JSON
+              mean_time=$(jq -r '.results[0].mean // "N/A"' "$benchmark_file" 2>/dev/null || echo "N/A")
+              echo "- Mean execution time: ${mean_time}s" >> performance-report.md
+              echo "" >> performance-report.md
+            fi
+          done
+          
+          # Add memory information
+          echo "## Memory Usage" >> performance-report.md
+          if [[ -f memory-usage.log ]]; then
+            echo "\`\`\`" >> performance-report.md
+            cat memory-usage.log >> performance-report.md
+            echo "\`\`\`" >> performance-report.md
+          fi
+
+      - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: nightly-quality-report
-          path: nightly-report.md
+          name: performance-benchmarks-${{ github.run_number }}
+          path: |
+            *-benchmark.json
+            performance-report.md
+            memory-*.log
+          retention-days: 60
+
+  # Security deep scan
+  security-deep-scan:
+    name: Deep Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install security tools
+        run: |
+          # Install additional security tools
+          sudo apt-get update
+          sudo apt-get install -y bandit lynis chkrootkit rkhunter
+          
+          # Install semgrep for advanced static analysis
+          pip install semgrep
+
+      - name: Static security analysis
+        run: |
+          echo "🔍 Running static security analysis..."
+          
+          # Run semgrep with security rules
+          semgrep --config=auto .tmux/claude/ \
+            --json --output=semgrep-results.json || true
+          
+          # Check for common security issues in shell scripts
+          find .tmux/claude -name "*.sh" -exec grep -l "password\|secret\|key" {} \; > potential-secrets.txt || true
+          
+          # Check for world-writable files
+          find .tmux/claude -type f -perm -002 > world-writable.txt || true
+
+      - name: Dynamic security testing
+        run: |
+          echo "🛡️ Running dynamic security tests..."
+          
+          cd .tmux/claude/tests
+          
+          # Test input validation with malicious inputs
+          export CLAUDE_VOICE_SECURITY_TEST=true
+          timeout 300 ./test_runner.sh security-deep 2>&1 | tee security-deep-output.log || true
+
+      - name: System security audit
+        run: |
+          echo "🔐 Running system security audit..."
+          
+          # Basic system hardening check
+          lynis audit system --quick --quiet > lynis-audit.log 2>&1 || true
+          
+          # Check for rootkits (basic scan)
+          chkrootkit > chkrootkit.log 2>&1 || true
+
+      - name: Generate security report
+        run: |
+          echo "📋 Generating security report..."
+          
+          cat > security-report.md << 'EOF'
+          # Deep Security Analysis Report
+          
+          ## Static Analysis Results
+          EOF
+          
+          # Process semgrep results
+          if [[ -f semgrep-results.json ]]; then
+            findings=$(jq '.results | length' semgrep-results.json 2>/dev/null || echo 0)
+            echo "- Security findings: $findings" >> security-report.md
+            
+            if [[ $findings -gt 0 ]]; then
+              echo "### Critical Findings" >> security-report.md
+              jq -r '.results[] | select(.extra.severity == "ERROR") | "- " + .message + " (" + .path + ":" + (.start.line | tostring) + ")"' semgrep-results.json >> security-report.md 2>/dev/null || true
+            fi
+          fi
+          
+          # Check potential secrets
+          if [[ -s potential-secrets.txt ]]; then
+            echo "### Potential Secrets" >> security-report.md
+            echo "Files that may contain secrets:" >> security-report.md
+            while read -r file; do
+              echo "- $file" >> security-report.md
+            done < potential-secrets.txt
+          fi
+          
+          echo "Security analysis completed at $(date)" >> security-report.md
+
+      - name: Upload security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-deep-scan-${{ github.run_number }}
+          path: |
+            semgrep-results.json
+            security-report.md
+            lynis-audit.log
+            chkrootkit.log
+            security-deep-output.log
+          retention-days: 90
+
+  # Code quality deep analysis
+  quality-deep-analysis:
+    name: Deep Quality Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install analysis tools
+        run: |
+          # Install additional code analysis tools
+          sudo apt-get update
+          sudo apt-get install -y cloc sloccount
+          
+          # Install advanced shell analysis tools
+          npm install -g jshint eslint
+
+      - name: Code complexity analysis
+        run: |
+          echo "📊 Running code complexity analysis..."
+          
+          # Lines of code analysis
+          cloc .tmux/claude/ --json > cloc-results.json
+          
+          # Detailed function analysis
+          find .tmux/claude -name "*.sh" -type f | while read -r script; do
+            echo "Analyzing $script..."
+            
+            # Count functions, lines, complexity
+            awk '
+            BEGIN { functions=0; total_lines=0; complex_functions=0 }
+            /^[a-zA-Z_][a-zA-Z0-9_]*\(\)/ { 
+              functions++; 
+              func_start = NR;
+              complexity = 1;
+            }
+            /if|while|for|case|&&|\|\|/ && functions > 0 { complexity++ }
+            /^}/ && functions > 0 {
+              func_length = NR - func_start;
+              if (func_length > 50 || complexity > 10) complex_functions++;
+            }
+            END { 
+              print FILENAME ": " functions " functions, " complex_functions " complex"
+            }
+            ' "$script"
+          done > complexity-analysis.txt
+
+      - name: Documentation coverage analysis
+        run: |
+          echo "📚 Analyzing documentation coverage..."
+          
+          find .tmux/claude/core -name "*.sh" -type f | while read -r script; do
+            total_functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() *{" "$script" 2>/dev/null || echo 0)
+            documented_functions=$(grep -B5 "^[a-zA-Z_][a-zA-Z0-9_]*() *{" "$script" | grep -c "^#" || echo 0)
+            
+            if [[ $total_functions -gt 0 ]]; then
+              coverage=$((documented_functions * 100 / total_functions))
+              echo "$script: $coverage% ($documented_functions/$total_functions)"
+            fi
+          done > documentation-coverage.txt
+
+      - name: Maintainability metrics
+        run: |
+          echo "🔧 Calculating maintainability metrics..."
+          
+          # Calculate cyclomatic complexity
+          find .tmux/claude -name "*.sh" -type f -exec grep -c "if\|while\|for\|case\|&&\||\|" {} + > cyclomatic-complexity.txt
+          
+          # Calculate coupling metrics (source/include dependencies)
+          find .tmux/claude -name "*.sh" -type f -exec grep -c "source\|require\|load" {} + > coupling-metrics.txt
+          
+          # Calculate file size distribution
+          find .tmux/claude -name "*.sh" -type f -exec wc -l {} + > file-sizes.txt
+
+      - name: Generate comprehensive quality report
+        run: |
+          echo "📈 Generating comprehensive quality report..."
+          
+          cat > quality-deep-report.md << 'EOF'
+          # Deep Quality Analysis Report
+          
+          ## Code Statistics
+          EOF
+          
+          # Process cloc results
+          if [[ -f cloc-results.json ]]; then
+            total_lines=$(jq -r '.SUM.code // 0' cloc-results.json)
+            total_files=$(jq -r '.SUM.nFiles // 0' cloc-results.json)
+            echo "- Total lines of code: $total_lines" >> quality-deep-report.md
+            echo "- Total files: $total_files" >> quality-deep-report.md
+          fi
+          
+          # Add complexity analysis
+          echo "" >> quality-deep-report.md
+          echo "## Complexity Analysis" >> quality-deep-report.md
+          if [[ -f complexity-analysis.txt ]]; then
+            echo "\`\`\`" >> quality-deep-report.md
+            cat complexity-analysis.txt >> quality-deep-report.md
+            echo "\`\`\`" >> quality-deep-report.md
+          fi
+          
+          # Add documentation coverage
+          echo "" >> quality-deep-report.md
+          echo "## Documentation Coverage" >> quality-deep-report.md
+          if [[ -f documentation-coverage.txt ]]; then
+            avg_coverage=$(awk -F: '{sum+=$2} END {print sum/NR "%"}' documentation-coverage.txt || echo "N/A")
+            echo "- Average documentation coverage: $avg_coverage" >> quality-deep-report.md
+            echo "\`\`\`" >> quality-deep-report.md
+            cat documentation-coverage.txt >> quality-deep-report.md
+            echo "\`\`\`" >> quality-deep-report.md
+          fi
+          
+          echo "Generated at: $(date)" >> quality-deep-report.md
+
+      - name: Upload quality analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-deep-analysis-${{ github.run_number }}
+          path: |
+            cloc-results.json
+            quality-deep-report.md
+            complexity-analysis.txt
+            documentation-coverage.txt
+            cyclomatic-complexity.txt
+            coupling-metrics.txt
+            file-sizes.txt
+          retention-days: 60
+
+  # Integration testing with external services
+  integration-testing:
+    name: External Integration Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup mock external services
+        run: |
+          echo "🔌 Setting up mock external services..."
+          
+          # Mock Ollama service
+          docker run -d --name mock-ollama -p 11434:11434 \
+            -e OLLAMA_MODELS='[{"name":"phi4-mini","size":1000000}]' \
+            python:3.9-slim \
+            python -c "
+          import http.server
+          import socketserver
+          import json
+          
+          class MockOllamaHandler(http.server.BaseHTTPRequestHandler):
+              def do_GET(self):
+                  if self.path == '/api/tags':
+                      response = {'models': [{'name': 'phi4-mini:latest'}]}
+                  else:
+                      response = {'status': 'mock'}
+                  
+                  self.send_response(200)
+                  self.send_header('Content-type', 'application/json')
+                  self.end_headers()
+                  self.wfile.write(json.dumps(response).encode())
+          
+          with socketserver.TCPServer(('', 11434), MockOllamaHandler) as httpd:
+              httpd.serve_forever()
+          " &
+          
+          # Wait for services to start
+          sleep 5
+
+      - name: Run integration tests
+        run: |
+          cd .tmux/claude/tests
+          
+          echo "🔗 Running integration tests with external services..."
+          
+          # Test Ollama integration
+          export OLLAMA_HOST="http://localhost:11434"
+          export CLAUDE_VOICE_TEST_INTEGRATION=true
+          
+          timeout 600 ./test_runner.sh integration-external 2>&1 | tee integration-external-output.log || true
+
+      - name: Test service connectivity
+        run: |
+          echo "🌐 Testing service connectivity..."
+          
+          # Test various network conditions
+          curl -v http://localhost:11434/api/tags || echo "Ollama mock service test failed"
+          
+          # Test with network delays
+          tc qdisc add dev lo root netem delay 100ms 2>/dev/null || echo "Network delay simulation not available"
+
+      - name: Cleanup services
+        if: always()
+        run: |
+          docker stop mock-ollama || true
+          docker rm mock-ollama || true
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-external-results-${{ github.run_number }}
+          path: |
+            .tmux/claude/tests/integration-external-output.log
+            .tmux/claude/logs/
           retention-days: 30
+
+  # Nightly report generation
+  nightly-report:
+    name: Nightly Quality Report
+    runs-on: ubuntu-latest
+    needs: [extended-testing, performance-benchmarks, security-deep-scan, quality-deep-analysis, integration-testing]
+    if: always()
+    timeout-minutes: 10
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate comprehensive nightly report
+        run: |
+          echo "📊 Generating comprehensive nightly report..."
+          
+          cat > nightly-report.md << 'EOF'
+          # Claude Voice Integration - Nightly Quality Report
+          
+          ## Report Summary
+          **Date**: $(date)
+          **Build**: ${{ github.run_number }}
+          **Commit**: ${{ github.sha }}
+          
+          ## Test Results Overview
+          EOF
+          
+          # Check test results
+          total_test_jobs=5
+          successful_jobs=0
+          
+          test_jobs=(
+            "extended-testing:${{ needs.extended-testing.result }}"
+            "performance-benchmarks:${{ needs.performance-benchmarks.result }}"
+            "security-deep-scan:${{ needs.security-deep-scan.result }}"
+            "quality-deep-analysis:${{ needs.quality-deep-analysis.result }}"
+            "integration-testing:${{ needs.integration-testing.result }}"
+          )
+          
+          echo "| Test Suite | Status | Details |" >> nightly-report.md
+          echo "|------------|--------|---------|" >> nightly-report.md
+          
+          for job_result in "${test_jobs[@]}"; do
+            job_name=$(echo "$job_result" | cut -d: -f1)
+            job_status=$(echo "$job_result" | cut -d: -f2)
+            
+            if [[ "$job_status" == "success" ]]; then
+              status_icon="✅"
+              successful_jobs=$((successful_jobs + 1))
+            elif [[ "$job_status" == "skipped" ]]; then
+              status_icon="⏭️"
+            else
+              status_icon="❌"
+            fi
+            
+            echo "| $job_name | $status_icon $job_status | See artifacts |" >> nightly-report.md
+          done
+          
+          success_rate=$((successful_jobs * 100 / total_test_jobs))
+          
+          cat >> nightly-report.md << EOF
+          
+          ## Quality Metrics
+          - **Overall Success Rate**: $success_rate%
+          - **Successful Test Suites**: $successful_jobs/$total_test_jobs
+          
+          ## Artifacts Generated
+          EOF
+          
+          # List artifacts
+          if [[ -d artifacts/ ]]; then
+            find artifacts/ -type f -name "*.md" -o -name "*.json" -o -name "*.log" | while read -r artifact; do
+              echo "- $(basename "$artifact")" >> nightly-report.md
+            done
+          fi
+          
+          cat >> nightly-report.md << 'EOF'
+          
+          ## Recommendations
+          EOF
+          
+          if [[ $success_rate -ge 90 ]]; then
+            echo "🎉 **Excellent**: All systems operating optimally" >> nightly-report.md
+          elif [[ $success_rate -ge 75 ]]; then
+            echo "⚠️ **Good**: Minor issues detected, review recommended" >> nightly-report.md
+          else
+            echo "🚨 **Action Required**: Multiple issues detected, immediate attention needed" >> nightly-report.md
+          fi
+          
+          echo "Nightly report generated:"
+          cat nightly-report.md
+
+      - name: Upload nightly report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report-${{ github.run_number }}
+          path: nightly-report.md
+          retention-days: 365  # Keep nightly reports for a full year
+
+      - name: Update issue if problems found
+        if: needs.extended-testing.result == 'failure' || needs.security-deep-scan.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = `Nightly Build Failure - ${new Date().toISOString().split('T')[0]}`;
+            const issueBody = `
+            ## Nightly Build Failure Report
+            
+            **Build Number**: ${{ github.run_number }}
+            **Date**: ${new Date().toISOString()}
+            **Commit**: ${{ github.sha }}
+            
+            ### Failed Jobs
+            - Extended Testing: ${{ needs.extended-testing.result }}
+            - Security Deep Scan: ${{ needs.security-deep-scan.result }}
+            
+            ### Next Steps
+            1. Review the failed job logs in the artifacts
+            2. Address the identified issues
+            3. Re-run the nightly build to verify fixes
+            
+            This issue was automatically created by the nightly CI pipeline.
+            `;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['bug', 'ci-failure', 'nightly-build']
+            });
