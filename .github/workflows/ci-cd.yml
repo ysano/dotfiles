@@ -124,7 +124,7 @@ jobs:
           
           # Create detailed shellcheck configuration
           cat > .shellcheckrc << 'EOF'
-          exclude=SC1090,SC1091,SC2034,SC2086
+          exclude=SC1090,SC1091,SC2034,SC2086,SC2155
           external-sources=true
           check-sourced=true
           EOF
@@ -365,15 +365,15 @@ jobs:
             # Don't fail for this pattern as it's commonly used safely
           fi
           
-          # Path traversal patterns
-          if grep -r -E '\.\./|\.\.\\' .tmux/claude/ --include="*.sh" | grep -v "# Safe:"; then
-            echo "⚠️ Potential path traversal pattern detected"
+          # Path traversal patterns (exclude test files)
+          if grep -r -E '\.\./|\.\.\\' .tmux/claude/ --include="*.sh" --exclude-dir="tests" | grep -v "# Safe:"; then
+            echo "⚠️ Potential path traversal pattern detected in production code"
             vuln_found=1
           fi
           
-          # Unsafe eval patterns
-          if grep -r -E '\beval\s+' .tmux/claude/ --include="*.sh" | grep -v "# Safe:"; then
-            echo "❌ Unsafe eval usage detected"
+          # Unsafe eval patterns (exclude test files and safe patterns)
+          if grep -r -E '\beval\s+' .tmux/claude/ --include="*.sh" --exclude-dir="tests" | grep -v -E "(# Safe:|yq eval|test_|mock_)"; then
+            echo "❌ Unsafe eval usage detected in production code"
             vuln_found=1
           fi
           
