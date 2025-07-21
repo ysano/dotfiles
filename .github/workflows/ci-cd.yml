@@ -94,15 +94,12 @@ jobs:
 
       - name: Install linting tools
         run: |
-          # Create local bin directory
-          mkdir -p ~/.local/bin
+          # Install shellcheck via package manager (more reliable)
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
           
-          # Install shellcheck
-          if ! command -v shellcheck >/dev/null 2>&1; then
-            wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz" | tar -xJv
-            cp "shellcheck-v0.9.0/shellcheck" ~/.local/bin/
-            chmod +x ~/.local/bin/shellcheck
-          fi
+          # Create local bin directory for additional tools
+          mkdir -p ~/.local/bin
           
           # Install shfmt
           if ! command -v shfmt >/dev/null 2>&1; then
@@ -115,6 +112,11 @@ jobs:
           
           # Add to PATH
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          
+          # Verify installations
+          shellcheck --version
+          ~/.local/bin/shfmt --version || echo "shfmt not found"
+          yamllint --version
 
       - name: Enhanced ShellCheck
         run: |
@@ -130,7 +132,7 @@ jobs:
           # Run shellcheck with detailed reporting
           find .tmux/claude -name "*.sh" -type f | while read -r script; do
             echo "Checking $script..."
-            ~/.local/bin/shellcheck --format=gcc "$script" || exit 1
+            shellcheck --format=gcc "$script" || exit 1
           done
           
           echo "✅ All shell scripts pass enhanced ShellCheck"
@@ -141,7 +143,7 @@ jobs:
           
           format_issues=0
           find .tmux/claude -name "*.sh" -type f | while read -r script; do
-            if ! ~/.local/bin/shfmt -d -i 4 -ci "$script"; then
+            if ! shfmt -d -i 4 -ci "$script" 2>/dev/null; then
               echo "❌ Format issues in $script"
               format_issues=$((format_issues + 1))
             fi
