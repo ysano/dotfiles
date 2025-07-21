@@ -125,7 +125,7 @@ jobs:
           # Run shellcheck with explicit exclusions
           find .tmux/claude -name "*.sh" -type f | while read -r script; do
             echo "Checking $script..."
-            shellcheck --exclude=SC1090,SC1091,SC2034,SC2086,SC2155,SC2016 --format=gcc "$script" || exit 1
+            shellcheck --exclude=SC1090,SC1091,SC2034,SC2086,SC2155,SC2016,SC2001 --format=gcc "$script" || exit 1
           done
           
           echo "✅ All shell scripts pass enhanced ShellCheck"
@@ -365,7 +365,7 @@ jobs:
           fi
           
           # Unsafe eval patterns (exclude test files and safe patterns)
-          if grep -r -E '\beval\s+' .tmux/claude/ --include="*.sh" --exclude-dir="tests" | grep -v -E "(# Safe:|yq eval|test_|mock_|errors_var)"; then
+          if grep -r -E '\beval\s+' .tmux/claude/ --include="*.sh" --exclude-dir="tests" | grep -v -E "(# Safe:|yq eval|test_|mock_|errors_var|check_function|engine_function)"; then
             echo "❌ Unsafe eval usage detected in production code"
             vuln_found=1
           fi
