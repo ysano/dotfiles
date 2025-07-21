@@ -13,7 +13,7 @@ get_config_value() {
     local key="$1"
     local default_value="$2"
     local config_file="$HOME/.tmux/claude/config/integration.conf"
-    
+
     if [[ -f "$config_file" ]]; then
         grep "^${key}=" "$config_file" 2>/dev/null | cut -d'=' -f2 || echo "$default_value"
     else
@@ -24,7 +24,7 @@ get_config_value() {
 # Graceful Degradation（機能劣化対応）
 graceful_degradation() {
     local reason="$1"
-    
+
     case "$reason" in
         "audio_unavailable")
             tmux display-message "Audio unavailable - Check system settings"
@@ -39,7 +39,7 @@ graceful_degradation() {
             tmux display-message "Claude integration temporarily unavailable"
             ;;
     esac
-    
+
     # フォールバック: 基本的なビープ音
     echo -e '\a'
 }
@@ -49,15 +49,15 @@ execute_voice_action_safely() {
     local voice_mode="$(get_config_value "voice_mode" "brief")"
     local voice_lines="$(get_config_value "voice_lines" "20")"
     local voice_model="$(get_config_value "voice_model" "auto")"
-    
+
     # tmux環境情報の収集
     local window_id=$(tmux display-message -p '#I' 2>/dev/null || echo "1")
     local pane_id=$(tmux display-message -p '#P' 2>/dev/null || echo "0")
-    
+
     # Claude Voice実行ログ
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Manual voice trigger: window=$window_id, pane=$pane_id" >> \
         "$HOME/.tmux/claude/logs/voice-actions.log"
-    
+
     # 音声処理の安全な実行
     if "$HOME/.tmux/claude/bin/claude-voice" "$voice_mode" "$voice_lines" "Kyoko" "$voice_model" 2>/dev/null; then
         # 成功時の処理
@@ -73,7 +73,7 @@ execute_voice_action_safely() {
 main() {
     # ログディレクトリの確保
     mkdir -p "$HOME/.tmux/claude/logs"
-    
+
     # 智的統合層による音声アクション実行
     voice_action "manual" "user_triggered"
 }

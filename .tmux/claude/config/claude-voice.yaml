@@ -14,7 +14,7 @@ voice:
   manual:
     mode: "brief"        # brief, detailed, technical
     lines: 25
-    model: "auto"        # auto, phi4-mini:latest, orca-mini:latest
+    model: "auto"        # auto, llama3.2:3b-instruct-q5_K_M, 7shi/tanuki-dpo-v1.0:latest
     voice: "Kyoko"
     
   # Auto-completion settings  
@@ -46,7 +46,7 @@ audio:
 llm:
   provider: "ollama"               # ollama, openai, anthropic
   ollama:
-    url: "http://localhost:11434"
+    url: "http://172.29.80.1:11434"
     timeout: 30
     max_retries: 3
     default_model: "phi4-mini:latest"
@@ -86,7 +86,7 @@ security:
   
 # === Experimental Features ===
 experimental:
-  enabled: false
+  enabled: true
   features:
     realtime_monitoring: false
     context_awareness: false

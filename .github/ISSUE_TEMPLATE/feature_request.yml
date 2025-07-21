@@ -1,0 +1,141 @@
+name: ✨ Feature Request
+description: Suggest a new feature for Claude Voice Integration
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide detailed information about your request.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What category does this feature belong to?
+      options:
+        - Core Functionality
+        - User Interface
+        - Configuration Management
+        - Voice Integration
+        - LLM Integration
+        - Statistics/Monitoring
+        - Testing/Quality Assurance
+        - Documentation
+        - Platform Support
+        - Performance Optimization
+        - Security Enhancement
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Blocking current usage
+        - Critical - Essential for adoption
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: What problem does this feature solve? What is the current limitation?
+      placeholder: "Describe the problem or limitation you're experiencing..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented
+      placeholder: "Describe your proposed solution in detail..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative approaches?
+      placeholder: "Describe any alternative solutions or workarounds you've considered..."
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Usage Examples
+      description: Provide examples of how this feature would be used
+      placeholder: |
+        Example 1:
+        ```bash
+        # Command or usage example
+        ```
+        
+        Example 2:
+        ```yaml
+        # Configuration example
+        ```
+
+  - type: dropdown
+    id: modules
+    attributes:
+      label: Affected Modules
+      description: Which modules would this feature affect?
+      multiple: true
+      options:
+        - user_interface.sh
+        - stats_monitor.sh
+        - config_manager.sh
+        - health_diagnostics.sh
+        - execution_engine.sh
+        - universal_voice.sh
+        - wsl_voice_engine.sh
+        - Configuration files
+        - Test suite
+        - Documentation
+        - CI/CD pipeline
+        - New module needed
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Notes
+      description: Any thoughts on how this could be implemented?
+      placeholder: "Optional: Share any ideas about implementation approach, potential challenges, etc."
+
+  - type: checkboxes
+    id: requirements
+    attributes:
+      label: Requirements
+      description: What would this feature require?
+      options:
+        - label: Backward compatibility must be maintained
+        - label: Documentation updates needed
+        - label: Test coverage required
+        - label: Configuration changes needed
+        - label: New dependencies acceptable
+        - label: Breaking changes acceptable (major version)
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm you have completed these steps
+      options:
+        - label: I have searched existing issues for similar requests
+          required: true
+        - label: I have provided a clear problem description
+          required: true
+        - label: I have described the proposed solution
+          required: true
+        - label: I understand this is a request, not a guarantee of implementation
+          required: true

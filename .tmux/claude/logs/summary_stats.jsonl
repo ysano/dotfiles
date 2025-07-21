@@ -1,0 +1,22 @@
+{
+    "timestamp": 1753025364,
+    "operation": "summary_generation",
+    "summary_type": "brief",
+    "model": "llama3.2:3b-instruct-q5_K_M",
+    "method": "llm",
+    "duration": 11.460674360,
+    "input_quality": 50,
+    "output_quality": 90,
+    "success": true
+}
+{
+    "timestamp": 1753025427,
+    "operation": "summary_generation",
+    "summary_type": "brief",
+    "model": "llama3.2:3b-instruct-q5_K_M",
+    "method": "llm",
+    "duration": 3.362216109,
+    "input_quality": 70,
+    "output_quality": 50,
+    "success": true
+}

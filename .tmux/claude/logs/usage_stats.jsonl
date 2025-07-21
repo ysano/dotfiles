@@ -1,0 +1,10 @@
+{
+    "timestamp": 1753025462,
+    "operation": "claude_voice_main",
+    "summary_type": "brief",
+    "model": "llama3.2:3b-instruct-q5_K_M", 
+    "os_type": "windows",
+    "duration": 38.438404442,
+    "success": true,
+    "version": "2.1.0"
+}

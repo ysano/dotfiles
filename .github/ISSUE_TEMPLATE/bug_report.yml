@@ -1,0 +1,115 @@
+name: 🐛 Bug Report
+description: Report a bug in Claude Voice Integration
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of Claude Voice Integration are you using?
+      placeholder: "v1.0.0 or commit hash"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform are you running on?
+      options:
+        - Linux
+        - macOS
+        - Windows WSL
+        - Docker
+        - Other (please specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Affected Module
+      description: Which module is affected by this bug?
+      options:
+        - user_interface.sh
+        - stats_monitor.sh
+        - config_manager.sh
+        - health_diagnostics.sh
+        - execution_engine.sh
+        - universal_voice.sh
+        - wsl_voice_engine.sh
+        - Multiple modules
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: "Describe what happened and what you expected to happen"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Run command '...'
+        2. See error
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please copy and paste any relevant log output
+      render: shell
+      placeholder: "Paste logs here..."
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Your claude-voice configuration (please remove sensitive information)
+      render: yaml
+      placeholder: "Paste your config here..."
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Information
+      description: Additional environment details
+      placeholder: |
+        - Shell: bash 5.1
+        - tmux version: 3.2
+        - Ollama version: 0.1.0
+        - Other relevant versions
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm you have completed these steps
+      options:
+        - label: I have searched existing issues for duplicates
+          required: true
+        - label: I have provided all requested information
+          required: true
+        - label: I have removed sensitive information from logs/config
+          required: true
+        - label: I have tested with the latest version
+          required: false
