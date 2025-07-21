@@ -45,6 +45,8 @@ setopt notify
 setopt long_list_jobs
 setopt auto_resume
 unsetopt bg_nice
+# Fix for monitor option error in non-interactive shells
+[[ -o interactive ]] && setopt monitor 2>/dev/null
 
 # prompting
 unsetopt promptcr
@@ -59,8 +61,10 @@ unsetopt promptcr
 MAILCHECK=300
 DIRSTACKSIZE=20
 
-# zle
-setopt emacs
+# zle - fix for non-interactive shells
+if [[ -o interactive ]]; then
+    setopt emacs 2>/dev/null
+fi
 
 # History settings (core only - main config in OMZ history.zsh)
 export HISTCONTROL=ignorespace # ignore commands that start with space

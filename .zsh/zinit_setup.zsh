@@ -221,7 +221,13 @@ setup_macos_tools() {
 # ================================
 
 setup_theme() {
-    # Powerlevel10k with instant prompt support
+    # Powerlevel10k with instant prompt support and gitstatus fix
+    # Set gitstatus environment variables before loading p10k
+    export GITSTATUS_LOG_LEVEL=${GITSTATUS_LOG_LEVEL:-}
+    
+    # Fix for interactive shell detection
+    [[ -o interactive ]] || return 0
+    
     zinit ice depth=1
     zinit light romkatv/powerlevel10k
     
