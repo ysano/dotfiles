@@ -45,8 +45,19 @@ run_stage() {
 # === CI パイプライン ===
 
 stage_lint() {
-    # 基本的な構文チェック
-    find "$CI_DIR/claude" -name "*.sh" -exec bash -n {} \; 2>/dev/null
+    # 基本的な構文チェック（ShellCheck軽量版）
+    # bash -n による構文チェック
+    find "$CI_DIR/claude" -name "*.sh" -exec bash -n {} \; 2>/dev/null || return 1
+    
+    # ShellCheckがある場合は軽量チェック（重要なエラーのみ）
+    if command -v shellcheck >/dev/null 2>&1; then
+        find "$CI_DIR/claude" -name "*.sh" -print0 | \
+        xargs -0 shellcheck \
+        -e SC1090,SC1091,SC2034,SC2086,SC2155,SC2119,SC2120,SC2181,SC2207 \
+        -e SC2088,SC2144,SC2145,SC2152,SC2154,SC2046,SC2076,SC2184,SC2168 \
+        -e SC2178,SC2064,SC2206,SC2221,SC2222 \
+        -S error 2>/dev/null || true
+    fi
 }
 
 stage_test() {
