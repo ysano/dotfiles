@@ -192,6 +192,7 @@ CLAUDE_WORKFLOWS_TEST_RESULTS.md
 .tmux/claude/logs/claude-voice.log
 .tmux/claude/logs/integration.log
 .tmux/claude/logs/performance.log
+.tmux/claude/logs/*.jsonl
 
 # Additional undo-tree files
 *.~undo-tree~
