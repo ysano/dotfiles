@@ -1,0 +1,10 @@
+=== Claude Voice Test Suite ===
+開始時刻: 2025年  7月 21日 月曜日 15:03:07 JST
+
+[0;34mℹ️  INFO[0m: テスト環境初期化完了
+[0;34mℹ️  INFO[0m: CLAUDE_VOICE_HOME: /home/user/.tmux/claude
+[0;34mℹ️  INFO[0m: テストレポート: /home/user/.tmux/claude/tests/output/test_report_20250721_150307.txt
+[0;34mℹ️  INFO[0m: === 統合テスト開始 ===
+[0;34mℹ️  INFO[0m: test_module_integration.sh 実行中...
+✅ Module integration test passed (file structure check)
+[0;32m✅ PASS[0m: test_module_integration.sh

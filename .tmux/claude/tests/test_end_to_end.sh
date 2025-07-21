@@ -27,9 +27,9 @@ setup_test_environment() {
     mkdir -p "$TEST_TEMP_DIR/bin"
     mkdir -p "$TEST_TEMP_DIR/os"
     export CLAUDE_VOICE_TEST_MODE=true
-    
+
     # テスト用設定ファイル
-    cat > "$TEST_TEMP_DIR/config/claude-voice.conf" << 'EOF'
+    cat >"$TEST_TEMP_DIR/config/claude-voice.conf" <<'EOF'
 [llm]
 default_model=phi4-mini:latest
 timeout=30
@@ -52,7 +52,7 @@ file=~/.tmux/claude/logs/claude-voice.log
 enable_speech=false
 EOF
 
-    cat > "$TEST_TEMP_DIR/config/claude-voice.yaml" << 'EOF'
+    cat >"$TEST_TEMP_DIR/config/claude-voice.yaml" <<'EOF'
 integration:
   enabled: true
 llm:
@@ -66,7 +66,7 @@ voice:
 EOF
 
     # テスト用バイナリ（メインエントリーポイント）
-    cat > "$TEST_TEMP_DIR/bin/claude-voice" << 'EOF'
+    cat >"$TEST_TEMP_DIR/bin/claude-voice" <<'EOF'
 #!/bin/bash
 # Test Claude Voice Binary
 CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}"
@@ -155,9 +155,9 @@ case "${1:-}" in
 esac
 EOF
     chmod +x "$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     # テスト用OS固有モジュール
-    cat > "$TEST_TEMP_DIR/os/linux.sh" << 'EOF'
+    cat >"$TEST_TEMP_DIR/os/linux.sh" <<'EOF'
 #!/bin/bash
 # Test Linux Audio Module
 speak_text() {
@@ -165,9 +165,9 @@ speak_text() {
     return 0
 }
 EOF
-    
+
     # テスト用統計データ
-    cat > "$TEST_TEMP_DIR/logs/usage_stats.jsonl" << 'EOF'
+    cat >"$TEST_TEMP_DIR/logs/usage_stats.jsonl" <<'EOF'
 {"timestamp":1640995200,"operation":"claude_voice_main","summary_type":"brief","model":"phi4-mini:latest","os_type":"linux","duration":3,"success":"true","version":"2.0.0"}
 {"timestamp":1640995800,"operation":"claude_voice_main","summary_type":"detailed","model":"auto","os_type":"linux","duration":5,"success":"true","version":"2.0.0"}
 {"timestamp":1640996400,"operation":"claude_voice_main","summary_type":"technical","model":"phi4-mini:latest","os_type":"linux","duration":4,"success":"true","version":"2.0.0"}
@@ -175,7 +175,7 @@ EOF
 
     # 必要なファイル作成
     touch "$TEST_TEMP_DIR/logs/claude-voice.log"
-    echo "enabled=true" > "$TEST_TEMP_DIR/.config_cache"
+    echo "enabled=true" >"$TEST_TEMP_DIR/.config_cache"
 }
 
 # クリーンアップ
@@ -187,9 +187,9 @@ cleanup_test_environment() {
 assert_success() {
     local description="$1"
     local command="$2"
-    
+
     ((test_count++))
-    
+
     if eval "$command" >/dev/null 2>&1; then
         echo "✅ PASS: $description"
         ((passed_count++))
@@ -205,9 +205,9 @@ assert_contains() {
     local haystack="$1"
     local needle="$2"
     local description="$3"
-    
+
     ((test_count++))
-    
+
     if [[ "$haystack" == *"$needle"* ]]; then
         echo "✅ PASS: $description"
         ((passed_count++))
@@ -224,9 +224,9 @@ assert_exit_code() {
     local expected_code="$1"
     local actual_code="$2"
     local description="$3"
-    
+
     ((test_count++))
-    
+
     if [[ "$expected_code" -eq "$actual_code" ]]; then
         echo "✅ PASS: $description"
         ((passed_count++))
@@ -243,7 +243,7 @@ assert_exit_code() {
 # システム前提条件チェック
 test_system_prerequisites() {
     echo "=== システム前提条件チェック ==="
-    
+
     # メインバイナリの存在確認
     if [[ -x "$TEST_TEMP_DIR/bin/claude-voice" ]]; then
         echo "✅ PASS: メインバイナリが実行可能"
@@ -254,13 +254,13 @@ test_system_prerequisites() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     # 設定ファイルの存在確認
     local config_files=(
         "$TEST_TEMP_DIR/config/claude-voice.conf"
         "$TEST_TEMP_DIR/config/claude-voice.yaml"
     )
-    
+
     for config_file in "${config_files[@]}"; do
         if [[ -f "$config_file" ]]; then
             echo "✅ PASS: 設定ファイルが存在: $(basename "$config_file")"
@@ -272,7 +272,7 @@ test_system_prerequisites() {
             ((failed_count++))
         fi
     done
-    
+
     # ログディレクトリの確認
     if [[ -d "$TEST_TEMP_DIR/logs" ]]; then
         echo "✅ PASS: ログディレクトリが存在"
@@ -289,46 +289,46 @@ test_system_prerequisites() {
 test_command_line_arguments() {
     echo ""
     echo "=== コマンドライン引数テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
     local binary="$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     # ヘルプ表示テスト
     local help_output
     help_output=$("$binary" --help 2>&1)
     local help_exit_code=$?
-    
+
     assert_exit_code 0 "$help_exit_code" "ヘルプ表示の終了コード"
     assert_contains "$help_output" "Claude Voice" "ヘルプにタイトルが含まれる"
     assert_contains "$help_output" "使用法" "ヘルプに使用法が含まれる"
-    
+
     # バージョン表示テスト
     local version_output
     version_output=$("$binary" --version 2>&1)
     local version_exit_code=$?
-    
+
     assert_exit_code 0 "$version_exit_code" "バージョン表示の終了コード"
     assert_contains "$version_output" "Claude Voice" "バージョン表示にタイトルが含まれる"
     assert_contains "$version_output" "v2.0.0" "バージョン番号が含まれる"
-    
+
     # テスト実行
     local test_output
     test_output=$("$binary" --test 2>&1)
     local test_exit_code=$?
-    
+
     assert_exit_code 0 "$test_exit_code" "テスト実行の終了コード"
     assert_contains "$test_output" "System Test" "テスト出力にタイトルが含まれる"
     assert_contains "$test_output" "completed successfully" "テスト完了メッセージが含まれる"
-    
+
     # ヘルスチェック実行
     local health_output
     health_output=$("$binary" --health 2>&1)
     local health_exit_code=$?
-    
+
     assert_exit_code 0 "$health_exit_code" "ヘルスチェック実行の終了コード"
     assert_contains "$health_output" "Health Check" "ヘルスチェック出力にタイトルが含まれる"
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -336,31 +336,31 @@ test_command_line_arguments() {
 test_summary_type_execution() {
     echo ""
     echo "=== 要約タイプ別実行テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
     local binary="$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     local summary_types=("brief" "detailed" "technical")
-    
+
     for summary_type in "${summary_types[@]}"; do
         local output
         output=$("$binary" "$summary_type" 2>&1)
         local exit_code=$?
-        
+
         assert_exit_code 0 "$exit_code" "$summary_type 要約の終了コード"
         assert_contains "$output" "$summary_type" "$summary_type 要約の実行確認"
         assert_contains "$output" "completed successfully" "$summary_type 要約の完了確認"
     done
-    
+
     # デフォルト実行（引数なし）
     local default_output
     default_output=$("$binary" 2>&1)
     local default_exit_code=$?
-    
+
     assert_exit_code 0 "$default_exit_code" "デフォルト実行の終了コード"
     assert_contains "$default_output" "brief" "デフォルトでbrief要約が実行される"
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -368,27 +368,27 @@ test_summary_type_execution() {
 test_error_handling() {
     echo ""
     echo "=== エラーハンドリングテスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
     local binary="$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     # 無効なオプション
     local invalid_output
     invalid_output=$("$binary" --invalid-option 2>&1 || true)
     local invalid_exit_code=$?
-    
+
     assert_exit_code 1 "$invalid_exit_code" "無効なオプションで適切なエラーコード"
     assert_contains "$invalid_output" "Unknown option" "無効なオプションで適切なエラーメッセージ"
-    
+
     # 無効な要約タイプ
     local invalid_type_output
     invalid_type_output=$("$binary" "invalid_summary_type" 2>&1 || true)
     local invalid_type_exit_code=$?
-    
+
     # 無効な要約タイプでもヘルプが表示されることを期待
     assert_contains "$invalid_type_output" "Unknown option" "無効な要約タイプで適切な処理"
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -396,17 +396,17 @@ test_error_handling() {
 test_configuration_integration() {
     echo ""
     echo "=== 設定管理統合テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
-    
+
     # 設定ファイルの読み込み確認
     if [[ -f "$CORE_DIR/config_manager.sh" ]]; then
         if source "$CORE_DIR/config_manager.sh" 2>/dev/null; then
             echo "✅ PASS: 設定管理モジュール読み込み成功"
             ((test_count++))
             ((passed_count++))
-            
+
             # 設定値取得テスト
             if declare -f get_config_value >/dev/null 2>&1; then
                 local config_value
@@ -427,7 +427,7 @@ test_configuration_integration() {
     else
         echo "⚠️  SKIP: 設定管理モジュールファイルが存在しません"
     fi
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -435,17 +435,17 @@ test_configuration_integration() {
 test_statistics_integration() {
     echo ""
     echo "=== 統計管理統合テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
-    
+
     # 統計ファイルの確認
     local stats_file="$TEST_TEMP_DIR/logs/usage_stats.jsonl"
     if [[ -f "$stats_file" ]]; then
         echo "✅ PASS: 統計ファイルが存在"
         ((test_count++))
         ((passed_count++))
-        
+
         # 統計データの形式確認
         local first_line
         first_line=$(head -1 "$stats_file")
@@ -458,10 +458,10 @@ test_statistics_integration() {
             ((test_count++))
             ((failed_count++))
         fi
-        
+
         # 統計エントリ数の確認
         local entry_count
-        entry_count=$(wc -l < "$stats_file")
+        entry_count=$(wc -l <"$stats_file")
         if [[ $entry_count -ge 1 ]]; then
             echo "✅ PASS: 統計データが存在 ($entry_count エントリ)"
             ((test_count++))
@@ -476,7 +476,7 @@ test_statistics_integration() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -484,24 +484,24 @@ test_statistics_integration() {
 test_health_check_integration() {
     echo ""
     echo "=== ヘルスチェック統合テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
-    
+
     # ヘルスチェックモジュールの確認
     if [[ -f "$CORE_DIR/health_diagnostics.sh" ]]; then
         if source "$CORE_DIR/health_diagnostics.sh" 2>/dev/null; then
             echo "✅ PASS: ヘルスチェックモジュール読み込み成功"
             ((test_count++))
             ((passed_count++))
-            
+
             # ヘルスチェック実行
             if declare -f run_health_check >/dev/null 2>&1; then
                 local health_output
                 health_output=$(run_health_check 2>&1)
                 if [[ -n "$health_output" ]]; then
                     assert_contains "$health_output" "Health Score" "ヘルスチェック結果にスコアが含まれる"
-                    
+
                     # スコア抽出
                     local score_line
                     score_line=$(echo "$health_output" | grep "Health Score" | head -1)
@@ -522,7 +522,7 @@ test_health_check_integration() {
     else
         echo "⚠️  SKIP: ヘルスチェックモジュールファイルが存在しません"
     fi
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -530,17 +530,17 @@ test_health_check_integration() {
 test_performance() {
     echo ""
     echo "=== パフォーマンステスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
     local binary="$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     # ヘルプ表示の実行時間
     local start_time=$(date +%s%3N)
     "$binary" --help >/dev/null 2>&1
     local end_time=$(date +%s%3N)
     local help_duration=$((end_time - start_time))
-    
+
     if [[ $help_duration -lt 2000 ]]; then
         echo "✅ PASS: ヘルプ表示時間: ${help_duration}ms (< 2000ms)"
         ((test_count++))
@@ -550,13 +550,13 @@ test_performance() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     # テスト実行の実行時間
     start_time=$(date +%s%3N)
     "$binary" --test >/dev/null 2>&1
     end_time=$(date +%s%3N)
     local test_duration=$((end_time - start_time))
-    
+
     if [[ $test_duration -lt 5000 ]]; then
         echo "✅ PASS: テスト実行時間: ${test_duration}ms (< 5000ms)"
         ((test_count++))
@@ -566,13 +566,13 @@ test_performance() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     # 要約実行の実行時間
     start_time=$(date +%s%3N)
     "$binary" brief >/dev/null 2>&1
     end_time=$(date +%s%3N)
     local summary_duration=$((end_time - start_time))
-    
+
     if [[ $summary_duration -lt 3000 ]]; then
         echo "✅ PASS: 要約実行時間: ${summary_duration}ms (< 3000ms)"
         ((test_count++))
@@ -582,7 +582,7 @@ test_performance() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -590,31 +590,31 @@ test_performance() {
 test_complete_workflow() {
     echo ""
     echo "=== 完全ワークフロー統合テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
     local binary="$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     # 完全なワークフロー実行テスト
     echo "完全ワークフロー実行中..."
-    
+
     # 1. システムヘルスチェック
     local health_result=0
     "$binary" --health >/dev/null 2>&1 || health_result=$?
-    
+
     # 2. 各要約タイプの実行
     local brief_result=0
     local detailed_result=0
     local technical_result=0
-    
+
     "$binary" brief >/dev/null 2>&1 || brief_result=$?
     "$binary" detailed >/dev/null 2>&1 || detailed_result=$?
     "$binary" technical >/dev/null 2>&1 || technical_result=$?
-    
+
     # 3. システムテスト実行
     local system_test_result=0
     "$binary" --test >/dev/null 2>&1 || system_test_result=$?
-    
+
     # 結果集計
     local workflow_score=0
     [[ $health_result -eq 0 ]] && ((workflow_score++))
@@ -622,10 +622,10 @@ test_complete_workflow() {
     [[ $detailed_result -eq 0 ]] && ((workflow_score++))
     [[ $technical_result -eq 0 ]] && ((workflow_score++))
     [[ $system_test_result -eq 0 ]] && ((workflow_score++))
-    
+
     local total_workflow_tests=5
     local workflow_success_rate=$((workflow_score * 100 / total_workflow_tests))
-    
+
     if [[ $workflow_score -eq $total_workflow_tests ]]; then
         echo "✅ PASS: 完全ワークフロー成功 ($workflow_score/$total_workflow_tests)"
         ((test_count++))
@@ -639,7 +639,7 @@ test_complete_workflow() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -647,11 +647,11 @@ test_complete_workflow() {
 test_regression() {
     echo ""
     echo "=== 回帰テスト ==="
-    
+
     local original_home="$CLAUDE_VOICE_HOME"
     export CLAUDE_VOICE_HOME="$TEST_TEMP_DIR"
     local binary="$TEST_TEMP_DIR/bin/claude-voice"
-    
+
     # 以前のバージョンで動作していた機能の確認
     local regression_tests=(
         "--help"
@@ -662,18 +662,18 @@ test_regression() {
         "detailed"
         "technical"
     )
-    
+
     local regression_passed=0
     local regression_total=${#regression_tests[@]}
-    
+
     for test_arg in "${regression_tests[@]}"; do
         if "$binary" "$test_arg" >/dev/null 2>&1; then
             ((regression_passed++))
         fi
     done
-    
+
     local regression_rate=$((regression_passed * 100 / regression_total))
-    
+
     if [[ $regression_passed -eq $regression_total ]]; then
         echo "✅ PASS: 回帰テスト成功 ($regression_passed/$regression_total)"
         ((test_count++))
@@ -687,7 +687,7 @@ test_regression() {
         ((test_count++))
         ((failed_count++))
     fi
-    
+
     export CLAUDE_VOICE_HOME="$original_home"
 }
 
@@ -698,13 +698,13 @@ test_summary() {
     echo "総テスト数: $test_count"
     echo "成功: $passed_count"
     echo "失敗: $failed_count"
-    
+
     local success_rate=0
     if [[ $test_count -gt 0 ]]; then
         success_rate=$((passed_count * 100 / test_count))
     fi
     echo "成功率: ${success_rate}%"
-    
+
     echo ""
     echo "=== 詳細レポート ==="
     echo "✅ システム前提条件: テスト完了"
@@ -717,7 +717,7 @@ test_summary() {
     echo "✅ パフォーマンス: テスト完了"
     echo "✅ ワークフロー統合: テスト完了"
     echo "✅ 回帰テスト: テスト完了"
-    
+
     if [[ $failed_count -eq 0 ]]; then
         echo ""
         echo "🎉 エンドツーエンドテスト: 全テスト成功！"
@@ -736,10 +736,10 @@ main() {
     echo "Claude Voice End-to-End Test"
     echo "============================"
     echo ""
-    
+
     # テスト環境セットアップ
     setup_test_environment
-    
+
     # エンドツーエンドテスト実行
     test_system_prerequisites
     test_command_line_arguments
@@ -751,10 +751,10 @@ main() {
     test_performance
     test_complete_workflow
     test_regression
-    
+
     # 結果表示
     test_summary
-    
+
     # クリーンアップ
     cleanup_test_environment
 }

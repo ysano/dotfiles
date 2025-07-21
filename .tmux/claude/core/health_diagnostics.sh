@@ -8,52 +8,52 @@
 run_health_check() {
     echo "=== Claude Voice Health Check ==="
     echo ""
-    
+
     local health_score=0
     local total_checks=0
     local issues=()
-    
+
     # 設定マネージャーの読み込み（オプション）
     if [[ -f "$CLAUDE_VOICE_HOME/core/integration.sh" ]]; then
         source "$CLAUDE_VOICE_HOME/core/integration.sh" >/dev/null 2>&1
     fi
-    
+
     # 1. 設定ファイルのヘルスチェック
     check_configuration_health issues
     local config_score=$?
     health_score=$((health_score + config_score))
     ((total_checks++))
-    
+
     # 2. 統合レイヤーのヘルスチェック
     check_integration_health issues
     local integration_score=$?
     health_score=$((health_score + integration_score))
     ((total_checks++))
-    
+
     # 3. 音声システムのヘルスチェック
     check_audio_health issues
     local audio_score=$?
     health_score=$((health_score + audio_score))
     ((total_checks++))
-    
+
     # 4. LLM統合のヘルスチェック
     check_llm_health issues
     local llm_score=$?
     health_score=$((health_score + llm_score))
     ((total_checks++))
-    
+
     # 5. ファイルシステムのヘルスチェック
     check_filesystem_health issues
     local fs_score=$?
     health_score=$((health_score + fs_score))
     ((total_checks++))
-    
+
     # 6. 依存関係のヘルスチェック
     check_dependencies_health issues
     local deps_score=$?
     health_score=$((health_score + deps_score))
     ((total_checks++))
-    
+
     # 結果の表示
     display_health_results "$health_score" "$total_checks" issues[@]
 }
@@ -62,13 +62,13 @@ run_health_check() {
 check_configuration_health() {
     local -n issues_ref=$1
     local score=0
-    
+
     echo "1. Configuration Health..."
-    
+
     # YAML設定ファイルのチェック
     if [[ -f "$CLAUDE_VOICE_HOME/config/claude-voice.yaml" ]]; then
         echo "   ✅ YAML configuration file exists"
-        
+
         # YAML構文チェック
         if command -v yq >/dev/null 2>&1; then
             if yq eval '.' "$CLAUDE_VOICE_HOME/config/claude-voice.yaml" >/dev/null 2>&1; then
@@ -88,17 +88,17 @@ check_configuration_health() {
         issues_ref+=("config_missing")
         score=0
     fi
-    
+
     # 従来設定ファイルのチェック
     if [[ -f "$CLAUDE_VOICE_HOME/config/claude-voice.conf" ]]; then
         echo "   ✅ Legacy configuration file exists"
     fi
-    
+
     # 統合設定のチェック
     if [[ -f "$CLAUDE_VOICE_HOME/config/integration.conf" ]]; then
         echo "   ✅ Integration configuration exists"
     fi
-    
+
     echo ""
     return $score
 }
@@ -107,9 +107,9 @@ check_configuration_health() {
 check_integration_health() {
     local -n issues_ref=$1
     local score=0
-    
+
     echo "2. Integration Layer Health..."
-    
+
     # 統合機能の確認
     if declare -f get_integration_status >/dev/null 2>&1; then
         local integration_status=$(get_integration_status 2>/dev/null || echo "unknown")
@@ -134,7 +134,7 @@ check_integration_health() {
         issues_ref+=("integration_missing")
         score=0
     fi
-    
+
     # tmux統合のチェック
     if command -v tmux >/dev/null 2>&1; then
         echo "   ✅ tmux command available"
@@ -148,7 +148,7 @@ check_integration_health() {
         issues_ref+=("tmux_missing")
         score=0
     fi
-    
+
     echo ""
     return $score
 }
@@ -159,9 +159,9 @@ check_audio_health() {
     local score=0
     local audio_engines_available=0
     local total_engines=0
-    
+
     echo "3. Audio System Health..."
-    
+
     # OS固有の音声システムチェック
     local os_type=$(detect_os 2>/dev/null || echo "unknown")
     case "$os_type" in
@@ -170,7 +170,7 @@ check_audio_health() {
             if command -v osascript >/dev/null 2>&1; then
                 echo "   ✅ macOS osascript available"
                 ((audio_engines_available++))
-                
+
                 if osascript -e 'get volume settings' >/dev/null 2>&1; then
                     echo "   ✅ Audio session accessible"
                 else
@@ -182,11 +182,11 @@ check_audio_health() {
                 issues_ref+=("osascript_missing")
             fi
             ;;
-        "windows"|"linux")
+        "windows" | "linux")
             # WSL/Linux音声エンジンのチェック
             if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
                 echo "   ℹ️  WSL environment detected"
-                
+
                 # WSL PowerShell音声エンジン
                 ((total_engines++))
                 if [[ -f "$CLAUDE_VOICE_HOME/core/wsl_voice_engine.sh" ]]; then
@@ -205,7 +205,7 @@ check_audio_health() {
                     issues_ref+=("wsl_engine_missing")
                 fi
             fi
-            
+
             # Linux espeak
             ((total_engines++))
             if command -v espeak >/dev/null 2>&1; then
@@ -214,7 +214,7 @@ check_audio_health() {
             else
                 echo "   ❌ Linux espeak not available"
             fi
-            
+
             # Linux festival
             ((total_engines++))
             if command -v festival >/dev/null 2>&1; then
@@ -229,11 +229,11 @@ check_audio_health() {
             issues_ref+=("unknown_os")
             ;;
     esac
-    
+
     # 音声エンジンレジストリのチェック
     if [[ -f "$CLAUDE_VOICE_HOME/core/voice_engine_registry.sh" ]]; then
         echo "   ✅ Voice engine registry available"
-        
+
         if source "$CLAUDE_VOICE_HOME/core/voice_engine_registry.sh" 2>/dev/null; then
             local best_engine=$(select_best_engine 2>/dev/null || echo "none")
             if [[ "$best_engine" != "none" && "$best_engine" != "simple_fallback" ]]; then
@@ -246,14 +246,14 @@ check_audio_health() {
         echo "   ❌ Voice engine registry not found"
         issues_ref+=("voice_registry_missing")
     fi
-    
+
     # スコア計算
     if [[ $total_engines -gt 0 ]] && [[ $audio_engines_available -gt 0 ]]; then
         score=1
     else
         score=0
     fi
-    
+
     echo ""
     return $score
 }
@@ -262,9 +262,9 @@ check_audio_health() {
 check_llm_health() {
     local -n issues_ref=$1
     local score=0
-    
+
     echo "4. LLM Integration Health..."
-    
+
     # Ollama接続チェック
     if command -v check_ollama_health >/dev/null 2>&1; then
         if check_ollama_health >/dev/null 2>&1; then
@@ -282,7 +282,7 @@ check_llm_health() {
             if curl -s "$ollama_url/api/tags" >/dev/null 2>&1; then
                 echo "   ✅ Ollama API accessible"
                 score=1
-                
+
                 # 利用可能なモデルの確認
                 local models=$(curl -s "$ollama_url/api/tags" | grep -o '"name":"[^"]*"' | wc -l 2>/dev/null || echo 0)
                 echo "   ℹ️  Available models: $models"
@@ -297,7 +297,7 @@ check_llm_health() {
             score=0
         fi
     fi
-    
+
     # LLMマネージャーのチェック
     if [[ -f "$CLAUDE_VOICE_HOME/core/llm_manager.sh" ]]; then
         echo "   ✅ LLM manager available"
@@ -306,7 +306,7 @@ check_llm_health() {
         issues_ref+=("llm_manager_missing")
         score=0
     fi
-    
+
     echo ""
     return $score
 }
@@ -317,9 +317,9 @@ check_filesystem_health() {
     local score=0
     local checks_passed=0
     local total_checks=0
-    
+
     echo "5. File System Health..."
-    
+
     # 必要なディレクトリの確認
     local required_dirs=(
         "$CLAUDE_VOICE_HOME/core"
@@ -327,7 +327,7 @@ check_filesystem_health() {
         "$CLAUDE_VOICE_HOME/logs"
         "$CLAUDE_VOICE_HOME/bin"
     )
-    
+
     local missing_dirs=()
     for dir in "${required_dirs[@]}"; do
         ((total_checks++))
@@ -337,21 +337,21 @@ check_filesystem_health() {
             missing_dirs+=("$dir")
         fi
     done
-    
+
     if [[ ${#missing_dirs[@]} -eq 0 ]]; then
         echo "   ✅ All required directories exist"
     else
         echo "   ❌ Missing directories: ${missing_dirs[*]}"
         issues_ref+=("missing_directories")
     fi
-    
+
     # 必要なファイルの確認
     local required_files=(
         "$CLAUDE_VOICE_HOME/bin/claude-voice"
         "$CLAUDE_VOICE_HOME/core/base.sh"
         "$CLAUDE_VOICE_HOME/core/universal_voice.sh"
     )
-    
+
     local missing_files=()
     for file in "${required_files[@]}"; do
         ((total_checks++))
@@ -361,14 +361,14 @@ check_filesystem_health() {
             missing_files+=("$file")
         fi
     done
-    
+
     if [[ ${#missing_files[@]} -eq 0 ]]; then
         echo "   ✅ All core files exist"
     else
         echo "   ❌ Missing files: ${missing_files[*]}"
         issues_ref+=("missing_files")
     fi
-    
+
     # 権限の確認
     if [[ -f "$CLAUDE_VOICE_HOME/bin/claude-voice" ]]; then
         ((total_checks++))
@@ -380,14 +380,14 @@ check_filesystem_health() {
             issues_ref+=("permission_error")
         fi
     fi
-    
+
     # スコア計算
     if [[ $total_checks -gt 0 ]] && [[ $checks_passed -eq $total_checks ]]; then
         score=1
     else
         score=0
     fi
-    
+
     echo ""
     return $score
 }
@@ -398,9 +398,9 @@ check_dependencies_health() {
     local score=0
     local deps_available=0
     local total_deps=0
-    
+
     echo "6. Dependencies Health..."
-    
+
     # 必須依存関係
     local required_deps=("bash" "curl")
     for dep in "${required_deps[@]}"; do
@@ -413,7 +413,7 @@ check_dependencies_health() {
             issues_ref+=("missing_${dep}")
         fi
     done
-    
+
     # オプション依存関係
     local optional_deps=("tmux" "jq" "yq")
     for dep in "${optional_deps[@]}"; do
@@ -425,7 +425,7 @@ check_dependencies_health() {
             echo "   ⚠️  $dep not available (optional)"
         fi
     done
-    
+
     # OS固有依存関係
     local os_type=$(detect_os 2>/dev/null || echo "unknown")
     case "$os_type" in
@@ -439,7 +439,7 @@ check_dependencies_health() {
                 issues_ref+=("missing_osascript")
             fi
             ;;
-        "windows"|"linux")
+        "windows" | "linux")
             if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
                 ((total_deps++))
                 if command -v powershell.exe >/dev/null 2>&1; then
@@ -452,14 +452,14 @@ check_dependencies_health() {
             fi
             ;;
     esac
-    
+
     # スコア計算
     if [[ $total_deps -gt 0 ]] && [[ $deps_available -ge 2 ]]; then
         score=1
     else
         score=0
     fi
-    
+
     echo ""
     return $score
 }
@@ -469,11 +469,11 @@ display_health_results() {
     local health_score=$1
     local total_checks=$2
     local -n issues_ref=$3
-    
+
     echo "=== Health Check Results ==="
-    local health_percentage=$(( (health_score * 100) / total_checks ))
+    local health_percentage=$(((health_score * 100) / total_checks))
     echo "Overall Health Score: $health_score/$total_checks ($health_percentage%)"
-    
+
     if [[ ${#issues_ref[@]} -eq 0 ]]; then
         echo "🎉 System is healthy!"
         return 0
@@ -483,15 +483,15 @@ display_health_results() {
         for issue in "${issues_ref[@]}"; do
             provide_issue_guidance "$issue"
         done
-        
+
         if [[ $health_percentage -lt 50 ]]; then
             echo ""
             echo "🚨 Critical health issues detected. System may not function properly."
-            return 2  # Critical health issues
+            return 2 # Critical health issues
         else
             echo ""
             echo "⚠️  Minor health issues detected. System should still function."
-            return 1  # Minor health issues
+            return 1 # Minor health issues
         fi
     fi
 }
@@ -499,7 +499,7 @@ display_health_results() {
 # 問題に対するガイダンス提供
 provide_issue_guidance() {
     local issue="$1"
-    
+
     case "$issue" in
         "yaml_syntax")
             echo "  - YAML configuration has syntax errors"
@@ -517,7 +517,7 @@ provide_issue_guidance() {
             echo "  - Audio session not accessible"
             echo "    Fix: Check system audio settings and permissions"
             ;;
-        "ollama_failed"|"ollama_api_failed")
+        "ollama_failed" | "ollama_api_failed")
             echo "  - Ollama LLM service not available"
             echo "    Fix: Start Ollama service (ollama serve) or check connection"
             ;;
@@ -542,42 +542,42 @@ provide_issue_guidance() {
 run_integration_test() {
     echo "=== Claude Voice Integration Test ==="
     echo ""
-    
+
     local test_passed=0
     local test_total=0
-    
+
     echo "Testing complete integration workflow..."
     echo ""
-    
+
     # テスト1: 設定システム
     ((test_total++))
     if test_configuration_system; then
         ((test_passed++))
     fi
-    
+
     # テスト2: 音声システム
     ((test_total++))
     if test_voice_system; then
         ((test_passed++))
     fi
-    
+
     # テスト3: LLM統合
     ((test_total++))
     if test_llm_integration; then
         ((test_passed++))
     fi
-    
+
     # テスト4: tmux統合
     ((test_total++))
     if test_tmux_integration; then
         ((test_passed++))
     fi
-    
+
     # テスト結果の表示
     echo ""
     echo "=== Integration Test Results ==="
     echo "Tests passed: $test_passed/$test_total"
-    
+
     if [[ $test_passed -eq $test_total ]]; then
         echo "✅ All integration tests passed!"
         return 0
@@ -590,7 +590,7 @@ run_integration_test() {
 # 設定システムのテスト
 test_configuration_system() {
     echo "1. Configuration System Test..."
-    
+
     if [[ -f "$CLAUDE_VOICE_HOME/core/config_manager.sh" ]]; then
         if source "$CLAUDE_VOICE_HOME/core/config_manager.sh" 2>/dev/null; then
             echo "   ✅ Configuration system working"
@@ -608,7 +608,7 @@ test_configuration_system() {
 # 音声システムのテスト
 test_voice_system() {
     echo "2. Voice System Test..."
-    
+
     if [[ -f "$CLAUDE_VOICE_HOME/core/universal_voice.sh" ]]; then
         if source "$CLAUDE_VOICE_HOME/core/universal_voice.sh" 2>/dev/null; then
             local engine=$(detect_voice_engine 2>/dev/null || echo "none")
@@ -632,7 +632,7 @@ test_voice_system() {
 # LLM統合のテスト
 test_llm_integration() {
     echo "3. LLM Integration Test..."
-    
+
     if [[ -f "$CLAUDE_VOICE_HOME/core/llm_manager.sh" ]]; then
         if source "$CLAUDE_VOICE_HOME/core/llm_manager.sh" 2>/dev/null; then
             # 簡易接続テスト
@@ -661,10 +661,10 @@ test_llm_integration() {
 # tmux統合のテスト
 test_tmux_integration() {
     echo "4. tmux Integration Test..."
-    
+
     if command -v tmux >/dev/null 2>&1; then
         echo "   ✅ tmux command available"
-        
+
         if [[ -n "${TMUX:-}" ]]; then
             echo "   ✅ Running inside tmux session"
             return 0
@@ -684,11 +684,11 @@ test_tmux_integration() {
 run_system_test() {
     echo "=== Claude Voice System Test ==="
     echo ""
-    
+
     local test_results=()
     local total_tests=0
     local passed_tests=0
-    
+
     # コアモジュールテスト
     echo "Testing core modules..."
     if test_core_modules; then
@@ -698,7 +698,7 @@ run_system_test() {
         test_results+=("❌ Core modules")
     fi
     ((total_tests++))
-    
+
     # OS固有機能テスト
     echo "Testing OS-specific functionality..."
     if test_os_specific_functions; then
@@ -708,7 +708,7 @@ run_system_test() {
         test_results+=("❌ OS-specific functions")
     fi
     ((total_tests++))
-    
+
     # 音声エンジンテスト
     echo "Testing voice engines..."
     if test_voice_engines; then
@@ -718,7 +718,7 @@ run_system_test() {
         test_results+=("❌ Voice engines")
     fi
     ((total_tests++))
-    
+
     # ファイルシステムテスト
     echo "Testing file system operations..."
     if test_filesystem_operations; then
@@ -728,17 +728,17 @@ run_system_test() {
         test_results+=("❌ File system operations")
     fi
     ((total_tests++))
-    
+
     # 結果表示
     echo ""
     echo "=== System Test Results ==="
     for result in "${test_results[@]}"; do
         echo "$result"
     done
-    
+
     echo ""
     echo "Tests passed: $passed_tests/$total_tests"
-    
+
     if [[ $passed_tests -eq $total_tests ]]; then
         echo "🎉 All system tests passed!"
         return 0
@@ -752,7 +752,7 @@ run_system_test() {
 test_core_modules() {
     local modules=("base.sh" "universal_voice.sh" "voice_engine_registry.sh")
     local failed_modules=()
-    
+
     for module in "${modules[@]}"; do
         local module_path="$CLAUDE_VOICE_HOME/core/$module"
         if [[ -f "$module_path" ]]; then
@@ -767,7 +767,7 @@ test_core_modules() {
             failed_modules+=("$module")
         fi
     done
-    
+
     [[ ${#failed_modules[@]} -eq 0 ]]
 }
 
@@ -775,7 +775,7 @@ test_core_modules() {
 test_os_specific_functions() {
     local os_type=$(detect_os 2>/dev/null || echo "unknown")
     local os_module="$CLAUDE_VOICE_HOME/os/${os_type}.sh"
-    
+
     if [[ -f "$os_module" ]]; then
         if bash -n "$os_module" 2>/dev/null; then
             echo "   ✅ OS module ($os_type) syntax OK"
@@ -795,7 +795,7 @@ test_voice_engines() {
     if [[ -f "$CLAUDE_VOICE_HOME/core/voice_engine_registry.sh" ]]; then
         if source "$CLAUDE_VOICE_HOME/core/voice_engine_registry.sh" 2>/dev/null; then
             echo "   ✅ Voice engine registry loaded"
-            
+
             local engine=$(select_best_engine 2>/dev/null || echo "none")
             if [[ "$engine" != "none" ]]; then
                 echo "   ✅ Best engine selected: $engine"
@@ -818,15 +818,15 @@ test_voice_engines() {
 test_filesystem_operations() {
     local test_dir="$CLAUDE_VOICE_HOME/logs"
     local test_file="$test_dir/test_write.tmp"
-    
+
     # 書き込みテスト
-    if echo "test" > "$test_file" 2>/dev/null; then
+    if echo "test" >"$test_file" 2>/dev/null; then
         echo "   ✅ File write test passed"
-        
+
         # 読み込みテスト
         if [[ "$(cat "$test_file" 2>/dev/null)" == "test" ]]; then
             echo "   ✅ File read test passed"
-            
+
             # クリーンアップ
             rm "$test_file" 2>/dev/null
             return 0
@@ -852,7 +852,7 @@ detect_os() {
             ;;
         "Linux")
             if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
-                echo "windows"  # WSL
+                echo "windows" # WSL
             else
                 echo "linux"
             fi
@@ -867,11 +867,11 @@ detect_os() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # テスト用の環境変数設定
     CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-${HOME}/.tmux/claude}"
-    
+
     echo "Health Diagnostics Module Test"
     echo "=============================="
     echo ""
-    
+
     case "${1:-health}" in
         "health")
             run_health_check

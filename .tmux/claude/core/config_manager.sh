@@ -7,8 +7,8 @@
 # 設定ファイルの管理（表示・編集・リセット）
 manage_config() {
     local action="${1:-show}"
-    local config_type="${2:-legacy}"  # legacy, yaml, cache
-    
+    local config_type="${2:-legacy}" # legacy, yaml, cache
+
     case "$config_type" in
         "legacy")
             manage_legacy_config "$action"
@@ -30,7 +30,7 @@ manage_config() {
 manage_legacy_config() {
     local action="$1"
     local config_file="$CLAUDE_VOICE_HOME/config/claude-voice.conf"
-    
+
     case "$action" in
         "show")
             echo "設定ファイル: $config_file"
@@ -63,7 +63,7 @@ manage_legacy_config() {
 manage_yaml_config() {
     local action="$1"
     local config_file="$CLAUDE_VOICE_HOME/config/claude-voice.yaml"
-    
+
     case "$action" in
         "show")
             echo "YAML設定ファイル: $config_file"
@@ -102,7 +102,7 @@ manage_yaml_config() {
 manage_config_cache() {
     local action="$1"
     local cache_file="$CLAUDE_VOICE_HOME/.config_cache"
-    
+
     case "$action" in
         "show")
             echo "設定キャッシュ: $cache_file"
@@ -136,7 +136,7 @@ manage_config_cache() {
 # 設定ファイルの編集
 edit_config_file() {
     local config_file="$1"
-    
+
     if [[ -f "$config_file" ]]; then
         "${EDITOR:-nano}" "$config_file"
         echo "設定ファイルを編集しました: $config_file"
@@ -145,10 +145,10 @@ edit_config_file() {
         read -r response
         if [[ "$response" =~ ^[yY] ]]; then
             mkdir -p "$(dirname "$config_file")"
-            
+
             # ファイル拡張子に基づいてデフォルト設定を作成
             case "$config_file" in
-                *.yaml|*.yml)
+                *.yaml | *.yml)
                     echo "YAML設定ファイルの作成はサポートされていません"
                     return 1
                     ;;
@@ -156,7 +156,7 @@ edit_config_file() {
                     create_default_config "$config_file"
                     ;;
             esac
-            
+
             "${EDITOR:-nano}" "$config_file"
             echo "設定ファイルを作成・編集しました: $config_file"
         fi
@@ -167,19 +167,19 @@ edit_config_file() {
 reset_config_file() {
     local config_file="$1"
     local create_function="$2"
-    
+
     echo "設定ファイルをデフォルトにリセットしますか？ (y/N)"
     read -r response
     if [[ "$response" =~ ^[yY] ]]; then
         mkdir -p "$(dirname "$config_file")"
-        
+
         # バックアップの作成
         if [[ -f "$config_file" ]]; then
             local backup_file="${config_file}.backup.$(date +%Y%m%d-%H%M%S)"
             cp "$config_file" "$backup_file"
             echo "既存の設定をバックアップしました: $backup_file"
         fi
-        
+
         # デフォルト設定の作成
         "$create_function" "$config_file"
         echo "設定ファイルをリセットしました: $config_file"
@@ -191,8 +191,8 @@ reset_config_file() {
 # デフォルト設定ファイルの作成
 create_default_config() {
     local config_file="$1"
-    
-    cat > "$config_file" << 'EOF'
+
+    cat >"$config_file" <<'EOF'
 # Claude Voice Configuration File
 # 設定変更後は claude-voice --config validate で検証してください
 
@@ -246,7 +246,7 @@ wsl_voice_integration=true
 # 音声エンジンレジストリ
 voice_engine_registry=true
 EOF
-    
+
     log "INFO" "Default configuration created: $config_file"
 }
 
@@ -255,23 +255,23 @@ EOF
 # 従来設定の検証
 validate_legacy_config() {
     local config_file="$1"
-    
+
     echo "設定ファイルの検証: $config_file"
-    
+
     if [[ ! -f "$config_file" ]]; then
         echo "❌ 設定ファイルが存在しません"
         return 1
     fi
-    
+
     local errors=0
     local warnings=0
-    
+
     # セクション形式の確認
     if ! grep -q '^\[.*\]' "$config_file"; then
         echo "⚠️  警告: セクション形式が見つかりません"
         ((warnings++))
     fi
-    
+
     # 必要なセクションの確認
     local required_sections=("llm" "audio" "capture" "logging")
     for section in "${required_sections[@]}"; do
@@ -280,12 +280,12 @@ validate_legacy_config() {
             ((errors++))
         fi
     done
-    
+
     # 値の形式確認
     check_config_value "$config_file" "timeout" '^[0-9]+$' "数値" errors
     check_config_value "$config_file" "max_retries" '^[0-9]+$' "数値" errors
     check_config_value "$config_file" "volume" '^[0-9]+$' "数値(0-100)" errors
-    
+
     # 結果の表示
     echo ""
     if [[ $errors -eq 0 ]]; then
@@ -305,30 +305,30 @@ validate_legacy_config() {
 # YAML設定の検証
 validate_yaml_config() {
     local config_file="$1"
-    
+
     echo "YAML設定ファイルの検証: $config_file"
-    
+
     if [[ ! -f "$config_file" ]]; then
         echo "❌ YAML設定ファイルが存在しません"
         return 1
     fi
-    
+
     # yqコマンドが利用可能な場合は詳細検証
     if command -v yq >/dev/null 2>&1; then
         if yq eval '.' "$config_file" >/dev/null 2>&1; then
             echo "✅ YAML形式は正常です"
-            
+
             # 重要なキーの存在確認
             local required_keys=("integration.enabled" "llm.provider" "voice.manual.mode")
             local missing_keys=0
-            
+
             for key in "${required_keys[@]}"; do
                 if ! yq eval ".$key" "$config_file" >/dev/null 2>&1; then
                     echo "⚠️  警告: 推奨キーがありません: $key"
                     ((missing_keys++))
                 fi
             done
-            
+
             if [[ $missing_keys -eq 0 ]]; then
                 echo "✅ YAML設定ファイルは完全です"
             else
@@ -353,9 +353,9 @@ check_config_value() {
     local pattern="$3"
     local description="$4"
     local errors_var="$5"
-    
+
     local value=$(grep "^$key=" "$config_file" 2>/dev/null | cut -d'=' -f2-)
-    
+
     if [[ -n "$value" ]]; then
         if [[ ! "$value" =~ $pattern ]]; then
             echo "❌ エラー: $key の値が不正です (期待: $description, 実際: $value)"
@@ -372,39 +372,39 @@ check_config_value() {
 repair_configuration() {
     echo "=== Claude Voice Configuration Repair ==="
     echo ""
-    
+
     local repairs_made=0
-    
+
     # 1. ディレクトリ構造の修復
     echo "1. ディレクトリ構造をチェック中..."
     local dir_repairs
     dir_repairs=$(repair_directory_structure)
     repairs_made=$((repairs_made + dir_repairs))
-    
+
     # 2. 設定ファイルの修復
     echo "2. 設定ファイルをチェック中..."
     local config_repairs
     config_repairs=$(repair_config_files)
     repairs_made=$((repairs_made + config_repairs))
-    
+
     # 3. 実行権限の修復
     echo "3. 実行権限をチェック中..."
     local perm_repairs
     perm_repairs=$(repair_executable_permissions)
     repairs_made=$((repairs_made + perm_repairs))
-    
+
     # 4. ログファイルの初期化
     echo "4. ログファイルを初期化中..."
     local log_repairs
     log_repairs=$(repair_log_files)
     repairs_made=$((repairs_made + log_repairs))
-    
+
     # 5. 設定の整合性チェック
     echo "5. 設定の整合性をチェック中..."
     local consistency_repairs
     consistency_repairs=$(repair_config_consistency)
     repairs_made=$((repairs_made + consistency_repairs))
-    
+
     echo ""
     if [[ $repairs_made -gt 0 ]]; then
         echo "✅ 設定修復完了: ${repairs_made}個の修復を実行しました"
@@ -412,7 +412,7 @@ repair_configuration() {
     else
         echo "✅ 修復の必要はありません - 設定は正常です"
     fi
-    
+
     return 0
 }
 
@@ -421,14 +421,14 @@ repair_directory_structure() {
     local repairs=0
     local required_dirs=(
         "$CLAUDE_VOICE_HOME/core"
-        "$CLAUDE_VOICE_HOME/config" 
+        "$CLAUDE_VOICE_HOME/config"
         "$CLAUDE_VOICE_HOME/logs"
         "$CLAUDE_VOICE_HOME/bin"
         "$CLAUDE_VOICE_HOME/os"
         "$CLAUDE_VOICE_HOME/scripts"
         "$CLAUDE_VOICE_HOME/tests"
     )
-    
+
     for dir in "${required_dirs[@]}"; do
         if [[ ! -d "$dir" ]]; then
             echo "   ディレクトリを作成: $dir"
@@ -436,28 +436,28 @@ repair_directory_structure() {
             ((repairs++))
         fi
     done
-    
+
     echo "$repairs"
 }
 
 # 設定ファイルの修復
 repair_config_files() {
     local repairs=0
-    
+
     # YAML設定ファイル
     if [[ ! -f "$CLAUDE_VOICE_HOME/config/claude-voice.yaml" ]]; then
         echo "   YAML設定ファイルはすでに存在します"
     fi
-    
+
     # 統合設定ファイル
     if [[ ! -f "$CLAUDE_VOICE_HOME/config/integration.conf" ]]; then
         echo "   統合設定ファイルを作成中..."
-        cat > "$CLAUDE_VOICE_HOME/config/integration.conf" << 'EOF'
+        cat >"$CLAUDE_VOICE_HOME/config/integration.conf" <<'EOF'
 integration.enabled=true
 EOF
         ((repairs++))
     fi
-    
+
     echo "$repairs"
 }
 
@@ -473,7 +473,7 @@ repair_executable_permissions() {
         "$CLAUDE_VOICE_HOME/session-hook.sh"
         "$CLAUDE_VOICE_HOME/voice-trigger.sh"
     )
-    
+
     for file in "${executable_files[@]}"; do
         if [[ -f "$file" ]] && [[ ! -x "$file" ]]; then
             echo "   実行権限を設定: $file"
@@ -481,7 +481,7 @@ repair_executable_permissions() {
             ((repairs++))
         fi
     done
-    
+
     echo "$repairs"
 }
 
@@ -493,7 +493,7 @@ repair_log_files() {
         "$CLAUDE_VOICE_HOME/logs/integration.log"
         "$CLAUDE_VOICE_HOME/logs/usage_stats.jsonl"
     )
-    
+
     for log_file in "${log_files[@]}"; do
         if [[ ! -f "$log_file" ]]; then
             echo "   ログファイルを作成: $log_file"
@@ -501,25 +501,25 @@ repair_log_files() {
             ((repairs++))
         fi
     done
-    
+
     echo "$repairs"
 }
 
 # 設定の整合性修復
 repair_config_consistency() {
     local repairs=0
-    
+
     # 設定キャッシュの整合性確認
     local cache_file="$CLAUDE_VOICE_HOME/.config_cache"
     if [[ -f "$cache_file" ]]; then
         # 空のキャッシュファイルをチェック
         if [[ ! -s "$cache_file" ]]; then
-            echo "enabled=false" > "$cache_file"
+            echo "enabled=false" >"$cache_file"
             echo "   設定キャッシュを初期化"
             ((repairs++))
         fi
     fi
-    
+
     echo "$repairs"
 }
 
@@ -530,7 +530,7 @@ get_config_value() {
     local key="$1"
     local default_value="$2"
     local config_file="$CLAUDE_VOICE_HOME/config/claude-voice.conf"
-    
+
     if [[ -f "$config_file" ]]; then
         local value=$(grep "^$key=" "$config_file" 2>/dev/null | cut -d'=' -f2-)
         echo "${value:-$default_value}"
@@ -543,7 +543,7 @@ get_config_value() {
 log() {
     local level="$1"
     local message="$2"
-    
+
     if command -v logger >/dev/null 2>&1; then
         echo "[$level] $message" >&2
     fi
@@ -553,11 +553,11 @@ log() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # テスト用の環境変数設定
     CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-${HOME}/.tmux/claude}"
-    
+
     echo "Configuration Manager Module Test"
     echo "================================="
     echo ""
-    
+
     case "${1:-help}" in
         "show")
             manage_config "show" "${2:-legacy}"
