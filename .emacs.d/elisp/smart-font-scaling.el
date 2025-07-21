@@ -101,43 +101,9 @@ Automatically configured based on the current platform."
 (defvar sfs--display-info-cache nil
   "Cached display information to avoid repeated calculations.")
 
-(defvar sfs--monitor-change-hook nil
-  "Hook run when monitor configuration changes.")
-
 ;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ;; Display Information Detection
 ;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-(defun sfs--get-display-info ()
-  "Get comprehensive display information."
-  (when (display-graphic-p)
-    (let* ((pixel-width (display-pixel-width))
-           (pixel-height (display-pixel-height))
-           (mm-width (display-mm-width))
-           (mm-height (display-mm-height))
-           (monitor-attrs (when (fboundp 'display-monitor-attributes-list)
-                           (display-monitor-attributes-list)))
-           (dpi-x (if (and mm-width (> mm-width 0))
-                     (/ (* pixel-width 25.4) mm-width)
-                   nil))
-           (dpi-y (if (and mm-height (> mm-height 0))
-                     (/ (* pixel-height 25.4) mm-height)
-                   nil))
-           (dpi-avg (when (and dpi-x dpi-y)
-                     (/ (+ dpi-x dpi-y) 2.0))))
-      
-      ;; プラットフォーム固有のDPI推定（計算値がない場合）
-      (unless dpi-avg
-        (setq dpi-avg (sfs--estimate-platform-dpi pixel-width pixel-height)))
-      
-      (list :pixel-width pixel-width
-            :pixel-height pixel-height
-            :mm-width mm-width
-            :mm-height mm-height
-            :dpi-x dpi-x
-            :dpi-y dpi-y
-            :dpi-avg dpi-avg
-            :monitor-attrs monitor-attrs))))
 
 (defun sfs--estimate-platform-dpi (width height)
   "Estimate effective DPI based on platform and resolution."
@@ -145,14 +111,14 @@ Automatically configured based on the current platform."
    ;; macOS specific estimation
    ((eq system-type 'darwin)
     (cond
-     ;; 4K/5K iMac (27-inch)
-     ((and (>= width 5120) (>= height 2880)) 220)
-     ;; 4K (21.5-inch iMac, external 4K)
-     ((and (>= width 4096) (>= height 2304)) 200)
      ;; UWQHD (Ultra-wide)
      ((and (>= width 3440) (>= height 1440)) 140)
      ;; QHD/WQHD
      ((and (>= width 2560) (>= height 1440)) 130)
+     ;; 4K/5K iMac (27-inch)
+     ((and (>= width 5120) (>= height 2880)) 220)
+     ;; 4K (21.5-inch iMac, external 4K)
+     ((and (>= width 4096) (>= height 2304)) 200)
      ;; MacBook Pro 16-inch Retina
      ((and (>= width 3072) (>= height 1920)) 226)
      ;; MacBook Pro 13-inch Retina
@@ -200,6 +166,34 @@ Automatically configured based on the current platform."
       ((and (>= width 1920) (>= height 1080)) 100)
       ;; 標準
       (t 96)))))
+
+(defun sfs--get-display-info ()
+  "Get comprehensive display information."
+  (when (display-graphic-p)
+    (let* ((pixel-width (display-pixel-width))
+           (pixel-height (display-pixel-height))
+           (mm-width (display-mm-width))
+           (mm-height (display-mm-height))
+           (dpi-x (if (and mm-width (> mm-width 0))
+                     (/ (* pixel-width 25.4) mm-width)
+                   nil))
+           (dpi-y (if (and mm-height (> mm-height 0))
+                     (/ (* pixel-height 25.4) mm-height)
+                   nil))
+           (dpi-avg (when (and dpi-x dpi-y)
+                     (/ (+ dpi-x dpi-y) 2.0))))
+      
+      ;; プラットフォーム固有のDPI推定（計算値がない場合）
+      (unless dpi-avg
+        (setq dpi-avg (sfs--estimate-platform-dpi pixel-width pixel-height)))
+      
+      (list :pixel-width pixel-width
+            :pixel-height pixel-height
+            :mm-width mm-width
+            :mm-height mm-height
+            :dpi-x dpi-x
+            :dpi-y dpi-y
+            :dpi-avg dpi-avg))))
 
 (defun sfs--calculate-scaling-factor (dpi)
   "Calculate appropriate scaling factor based on DPI."
@@ -337,16 +331,6 @@ Automatically configured based on the current platform."
                  "none"))))
 
 ;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-;; Dynamic Monitor Detection
-;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-(defun sfs--monitor-change-handler ()
-  "Handle monitor configuration changes."
-  (when sfs-debug-mode
-    (message "Monitor configuration changed, refreshing font scaling"))
-  (run-with-timer 0.5 nil #'sfs-refresh-display-info))
-
-;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ;; Minor Mode
 ;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -371,56 +355,15 @@ Automatically configured based on the current platform."
         ;; Enable
         (when (display-graphic-p)
           (sfs-apply-optimal-scaling))
-        
-        ;; Set up monitor change detection
-        (when (fboundp 'display-monitor-attributes-list)
-          (add-hook 'window-configuration-change-hook 
-                   #'sfs--monitor-change-handler))
-        
-        ;; Set up font protection (reapply if changed by other packages)
-        (add-hook 'after-init-hook #'sfs--setup-font-protection)
-        
         (when sfs-debug-mode
           (message "Smart Font Scaling mode enabled")))
-    
     ;; Disable
-    (remove-hook 'window-configuration-change-hook #'sfs--monitor-change-handler)
-    (remove-hook 'after-init-hook #'sfs--setup-font-protection)
     (when sfs-debug-mode
       (message "Smart Font Scaling mode disabled"))))
 
-;; Font protection mechanism
-(defun sfs--setup-font-protection ()
-  "Setup protection against font changes by other packages."
-  (when (display-graphic-p)
-    ;; Apply our settings after everything else is loaded
-    (run-with-timer 2.0 nil 
-                    (lambda ()
-                      (sfs-apply-optimal-scaling)
-                      (when sfs-debug-mode
-                        (message "Font protection applied - final font scaling"))))
-    
-    ;; Set up periodic check to maintain font size
-    (run-with-timer 5.0 10.0  ; Check every 10 seconds after 5 seconds
-                    (lambda ()
-                      (when (and smart-font-scaling-mode
-                                 (display-graphic-p)
-                                 sfs--current-font-size)
-                        (let ((current-height (face-attribute 'default :height)))
-                          (when (< current-height (* sfs--current-font-size 10))
-                            (when sfs-debug-mode
-                              (message "Font size changed detected, reapplying..."))
-                            (sfs-apply-optimal-scaling)))))))))
-
-;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-;; Integration with existing font configuration
-;; ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 ;;;###autoload
 (defun sfs-replace-static-font-config ()
-  "Replace static font configuration with smart scaling.
-This function is designed to be called from init-ui-simple.el
-to replace the existing static font configuration."
+  "Replace static font configuration with smart scaling."
   (when (display-graphic-p)
     (smart-font-scaling-mode 1)))
 
