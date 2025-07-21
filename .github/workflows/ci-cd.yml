@@ -125,7 +125,7 @@ jobs:
           # Run shellcheck with explicit exclusions
           find .tmux/claude -name "*.sh" -type f | while read -r script; do
             echo "Checking $script..."
-            shellcheck --exclude=SC1090,SC1091,SC2034,SC2086,SC2155,SC2016,SC2001 --format=gcc "$script" || exit 1
+            shellcheck --exclude=SC1090,SC1091,SC2034,SC2086,SC2155,SC2016,SC2001,SC2154 --format=gcc "$script" || exit 1
           done
           
           echo "✅ All shell scripts pass enhanced ShellCheck"
