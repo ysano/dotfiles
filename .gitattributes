@@ -1,0 +1,17 @@
+# Claude Commands出典追跡システム
+# Git属性による出典管理
+
+# オリジナル作成ファイル（デフォルト）
+.claude/commands/**/*.md source=Original author=Local
+
+# Claude-Command-Suite由来ファイル（上書き）
+.claude/commands/dev/all-tools.md source=Claude-Command-Suite author=IndyDevDan/DislerH
+.claude/commands/dev/git-status.md source=Claude-Command-Suite author=IndyDevDan/DislerH
+.claude/commands/dev/prime.md source=Claude-Command-Suite author=IndyDevDan/DislerH
+.claude/commands/dev/directory-deep-dive.md source=Claude-Command-Suite author=ThomasLandgraf
+.claude/commands/team/decision-quality-analyzer.md source=Claude-Command-Suite author=Local
+.claude/commands/performance/system-behavior-simulator.md source=Claude-Command-Suite author=Local
+
+# 特殊ファイル（管理ドキュメント）
+.claude/CLAUDE_COMMANDS_INTEGRATION_LOG.md source=Documentation author=Claude
+.claude/FOLDER_STRUCTURE_MIGRATION_PLAN.md source=Documentation author=Claude
