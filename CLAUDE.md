@@ -161,3 +161,22 @@ gwr      # gwt remove
 - フォールバック機構を必ず実装
 - デバッグ出力を含める
 - パフォーマンス影響を測定
+
+## Claude Commands管理
+
+### コマンド実行
+```bash
+# フォルダ構造での実行
+/dev:git-status
+/team:issue-triage
+/deploy:prepare-release
+```
+
+### 出典確認
+```bash
+# 出典統計
+./scripts/check_command_sources.sh
+
+# 新規追加
+./scripts/add_new_command.sh <category> <name> <source>
+```
