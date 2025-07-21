@@ -2,6 +2,12 @@
 # Claude Voice Trigger - Smart Voice Action Handler
 # キーバインド経由での音声機能トリガー
 
+# ユニバーサル音声システムの読み込み
+UNIVERSAL_VOICE_SCRIPT="$HOME/.tmux/claude/core/universal_voice.sh"
+if [[ -f "$UNIVERSAL_VOICE_SCRIPT" ]]; then
+    source "$UNIVERSAL_VOICE_SCRIPT"
+fi
+
 # 智的統合層の読み込み
 source "$HOME/.tmux/claude/core/integration.sh" 2>/dev/null || {
     echo "Smart integration layer not available" >&2
@@ -59,7 +65,10 @@ execute_voice_action_safely() {
         "$HOME/.tmux/claude/logs/voice-actions.log"
 
     # 音声処理の安全な実行
-    if "$HOME/.tmux/claude/bin/claude-voice" "$voice_mode" "$voice_lines" "Kyoko" "$voice_model" 2>/dev/null; then
+    # 正しい引数順序: summary_type lines voice model device
+    # voice_mode は summary_type、voice は音声名（Kyoko）
+    local voice_name="Kyoko"
+    if "$HOME/.tmux/claude/bin/claude-voice" "$voice_mode" "$voice_lines" "$voice_name" "$voice_model" "auto" 2>/dev/null; then
         # 成功時の処理
         tmux display-message "Claude Voice: 要約完了"
     else
