@@ -35,7 +35,7 @@ detect_wsl_version() {
         echo "Not WSL"
         return 1
     fi
-    
+
     if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
         # WSL2の場合はプロセス情報で判定
         if grep -qi "WSL2" /proc/version 2>/dev/null; then
@@ -55,12 +55,12 @@ detect_wsl_version() {
 # WSL固有のシステム情報取得
 get_wsl_info() {
     local info_type="${1:-all}"
-    
+
     if ! is_wsl_environment; then
         echo "Not running in WSL environment"
         return 1
     fi
-    
+
     case "$info_type" in
         "version")
             detect_wsl_version
@@ -79,7 +79,7 @@ get_wsl_info() {
                 echo "$WINDOWS_BUILD_VERSION"
                 return 0
             fi
-            
+
             local build_version
             if command -v cmd.exe >/dev/null 2>&1; then
                 build_version=$(cmd.exe /c "ver" 2>/dev/null | grep -oP "Version \K[0-9]+\.[0-9]+\.[0-9]+" || echo "Unknown")
@@ -109,7 +109,7 @@ get_wsl_info() {
             local wsl_ip
             wsl_ip=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "Unknown")
             echo "WSL IP: $wsl_ip"
-            
+
             # Windows側IPの取得
             local windows_ip
             if command -v powershell.exe >/dev/null 2>&1; then
@@ -143,18 +143,18 @@ get_wsl_info() {
 # WSL クリップボード統合機能
 wsl_clipboard_copy() {
     local text="$1"
-    
+
     if [[ -z "$text" ]]; then
         log "ERROR" "No text provided for clipboard copy"
         return 1
     fi
-    
+
     # クリップボード機能が利用可能かチェック
     if [[ "$WSL_CLIPBOARD_AVAILABLE" == "false" ]]; then
         log "WARN" "Clipboard functionality not available"
         return 1
     fi
-    
+
     # clip.exe の使用（推奨）
     if command -v clip.exe >/dev/null 2>&1; then
         echo -n "$text" | clip.exe
@@ -162,7 +162,7 @@ wsl_clipboard_copy() {
         WSL_CLIPBOARD_AVAILABLE="true"
         return 0
     fi
-    
+
     # PowerShell経由のクリップボード
     local powershell_path
     powershell_path=$(find_powershell_path)
@@ -174,7 +174,7 @@ wsl_clipboard_copy() {
             return 0
         fi
     fi
-    
+
     # Windows PowerShell直接実行（フォールバック）
     if command -v powershell.exe >/dev/null 2>&1; then
         echo -n "$text" | powershell.exe -Command "Set-Clipboard -Value (Get-Content -Raw)" 2>/dev/null
@@ -182,7 +182,7 @@ wsl_clipboard_copy() {
         WSL_CLIPBOARD_AVAILABLE="true"
         return 0
     fi
-    
+
     log "WARN" "No clipboard integration available"
     WSL_CLIPBOARD_AVAILABLE="false"
     return 1
@@ -195,7 +195,7 @@ wsl_clipboard_paste() {
         log "WARN" "Clipboard functionality not available"
         return 1
     fi
-    
+
     # PowerShell経由の貼り付け（推奨）
     local powershell_path
     powershell_path=$(find_powershell_path)
@@ -207,7 +207,7 @@ wsl_clipboard_paste() {
             return 0
         fi
     fi
-    
+
     # Windows PowerShell直接実行（フォールバック）
     if command -v powershell.exe >/dev/null 2>&1; then
         local paste_content
@@ -217,7 +217,7 @@ wsl_clipboard_paste() {
             return 0
         fi
     fi
-    
+
     log "WARN" "No clipboard paste capability available"
     return 1
 }
@@ -225,14 +225,14 @@ wsl_clipboard_paste() {
 # WSLクリップボード機能テスト
 test_wsl_clipboard() {
     echo "=== WSL Clipboard Integration Test ==="
-    
+
     if ! is_wsl_environment; then
         echo "❌ Not running in WSL environment"
         return 1
     fi
-    
+
     local test_text="WSL Clipboard Test - $(date)"
-    
+
     # コピーテスト
     echo "Testing clipboard copy..."
     if wsl_clipboard_copy "$test_text"; then
@@ -241,12 +241,12 @@ test_wsl_clipboard() {
         echo "❌ Clipboard copy failed"
         return 1
     fi
-    
+
     # 貼り付けテスト
     echo "Testing clipboard paste..."
     local pasted_text
     pasted_text=$(wsl_clipboard_paste)
-    
+
     if [[ "$pasted_text" == "$test_text" ]]; then
         echo "✅ Clipboard paste successful"
     else
@@ -255,7 +255,7 @@ test_wsl_clipboard() {
         echo "  Got: $pasted_text"
         return 1
     fi
-    
+
     echo "WSL Clipboard test completed successfully"
     return 0
 }
@@ -263,26 +263,26 @@ test_wsl_clipboard() {
 # WSL環境最適化
 optimize_wsl_environment() {
     log "INFO" "Optimizing WSL environment for Claude Voice"
-    
+
     if ! is_wsl_environment; then
         log "WARN" "Not running in WSL environment - skipping WSL optimization"
         return 1
     fi
-    
+
     # WSL固有の環境変数設定
     export CLAUDE_WSL_MODE="true"
     export CLAUDE_AUDIO_BACKEND="windows"
     export WSL_VERSION=$(detect_wsl_version)
-    
+
     log "DEBUG" "WSL environment variables set: WSL_VERSION=$WSL_VERSION"
-    
+
     # Windows側アプリケーションパスの確認と設定
     local windows_paths=(
         "/mnt/c/Windows/System32"
         "/mnt/c/Program Files"
         "/mnt/c/Program Files (x86)"
     )
-    
+
     for path in "${windows_paths[@]}"; do
         if [[ -d "$path" ]]; then
             case "$path" in
@@ -301,7 +301,7 @@ optimize_wsl_environment() {
             esac
         fi
     done
-    
+
     # PowerShellの事前キャッシュ
     local powershell_path
     powershell_path=$(find_powershell_path)
@@ -309,7 +309,7 @@ optimize_wsl_environment() {
         export CLAUDE_POWERSHELL_PATH="$powershell_path"
         log "DEBUG" "PowerShell path cached: $CLAUDE_POWERSHELL_PATH"
     fi
-    
+
     # クリップボード機能のテスト
     wsl_clipboard_copy "test" >/dev/null 2>&1
     local clipboard_test_result=$?
@@ -320,18 +320,18 @@ optimize_wsl_environment() {
         export CLAUDE_CLIPBOARD_AVAILABLE="false"
         log "WARN" "WSL clipboard integration not available"
     fi
-    
+
     # WSL固有のパフォーマンス最適化
     # ファイルシステムキャッシュの最適化（可能な場合）
     if [[ -w /proc/sys/vm/drop_caches ]]; then
         log "DEBUG" "File system cache optimization available"
     fi
-    
+
     # Windows側の時刻同期確認（WSL1の場合に重要）
     if [[ "$WSL_VERSION" == "WSL1" ]]; then
         log "DEBUG" "WSL1 detected - time sync considerations may apply"
     fi
-    
+
     log "INFO" "WSL environment optimization completed"
     return 0
 }
@@ -341,7 +341,7 @@ wsl_fallback_notification() {
     local title="$1"
     local message="$2"
     local urgency="${3:-normal}"
-    
+
     # PowerShell通知の試行
     local powershell_path
     powershell_path=$(find_powershell_path)
@@ -362,7 +362,7 @@ Start-Sleep -Seconds 1
             return 0
         fi
     fi
-    
+
     # コンソール通知（フォールバック）
     local urgency_prefix=""
     case "$urgency" in
@@ -371,15 +371,15 @@ Start-Sleep -Seconds 1
         "normal") urgency_prefix="ℹ️  " ;;
         "low") urgency_prefix="💡 " ;;
     esac
-    
+
     echo "${urgency_prefix}通知: $title"
     echo "  $message"
-    
+
     # システムビープ（可能な場合）
     if command -v printf >/dev/null 2>&1; then
         printf '\a' 2>/dev/null
     fi
-    
+
     return 0
 }
 
@@ -389,7 +389,7 @@ get_wsl_simple_info() {
         echo "Not WSL"
         return 1
     fi
-    
+
     echo "WSL $(detect_wsl_version)"
     if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
         echo "($WSL_DISTRO_NAME)"
@@ -399,7 +399,7 @@ get_wsl_simple_info() {
 # WSL基本機能テスト
 test_wsl_basic_functions() {
     echo "=== WSL Basic Functions Test ==="
-    
+
     # WSL環境検出テスト
     if is_wsl_environment; then
         echo "✅ WSL environment detected"
@@ -409,7 +409,7 @@ test_wsl_basic_functions() {
         echo "❌ Not running in WSL environment"
         return 1
     fi
-    
+
     # PowerShell統合テスト
     local powershell_path
     powershell_path=$(find_powershell_path)
@@ -418,35 +418,35 @@ test_wsl_basic_functions() {
     else
         echo "❌ PowerShell integration not available"
     fi
-    
+
     # Windows側ファイルシステムアクセステスト
     if [[ -d "/mnt/c/Windows" ]]; then
         echo "✅ Windows filesystem accessible"
     else
         echo "❌ Windows filesystem not accessible"
     fi
-    
+
     # クリップボード機能テスト
     test_wsl_clipboard
-    
+
     return 0
 }
 
 # WSL統合初期化
 init_wsl_integration() {
     log "DEBUG" "Initializing WSL integration"
-    
+
     if ! is_wsl_environment; then
         log "WARN" "Not running in WSL - WSL integration disabled"
         return 1
     fi
-    
+
     # 基本情報の取得とキャッシュ
     WSL_INFO_CACHE=$(get_wsl_info all)
-    
+
     # 環境最適化
     optimize_wsl_environment
-    
+
     log "INFO" "WSL Integration initialized: $(detect_wsl_version)"
     return 0
 }
@@ -454,7 +454,7 @@ init_wsl_integration() {
 # WSL統合情報取得
 get_wsl_integration_info() {
     local format="${1:-json}"
-    
+
     case "$format" in
         "json")
             cat <<EOF

@@ -16,42 +16,42 @@ declare -g AUDIO_DEVICE_LIST=""
 # Windows システム音の再生
 play_windows_sound() {
     local sound_name="$1"
-    local volume="${2:-50}"  # 0-100
-    
+    local volume="${2:-50}" # 0-100
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         log "WARN" "PowerShell not available for system sound"
         return 1
     fi
-    
+
     # Windows システム音のマッピング
     local sound_event=""
     case "$sound_name" in
-        "error"|"critical")
+        "error" | "critical")
             sound_event="SystemHand"
             ;;
-        "warning"|"warn")
+        "warning" | "warn")
             sound_event="SystemExclamation"
             ;;
-        "info"|"information"|"notify")
+        "info" | "information" | "notify")
             sound_event="SystemAsterisk"
             ;;
-        "question"|"confirm")
+        "question" | "confirm")
             sound_event="SystemQuestion"
             ;;
-        "success"|"complete")
+        "success" | "complete")
             sound_event="SystemAsterisk"
             ;;
-        "beep"|"default")
+        "beep" | "default")
             sound_event="Beep"
             ;;
         *)
             sound_event="SystemAsterisk"
             ;;
     esac
-    
+
     local sound_script="
 try {
     # システム音の再生
@@ -71,10 +71,10 @@ try {
     }
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$sound_script" 5 "$powershell_path")
-    
+
     # 統合エラーハンドリングを使用
     if [[ -n "${LOADED_MODULES[error_handler]:-}" ]] || load_module "error_handler" false; then
         case "$result" in
@@ -125,32 +125,32 @@ play_windows_system_beep() {
     local frequency="${2:-800}"
     local duration="${3:-200}"
     local interval="${4:-300}"
-    
+
     log "DEBUG" "Playing system beep: count=$count, freq=$frequency, duration=$duration"
-    
+
     # パラメータ検証
     if [[ ! "$count" =~ ^[0-9]+$ ]] || [[ $count -gt 10 ]]; then
         log "WARN" "Invalid beep count: $count, using 1"
         count=1
     fi
-    
+
     if [[ ! "$frequency" =~ ^[0-9]+$ ]] || [[ $frequency -lt 37 ]] || [[ $frequency -gt 32767 ]]; then
         log "WARN" "Invalid frequency: $frequency, using 800"
         frequency=800
     fi
-    
+
     if [[ ! "$duration" =~ ^[0-9]+$ ]] || [[ $duration -gt 5000 ]]; then
         log "WARN" "Invalid duration: $duration, using 200"
         duration=200
     fi
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         # フォールバック: ASCII ベル文字
         log "DEBUG" "Using ASCII bell fallback"
-        for ((i=1; i<=count; i++)); do
+        for ((i = 1; i <= count; i++)); do
             printf '\a'
             if [[ $count -gt 1 && $i -lt $count ]]; then
                 sleep $(echo "scale=3; $interval/1000" | bc -l 2>/dev/null || echo "0.3")
@@ -158,7 +158,7 @@ play_windows_system_beep() {
         done
         return 0
     fi
-    
+
     # PowerShell ビープ音スクリプト
     local beep_script="
 try {
@@ -173,10 +173,10 @@ try {
     Write-Output 'BEEP_ERROR:\$(\$_.Exception.Message)'
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$beep_script" 10 "$powershell_path")
-    
+
     case "$result" in
         BEEP_SUCCESS:*)
             log "DEBUG" "Beep sequence completed: ${result#BEEP_SUCCESS:} beeps"
@@ -203,14 +203,14 @@ system_beep() {
 windows_beep_fallback() {
     local message="$1"
     local urgency="${2:-normal}"
-    
+
     log "DEBUG" "Using Windows beep fallback for message (urgency: $urgency)"
-    
+
     # メッセージの分析に基づくビープパターン
     local beep_count=1
     local frequency=800
     local duration=200
-    
+
     # メッセージの長さに応じた調整
     local length=${#message}
     if [[ $length -gt 100 ]]; then
@@ -218,19 +218,19 @@ windows_beep_fallback() {
     elif [[ $length -gt 50 ]]; then
         beep_count=2
     fi
-    
+
     # 緊急度による調整
     case "$urgency" in
-        "critical"|"error")
+        "critical" | "error")
             frequency=400
             duration=500
             beep_count=$((beep_count + 1))
             ;;
-        "warning"|"warn")
+        "warning" | "warn")
             frequency=600
             duration=300
             ;;
-        "info"|"normal")
+        "info" | "normal")
             frequency=800
             duration=200
             ;;
@@ -239,7 +239,7 @@ windows_beep_fallback() {
             duration=100
             ;;
     esac
-    
+
     # エラーキーワードの検出
     if echo "$message" | grep -qi "error\|エラー\|failed\|失敗\|critical\|重大"; then
         frequency=400
@@ -252,35 +252,35 @@ windows_beep_fallback() {
         frequency=1200
         duration=150
     fi
-    
+
     system_beep "$beep_count" "$frequency" "$duration"
 }
 
 # 音量制御（Windows）
 set_system_volume() {
-    local volume="$1"  # 0-100
+    local volume="$1" # 0-100
     local device_type="${2:-output}"
-    
+
     if [[ -z "$volume" ]] || [[ ! "$volume" =~ ^[0-9]+$ ]]; then
         log "ERROR" "Invalid volume value: $volume"
         return 1
     fi
-    
+
     if [[ $volume -lt 0 ]] || [[ $volume -gt 100 ]]; then
         log "ERROR" "Volume out of range (0-100): $volume"
         return 1
     fi
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     log "DEBUG" "Setting Windows system volume: $volume% ($device_type)"
-    
+
     if [[ -z "$powershell_path" ]]; then
         log "ERROR" "PowerShell not available for volume control"
         return 1
     fi
-    
+
     # Windows 音量制御スクリプト（改良版）
     local volume_script="
 try {
@@ -339,10 +339,10 @@ try {
     Write-Output 'VOLUME_ERROR:\$(\$_.Exception.Message)'
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$volume_script" 15 "$powershell_path")
-    
+
     case "$result" in
         VOLUME_SET:*)
             local set_volume="${result#VOLUME_SET:}"
@@ -364,15 +364,15 @@ try {
 # 現在の音量取得（Windows）
 get_system_volume() {
     local device_type="${1:-output}"
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
-        echo "${CURRENT_VOLUME:-50}"  # キャッシュまたはデフォルト値
+        echo "${CURRENT_VOLUME:-50}" # キャッシュまたはデフォルト値
         return 1
     fi
-    
+
     # Windows 音量取得スクリプト
     local volume_script="
 try {
@@ -388,10 +388,10 @@ try {
     Write-Output 'VOLUME_GET:50'
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$volume_script" 5 "$powershell_path")
-    
+
     case "$result" in
         VOLUME_GET:*)
             local volume="${result#VOLUME_GET:}"
@@ -407,16 +407,16 @@ try {
 
 # オーディオデバイス一覧取得
 get_audio_devices() {
-    local device_type="${1:-all}"  # all, input, output
-    
+    local device_type="${1:-all}" # all, input, output
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         echo "No audio devices available (PowerShell required)"
         return 1
     fi
-    
+
     local devices_script="
 try {
     # Windows オーディオデバイスの取得
@@ -435,16 +435,16 @@ try {
     Write-Output 'DEVICE_ERROR:\$(\$_.Exception.Message)'
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$devices_script" 10 "$powershell_path")
-    
+
     if [[ "$result" == DEVICE_ERROR:* ]]; then
         log "ERROR" "Audio device enumeration failed: ${result#DEVICE_ERROR:}"
         echo "Default Audio Device"
         return 1
     fi
-    
+
     # デバイス情報のフォーマット
     echo "$result" | grep "^DEVICE:" | while IFS=: read -r prefix name status; do
         echo "  - $name ($status)"
@@ -454,7 +454,7 @@ try {
 # オーディオシステム情報取得
 get_audio_system_info() {
     local format="${1:-text}"
-    
+
     case "$format" in
         "json")
             cat <<EOF
@@ -488,22 +488,22 @@ EOF
 # Windows/WSL固有のオーディオ初期化
 init_windows_audio() {
     log "INFO" "Initializing Windows/WSL audio subsystem"
-    
+
     # PowerShell依存関係チェック
     if ! check_powershell_execution; then
         log "ERROR" "Windows audio initialization failed - PowerShell not available"
         return 1
     fi
-    
+
     # 現在の音量を取得してキャッシュ
     CURRENT_VOLUME=$(get_system_volume)
-    
+
     # オーディオデバイス情報をキャッシュ
     AUDIO_DEVICE_LIST=$(get_audio_devices)
-    
+
     # 初期化完了フラグ
     WINDOWS_AUDIO_INITIALIZED="true"
-    
+
     log "INFO" "Windows audio system initialized (Volume: ${CURRENT_VOLUME}%)"
     return 0
 }
@@ -511,17 +511,17 @@ init_windows_audio() {
 # Windowsオーディオシステムテスト
 test_windows_audio_system() {
     echo "=== Windows Audio System Test ==="
-    
+
     # PowerShell チェック
     if ! check_powershell_execution; then
         echo "❌ PowerShell not available for audio testing"
         return 1
     fi
-    
+
     # システム音テスト
     echo "Testing system sounds..."
     local test_sounds=("info" "warning" "error" "beep")
-    
+
     for sound in "${test_sounds[@]}"; do
         echo "  Playing $sound sound..."
         if play_windows_sound "$sound"; then
@@ -531,7 +531,7 @@ test_windows_audio_system() {
         fi
         sleep 0.5
     done
-    
+
     # ビープ音テスト
     echo ""
     echo "Testing beep sequences..."
@@ -540,14 +540,14 @@ test_windows_audio_system() {
     else
         echo "❌ Beep sequence test failed"
     fi
-    
+
     # 音量制御テスト
     echo ""
     echo "Testing volume control..."
     local original_volume
     original_volume=$(get_system_volume)
     echo "  Current volume: $original_volume%"
-    
+
     if set_system_volume 70; then
         echo "✅ Volume control test passed"
         # 元の音量に復元
@@ -555,7 +555,7 @@ test_windows_audio_system() {
     else
         echo "❌ Volume control test failed"
     fi
-    
+
     # オーディオデバイス検出テスト
     echo ""
     echo "Testing audio device detection..."
@@ -567,16 +567,16 @@ test_windows_audio_system() {
     else
         echo "❌ No audio devices detected"
     fi
-    
+
     # フォールバック機能テスト
     echo ""
     echo "Testing fallback beep..."
     windows_beep_fallback "This is a test message" "normal"
     echo "✅ Fallback beep test completed"
-    
+
     echo ""
     echo "Windows Audio System test completed"
     get_audio_system_info "text"
-    
+
     return 0
 }

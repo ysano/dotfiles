@@ -10,13 +10,13 @@ declare -g POWERSHELL_TYPE=""
 # PowerShell実行パスの検出（統合版）
 find_powershell_path() {
     log "DEBUG" "Searching for PowerShell executable"
-    
+
     # キャッシュされたパスがあれば使用
     if [[ -n "$POWERSHELL_PATH" ]] && [[ -x "$POWERSHELL_PATH" ]]; then
         echo "$POWERSHELL_PATH"
         return 0
     fi
-    
+
     # 検索パスの優先順位（WSL用に拡張）
     local powershell_paths=(
         # PowerShell Core (推奨) - 複数バージョン対応
@@ -35,7 +35,7 @@ find_powershell_path() {
         "/mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps/pwsh.exe"
         "/mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps/powershell.exe"
     )
-    
+
     for path in "${powershell_paths[@]}"; do
         # ワイルドカード展開
         if [[ "$path" == *"*"* ]]; then
@@ -67,7 +67,7 @@ find_powershell_path() {
             fi
         fi
     done
-    
+
     log "ERROR" "PowerShell executable not found"
     return 1
 }
@@ -75,16 +75,16 @@ find_powershell_path() {
 # PowerShell情報の検出
 detect_powershell_info() {
     local ps_path="$1"
-    
+
     if [[ -z "$ps_path" ]]; then
         return 1
     fi
-    
+
     # バージョン情報取得
     local version_output
     version_output=$("$ps_path" -Command '$PSVersionTable.PSVersion.ToString()' 2>/dev/null || echo "unknown")
     POWERSHELL_VERSION="$version_output"
-    
+
     # PowerShellタイプの判定
     if [[ "$ps_path" == *"pwsh.exe"* ]]; then
         POWERSHELL_TYPE="PowerShell Core"
@@ -93,34 +93,34 @@ detect_powershell_info() {
     else
         POWERSHELL_TYPE="Unknown"
     fi
-    
+
     log "DEBUG" "PowerShell detected: $POWERSHELL_TYPE v$POWERSHELL_VERSION"
 }
 
 # PowerShell実行可能性チェック
 check_powershell_execution() {
     local ps_path="${1:-$(find_powershell_path)}"
-    
+
     if [[ -z "$ps_path" ]]; then
         log "ERROR" "PowerShell path not provided and not found"
         return 1
     fi
-    
+
     # 基本実行テスト
     if ! "$ps_path" -Command "echo 'test'" >/dev/null 2>&1; then
         log "ERROR" "PowerShell execution test failed"
         return 1
     fi
-    
+
     # 権限チェック
     local execution_policy
     execution_policy=$("$ps_path" -Command "Get-ExecutionPolicy" 2>/dev/null || echo "Unknown")
-    
+
     if [[ "$execution_policy" == "Restricted" ]]; then
         log "WARN" "PowerShell execution policy is Restricted - some features may not work"
         return 2
     fi
-    
+
     log "DEBUG" "PowerShell execution check passed (Policy: $execution_policy)"
     return 0
 }
@@ -130,7 +130,7 @@ execute_powershell_script() {
     local script="$1"
     local timeout="${2:-30}"
     local ps_path="${3:-$(find_powershell_path)}"
-    
+
     # エラーハンドラーの読み込み
     if [[ -n "${LOADED_MODULES[error_handler]:-}" ]] || load_module "error_handler" false; then
         # 統合エラーハンドリングを使用
@@ -138,14 +138,14 @@ execute_powershell_script() {
             report_error "POWERSHELL_NOT_FOUND" "powershell_engine" "execute_powershell_script" "PowerShell executable not available"
             return 101
         fi
-        
+
         if [[ -z "$script" ]]; then
             report_error "CONFIGURATION_ERROR" "powershell_engine" "execute_powershell_script" "No PowerShell script provided"
             return 4
         fi
-        
+
         log "DEBUG" "Executing PowerShell script (timeout: ${timeout}s)"
-        
+
         # タイムアウト付き実行
         local result
         if command -v timeout >/dev/null 2>&1; then
@@ -159,7 +159,7 @@ execute_powershell_script() {
                 return $?
             fi
         fi
-        
+
         echo "$result"
         return 0
     else
@@ -168,14 +168,14 @@ execute_powershell_script() {
             log "ERROR" "PowerShell not available for script execution"
             return 1
         fi
-        
+
         if [[ -z "$script" ]]; then
             log "ERROR" "No PowerShell script provided"
             return 1
         fi
-        
+
         log "DEBUG" "Executing PowerShell script (timeout: ${timeout}s)"
-        
+
         # タイムアウト付き実行
         if command -v timeout >/dev/null 2>&1; then
             timeout "$timeout" "$ps_path" -Command "$script" 2>/dev/null
@@ -190,23 +190,23 @@ execute_powershell_file() {
     local script_file="$1"
     local timeout="${2:-30}"
     local ps_path="${3:-$(find_powershell_path)}"
-    
+
     if [[ -z "$ps_path" ]]; then
         log "ERROR" "PowerShell not available for file execution"
         return 1
     fi
-    
+
     if [[ ! -f "$script_file" ]]; then
         log "ERROR" "PowerShell script file not found: $script_file"
         return 1
     fi
-    
+
     log "DEBUG" "Executing PowerShell file: $script_file"
-    
+
     # Windows形式のパスに変換
     local windows_path
     windows_path=$(wslpath -w "$script_file" 2>/dev/null || echo "$script_file")
-    
+
     # タイムアウト付き実行
     if command -v timeout >/dev/null 2>&1; then
         timeout "$timeout" "$ps_path" -File "$windows_path" 2>/dev/null
@@ -218,11 +218,11 @@ execute_powershell_file() {
 # PowerShell COM オブジェクト利用可能性チェック
 check_powershell_com_support() {
     local ps_path="${1:-$(find_powershell_path)}"
-    
+
     if [[ -z "$ps_path" ]]; then
         return 1
     fi
-    
+
     # COM オブジェクト作成テスト
     local com_test_script='
     try {
@@ -235,10 +235,10 @@ check_powershell_com_support() {
         Write-Output "COM_NOT_SUPPORTED"
     }
     '
-    
+
     local result
     result=$(execute_powershell_script "$com_test_script" 10 "$ps_path")
-    
+
     if [[ "$result" == "COM_SUPPORTED" ]]; then
         log "DEBUG" "PowerShell COM support verified"
         return 0
@@ -251,11 +251,11 @@ check_powershell_com_support() {
 # PowerShell .NET Framework チェック
 check_powershell_dotnet_support() {
     local ps_path="${1:-$(find_powershell_path)}"
-    
+
     if [[ -z "$ps_path" ]]; then
         return 1
     fi
-    
+
     # .NET Framework バージョンチェック
     local dotnet_test_script='
     try {
@@ -269,10 +269,10 @@ check_powershell_dotnet_support() {
         Write-Output "SPEECH_NOT_AVAILABLE"
     }
     '
-    
+
     local result
     result=$(execute_powershell_script "$dotnet_test_script" 10 "$ps_path")
-    
+
     if echo "$result" | grep -q "SPEECH_AVAILABLE"; then
         log "DEBUG" "PowerShell .NET Speech support verified"
         return 0
@@ -286,7 +286,7 @@ check_powershell_dotnet_support() {
 check_powershell_dependencies() {
     local missing_deps=()
     local optional_deps=()
-    
+
     # PowerShellの確認
     local powershell_path
     powershell_path=$(find_powershell_path)
@@ -297,24 +297,24 @@ check_powershell_dependencies() {
         if ! check_powershell_execution "$powershell_path"; then
             missing_deps+=("PowerShell execution capability")
         fi
-        
+
         # COM サポート確認
         if ! check_powershell_com_support "$powershell_path"; then
             optional_deps+=("PowerShell COM support (for advanced features)")
         fi
-        
+
         # .NET Speech サポート確認
         if ! check_powershell_dotnet_support "$powershell_path"; then
             optional_deps+=("PowerShell .NET Speech support (for TTS)")
         fi
     fi
-    
+
     # WSL環境の確認と強化された検出
     if [[ -z "${WSL_DISTRO_NAME:-}" ]] && ! grep -qi microsoft /proc/version 2>/dev/null; then
         log "WARN" "Not running in WSL environment - some features may not work"
         return 1
     fi
-    
+
     # WSL2の確認
     if grep -qi "WSL2" /proc/version 2>/dev/null; then
         log "DEBUG" "Running in WSL2 environment"
@@ -323,17 +323,17 @@ check_powershell_dependencies() {
         log "DEBUG" "Running in WSL1 environment"
         export WSL_VERSION="1"
     fi
-    
+
     # エラー報告
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         log "ERROR" "Missing critical dependencies: ${missing_deps[*]}"
         return 1
     fi
-    
+
     if [[ ${#optional_deps[@]} -gt 0 ]]; then
         log "WARN" "Missing optional dependencies: ${optional_deps[*]}"
     fi
-    
+
     log "DEBUG" "PowerShell dependencies check passed"
     return 0
 }
@@ -347,26 +347,26 @@ check_windows_dependencies() {
 # PowerShell エンジン初期化
 init_powershell_engine() {
     log "DEBUG" "Initializing PowerShell engine"
-    
+
     # 依存関係チェック
     if ! check_windows_dependencies; then
         log "ERROR" "PowerShell engine initialization failed - dependencies not met"
         return 1
     fi
-    
+
     # PowerShell情報表示
     if [[ -n "$POWERSHELL_PATH" ]]; then
         log "INFO" "PowerShell Engine: $POWERSHELL_TYPE v$POWERSHELL_VERSION"
         log "INFO" "PowerShell Path: $POWERSHELL_PATH"
     fi
-    
+
     return 0
 }
 
 # PowerShell エンジン情報取得
 get_powershell_info() {
     local format="${1:-json}"
-    
+
     case "$format" in
         "json")
             cat <<EOF
@@ -395,7 +395,7 @@ EOF
 # PowerShell エンジンテスト
 test_powershell_engine() {
     echo "=== PowerShell Engine Test ==="
-    
+
     # 基本検出テスト
     local ps_path
     ps_path=$(find_powershell_path)
@@ -405,7 +405,7 @@ test_powershell_engine() {
         echo "❌ PowerShell not found"
         return 1
     fi
-    
+
     # 実行テスト
     if check_powershell_execution "$ps_path"; then
         echo "✅ PowerShell execution test passed"
@@ -413,35 +413,35 @@ test_powershell_engine() {
         echo "❌ PowerShell execution test failed"
         return 1
     fi
-    
+
     # 機能テスト
     local test_script='Write-Output "Hello from PowerShell"'
     local result
     result=$(execute_powershell_script "$test_script" 5 "$ps_path")
-    
+
     if [[ "$result" == "Hello from PowerShell" ]]; then
         echo "✅ PowerShell script execution test passed"
     else
         echo "❌ PowerShell script execution test failed"
         return 1
     fi
-    
+
     # COM サポートテスト
     if check_powershell_com_support "$ps_path"; then
         echo "✅ PowerShell COM support available"
     else
         echo "⚠️  PowerShell COM support not available"
     fi
-    
+
     # .NET Speech サポートテスト
     if check_powershell_dotnet_support "$ps_path"; then
         echo "✅ PowerShell .NET Speech support available"
     else
         echo "⚠️  PowerShell .NET Speech support not available"
     fi
-    
+
     echo "PowerShell Engine test completed"
     get_powershell_info "text"
-    
+
     return 0
 }

@@ -17,20 +17,20 @@ declare -g TTS_VOICE_LIST=""
 detect_windows_tts_voices() {
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
-        echo "Microsoft Haruka Desktop"  # デフォルト
+        echo "Microsoft Haruka Desktop" # デフォルト
         return 1
     fi
-    
+
     log "DEBUG" "Detecting Windows TTS voices"
-    
+
     # キャッシュされた結果があれば使用
     if [[ -n "$TTS_VOICE_LIST" ]]; then
         echo "$TTS_VOICE_LIST"
         return 0
     fi
-    
+
     # PowerShellで利用可能な音声を取得
     local voices_script='
 try {
@@ -50,16 +50,16 @@ try {
     Write-Output "ERROR: $($_.Exception.Message)"
 }
 '
-    
+
     local result
     result=$(execute_powershell_script "$voices_script" 10 "$powershell_path")
-    
+
     if [[ "$result" == ERROR:* ]]; then
         log "WARN" "TTS voice detection failed: ${result#ERROR: }"
-        echo "Microsoft Haruka Desktop"  # フォールバック
+        echo "Microsoft Haruka Desktop" # フォールバック
         return 1
     fi
-    
+
     # JSON結果をパース
     local voices
     if command -v jq >/dev/null 2>&1 && [[ "$result" == [* ]]; then
@@ -68,12 +68,12 @@ try {
         # JSON パースなしの簡易抽出
         voices=$(echo "$result" | grep -o '"Name":"[^"]*"' | sed 's/"Name":"\([^"]*\)"/\1/' | sort -u)
     fi
-    
+
     if [[ -n "$voices" ]]; then
         TTS_VOICE_LIST="$voices"
         echo "$voices"
     else
-        echo "Microsoft Haruka Desktop"  # フォールバック
+        echo "Microsoft Haruka Desktop" # フォールバック
     fi
 }
 
@@ -82,11 +82,11 @@ get_voice_details() {
     local voice_name="$1"
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]] || [[ -z "$voice_name" ]]; then
         return 1
     fi
-    
+
     local voice_info_script="
 try {
     Add-Type -AssemblyName System.Speech
@@ -109,23 +109,23 @@ try {
     Write-Output \"ERROR: \$(\$_.Exception.Message)\"
 }
 "
-    
+
     execute_powershell_script "$voice_info_script" 10 "$powershell_path"
 }
 
 # 最適な日本語音声の選択
 select_japanese_voice() {
     local force_refresh="${1:-false}"
-    
+
     # キャッシュされた結果があれば使用
     if [[ -n "$SELECTED_JAPANESE_VOICE" ]] && [[ "$force_refresh" != "true" ]]; then
         echo "$SELECTED_JAPANESE_VOICE"
         return 0
     fi
-    
+
     local available_voices
     available_voices=$(detect_windows_tts_voices)
-    
+
     # 日本語音声の優先順位
     local preferred_voices=(
         "Microsoft Haruka Desktop"
@@ -136,7 +136,7 @@ select_japanese_voice() {
         "Microsoft Ayumi Desktop"
         "Microsoft Ayumi Mobile"
     )
-    
+
     for voice in "${preferred_voices[@]}"; do
         if echo "$available_voices" | grep -Fq "$voice"; then
             SELECTED_JAPANESE_VOICE="$voice"
@@ -145,7 +145,7 @@ select_japanese_voice() {
             return 0
         fi
     done
-    
+
     # 日本語が含まれる音声を検索
     local japanese_voice
     japanese_voice=$(echo "$available_voices" | grep -i "haruka\|sayaka\|ichiro\|ayumi" | head -1)
@@ -155,7 +155,7 @@ select_japanese_voice() {
         echo "$japanese_voice"
         return 0
     fi
-    
+
     # 日本語ロケールの音声を検索
     local jp_voice
     jp_voice=$(echo "$available_voices" | grep -i "ja-jp\|japanese" | head -1)
@@ -165,7 +165,7 @@ select_japanese_voice() {
         echo "$jp_voice"
         return 0
     fi
-    
+
     # フォールバック
     SELECTED_JAPANESE_VOICE="Microsoft Haruka Desktop"
     echo "Microsoft Haruka Desktop"
@@ -174,47 +174,47 @@ select_japanese_voice() {
 # 音声テキストの前処理（Windows向け）
 preprocess_speech_text() {
     local text="$1"
-    
+
     if [[ -z "$text" ]]; then
         return 1
     fi
-    
+
     # PowerShell文字列エスケープ
     local processed
-    processed=$(echo "$text" | \
-        sed "s/'/\'\'/g" | \
-        sed 's/"/\\"/g' | \
-        sed 's/`/\\`/g' | \
+    processed=$(echo "$text" |
+        sed "s/'/\'\'/g" |
+        sed 's/"/\\"/g' |
+        sed 's/`/\\`/g' |
         sed 's/\$/\\$/g')
-    
+
     # 特殊文字の読み上げ対応
-    processed=$(echo "$processed" | \
-        sed 's/⏺/○/g' | \
-        sed 's/✅/成功/g' | \
-        sed 's/❌/エラー/g' | \
-        sed 's/⚠️/警告/g' | \
-        sed 's/📁/フォルダ/g' | \
-        sed 's/🔧/設定/g' | \
-        sed 's/📊/グラフ/g' | \
-        sed 's/🎯/ターゲット/g' | \
-        sed 's/🚀/ロケット/g' | \
-        sed 's/&/アンド/g' | \
-        sed 's/@/アット/g' | \
-        sed 's/#/シャープ/g' | \
+    processed=$(echo "$processed" |
+        sed 's/⏺/○/g' |
+        sed 's/✅/成功/g' |
+        sed 's/❌/エラー/g' |
+        sed 's/⚠️/警告/g' |
+        sed 's/📁/フォルダ/g' |
+        sed 's/🔧/設定/g' |
+        sed 's/📊/グラフ/g' |
+        sed 's/🎯/ターゲット/g' |
+        sed 's/🚀/ロケット/g' |
+        sed 's/&/アンド/g' |
+        sed 's/@/アット/g' |
+        sed 's/#/シャープ/g' |
         sed 's/%/パーセント/g')
-    
+
     # URL の簡略化
     processed=$(echo "$processed" | sed 's|https\?://[^ ]*|URL|g')
-    
+
     # コードブロックの簡略化
     processed=$(echo "$processed" | sed 's/```[^`]*```/コードブロック/g')
-    
+
     # 長すぎるテキストの短縮
     local max_length="${SPEECH_MAX_LENGTH:-400}"
     if [[ ${#processed} -gt $max_length ]]; then
         processed="${processed:0:$max_length}。以下省略。"
     fi
-    
+
     echo "$processed"
 }
 
@@ -222,22 +222,22 @@ preprocess_speech_text() {
 speak_with_windows_tts() {
     local text="$1"
     local voice="${2:-auto}"
-    local rate="${3:-0}"  # -10 to 10
-    local volume="${4:-100}"  # 0 to 100
-    
+    local rate="${3:-0}"     # -10 to 10
+    local volume="${4:-100}" # 0 to 100
+
     if [[ -z "$text" ]]; then
         log "ERROR" "No text provided for TTS"
         return 1
     fi
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         log "ERROR" "PowerShell not available for TTS"
         return 1
     fi
-    
+
     # 音声の選択
     local selected_voice
     if [[ "$voice" == "auto" ]] || [[ -z "$voice" ]]; then
@@ -245,13 +245,13 @@ speak_with_windows_tts() {
     else
         selected_voice="$voice"
     fi
-    
+
     # テキストの前処理
     local processed_text
     processed_text=$(preprocess_speech_text "$text")
-    
+
     log "DEBUG" "TTS: voice=$selected_voice, rate=$rate, volume=$volume"
-    
+
     # PowerShell TTS スクリプト
     local tts_script="
 try {
@@ -279,10 +279,10 @@ try {
     Write-Output \"TTS_ERROR: \$(\$_.Exception.Message)\"
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$tts_script" 30 "$powershell_path")
-    
+
     # 統合エラーハンドリングを使用
     if [[ -n "${LOADED_MODULES[error_handler]:-}" ]] || load_module "error_handler" false; then
         case "$result" in
@@ -333,11 +333,11 @@ speak_with_windows_tts_async() {
     local voice="${2:-auto}"
     local rate="${3:-0}"
     local volume="${4:-100}"
-    
+
     # バックグラウンドで音声合成実行
     (speak_with_windows_tts "$text" "$voice" "$rate" "$volume") &
     local pid=$!
-    
+
     log "DEBUG" "TTS started in background (PID: $pid)"
     return 0
 }
@@ -345,20 +345,20 @@ speak_with_windows_tts_async() {
 # Windows音声合成のテスト
 test_windows_tts() {
     local test_text="${1:-テスト音声です。Windows TTS エンジンの動作確認中。}"
-    
+
     echo "=== Windows TTS Engine Test ==="
-    
+
     # PowerShellエンジンチェック
     if ! check_powershell_execution; then
         echo "❌ PowerShell not available for TTS testing"
         return 1
     fi
-    
+
     # 音声検出テスト
     echo "音声検出中..."
     local voices
     voices=$(detect_windows_tts_voices)
-    
+
     if [[ -n "$voices" ]]; then
         echo "✅ 検出された音声:"
         echo "$voices" | sed 's/^/  - /'
@@ -366,21 +366,21 @@ test_windows_tts() {
         echo "❌ 音声が検出されませんでした"
         return 1
     fi
-    
+
     # 日本語音声選択テスト
     echo ""
     echo "日本語音声選択中..."
     local jp_voice
     jp_voice=$(select_japanese_voice)
     echo "✅ 選択された日本語音声: $jp_voice"
-    
+
     # テキスト前処理テスト
     echo ""
     echo "テキスト前処理テスト..."
     local processed
     processed=$(preprocess_speech_text "✅ テスト成功！ URL: https://example.com @user #tag")
     echo "✅ 前処理結果: $processed"
-    
+
     # 音声合成テスト
     echo ""
     echo "音声合成テスト実行中..."
@@ -390,7 +390,7 @@ test_windows_tts() {
         echo "❌ Windows TTS 音声合成失敗"
         return 1
     fi
-    
+
     return 0
 }
 
@@ -398,26 +398,26 @@ test_windows_tts() {
 speak_windows() {
     local text="$1"
     local voice="${2:-auto}"
-    
+
     speak_with_windows_tts "$text" "$voice"
 }
 
 # Windows TTS エンジン初期化
 init_windows_tts_engine() {
     log "DEBUG" "Initializing Windows TTS engine"
-    
+
     # PowerShell依存関係チェック
     if ! check_powershell_dotnet_support; then
         log "ERROR" "Windows TTS engine requires PowerShell .NET Speech support"
         return 1
     fi
-    
+
     # 音声リスト取得
     detect_windows_tts_voices >/dev/null
-    
+
     # 日本語音声選択
     select_japanese_voice >/dev/null
-    
+
     log "INFO" "Windows TTS Engine initialized with voice: ${SELECTED_JAPANESE_VOICE:-auto}"
     return 0
 }
@@ -425,7 +425,7 @@ init_windows_tts_engine() {
 # Windows TTS エンジン情報取得
 get_windows_tts_info() {
     local format="${1:-json}"
-    
+
     case "$format" in
         "json")
             cat <<EOF

@@ -17,12 +17,12 @@ declare -g LAST_NOTIFICATION_TIME=""
 check_toast_notification_support() {
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         TOAST_NOTIFICATION_AVAILABLE="false"
         return 1
     fi
-    
+
     # Windows.UI.Notifications サポートチェック
     local toast_test_script="
 try {
@@ -32,10 +32,10 @@ try {
     Write-Output 'TOAST_NOT_SUPPORTED'
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$toast_test_script" 10 "$powershell_path")
-    
+
     if [[ "$result" == "TOAST_SUPPORTED" ]]; then
         TOAST_NOTIFICATION_AVAILABLE="true"
         log "DEBUG" "Windows Toast notifications supported"
@@ -52,26 +52,26 @@ send_toast_notification() {
     local title="$1"
     local message="$2"
     local icon="${3:-Information}"
-    local duration="${4:-Short}"  # Short, Long
+    local duration="${4:-Short}" # Short, Long
     local sound="${5:-Default}"
-    
+
     if [[ -z "$title" ]] || [[ -z "$message" ]]; then
         log "ERROR" "Title and message required for toast notification"
         return 1
     fi
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]] || [[ "$TOAST_NOTIFICATION_AVAILABLE" == "false" ]]; then
         log "WARN" "Toast notifications not available"
         return 1
     fi
-    
+
     # テキストエスケープ
     local escaped_title=$(echo "$title" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
     local escaped_message=$(echo "$message" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
-    
+
     # Toast通知スクリプト
     local toast_script="
 try {
@@ -104,10 +104,10 @@ try {
     Write-Output 'TOAST_ERROR:'\\$(\\$_.Exception.Message)
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$toast_script" 10 "$powershell_path")
-    
+
     # 統合エラーハンドリングを使用
     if [[ -n "${LOADED_MODULES[error_handler]:-}" ]] || load_module "error_handler" false; then
         case "$result" in
@@ -150,26 +150,26 @@ try {
 send_messagebox_notification() {
     local title="$1"
     local message="$2"
-    local icon="${3:-Information}"  # Information, Warning, Error, Question
-    local buttons="${4:-OK}"        # OK, OKCancel, YesNo, YesNoCancel
-    
+    local icon="${3:-Information}" # Information, Warning, Error, Question
+    local buttons="${4:-OK}"       # OK, OKCancel, YesNo, YesNoCancel
+
     if [[ -z "$title" ]] || [[ -z "$message" ]]; then
         log "ERROR" "Title and message required for MessageBox notification"
         return 1
     fi
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         log "WARN" "MessageBox notifications not available"
         return 1
     fi
-    
+
     # テキストエスケープ
     local escaped_title=$(echo "$title" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
     local escaped_message=$(echo "$message" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
-    
+
     # MessageBox通知スクリプト
     local messagebox_script="
 try {
@@ -180,10 +180,10 @@ try {
     Write-Output 'MESSAGEBOX_ERROR:'\\$(\\$_.Exception.Message)
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$messagebox_script" 30 "$powershell_path")
-    
+
     case "$result" in
         MESSAGEBOX_SUCCESS:*)
             local user_response="${result#MESSAGEBOX_SUCCESS:}"
@@ -209,22 +209,22 @@ send_platform_notification() {
     local sound="${3:-default}"
     local urgency="${4:-normal}"
     local timeout="${5:-5000}"
-    
+
     if [[ -z "$title" ]] || [[ -z "$message" ]]; then
         log "ERROR" "Title and message required for notification"
         return 1
     fi
-    
+
     log "DEBUG" "Sending Windows notification: title=$title, urgency=$urgency"
-    
+
     # 緊急度に基づく通知スタイル設定
     local toast_icon="Information"
     local toast_sound="Default"
     local toast_duration="Short"
     local msgbox_icon="Information"
-    
+
     case "$urgency" in
-        "critical"|"high")
+        "critical" | "high")
             toast_icon="Warning"
             toast_sound="Alarm"
             toast_duration="Long"
@@ -235,7 +235,7 @@ send_platform_notification() {
             toast_sound="Exclamation"
             msgbox_icon="Warning"
             ;;
-        "normal"|"info")
+        "normal" | "info")
             toast_icon="Information"
             toast_sound="Default"
             msgbox_icon="Information"
@@ -246,20 +246,20 @@ send_platform_notification() {
             msgbox_icon="Information"
             ;;
     esac
-    
+
     # Toast通知を最初に試行
     if [[ "$TOAST_NOTIFICATION_AVAILABLE" != "false" ]]; then
         if send_toast_notification "$title" "$message" "$toast_icon" "$toast_duration" "$toast_sound"; then
             return 0
         fi
     fi
-    
+
     # フォールバック: MessageBox通知
     log "DEBUG" "Falling back to MessageBox notification"
     if send_messagebox_notification "$title" "$message" "$msgbox_icon" "OK"; then
         return 0
     fi
-    
+
     # 最終フォールバック: コンソール出力
     log "WARN" "All GUI notifications failed, using console fallback"
     echo "通知: $title - $message"
@@ -276,26 +276,26 @@ send_notification() {
 send_balloon_notification() {
     local title="$1"
     local message="$2"
-    local icon="${3:-Info}"  # None, Info, Warning, Error
+    local icon="${3:-Info}" # None, Info, Warning, Error
     local timeout="${4:-5000}"
-    
+
     if [[ -z "$title" ]] || [[ -z "$message" ]]; then
         log "ERROR" "Title and message required for balloon notification"
         return 1
     fi
-    
+
     local powershell_path
     powershell_path=$(find_powershell_path)
-    
+
     if [[ -z "$powershell_path" ]]; then
         log "WARN" "Balloon notifications not available"
         return 1
     fi
-    
+
     # テキストエスケープ
     local escaped_title=$(echo "$title" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
     local escaped_message=$(echo "$message" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
-    
+
     # バルーン通知スクリプト
     local balloon_script="
 try {
@@ -313,10 +313,10 @@ try {
     Write-Output 'BALLOON_ERROR:'\\$(\\$_.Exception.Message)
 }
 "
-    
+
     local result
     result=$(execute_powershell_script "$balloon_script" 15 "$powershell_path")
-    
+
     case "$result" in
         "BALLOON_SUCCESS")
             log "DEBUG" "Balloon notification sent successfully"
@@ -336,8 +336,8 @@ try {
 # 通知レート制限
 is_notification_rate_limited() {
     local current_time=$(date +%s)
-    local min_interval="${NOTIFICATION_MIN_INTERVAL:-2}"  # 秒
-    
+    local min_interval="${NOTIFICATION_MIN_INTERVAL:-2}" # 秒
+
     if [[ -n "$LAST_NOTIFICATION_TIME" ]]; then
         local time_diff=$((current_time - LAST_NOTIFICATION_TIME))
         if [[ $time_diff -lt $min_interval ]]; then
@@ -345,7 +345,7 @@ is_notification_rate_limited() {
             return 0
         fi
     fi
-    
+
     return 1
 }
 
@@ -356,10 +356,10 @@ add_to_notification_queue() {
     local title="$1"
     local message="$2"
     local urgency="${3:-normal}"
-    
+
     local notification_data="$title|$message|$urgency|$(date +%s)"
     NOTIFICATION_QUEUE+=("$notification_data")
-    
+
     log "DEBUG" "Added notification to queue (queue size: ${#NOTIFICATION_QUEUE[@]})"
 }
 
@@ -367,20 +367,20 @@ process_notification_queue() {
     if [[ ${#NOTIFICATION_QUEUE[@]} -eq 0 ]]; then
         return 0
     fi
-    
+
     # レート制限チェック
     if is_notification_rate_limited; then
         log "DEBUG" "Skipping queue processing due to rate limit"
         return 0
     fi
-    
+
     # キューから最初の通知を取得
     local notification_data="${NOTIFICATION_QUEUE[0]}"
-    NOTIFICATION_QUEUE=("${NOTIFICATION_QUEUE[@]:1}")  # 最初の要素を削除
-    
+    NOTIFICATION_QUEUE=("${NOTIFICATION_QUEUE[@]:1}") # 最初の要素を削除
+
     # 通知データをパース
-    IFS='|' read -r title message urgency timestamp <<< "$notification_data"
-    
+    IFS='|' read -r title message urgency timestamp <<<"$notification_data"
+
     log "DEBUG" "Processing queued notification: $title"
     send_notification "$title" "$message" "default" "$urgency"
 }
@@ -388,16 +388,16 @@ process_notification_queue() {
 # 通知システムの初期化
 init_windows_notification_system() {
     log "INFO" "Initializing Windows notification system"
-    
+
     # PowerShell依存関係チェック
     if ! check_powershell_execution; then
         log "ERROR" "Windows notification system initialization failed - PowerShell not available"
         return 1
     fi
-    
+
     # Toast通知サポートチェック
     check_toast_notification_support
-    
+
     log "INFO" "Windows notification system initialized (Toast: ${TOAST_NOTIFICATION_AVAILABLE:-unknown})"
     return 0
 }
@@ -405,7 +405,7 @@ init_windows_notification_system() {
 # 通知システム情報取得
 get_notification_system_info() {
     local format="${1:-json}"
-    
+
     case "$format" in
         "json")
             cat <<EOF
@@ -434,17 +434,17 @@ EOF
 # Windows通知システムテスト
 test_windows_notification_system() {
     echo "=== Windows Notification System Test ==="
-    
+
     # PowerShell チェック
     if ! check_powershell_execution; then
         echo "❌ PowerShell not available for notification testing"
         return 1
     fi
-    
+
     # Toast通知サポートテスト
     if check_toast_notification_support; then
         echo "✅ Toast notification support detected"
-        
+
         # Toast通知テスト
         if send_toast_notification "Test Notification" "Toast notification test from Claude Voice" "Information" "Short" "Default"; then
             echo "✅ Toast notification test successful"
@@ -454,7 +454,7 @@ test_windows_notification_system() {
     else
         echo "⚠️  Toast notification not supported"
     fi
-    
+
     # MessageBox通知テスト
     echo ""
     echo "Testing MessageBox notification..."
@@ -463,7 +463,7 @@ test_windows_notification_system() {
     else
         echo "❌ MessageBox notification test failed"
     fi
-    
+
     # バルーン通知テスト
     echo ""
     echo "Testing Balloon notification..."
@@ -472,7 +472,7 @@ test_windows_notification_system() {
     else
         echo "❌ Balloon notification test failed"
     fi
-    
+
     # 統合通知テスト
     echo ""
     echo "Testing integrated notification system..."
@@ -481,25 +481,25 @@ test_windows_notification_system() {
     else
         echo "❌ Integrated notification test failed"
     fi
-    
+
     # キューシステムテスト
     echo ""
     echo "Testing notification queue system..."
     add_to_notification_queue "Queue Test 1" "First queued notification" "normal"
     add_to_notification_queue "Queue Test 2" "Second queued notification" "normal"
-    
+
     echo "Queue size: ${#NOTIFICATION_QUEUE[@]}"
-    
+
     process_notification_queue
     sleep 1
     process_notification_queue
-    
+
     echo "✅ Notification queue test completed"
-    
+
     echo ""
     echo "Windows Notification System test completed"
     get_notification_system_info "text"
-    
+
     return 0
 }
 
@@ -507,14 +507,14 @@ test_windows_notification_system() {
 send_urgent_notification() {
     local title="$1"
     local message="$2"
-    
+
     # レート制限を無視して緊急通知を送信
     local saved_last_time="$LAST_NOTIFICATION_TIME"
     LAST_NOTIFICATION_TIME=""
-    
+
     send_notification "$title" "$message" "alarm" "critical"
     local result=$?
-    
+
     LAST_NOTIFICATION_TIME="$saved_last_time"
     return $result
 }

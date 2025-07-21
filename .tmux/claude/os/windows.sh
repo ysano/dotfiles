@@ -39,7 +39,7 @@ detect_windows_tts_voices() {
     if [[ -n "${LOADED_MODULES[windows_tts_engine]}" ]]; then
         detect_windows_tts_voices "$@"
     else
-        echo "Microsoft Haruka Desktop"  # フォールバック
+        echo "Microsoft Haruka Desktop" # フォールバック
         return 1
     fi
 }
@@ -48,7 +48,7 @@ detect_windows_tts_voices() {
 select_japanese_voice() {
     # windows_tts_engine.sh の関数を呼び出し
     source "${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}/core/windows_tts_engine.sh" 2>/dev/null || {
-        echo "Microsoft Haruka Desktop"  # フォールバック
+        echo "Microsoft Haruka Desktop" # フォールバック
         return 1
     }
     select_japanese_voice "$@"
@@ -69,11 +69,11 @@ speak_windows() {
 speak_text() {
     local text="$1"
     local voice="${2:-$(get_config "audio.default_voice" "auto")}"
-    local device="${3:-auto}"  # Windows では通常無視
-    local rate="${4:-$(get_config "audio.speech_rate" "0")}"  # -10 to 10
-    
+    local device="${3:-auto}"                                # Windows では通常無視
+    local rate="${4:-$(get_config "audio.speech_rate" "0")}" # -10 to 10
+
     log "DEBUG" "Speaking text on Windows: voice=$voice, rate=$rate"
-    
+
     # 新しいWindows音声システムを呼び出し
     speak_windows "$text" "$voice"
     return $?
@@ -116,7 +116,7 @@ system_beep() {
     # windows_audio_system.sh の関数を呼び出し
     source "${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}/core/windows_audio_system.sh" 2>/dev/null || {
         log "WARN" "Windows audio system module not found"
-        for ((i=1; i<=count; i++)); do
+        for ((i = 1; i <= count; i++)); do
             echo -e '\a'
             if [[ ${1:-1} -gt 1 && $i -lt ${1:-1} ]]; then
                 sleep 0.3
@@ -152,7 +152,7 @@ set_system_volume() {
 get_system_volume() {
     # windows_audio_system.sh の関数を呼び出し
     source "${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}/core/windows_audio_system.sh" 2>/dev/null || {
-        echo "50"  # デフォルト値
+        echo "50" # デフォルト値
         return 1
     }
     get_system_volume "$@"
@@ -161,24 +161,24 @@ get_system_volume() {
 # Windows/WSL固有の初期化
 init_windows_audio() {
     log "INFO" "Initializing Windows/WSL audio subsystem"
-    
+
     # 依存関係チェック
     if ! check_windows_dependencies; then
         return 1
     fi
-    
+
     # PowerShell パスの確認
     local powershell_path=$(find_powershell_path)
     log "DEBUG" "PowerShell path: $powershell_path"
-    
+
     # 利用可能な音声の確認
     local voices=$(detect_windows_tts_voices | head -3)
     log "DEBUG" "Available voices (first 3): $voices"
-    
+
     # デフォルト日本語音声の選択
     local default_voice=$(select_japanese_voice)
     log "DEBUG" "Selected default Japanese voice: $default_voice"
-    
+
     log "INFO" "Windows/WSL audio subsystem initialized successfully"
     return 0
 }
@@ -186,41 +186,41 @@ init_windows_audio() {
 # このモジュールのテスト関数
 test_windows_functions() {
     echo "Testing Windows/WSL-specific functions..."
-    
+
     # 依存関係チェック
     if check_windows_dependencies; then
         echo "Dependencies: OK"
     else
         echo "Dependencies: ISSUES"
     fi
-    
+
     # PowerShell パスの確認
     local powershell_path=$(find_powershell_path)
     echo "PowerShell path: $powershell_path"
-    
+
     # 利用可能な音声の確認
     local voices=$(detect_windows_tts_voices | head -3)
     echo "Available voices (first 3): $voices"
-    
+
     # デフォルト日本語音声
     local japanese_voice=$(select_japanese_voice)
     echo "Default Japanese voice: $japanese_voice"
-    
+
     # 現在の音量取得
     local volume=$(get_system_volume "output")
     echo "Current output volume: $volume"
-    
+
     # 短いテスト音声（オプション）
     local test_speech=$(get_config "test.enable_speech" "false")
     if [[ "$test_speech" == "true" ]]; then
         echo "Testing speech synthesis..."
         speak_text "Windows テスト" "$japanese_voice" "auto" "0"
     fi
-    
+
     # テストビープ音
     echo "Testing system beep..."
     system_beep 2 600 150
-    
+
     echo "Windows/WSL functions test completed"
 }
 
@@ -300,10 +300,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # 基本モジュールの読み込み
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
     source "$SCRIPT_DIR/core/base.sh"
-    
+
     claude_voice_init true
     optimize_wsl_environment
-    
+
     # PowerShell利用可能性に応じたテスト
     if check_windows_dependencies 2>/dev/null; then
         echo "PowerShell利用可能 - フルテスト実行"

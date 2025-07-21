@@ -22,9 +22,9 @@ universal_speak() {
     local text="$1"
     local voice_setting="${2:-auto}"
     local engine="${3:-$(detect_voice_engine)}"
-    
+
     log "DEBUG" "Universal speak: engine=$engine, voice=$voice_setting"
-    
+
     init_universal_voice
     execute_voice_engine "$engine" "$text" "$voice_setting"
 }
@@ -35,12 +35,12 @@ universal_speak_async() {
     local voice_setting="${2:-auto}"
     local timeout="${3:-30}"
     local max_concurrent="${4:-1}"
-    
+
     log "DEBUG" "Starting async universal speech synthesis"
-    
+
     # 並行音声出力の制限
     limit_concurrent_voices "$max_concurrent"
-    
+
     # バックグラウンドで音声出力
     (
         timeout "$timeout" universal_speak "$text" "$voice_setting" 2>/dev/null
@@ -51,17 +51,17 @@ universal_speak_async() {
             log "WARN" "Universal speech synthesis failed with exit code $exit_code"
         fi
     ) &
-    
+
     local bg_pid=$!
     log "DEBUG" "Universal speech synthesis started in background (PID: $bg_pid)"
-    
+
     return 0
 }
 
 # === 並行音声プロセス制限 ===
 limit_concurrent_voices() {
     local max_processes="${1:-1}"
-    
+
     # 様々な音声プロセスの検出パターン
     local voice_patterns=(
         "powershell.*Speech"
@@ -69,30 +69,30 @@ limit_concurrent_voices() {
         "espeak"
         "festival.*tts"
     )
-    
+
     local total_count=0
     local pids_to_kill=()
-    
+
     # 各パターンでプロセスを検索
     for pattern in "${voice_patterns[@]}"; do
         local pids=($(pgrep -f "$pattern" 2>/dev/null))
         total_count=$((total_count + ${#pids[@]}))
-        
+
         # 制限を超えた場合のPIDを収集
         if [[ $total_count -gt $max_processes ]]; then
             local excess=$((total_count - max_processes))
-            for ((i=0; i<excess && i<${#pids[@]}; i++)); do
+            for ((i = 0; i < excess && i < ${#pids[@]}; i++)); do
                 pids_to_kill+=("${pids[i]}")
             done
         fi
     done
-    
+
     # 余分なプロセスを終了
     for pid in "${pids_to_kill[@]}"; do
         kill "$pid" 2>/dev/null
         log "DEBUG" "Terminated voice process: $pid"
     done
-    
+
     if [[ ${#pids_to_kill[@]} -gt 0 ]]; then
         sleep 0.5
     fi
@@ -102,15 +102,15 @@ limit_concurrent_voices() {
 diagnose_universal_voice() {
     echo "=== Universal Voice System Diagnostics ==="
     echo ""
-    
+
     # 環境検出
     local os_type=$(uname)
     echo "Operating System: $os_type"
-    
+
     if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
         echo "Environment: WSL"
     fi
-    
+
     echo ""
     init_universal_voice
     diagnose_engine_registry
@@ -120,23 +120,23 @@ diagnose_universal_voice() {
 test_universal_voice() {
     echo "Testing Universal Voice System..."
     echo ""
-    
+
     # 診断実行
     diagnose_universal_voice
     echo ""
-    
+
     # 音声テスト
     local engine=$(detect_voice_engine)
     echo "Testing with engine: $engine"
     echo ""
-    
+
     echo "Testing Japanese speech..."
     if universal_speak "ユニバーサル音声システムのテストです。日本語の読み上げが動作しています。"; then
         echo "✅ Japanese speech test: PASSED"
     else
         echo "❌ Japanese speech test: FAILED"
     fi
-    
+
     echo ""
     echo "Testing English speech..."
     if universal_speak "This is a test of the universal voice system. Cross-platform speech synthesis is working."; then
@@ -144,12 +144,12 @@ test_universal_voice() {
     else
         echo "❌ English speech test: FAILED"
     fi
-    
+
     echo ""
     echo "Testing async speech..."
     universal_speak_async "非同期音声テストです。バックグラウンドで再生されています。"
     echo "✅ Async speech test: INITIATED"
-    
+
     echo ""
     echo "Universal Voice System test completed"
 }
@@ -158,7 +158,7 @@ test_universal_voice() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # 基本モジュールの読み込み
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
+
     if [[ -f "$SCRIPT_DIR/base.sh" ]]; then
         source "$SCRIPT_DIR/base.sh"
         claude_voice_init true
@@ -170,7 +170,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             echo "[$level] $message" >&2
         }
     fi
-    
+
     # コマンドライン引数の処理
     case "${1:-test}" in
         "test")

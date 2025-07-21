@@ -1,4 +1,3 @@
 > create a new file
 
-Creating file... (Press Esc to interrupt)
-Processing request...
+✻ Processing… (12s · 450 tokens · esc to interrupt)
