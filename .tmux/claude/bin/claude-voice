@@ -52,6 +52,7 @@ main() {
     local voice="${3:-$DEFAULT_VOICE}"
     local model="${4:-$DEFAULT_MODEL}"
     local device="${5:-$DEFAULT_DEVICE}"
+    local target_window="${6:-.}"  # 6番目の引数でウィンドウIDを指定可能
     
     log "INFO" "Starting claude-voice (OS: $(detect_os), type: $summary_type)"
     
@@ -70,9 +71,9 @@ main() {
     local start_time=$(start_timer)
     
     # 1. 画面キャプチャ
-    echo "📺 画面内容を取得中..."
+    echo "📺 画面内容を取得中... (target: $target_window)"
     local screen_text
-    if ! screen_text=$(capture_screen_text "." "$lines"); then
+    if ! screen_text=$(capture_screen_text "$target_window" "$lines"); then
         local error_msg="画面内容の取得に失敗しました。"
         echo "❌ $error_msg"
         speak_text "$error_msg" "$voice"

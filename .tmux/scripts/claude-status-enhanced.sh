@@ -28,23 +28,28 @@ detect_claude_status() {
     
     debug_log "Analyzing output: ${#output} chars"
     
-    # Get only the 3 lines above the input UI box for precise state detection
-    # This avoids false positives from conversation history
-    local ui_context=$(echo "$output" | grep -B3 "╭─" | tail -4 || echo "$output" | tail -3)
-    debug_log "Analyzing UI context: ${#ui_context} chars (3 lines above input box)"
+    # Get recent output for pattern matching
+    local recent_output=$(echo "$output" | tail -20)
     
-    # 1. Waiting: User input required (highest priority - user action needed)
-    # Only check UI context to avoid false positives from conversation history
-    if echo "$ui_context" | grep -qE '(Do you want|Would you like|Continue\?|Proceed\?|❯.*Yes|Error:|Failed:|Exception:)'; then
-        debug_log "Detected: Waiting (input required in UI context)"
+    # 1. Busy: Processing with tokens and interrupt (highest priority - active processing)
+    if echo "$recent_output" | grep -qE '\([0-9]+s\s+·.*tokens.*interrupt\)'; then
+        debug_log "Detected: Busy (processing pattern in recent output)"
+        echo "Busy"
+        return
+    fi
+    
+    # 2. Waiting: User input required (interactive prompts)
+    # Look for active prompt patterns in recent output
+    if echo "$recent_output" | grep -qE '(Do you want to proceed\?|Would you like to|Continue\?.*❯|❯ 1\. Yes.*2\. Yes.*3\. No)'; then
+        debug_log "Detected: Waiting (active input prompt in recent output)"
         echo "Waiting"
         return
     fi
     
-    # 2. Busy: Processing with tokens and interrupt (processing state)
-    if echo "$ui_context" | grep -qE '\([0-9]+s\s+·.*tokens.*interrupt\)'; then
-        debug_log "Detected: Busy (processing pattern)"
-        echo "Busy"
+    # Check for error states that require user action
+    if echo "$recent_output" | grep -qE '(Error:|Failed:|Exception:.*❯)'; then
+        debug_log "Detected: Waiting (error requiring user action)"
+        echo "Waiting"
         return
     fi
     

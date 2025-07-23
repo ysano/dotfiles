@@ -52,7 +52,7 @@ fi
 
 # Get current status if not provided
 if [ -z "$NEW_STATUS" ]; then
-    NEW_STATUS=$(~/.tmux/scripts/claude-status.sh "$WINDOW_ID")
+    NEW_STATUS=$(~/.tmux/scripts/claude-status-enhanced.sh "$WINDOW_ID")
 fi
 
 # Early exit if no change detected
@@ -180,110 +180,155 @@ find_powershell_path() {
 # Waiting notification (⌛) - Input required
 notify_waiting() {
     local os_type=$(detect_os_type)
+    local sound_played=false
     
     case "$os_type" in
         "macos")
             # macOS: Cleanup old notifications first
             cleanup_macos_notifications
             
-            # macOS: System sound + terminal-notifier
-            if command -v afplay >/dev/null 2>&1; then
-                afplay /System/Library/Sounds/Glass.aiff 2>/dev/null &
+            # macOS: System sound + terminal-notifier (higher volume)
+            if command -v afplay >/dev/null 2>&1 && afplay -v 0.8 /System/Library/Sounds/Glass.aiff 2>/dev/null &
+            then
+                sound_played=true
             fi
-            # Enhanced notification with terminal-notifier
+            # Enhanced notification with terminal-notifier (no sound since afplay already played)
             if command -v terminal-notifier >/dev/null 2>&1; then
-                send_notification_smart "Claude Code" "⌛ Waiting" "入力待ちです" "Glass" "claude-code-waiting"
+                terminal-notifier \
+                    -title "Claude Code" \
+                    -subtitle "⌛ Waiting" \
+                    -message "入力待ちです" \
+                    -group "claude-code-waiting" \
+                    -sender "com.apple.Terminal" 2>/dev/null &
             else
-                # Fallback to osascript if terminal-notifier not available
+                # Fallback to osascript if terminal-notifier not available (no sound)
                 osascript -e 'display notification "入力待ちです" with title "Claude Code" subtitle "⌛ Waiting"' 2>/dev/null &
             fi
             ;;
         "wsl")
-            # WSL: PowerShell beep notification sound
+            # WSL: PowerShell waiting melody (ascending tone)
             local powershell_path=$(find_powershell_path)
-            if [[ -n "$powershell_path" ]]; then
-                "$powershell_path" -Command "
+            if [[ -n "$powershell_path" ]] && "$powershell_path" -Command "
                 [console]::beep(659, 100)
                 Start-Sleep -Milliseconds 50
                 [console]::beep(880, 150)
+                Start-Sleep -Milliseconds 50
+                [console]::beep(1175, 100)
                 " 2>/dev/null &
-            else
-                echo -e "\a"
-                sleep 0.1
-                echo -e "\a"
+            then
+                sound_played=true
             fi
             ;;
         "linux")
-            # Linux: System sound or fallback
+            # Linux: Waiting notification sound (chime pattern)
             if command -v paplay >/dev/null 2>&1; then
-                paplay /usr/share/sounds/alsa/Side_Left.wav 2>/dev/null &
+                # Try various common Linux sound files for waiting
+                if [ -f "/usr/share/sounds/freedesktop/stereo/dialog-information.oga" ] && paplay /usr/share/sounds/freedesktop/stereo/dialog-information.oga 2>/dev/null &
+                then
+                    sound_played=true
+                elif [ -f "/usr/share/sounds/alsa/Side_Left.wav" ] && paplay /usr/share/sounds/alsa/Side_Left.wav 2>/dev/null &
+                then
+                    sound_played=true
+                elif [ -f "/usr/share/sounds/ubuntu/stereo/dialog-information.ogg" ] && paplay /usr/share/sounds/ubuntu/stereo/dialog-information.ogg 2>/dev/null &
+                then
+                    sound_played=true
+                fi
             elif command -v notify-send >/dev/null 2>&1; then
                 notify-send "Claude Code" "⌛ 入力待ちです" 2>/dev/null &
-            else
-                echo -e "\a"
-                sleep 0.1
-                echo -e "\a"
             fi
             ;;
         *)
-            # Fallback: Terminal bell
-            echo -e "\a"
-            sleep 0.1
-            echo -e "\a"
+            # Unknown OS: sound_played remains false
             ;;
     esac
+    
+    # Fallback beep if no sound was played
+    if [ "$sound_played" = "false" ]; then
+        echo -e "\a"
+    fi
 }
 
 # Complete notification (✅) - Task completed
 notify_complete() {
     local os_type=$(detect_os_type)
+    local sound_played=false
     
     case "$os_type" in
         "macos")
             # macOS: Cleanup old notifications first
             cleanup_macos_notifications
             
-            # macOS: Completion sound + terminal-notifier
-            if command -v afplay >/dev/null 2>&1; then
-                afplay /System/Library/Sounds/Hero.aiff 2>/dev/null &
+            # macOS: Completion sound + terminal-notifier (higher volume)
+            if command -v afplay >/dev/null 2>&1 && afplay -v 0.8 /System/Library/Sounds/Hero.aiff 2>/dev/null &
+            then
+                sound_played=true
             fi
-            # Enhanced notification with terminal-notifier
+            # Enhanced notification with terminal-notifier (no sound since afplay already played)
             if command -v terminal-notifier >/dev/null 2>&1; then
-                send_notification_smart "Claude Code" "✅ Complete" "処理が完了しました" "Hero" "claude-code-complete"
+                terminal-notifier \
+                    -title "Claude Code" \
+                    -subtitle "✅ Complete" \
+                    -message "処理が完了しました" \
+                    -group "claude-code-complete" \
+                    -sender "com.apple.Terminal" 2>/dev/null &
             else
-                # Fallback to osascript if terminal-notifier not available
+                # Fallback to osascript if terminal-notifier not available (no sound)
                 osascript -e 'display notification "処理が完了しました" with title "Claude Code" subtitle "✅ Complete"' 2>/dev/null &
             fi
             ;;
         "wsl")
             # WSL: PowerShell completion sound (ascending melody)
             local powershell_path=$(find_powershell_path)
-            if [[ -n "$powershell_path" ]]; then
-                "$powershell_path" -Command "
+            if [[ -n "$powershell_path" ]] && "$powershell_path" -Command "
                 [console]::beep(523, 80)
                 [console]::beep(659, 80)
                 [console]::beep(783, 80)
                 [console]::beep(1046, 120)
                 " 2>/dev/null &
-            else
-                echo -e "\a"
+            then
+                sound_played=true
             fi
             ;;
         "linux")
-            # Linux: System sound or fallback
+            # Linux: Completion notification sound (success pattern)
             if command -v paplay >/dev/null 2>&1; then
-                paplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
+                # Try various common Linux sound files for completion
+                if [ -f "/usr/share/sounds/freedesktop/stereo/complete.oga" ] && paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
+                then
+                    sound_played=true
+                elif [ -f "/usr/share/sounds/ubuntu/stereo/message-new-instant.ogg" ] && paplay /usr/share/sounds/ubuntu/stereo/message-new-instant.ogg 2>/dev/null &
+                then
+                    sound_played=true
+                elif [ -f "/usr/share/sounds/alsa/Front_Left.wav" ] && paplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
+                then
+                    sound_played=true
+                elif [ -f "/usr/share/sounds/ubuntu/stereo/system-ready.ogg" ] && paplay /usr/share/sounds/ubuntu/stereo/system-ready.ogg 2>/dev/null &
+                then
+                    sound_played=true
+                fi
             elif command -v notify-send >/dev/null 2>&1; then
                 notify-send "Claude Code" "✅ 処理完了" 2>/dev/null &
-            else
-                echo -e "\a"
             fi
             ;;
         *)
-            # Fallback: Terminal bell
-            echo -e "\a"
+            # Unknown OS: sound_played remains false
             ;;
     esac
+    
+    # Fallback beep if no sound was played
+    if [ "$sound_played" = "false" ]; then
+        echo -e "\a"
+    fi
+}
+
+# Get notification mode
+get_notification_mode() {
+    local mode_file="$HOME/.tmux/claude/notification_mode"
+    if [ -f "$mode_file" ]; then
+        cat "$mode_file" 2>/dev/null || echo "sound"
+    else
+        echo "sound"
+    fi
 }
 
 # Enhanced notification function with better error handling
@@ -298,49 +343,113 @@ notify_status_change() {
         return 0
     fi
     
+    # Check notification mode
+    local notification_mode
+    notification_mode=$(get_notification_mode)
+    if [ "$notification_mode" = "beep" ]; then
+        # BEEP mode: only system bell
+        echo -e "\a"
+        return 0
+    fi
+    
     # Enhanced notification with OS-specific sounds and alerts
     case "$NEW_STATUS" in
         "✅")
-            # Process completed - use enhanced completion notification
+            # Optional: Auto-trigger Claude Voice summary on completion
+            # Phase 2 Fix: Get environment variables from tmux directly
+            local auto_summary=$(tmux show-environment -g CLAUDE_VOICE_AUTO_SUMMARY 2>/dev/null | cut -d= -f2 || echo "false")
+            local on_complete=$(tmux show-environment -g CLAUDE_VOICE_ON_COMPLETE 2>/dev/null | cut -d= -f2 || echo "true")
+            
+            # Always play notification sound first
             notify_complete
             
-            # Optional: Auto-trigger Claude Voice summary on completion
-            if [ "${CLAUDE_VOICE_AUTO_SUMMARY:-false}" = "true" ] && [ "${CLAUDE_VOICE_ON_COMPLETE:-true}" = "true" ]; then
-                # Phase 1 Fix: Execute voice in foreground with proper session management
-                # Use osascript to ensure desktop audio session access
-                osascript -e 'do shell script "~/.tmux/claude/bin/claude-voice brief 20 Kyoko"' &
+            if [ "$auto_summary" = "true" ] && [ "$on_complete" = "true" ]; then
+                # Fast voice synthesis startup - direct call for speed (window.pane format)
+                ~/.tmux/claude/bin/claude-voice brief 20 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
             fi
             ;;
         "⌛")
-            # Waiting for input - use enhanced input notification
+            # Optional: Auto-trigger Claude Voice summary on input waiting
+            # Phase 2 Fix: Get environment variables from tmux directly
+            local auto_summary=$(tmux show-environment -g CLAUDE_VOICE_AUTO_SUMMARY 2>/dev/null | cut -d= -f2 || echo "false")
+            local on_waiting=$(tmux show-environment -g CLAUDE_VOICE_ON_WAITING 2>/dev/null | cut -d= -f2 || echo "true")
+            
+            # Always play notification sound first
             notify_waiting
             
-            # Optional: Auto-trigger Claude Voice summary on input waiting
-            if [ "${CLAUDE_VOICE_AUTO_SUMMARY:-false}" = "true" ] && [ "${CLAUDE_VOICE_ON_WAITING:-true}" = "true" ]; then
-                # Phase 1 Fix: Execute voice in foreground with proper session management
-                # Use osascript to ensure desktop audio session access
-                osascript -e 'do shell script "~/.tmux/claude/bin/claude-voice brief 15 Kyoko"' &
+            if [ "$auto_summary" = "true" ] && [ "$on_waiting" = "true" ]; then
+                # Fast voice synthesis startup - direct call for speed (window.pane format)
+                ~/.tmux/claude/bin/claude-voice brief 15 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
             fi
             ;;
         "⚡")
             # Process started - enhanced notification for macOS
             local os_type=$(detect_os_type)
+            local sound_played=false
+            
             if [ "$os_type" = "macos" ]; then
                 cleanup_macos_notifications
-                if command -v terminal-notifier >/dev/null 2>&1; then
-                    send_notification_smart "Claude Code" "⚡ Busy" "処理中です" "Ping" "claude-code-busy"
-                else
-                    echo -e "\a"
+                
+                # Ping.aiff for processing/busy state (higher volume)
+                if command -v afplay >/dev/null 2>&1 && afplay -v 0.8 /System/Library/Sounds/Ping.aiff 2>/dev/null &
+                then
+                    sound_played=true
                 fi
-            else
+                
+                # Enhanced notification with terminal-notifier (no sound since afplay already played)
+                if command -v terminal-notifier >/dev/null 2>&1; then
+                    terminal-notifier \
+                        -title "Claude Code" \
+                        -subtitle "⚡ Busy" \
+                        -message "処理中です" \
+                        -group "claude-code-busy" \
+                        -sender "com.apple.Terminal" 2>/dev/null &
+                fi
+            elif [ "$os_type" = "wsl" ]; then
+                # WSL: PowerShell busy melody (rapid alert pattern)
+                local powershell_path=$(find_powershell_path)
+                if [[ -n "$powershell_path" ]] && "$powershell_path" -Command "
+                    [console]::beep(800, 80)
+                    Start-Sleep -Milliseconds 30
+                    [console]::beep(800, 80)
+                    Start-Sleep -Milliseconds 30
+                    [console]::beep(600, 100)
+                    " 2>/dev/null &
+                then
+                    sound_played=true
+                fi
+            elif [ "$os_type" = "linux" ]; then
+                # Linux: Busy notification sound (alert pattern)
+                if command -v paplay >/dev/null 2>&1; then
+                    # Try various common Linux sound files for busy/alert
+                    if [ -f "/usr/share/sounds/freedesktop/stereo/dialog-warning.oga" ] && paplay /usr/share/sounds/freedesktop/stereo/dialog-warning.oga 2>/dev/null &
+                    then
+                        sound_played=true
+                    elif [ -f "/usr/share/sounds/ubuntu/stereo/phone-incoming-call.ogg" ] && paplay /usr/share/sounds/ubuntu/stereo/phone-incoming-call.ogg 2>/dev/null &
+                    then
+                        sound_played=true
+                    elif [ -f "/usr/share/sounds/alsa/Rear_Left.wav" ] && paplay /usr/share/sounds/alsa/Rear_Left.wav 2>/dev/null &
+                    then
+                        sound_played=true
+                    fi
+                elif command -v notify-send >/dev/null 2>&1; then
+                    notify-send "Claude Code" "⚡ 処理中" 2>/dev/null &
+                fi
+            fi
+            
+            # Fallback beep if no sound was played
+            if [ "$sound_played" = "false" ]; then
                 echo -e "\a"
             fi
             
             # Optional: Auto-trigger Claude Voice summary on busy start (usually not needed)
-            if [ "${CLAUDE_VOICE_AUTO_SUMMARY:-false}" = "true" ] && [ "${CLAUDE_VOICE_ON_BUSY:-false}" = "true" ]; then
-                # Phase 1 Fix: Execute voice in foreground with proper session management
-                # Use osascript to ensure desktop audio session access
-                osascript -e 'do shell script "~/.tmux/claude/bin/claude-voice brief 10 Kyoko"' &
+            # Phase 2 Fix: Get environment variables from tmux directly
+            local auto_summary=$(tmux show-environment -g CLAUDE_VOICE_AUTO_SUMMARY 2>/dev/null | cut -d= -f2 || echo "false")
+            local on_busy=$(tmux show-environment -g CLAUDE_VOICE_ON_BUSY 2>/dev/null | cut -d= -f2 || echo "false")
+            
+            if [ "$auto_summary" = "true" ] && [ "$on_busy" = "true" ]; then
+                # Fast voice synthesis startup - direct call for speed (window.pane format)
+                ~/.tmux/claude/bin/claude-voice brief 10 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
             fi
             ;;
     esac
