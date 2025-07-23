@@ -75,17 +75,8 @@ check_macos_focus_mode() {
 
 # 音声デバイスの智的選択（macOS）
 select_macos_audio_device() {
-    # BlackHole等の仮想デバイスを検出
-    local default_output=$(system_profiler SPAudioDataType 2>/dev/null | \
-        grep -A1 "Default.*Output.*Device.*Yes" | \
-        grep "Manufacturer" | head -1)
-    
-    if echo "$default_output" | grep -qi "existential\|blackhole\|soundflower"; then
-        # 仮想デバイスの場合は物理デバイスにフォールバック
-        echo "MacBook Proのスピーカー"
-    else
-        echo "auto"  # デフォルトデバイスを使用
-    fi
+    # 常にシステムのデフォルト出力設定を尊重
+    echo "auto"
 }
 
 # 並行音声プロセスの制限（macOS）
@@ -110,7 +101,7 @@ limit_concurrent_voices_macos() {
 universal_speak() {
     local text="$1"
     local voice_setting="${2:-auto}"
-    local speed="${3:-200}"
+    local speed="${3:-180}"  # 少し遅めで聞き取りやすく
     local max_length="${4:-300}"
     local engine="${5:-$(detect_voice_engine)}"
     
@@ -133,8 +124,8 @@ universal_speak() {
             # デバイス選択
             local audio_device=$(select_macos_audio_device)
             
-            # 音声設定の最適化
-            local voice_name="Kyoko"
+            # 音声設定の最適化（Enhanced優先）
+            local voice_name="Kyoko (Enhanced)"
             [[ "$voice_setting" != "auto" ]] && voice_name="$voice_setting"
             
             # 非同期実行 with timeout

@@ -15,7 +15,7 @@ voice:
     mode: "brief"        # brief, detailed, technical
     lines: 25
     model: "auto"        # auto, llama3.2:3b-instruct-q5_K_M, 7shi/tanuki-dpo-v1.0:latest
-    voice: "Kyoko"
+    voice: "Kyoko (Enhanced)"
     
   # Auto-completion settings  
   auto_complete:
@@ -23,7 +23,7 @@ voice:
     mode: "brief"
     lines: 15
     model: "auto"
-    voice: "Kyoko"
+    voice: "Kyoko (Enhanced)"
     
   # Auto-waiting settings
   auto_waiting:
@@ -31,7 +31,7 @@ voice:
     mode: "brief" 
     lines: 10
     model: "auto"
-    voice: "Kyoko"
+    voice: "Kyoko (Enhanced)"
 
 # === Audio System ===
 audio:
@@ -41,12 +41,13 @@ audio:
   voice_timeout: 30
   respect_dnd: true
   volume_control: "system"         # system, custom
+  speech_rate: 180                 # 遅めの速度で聞き取りやすく (デフォルト: 200)
   
 # === AI/LLM Settings ===
 llm:
   provider: "ollama"               # ollama, openai, anthropic
   ollama:
-    url: "http://172.29.80.1:11434"
+    url: "http://localhost:11434"
     timeout: 30
     max_retries: 3
     default_model: "phi4-mini:latest"

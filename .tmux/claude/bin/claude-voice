@@ -110,7 +110,15 @@ main() {
     
     # 4. 音声出力
     echo "🔊 音声で読み上げ中..."
-    if ! speak_text "$summary" "$voice" "$device"; then
+    
+    # ウィンドウIDの抽出（パンニング用）
+    local window_id_for_panning=""
+    if [[ "$target_window" != "." && "$target_window" =~ ^([0-9]+)\..*$ ]]; then
+        window_id_for_panning="${BASH_REMATCH[1]}"
+        log "DEBUG" "Extracted window ID for panning: $window_id_for_panning"
+    fi
+    
+    if ! speak_text "$summary" "$voice" "$device" "200" "$window_id_for_panning"; then
         log "WARN" "Speech synthesis failed, showing text only"
         echo "📝 要約内容: $summary"
     fi

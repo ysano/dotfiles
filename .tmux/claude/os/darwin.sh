@@ -126,14 +126,153 @@ normalize_device_name() {
     esac
 }
 
+# Claude Code実行中ウィンドウの検出
+get_active_claude_windows() {
+    local active_windows=()
+    
+    # ステータスファイルから実行中ウィンドウを検出
+    if [[ -d "$HOME/.tmux/status" ]]; then
+        for status_file in "$HOME/.tmux/status"/window-*.status; do
+            [[ -f "$status_file" ]] || continue
+            
+            local window_id=$(basename "$status_file" | sed 's/window-\([0-9]*\)\.status/\1/')
+            local status_content=$(cat "$status_file" 2>/dev/null)
+            
+            # Claude Codeのアイコン（⚡、⌛、✅）があるウィンドウを検出
+            if [[ "$status_content" =~ ^[⚡⌛✅]$ ]]; then
+                # tmuxウィンドウが実際に存在することを確認
+                if tmux list-windows -F '#I' 2>/dev/null | grep -q "^${window_id}$"; then
+                    active_windows+=("$window_id")
+                fi
+            fi
+        done
+    fi
+    
+    # ウィンドウIDでソート
+    printf '%s\n' "${active_windows[@]}" | sort -n
+}
+
+# 均等配置パンニング位置の計算
+calculate_dynamic_panning() {
+    local target_window_id="$1"
+    
+    # ウィンドウIDが無効な場合は中央
+    if [[ -z "$target_window_id" || ! "$target_window_id" =~ ^[0-9]+$ ]]; then
+        echo "0.5 0.5"
+        return
+    fi
+    
+    # 実行中Claude Codeウィンドウのリストを取得
+    local active_windows=()
+    while IFS= read -r window_id; do
+        [[ -n "$window_id" ]] && active_windows+=("$window_id")
+    done < <(get_active_claude_windows)
+    
+    local window_count=${#active_windows[@]}
+    
+    # アクティブウィンドウが見つからない場合は中央
+    if [[ $window_count -eq 0 ]]; then
+        log "DEBUG" "No active Claude windows found, using center position"
+        echo "0.5 0.5"
+        return
+    fi
+    
+    # 現在のウィンドウがリストに含まれているかチェック
+    local window_index=-1
+    for i in "${!active_windows[@]}"; do
+        if [[ "${active_windows[$i]}" == "$target_window_id" ]]; then
+            window_index=$i
+            break
+        fi
+    done
+    
+    # 対象ウィンドウが見つからない場合は中央
+    if [[ $window_index -eq -1 ]]; then
+        log "DEBUG" "Target window $target_window_id not in active list, using center position"
+        echo "0.5 0.5"
+        return
+    fi
+    
+    # 均等配置の位置計算
+    local position
+    if [[ $window_count -eq 1 ]]; then
+        position=0.5  # 1つのウィンドウ: 中央
+    else
+        # 複数ウィンドウ: 0.0から1.0を等分割
+        position=$(awk "BEGIN { printf \"%.3f\", $window_index / ($window_count - 1) }")
+    fi
+    
+    # 左右チャンネルのゲイン計算
+    local left_gain=$(awk "BEGIN { printf \"%.3f\", 1.0 - $position }")
+    local right_gain=$(awk "BEGIN { printf \"%.3f\", $position }")
+    
+    log "DEBUG" "Dynamic panning - Window $target_window_id (${window_index}/${window_count}): position=$position, L=$left_gain, R=$right_gain"
+    log "DEBUG" "Active windows: ${active_windows[*]}"
+    
+    echo "$left_gain $right_gain"
+}
+
+# 後方互換性のためのエイリアス関数
+calculate_panning() {
+    calculate_dynamic_panning "$1"
+}
+
+# パンニング音声再生
+speak_text_with_panning() {
+    local text="$1"
+    local voice="$2"
+    local rate="$3"
+    local window_id="$4"
+    
+    # 動的パンニング値を計算
+    local panning_values=$(calculate_dynamic_panning "$window_id")
+    local left_gain=$(echo "$panning_values" | cut -d' ' -f1)
+    local right_gain=$(echo "$panning_values" | cut -d' ' -f2)
+    
+    log "DEBUG" "Panning for window $window_id: L=$left_gain, R=$right_gain"
+    
+    # 一時音声ファイルを作成
+    local temp_audio_file=$(mktemp -t "claude_voice_XXXXXX.aiff")
+    
+    # sayコマンドで音声ファイルを生成
+    if say -v "$voice" -r "$rate" -o "$temp_audio_file" "$text" 2>/dev/null; then
+        log "DEBUG" "Generated audio file: $temp_audio_file"
+        
+        # ffplayでパンニング再生
+        local pan_filter="pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0"
+        
+        if ffplay -i "$temp_audio_file" -af "$pan_filter" -autoexit -nodisp -loglevel quiet 2>/dev/null; then
+            log "DEBUG" "Panned audio playback successful"
+            rm -f "$temp_audio_file"
+            return 0
+        else
+            log "WARN" "Panned playback failed, falling back to direct say"
+            rm -f "$temp_audio_file"
+            return 1
+        fi
+    else
+        log "ERROR" "Failed to generate audio file"
+        rm -f "$temp_audio_file"
+        return 1
+    fi
+}
+
 # 音声合成実行
 speak_text() {
     local text="$1"
     local voice="${2:-$(get_config "audio.default_voice" "Kyoko")}"
     local device="${3:-auto}"
     local rate="${4:-$(get_config "audio.speech_rate" "200")}"
+    local window_id="${5:-}"  # ウィンドウIDによるパンニング制御
 
-    log "DEBUG" "Speaking text on macOS: voice=$voice, device=$device, rate=$rate"
+    log "DEBUG" "Speaking text on macOS: voice=$voice, device=$device, rate=$rate, window_id=$window_id"
+    
+    # パンニング機能の有効性チェック
+    local use_panning=false
+    if [[ -n "$window_id" && "$window_id" != "." ]] && has_command ffplay; then
+        use_panning=true
+        log "DEBUG" "Panning enabled for window $window_id"
+    fi
 
     # 依存関係チェック
     if ! check_macos_dependencies; then
@@ -168,6 +307,19 @@ speak_text() {
 
     # 実行とエラーハンドリング - macOS音声セッション管理を強化
     local start_time=$(start_timer)
+    
+    # パンニング再生の分岐
+    if [[ "$use_panning" == "true" ]]; then
+        log "DEBUG" "Using panned audio playback for window $window_id"
+        if speak_text_with_panning "$processed_text" "$voice" "$rate" "$window_id"; then
+            local elapsed_time=$(get_elapsed_time "$start_time")
+            log "INFO" "Panned speech completed successfully in ${elapsed_time}ms"
+            return 0
+        else
+            log "WARN" "Panned speech failed, falling back to standard say"
+            # フォールバックとして通常のsay実行を継続
+        fi
+    fi
 
     log "DEBUG" "Executing: say ${say_args[*]} \"$processed_text\""
 
@@ -535,6 +687,78 @@ init_macos_audio() {
     return 0
 }
 
+# 動的パンニングシステムのテスト関数
+test_dynamic_panning() {
+    echo "=== Dynamic Panning System Test ==="
+    echo ""
+    
+    # 1. アクティブウィンドウの検出テスト
+    echo "1. Testing active Claude windows detection..."
+    local active_windows=()
+    while IFS= read -r window_id; do
+        [[ -n "$window_id" ]] && active_windows+=("$window_id")
+    done < <(get_active_claude_windows)
+    
+    local window_count=${#active_windows[@]}
+    echo "   Found $window_count active Claude Code windows: ${active_windows[*]}"
+    
+    if [[ $window_count -eq 0 ]]; then
+        echo "   ⚠️  No active windows found. Create some Claude Code activity to test panning."
+        return 1
+    fi
+    
+    # 2. 各ウィンドウのパンニング計算テスト
+    echo ""
+    echo "2. Testing dynamic panning calculations..."
+    for window_id in "${active_windows[@]}"; do
+        local panning_values=$(calculate_dynamic_panning "$window_id")
+        local left_gain=$(echo "$panning_values" | cut -d' ' -f1)
+        local right_gain=$(echo "$panning_values" | cut -d' ' -f2)
+        
+        echo "   Window $window_id: L=$left_gain, R=$right_gain"
+        
+        # パンニング値の妥当性チェック
+        local total_gain=$(awk "BEGIN { printf \"%.3f\", $left_gain + $right_gain }")
+        if [[ "$total_gain" != "1.000" ]]; then
+            echo "   ❌ Invalid gain total: $total_gain (should be 1.000)"
+        else
+            echo "   ✅ Gain values valid"
+        fi
+    done
+    
+    # 3. エッジケースのテスト
+    echo ""
+    echo "3. Testing edge cases..."
+    
+    # 存在しないウィンドウ
+    local invalid_panning=$(calculate_dynamic_panning "999")
+    echo "   Invalid window (999): $invalid_panning"
+    
+    # 空文字列
+    local empty_panning=$(calculate_dynamic_panning "")
+    echo "   Empty window ID: $empty_panning"
+    
+    # 4. 実際の音声テスト（オプション）
+    echo ""
+    echo "4. Audio panning test (optional)..."
+    local test_audio=$(get_config "test.enable_panning_audio" "false")
+    if [[ "$test_audio" == "true" && $window_count -gt 0 ]]; then
+        echo "   Testing audio panning for each active window..."
+        for window_id in "${active_windows[@]}"; do
+            echo "   Playing test audio for window $window_id..."
+            speak_text "ウィンドウ ${window_id} からのテスト音声" "Kyoko" "system_default" "200" "$window_id" &
+            sleep 2
+        done
+        wait
+    else
+        echo "   ⚠️  Audio test disabled (set test.enable_panning_audio=true to enable)"
+    fi
+    
+    echo ""
+    echo "✅ Dynamic panning system test completed"
+    return 0
+}
+
 # このモジュールのテスト関数
 test_macos_functions() {
     echo "Testing macOS-specific functions..."
@@ -571,6 +795,10 @@ test_macos_functions() {
         echo "Testing speech synthesis..."
         speak_text "テスト" "Kyoko" "auto" "300"
     fi
+
+    # 動的パンニングシステムのテスト
+    echo ""
+    test_dynamic_panning
 
     echo "macOS functions test completed"
 }
