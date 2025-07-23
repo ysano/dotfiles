@@ -213,15 +213,15 @@ generate_prompt() {
     case "$claude_status" in
         "⌛"|"Waiting")
             # 入力待ち状態: ユーザーに何を確認したいかを明確にする
-            base_prompt="Claude Codeが確認を求めている内容を20-30文字で：\n${context_info}${input_text}\n\n確認内容："
+            base_prompt="以下の画面内容から、Claude Codeがユーザーに確認を求めている内容を20-30文字で抽出してください。特に画面下部と╭─で囲まれた部分を重視：\n${context_info}${input_text}\n\n確認内容："
             ;;
         "⚡"|"Busy")
             # 処理中状態: 何を処理しているかを要約
-            base_prompt="Claude Codeの処理内容を20-30文字で：\n${context_info}${input_text}\n\n処理："
+            base_prompt="以下の画面内容から、Claude Codeが現在処理している内容を20-30文字で要約してください。特に画面下部の最新情報を重視：\n${context_info}${input_text}\n\n処理："
             ;;
         "✅"|"Complete")
             # 完了状態: 何が完了したかを要約
-            base_prompt="Claude Codeの完了内容を20-30文字で：\n${context_info}${input_text}\n\n完了："
+            base_prompt="以下の画面内容から、Claude Codeが完了した作業内容を20-30文字で要約してください。特に画面下部の最新結果を重視：\n${context_info}${input_text}\n\n完了："
             ;;
         *)
             # デフォルト: 従来のプロンプト

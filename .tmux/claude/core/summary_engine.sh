@@ -25,7 +25,7 @@ generate_summary() {
     local context=$(collect_context_information)
 
     # 入力テキストの前処理
-    local processed_text=$(preprocess_input_text "$input_text")
+    local processed_text=$(preprocess_input_text "$input_text" "$claude_status")
 
     # 要約品質の事前評価
     local input_quality=$(evaluate_input_quality "$processed_text")
@@ -132,15 +132,50 @@ detect_project_type() {
 # 入力テキストの前処理
 preprocess_input_text() {
     local input_text="$1"
+    local claude_status="${2:-}"  # Claude Codeの状態
 
     # 重複行の除去
     local deduplicated=$(echo "$input_text" | awk '!seen[$0]++')
 
-    # 意味のない行の除去
-    local filtered=$(echo "$deduplicated" |
+    # 画面下部（最新情報）を重視 - 最後の30行を重要部分として抽出
+    local total_lines=$(echo "$deduplicated" | wc -l)
+    local important_section=""
+    if [[ $total_lines -gt 30 ]]; then
+        local recent_lines=$(echo "$deduplicated" | tail -30)
+        local older_lines=$(echo "$deduplicated" | head -$((total_lines - 30)))
+        
+        # 重要部分をマーキング
+        important_section="$older_lines
+
+===最新・重要部分===
+$recent_lines"
+    else
+        important_section="$deduplicated"
+    fi
+
+    # Claude Code枠内コンテンツの特別処理
+    local enhanced_text=""
+    if [[ -n "$claude_status" ]]; then
+        # 枠で囲まれた部分（╭─...╰─）を抽出して強調
+        local box_content=$(echo "$important_section" | sed -n '/╭─/,/╰─/p')
+        if [[ -n "$box_content" ]]; then
+            enhanced_text="$important_section
+
+===Claude Code確認内容===
+$box_content"
+        else
+            enhanced_text="$important_section"
+        fi
+    else
+        enhanced_text="$important_section"
+    fi
+
+    # 意味のない行の除去（但し重要マーカーは保持）
+    local filtered=$(echo "$enhanced_text" |
         grep -v '^[[:space:]]*$' |
         grep -v '^[-=_]\+$' |
-        grep -v '^[[:space:]]*[│┌┐└┘├┤┬┴┼]\+[[:space:]]*$')
+        grep -v '^[[:space:]]*[│┌┐└┘├┤┬┴┼]\+[[:space:]]*$' |
+        grep -v '^===.*===.*')
 
     # 長すぎる行の短縮
     local truncated=$(echo "$filtered" |
