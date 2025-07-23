@@ -604,6 +604,65 @@ play_sound_file() {
     fi
 }
 
+# パンニング対応サウンドファイル再生
+play_sound_file_with_panning() {
+    local file_path="$1"
+    local volume="${2:-$(get_config "audio.volume" "0.8")}"
+    local window_id="${3:-}"
+
+    log "DEBUG" "Playing sound file with panning on macOS: $file_path, volume=$volume, window_id=$window_id"
+
+    if [[ ! -f "$file_path" ]]; then
+        log "ERROR" "Sound file not found: $file_path"
+        return 1
+    fi
+
+    # パンニング機能の有効性チェック
+    local use_panning=false
+    if [[ -n "$window_id" && "$window_id" != "." ]] && has_command ffplay; then
+        use_panning=true
+        log "DEBUG" "Panning enabled for sound file with window $window_id"
+    fi
+
+    # パンニング再生の実行
+    if [[ "$use_panning" == "true" ]]; then
+        # 動的パンニング値を計算
+        local panning_values=$(calculate_dynamic_panning "$window_id")
+        local left_gain=$(echo "$panning_values" | cut -d' ' -f1)
+        local right_gain=$(echo "$panning_values" | cut -d' ' -f2)
+        
+        log "DEBUG" "Sound file panning for window $window_id: L=$left_gain, R=$right_gain"
+        
+        # ffplayでパンニング再生
+        local pan_filter="pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0,volume=${volume}"
+        
+        if ffplay -i "$file_path" -af "$pan_filter" -autoexit -nodisp -loglevel quiet 2>/dev/null; then
+            log "DEBUG" "Panned sound file playback successful"
+            return 0
+        else
+            log "WARN" "Panned sound file playback failed, falling back to afplay"
+            # フォールバックとして通常のafplay実行を継続
+        fi
+    fi
+
+    # 通常のafplay再生（フォールバック）
+    if has_command afplay; then
+        local afplay_args=()
+        afplay_args+=("-v" "$volume")
+
+        if afplay "${afplay_args[@]}" "$file_path" 2>/dev/null; then
+            log "DEBUG" "Sound file played successfully with afplay fallback"
+            return 0
+        else
+            log "ERROR" "Failed to play sound file with afplay"
+            return 1
+        fi
+    else
+        log "ERROR" "afplay not available for sound file playback"
+        return 1
+    fi
+}
+
 # 音量制御
 set_system_volume() {
     local volume="$1"         # 0-100
