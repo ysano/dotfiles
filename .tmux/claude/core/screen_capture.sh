@@ -8,13 +8,141 @@ if ! has_command tmux; then
     exit 1
 fi
 
-# tmuxペインのテキスト内容を取得
-capture_screen_text() {
+# キャラクタベースの枠パターンを検出
+detect_character_frames() {
+    local text="$1"
+    
+    local complete_frames=0
+    local incomplete_frames=0
+    
+    # 改行を空白に置換してから検索（複数行パターン対応）
+    local normalized_text=$(echo "$text" | tr '\n' ' ')
+    
+    # 丸角ボックスの検出
+    local rounded_complete=$(echo "$text" | perl -0777 -ne 'print scalar(() = /╭[^\n]*╮.*?╰[^\n]*╯/gs)' 2>/dev/null || echo "0")
+    local rounded_top=$(echo "$text" | grep -c '╭.*╮' 2>/dev/null || echo "0")
+    local rounded_bottom=$(echo "$text" | grep -c '╰.*╯' 2>/dev/null || echo "0")
+    
+    # 角ボックスの検出
+    local square_complete=$(echo "$text" | perl -0777 -ne 'print scalar(() = /┌[^\n]*┐.*?└[^\n]*┘/gs)' 2>/dev/null || echo "0")
+    local square_top=$(echo "$text" | grep -c '┌.*┐' 2>/dev/null || echo "0")
+    local square_bottom=$(echo "$text" | grep -c '└.*┘' 2>/dev/null || echo "0")
+    
+    # 太線ボックスの検出
+    local thick_complete=$(echo "$text" | perl -0777 -ne 'print scalar(() = /┏[^\n]*┓.*?┗[^\n]*┛/gs)' 2>/dev/null || echo "0")
+    local thick_top=$(echo "$text" | grep -c '┏.*┓' 2>/dev/null || echo "0")
+    local thick_bottom=$(echo "$text" | grep -c '┗.*┛' 2>/dev/null || echo "0")
+    
+    # 数値検証
+    [[ "$rounded_complete" =~ ^[0-9]+$ ]] || rounded_complete=0
+    [[ "$rounded_top" =~ ^[0-9]+$ ]] || rounded_top=0
+    [[ "$rounded_bottom" =~ ^[0-9]+$ ]] || rounded_bottom=0
+    [[ "$square_complete" =~ ^[0-9]+$ ]] || square_complete=0
+    [[ "$square_top" =~ ^[0-9]+$ ]] || square_top=0
+    [[ "$square_bottom" =~ ^[0-9]+$ ]] || square_bottom=0
+    [[ "$thick_complete" =~ ^[0-9]+$ ]] || thick_complete=0
+    [[ "$thick_top" =~ ^[0-9]+$ ]] || thick_top=0
+    [[ "$thick_bottom" =~ ^[0-9]+$ ]] || thick_bottom=0
+    
+    # 完全な枠の合計
+    complete_frames=$((rounded_complete + square_complete + thick_complete))
+    
+    # 不完全な枠の検出
+    if [[ $rounded_top -gt $rounded_complete || $rounded_bottom -gt $rounded_complete ]]; then
+        incomplete_frames=$((incomplete_frames + 1))
+    fi
+    if [[ $square_top -gt $square_complete || $square_bottom -gt $square_complete ]]; then
+        incomplete_frames=$((incomplete_frames + 1))
+    fi
+    if [[ $thick_top -gt $thick_complete || $thick_bottom -gt $thick_complete ]]; then
+        incomplete_frames=$((incomplete_frames + 1))
+    fi
+    
+    # 枠の状態を判定
+    local frame_status="none"
+    if [[ $complete_frames -gt 0 ]]; then
+        frame_status="complete"
+    elif [[ $incomplete_frames -gt 0 ]]; then
+        frame_status="incomplete"
+    fi
+    
+    log "DEBUG" "Frame detection: complete=$complete_frames, incomplete=$incomplete_frames, status=$frame_status"
+    log "DEBUG" "Details: rounded=($rounded_complete/$rounded_top/$rounded_bottom), square=($square_complete/$square_top/$square_bottom), thick=($thick_complete/$thick_top/$thick_bottom)"
+    
+    # 結果をJSON形式で返す
+    cat <<EOF
+{
+    "status": "$frame_status",
+    "complete_frames": $complete_frames,
+    "incomplete_frames": $incomplete_frames,
+    "needs_expansion": $([ "$frame_status" = "incomplete" ] && echo "true" || echo "false")
+}
+EOF
+}
+
+# 智的キャプチャ範囲拡大
+capture_with_smart_expansion() {
+    local pane_id="${1:-.}"
+    local initial_lines="${2:-50}"
+    local include_history="${3:-true}"
+    local max_attempts="${4:-3}"
+    local expansion_increment="${5:-20}"
+    
+    log "DEBUG" "Smart capture: pane=$pane_id, initial_lines=$initial_lines, max_attempts=$max_attempts"
+    
+    local current_lines=$initial_lines
+    local attempt=1
+    
+    while [[ $attempt -le $max_attempts ]]; do
+        log "DEBUG" "Capture attempt $attempt with $current_lines lines"
+        
+        # 現在の範囲でキャプチャ実行
+        local captured_text
+        if ! captured_text=$(capture_basic_screen_text "$pane_id" "$current_lines" "$include_history"); then
+            log "ERROR" "Basic capture failed on attempt $attempt"
+            return 1
+        fi
+        
+        # 枠の検出
+        local frame_info=$(detect_character_frames "$captured_text")
+        local frame_status=$(echo "$frame_info" | grep -o '"status": "[^"]*"' | cut -d'"' -f4)
+        local needs_expansion=$(echo "$frame_info" | grep -o '"needs_expansion": [^,}]*' | cut -d':' -f2 | tr -d ' ')
+        
+        log "DEBUG" "Attempt $attempt: frame_status=$frame_status, needs_expansion=$needs_expansion"
+        
+        # 完全な枠が見つかった場合、または最大試行回数に達した場合は終了
+        if [[ "$frame_status" == "complete" ]] || [[ $attempt -eq $max_attempts ]]; then
+            local final_processed=$(process_captured_text "$captured_text")
+            log "INFO" "Smart capture completed: attempts=$attempt, lines=$current_lines, status=$frame_status"
+            echo "$final_processed"
+            return 0
+        fi
+        
+        # 不完全な枠が検出された場合は範囲を拡大
+        if [[ "$needs_expansion" == "true" ]]; then
+            current_lines=$((current_lines + expansion_increment))
+            log "DEBUG" "Expanding capture range to $current_lines lines"
+        else
+            # 枠が全く検出されない場合は、デフォルトの拡大を実行
+            current_lines=$((current_lines + expansion_increment / 2))
+            log "DEBUG" "No frames detected, modest expansion to $current_lines lines"
+        fi
+        
+        ((attempt++))
+    done
+    
+    # フォールバック: 最後の結果を返す
+    local final_text=$(process_captured_text "$captured_text")
+    log "WARN" "Smart capture reached max attempts, returning last result"
+    echo "$final_text"
+    return 0
+}
+
+# 基本的なtmuxペインキャプチャ（内部使用）
+capture_basic_screen_text() {
     local pane_id="${1:-.}"
     local lines="${2:-50}"
     local include_history="${3:-true}"
-
-    log "DEBUG" "Capturing screen text: pane=$pane_id, lines=$lines, history=$include_history"
 
     # tmuxペインの存在確認
     if ! tmux list-panes -t "$pane_id" >/dev/null 2>&1; then
@@ -44,6 +172,31 @@ capture_screen_text() {
     if [[ -z "$screen_text" ]]; then
         log "WARN" "No content captured from tmux pane"
         return 3
+    fi
+
+    echo "$screen_text"
+    return 0
+}
+
+# メイン画面キャプチャ関数（智的拡大機能付き）
+capture_screen_text() {
+    local pane_id="${1:-.}"
+    local lines="${2:-50}"
+    local include_history="${3:-true}"
+    local enable_smart_expansion="${4:-true}"
+
+    log "DEBUG" "Capturing screen text: pane=$pane_id, lines=$lines, history=$include_history, smart_expansion=$enable_smart_expansion"
+
+    # 智的拡大が有効な場合
+    if [[ "$enable_smart_expansion" == "true" ]]; then
+        capture_with_smart_expansion "$pane_id" "$lines" "$include_history"
+        return $?
+    fi
+    
+    # 従来の方式（後方互換性）
+    local screen_text
+    if ! screen_text=$(capture_basic_screen_text "$pane_id" "$lines" "$include_history"); then
+        return $?
     fi
 
     # テキストの前処理
@@ -227,6 +380,80 @@ evaluate_capture_quality() {
     echo "$quality_score"
 }
 
+# 枠検出のテスト関数
+test_frame_detection() {
+    echo "=== Frame Detection Test ==="
+    echo ""
+    
+    # テスト用のサンプルテキスト
+    local test_samples=(
+        $'完全な丸角ボックス:\n╭─────────────╮\n│ Complete Box │\n╰─────────────╯'
+        $'不完全な丸角ボックス（上のみ）:\n╭─────────────╮\n│ Incomplete Box'
+        $'不完全な丸角ボックス（下のみ）:\n│ Incomplete Box\n╰─────────────╯'
+        $'完全な角ボックス:\n┌─────────────┐\n│ Complete Box │\n└─────────────┘'
+        $'枠なしテキスト:\nJust plain text\nwithout any frames'
+    )
+    
+    local test_names=(
+        "Complete rounded box"
+        "Incomplete rounded box (top only)"
+        "Incomplete rounded box (bottom only)"
+        "Complete square box"
+        "No frames"
+    )
+    
+    for i in "${!test_samples[@]}"; do
+        echo "Test $((i+1)): ${test_names[$i]}"
+        echo "Sample text:"
+        echo "${test_samples[$i]}"
+        echo ""
+        
+        local frame_result=$(detect_character_frames "${test_samples[$i]}")
+        echo "Detection result: $frame_result"
+        echo ""
+        echo "---"
+        echo ""
+    done
+    
+    echo "✅ Frame detection test completed"
+}
+
+# 智的拡大機能のテスト
+test_smart_expansion() {
+    echo "=== Smart Expansion Test ==="
+    echo ""
+    
+    # 現在のペインで智的拡大をテスト
+    echo "Testing smart expansion on current pane..."
+    
+    # 複数の初期行数でテスト
+    local test_lines=(10 20 30)
+    
+    for lines in "${test_lines[@]}"; do
+        echo "Testing with initial $lines lines:"
+        
+        # 智的拡大有効でキャプチャ
+        local smart_result=$(capture_screen_text "." "$lines" "true" "true")
+        local smart_length=${#smart_result}
+        
+        # 通常キャプチャ
+        local normal_result=$(capture_screen_text "." "$lines" "true" "false")
+        local normal_length=${#normal_result}
+        
+        echo "  Smart expansion: $smart_length characters"
+        echo "  Normal capture:  $normal_length characters"
+        echo "  Difference:      $((smart_length - normal_length)) characters"
+        
+        # 枠検出結果
+        local frame_info=$(detect_character_frames "$smart_result")
+        local frame_status=$(echo "$frame_info" | grep -o '"status": "[^"]*"' | cut -d'"' -f4)
+        echo "  Frame status:    $frame_status"
+        echo ""
+    done
+    
+    echo "✅ Smart expansion test completed"
+}
+
 # このモジュールのテスト関数
 test_screen_capture() {
     echo "Testing screen capture module..."
@@ -242,6 +469,16 @@ test_screen_capture() {
     # 品質評価
     local quality=$(evaluate_capture_quality "$captured_text")
     echo "Capture quality score: $quality"
+
+    echo ""
+    
+    # 枠検出テスト
+    test_frame_detection
+    
+    echo ""
+    
+    # 智的拡大テスト
+    test_smart_expansion
 
     echo "Screen capture test completed"
 }
