@@ -88,10 +88,18 @@ main() {
     local context=$(collect_context_information)
     log "DEBUG" "Context: $context"
     
+    # 2.5. Claude Codeの状態を検出
+    local claude_status=""
+    if [[ "$target_window" != "." ]]; then
+        # 特定のウィンドウが指定された場合、そのウィンドウの状態を取得
+        claude_status=$(~/.tmux/scripts/claude-status-enhanced.sh "${target_window%.*}" 2>/dev/null || echo "")
+        log "DEBUG" "Detected Claude status: $claude_status"
+    fi
+    
     # 3. 要約生成
     echo "🤖 ${model}で要約を生成中..."
     local summary
-    if ! summary=$(generate_summary "$screen_text" "$summary_type" "$model"); then
+    if ! summary=$(generate_summary "$screen_text" "$summary_type" "$model" "" "$claude_status"); then
         local error_msg="要約の生成に失敗しました。"
         echo "❌ $error_msg"
         speak_text "$error_msg" "$voice"

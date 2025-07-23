@@ -8,6 +8,7 @@ generate_summary() {
     local summary_type="${2:-brief}"
     local model="${3:-auto}"
     local options="${4:-}"
+    local claude_status="${5:-}"  # Claude Codeの状態
 
     local start_time=$(start_timer)
 
@@ -40,7 +41,7 @@ generate_summary() {
         generation_method="enhanced_simple"
     else
         # LLM による要約を試行
-        summary=$(generate_llm_summary "$processed_text" "$summary_type" "$model" "$context")
+        summary=$(generate_llm_summary "$processed_text" "$summary_type" "$model" "$context" "$claude_status")
         generation_method="llm"
     fi
 

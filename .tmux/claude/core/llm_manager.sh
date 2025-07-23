@@ -191,8 +191,9 @@ generate_prompt() {
     local summary_type="$2"
     local model="$3"
     local context="$4"
+    local claude_status="$5"  # 新しいパラメータ: Claude Codeの状態
 
-    log "DEBUG" "Generating prompt: type=$summary_type, model=$model"
+    log "DEBUG" "Generating prompt: type=$summary_type, model=$model, status=$claude_status"
 
     # 入力テキストの前処理
     local max_chars=$(get_config "llm.max_input_chars" "2000")
@@ -207,28 +208,45 @@ generate_prompt() {
         context_info="コンテキスト: $context\n\n"
     fi
 
-    # 超高速化プロンプト（文字数制限: 10-15文字）
+    # Claude Code状態別の特化プロンプト
     local base_prompt=""
-    case "$summary_type" in
-        "brief")
-            if [[ "$model" == "phi4-mini"* ]]; then
-                base_prompt="10-15文字で状況：\n${context_info}${input_text}\n\n状況："
-            elif [[ "$model" == "orca-mini"* ]]; then
-                base_prompt="10-15文字で要約：\n${context_info}${input_text}\n\n要約："
-            elif [[ "$model" == "qwen2.5-coder"* ]]; then
-                base_prompt="10-15文字で開発状況：\n${context_info}${input_text}\n\n状況："
-            else
-                base_prompt="10-15文字で要約：\n${context_info}${input_text}\n\n要約："
-            fi
+    case "$claude_status" in
+        "⌛"|"Waiting")
+            # 入力待ち状態: ユーザーに何を確認したいかを明確にする
+            base_prompt="Claude Codeが確認を求めている内容を20-30文字で：\n${context_info}${input_text}\n\n確認内容："
             ;;
-        "detailed")
-            base_prompt="詳細分析を50-70文字で要約：\n${context_info}${input_text}\n\n分析："
+        "⚡"|"Busy")
+            # 処理中状態: 何を処理しているかを要約
+            base_prompt="Claude Codeの処理内容を20-30文字で：\n${context_info}${input_text}\n\n処理："
             ;;
-        "technical")
-            base_prompt="技術的状況を30-50文字で分析：\n${context_info}${input_text}\n\n分析："
+        "✅"|"Complete")
+            # 完了状態: 何が完了したかを要約
+            base_prompt="Claude Codeの完了内容を20-30文字で：\n${context_info}${input_text}\n\n完了："
             ;;
         *)
-            base_prompt="状況を20-30文字で要約：\n${context_info}${input_text}\n\n要約："
+            # デフォルト: 従来のプロンプト
+            case "$summary_type" in
+                "brief")
+                    if [[ "$model" == "phi4-mini"* ]]; then
+                        base_prompt="10-15文字で状況：\n${context_info}${input_text}\n\n状況："
+                    elif [[ "$model" == "orca-mini"* ]]; then
+                        base_prompt="10-15文字で要約：\n${context_info}${input_text}\n\n要約："
+                    elif [[ "$model" == "qwen2.5-coder"* ]]; then
+                        base_prompt="10-15文字で開発状況：\n${context_info}${input_text}\n\n状況："
+                    else
+                        base_prompt="10-15文字で要約：\n${context_info}${input_text}\n\n要約："
+                    fi
+                    ;;
+                "detailed")
+                    base_prompt="詳細分析を50-70文字で要約：\n${context_info}${input_text}\n\n分析："
+                    ;;
+                "technical")
+                    base_prompt="技術的状況を30-50文字で分析：\n${context_info}${input_text}\n\n分析："
+                    ;;
+                *)
+                    base_prompt="状況を20-30文字で要約：\n${context_info}${input_text}\n\n要約："
+                    ;;
+            esac
             ;;
     esac
 
@@ -387,6 +405,7 @@ generate_llm_summary() {
     local summary_type="${2:-brief}"
     local preferred_model="${3:-auto}"
     local context="${4:-}"
+    local claude_status="${5:-}"  # Claude Codeの状態
 
     log "INFO" "Starting LLM summary generation"
 
@@ -408,7 +427,7 @@ generate_llm_summary() {
         return 0
     else
         # Ollama経由での処理を試行
-        local prompt=$(generate_prompt "$input_text" "$summary_type" "$selected_model" "$context")
+        local prompt=$(generate_prompt "$input_text" "$summary_type" "$selected_model" "$context" "$claude_status")
 
         if execute_ollama_request "$selected_model" "$prompt"; then
             return 0
