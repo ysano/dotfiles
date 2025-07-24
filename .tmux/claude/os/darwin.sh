@@ -139,7 +139,7 @@ get_active_claude_windows() {
             local status_content=$(cat "$status_file" 2>/dev/null)
             
             # Claude Codeのアイコン（⚡、⌛、✅）があるウィンドウを検出
-            if [[ "$status_content" =~ ^[⚡⌛✅]$ ]]; then
+            if [[ "$status_content" == "⚡" || "$status_content" == "⌛" || "$status_content" == "✅" ]]; then
                 # tmuxウィンドウが実際に存在することを確認
                 if tmux list-windows -F '#I' 2>/dev/null | grep -q "^${window_id}$"; then
                     active_windows+=("$window_id")
@@ -164,9 +164,12 @@ calculate_dynamic_panning() {
     
     # 実行中Claude Codeウィンドウのリストを取得
     local active_windows=()
-    while IFS= read -r window_id; do
-        [[ -n "$window_id" ]] && active_windows+=("$window_id")
-    done < <(get_active_claude_windows)
+    local active_list=$(get_active_claude_windows)
+    if [[ -n "$active_list" ]]; then
+        while IFS= read -r window_id; do
+            [[ -n "$window_id" ]] && active_windows+=("$window_id")
+        done <<< "$active_list"
+    fi
     
     local window_count=${#active_windows[@]}
     
@@ -179,11 +182,13 @@ calculate_dynamic_panning() {
     
     # 現在のウィンドウがリストに含まれているかチェック
     local window_index=-1
-    for i in "${!active_windows[@]}"; do
-        if [[ "${active_windows[$i]}" == "$target_window_id" ]]; then
+    local i=0
+    for window in "${active_windows[@]}"; do
+        if [[ "$window" == "$target_window_id" ]]; then
             window_index=$i
             break
         fi
+        ((i++))
     done
     
     # 対象ウィンドウが見つからない場合は中央
@@ -202,11 +207,28 @@ calculate_dynamic_panning() {
         position=$(awk "BEGIN { printf \"%.3f\", $window_index / ($window_count - 1) }")
     fi
     
-    # 左右チャンネルのゲイン計算
-    local left_gain=$(awk "BEGIN { printf \"%.3f\", 1.0 - $position }")
-    local right_gain=$(awk "BEGIN { printf \"%.3f\", $position }")
+    # デシベル計算による左右チャンネルのゲイン計算
+    # Equal Power Pan Law (-3dB center) を使用
+    local pan_angle=$(awk "BEGIN { printf \"%.6f\", $position * 1.5707963267948966 }")  # π/2 radians
+    local left_gain=$(awk "BEGIN { printf \"%.6f\", cos($pan_angle) * 1.414213562373095 }")   # √2 * cos(θ)
+    local right_gain=$(awk "BEGIN { printf \"%.6f\", sin($pan_angle) * 1.414213562373095 }")  # √2 * sin(θ)
     
-    log "DEBUG" "Dynamic panning - Window $target_window_id (${window_index}/${window_count}): position=$position, L=$left_gain, R=$right_gain"
+    # デシベル制限 (最小-60dB, 最大0dB)
+    local left_db=$(awk "BEGIN { 
+        if ($left_gain > 0.001) 
+            printf \"%.2f\", 20 * log($left_gain) / log(10)
+        else 
+            printf \"-60.00\"
+    }")
+    local right_db=$(awk "BEGIN { 
+        if ($right_gain > 0.001) 
+            printf \"%.2f\", 20 * log($right_gain) / log(10)
+        else 
+            printf \"-60.00\"
+    }")
+    
+    log "DEBUG" "Dynamic dB panning - Window $target_window_id (${window_index}/${window_count}): position=$position"
+    log "DEBUG" "Pan angle: ${pan_angle}rad, L_gain=${left_gain}(${left_db}dB), R_gain=${right_gain}(${right_db}dB)"
     log "DEBUG" "Active windows: ${active_windows[*]}"
     
     echo "$left_gain $right_gain"
