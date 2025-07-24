@@ -139,7 +139,7 @@ get_active_claude_windows() {
             local status_content=$(cat "$status_file" 2>/dev/null)
             
             # Claude Codeのアイコン（⚡、⌛、✅）があるウィンドウを検出
-            if [[ "$status_content" =~ ^[⚡⌛✅]$ ]]; then
+            if [[ "$status_content" == "⚡" || "$status_content" == "⌛" || "$status_content" == "✅" ]]; then
                 # tmuxウィンドウが実際に存在することを確認
                 if tmux list-windows -F '#I' 2>/dev/null | grep -q "^${window_id}$"; then
                     active_windows+=("$window_id")
@@ -164,9 +164,12 @@ calculate_dynamic_panning() {
     
     # 実行中Claude Codeウィンドウのリストを取得
     local active_windows=()
-    while IFS= read -r window_id; do
-        [[ -n "$window_id" ]] && active_windows+=("$window_id")
-    done < <(get_active_claude_windows)
+    local active_list=$(get_active_claude_windows)
+    if [[ -n "$active_list" ]]; then
+        while IFS= read -r window_id; do
+            [[ -n "$window_id" ]] && active_windows+=("$window_id")
+        done <<< "$active_list"
+    fi
     
     local window_count=${#active_windows[@]}
     
@@ -179,11 +182,13 @@ calculate_dynamic_panning() {
     
     # 現在のウィンドウがリストに含まれているかチェック
     local window_index=-1
-    for i in "${!active_windows[@]}"; do
-        if [[ "${active_windows[$i]}" == "$target_window_id" ]]; then
+    local i=0
+    for window in "${active_windows[@]}"; do
+        if [[ "$window" == "$target_window_id" ]]; then
             window_index=$i
             break
         fi
+        ((i++))
     done
     
     # 対象ウィンドウが見つからない場合は中央
@@ -202,11 +207,28 @@ calculate_dynamic_panning() {
         position=$(awk "BEGIN { printf \"%.3f\", $window_index / ($window_count - 1) }")
     fi
     
-    # 左右チャンネルのゲイン計算
-    local left_gain=$(awk "BEGIN { printf \"%.3f\", 1.0 - $position }")
-    local right_gain=$(awk "BEGIN { printf \"%.3f\", $position }")
+    # デシベル計算による左右チャンネルのゲイン計算
+    # Equal Power Pan Law (-3dB center) を使用
+    local pan_angle=$(awk "BEGIN { printf \"%.6f\", $position * 1.5707963267948966 }")  # π/2 radians
+    local left_gain=$(awk "BEGIN { printf \"%.6f\", cos($pan_angle) * 1.414213562373095 }")   # √2 * cos(θ)
+    local right_gain=$(awk "BEGIN { printf \"%.6f\", sin($pan_angle) * 1.414213562373095 }")  # √2 * sin(θ)
     
-    log "DEBUG" "Dynamic panning - Window $target_window_id (${window_index}/${window_count}): position=$position, L=$left_gain, R=$right_gain"
+    # デシベル制限 (最小-60dB, 最大0dB)
+    local left_db=$(awk "BEGIN { 
+        if ($left_gain > 0.001) 
+            printf \"%.2f\", 20 * log($left_gain) / log(10)
+        else 
+            printf \"-60.00\"
+    }")
+    local right_db=$(awk "BEGIN { 
+        if ($right_gain > 0.001) 
+            printf \"%.2f\", 20 * log($right_gain) / log(10)
+        else 
+            printf \"-60.00\"
+    }")
+    
+    log "DEBUG" "Dynamic dB panning - Window $target_window_id (${window_index}/${window_count}): position=$position"
+    log "DEBUG" "Pan angle: ${pan_angle}rad, L_gain=${left_gain}(${left_db}dB), R_gain=${right_gain}(${right_db}dB)"
     log "DEBUG" "Active windows: ${active_windows[*]}"
     
     echo "$left_gain $right_gain"
@@ -593,6 +615,65 @@ play_sound_file() {
 
         if afplay "${afplay_args[@]}" "$file_path" 2>/dev/null; then
             log "DEBUG" "Sound file played successfully"
+            return 0
+        else
+            log "ERROR" "Failed to play sound file with afplay"
+            return 1
+        fi
+    else
+        log "ERROR" "afplay not available for sound file playback"
+        return 1
+    fi
+}
+
+# パンニング対応サウンドファイル再生
+play_sound_file_with_panning() {
+    local file_path="$1"
+    local volume="${2:-$(get_config "audio.volume" "4.0")}"
+    local window_id="${3:-}"
+
+    log "DEBUG" "Playing sound file with panning on macOS: $file_path, volume=$volume, window_id=$window_id"
+
+    if [[ ! -f "$file_path" ]]; then
+        log "ERROR" "Sound file not found: $file_path"
+        return 1
+    fi
+
+    # パンニング機能の有効性チェック
+    local use_panning=false
+    if [[ -n "$window_id" && "$window_id" != "." ]] && has_command ffplay; then
+        use_panning=true
+        log "DEBUG" "Panning enabled for sound file with window $window_id"
+    fi
+
+    # パンニング再生の実行
+    if [[ "$use_panning" == "true" ]]; then
+        # 動的パンニング値を計算
+        local panning_values=$(calculate_dynamic_panning "$window_id")
+        local left_gain=$(echo "$panning_values" | cut -d' ' -f1)
+        local right_gain=$(echo "$panning_values" | cut -d' ' -f2)
+        
+        log "DEBUG" "Sound file panning for window $window_id: L=$left_gain, R=$right_gain"
+        
+        # ffplayでパンニング再生
+        local pan_filter="pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0,volume=${volume}"
+        
+        if ffplay -i "$file_path" -af "$pan_filter" -autoexit -nodisp -loglevel quiet 2>/dev/null; then
+            log "DEBUG" "Panned sound file playback successful"
+            return 0
+        else
+            log "WARN" "Panned sound file playback failed, falling back to afplay"
+            # フォールバックとして通常のafplay実行を継続
+        fi
+    fi
+
+    # 通常のafplay再生（フォールバック）
+    if has_command afplay; then
+        local afplay_args=()
+        afplay_args+=("-v" "$volume")
+
+        if afplay "${afplay_args[@]}" "$file_path" 2>/dev/null; then
+            log "DEBUG" "Sound file played successfully with afplay fallback"
             return 0
         else
             log "ERROR" "Failed to play sound file with afplay"

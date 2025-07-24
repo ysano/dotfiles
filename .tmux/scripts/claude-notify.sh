@@ -187,8 +187,12 @@ notify_waiting() {
             # macOS: Cleanup old notifications first
             cleanup_macos_notifications
             
-            # macOS: System sound + terminal-notifier (higher volume)
-            if command -v afplay >/dev/null 2>&1 && afplay -v 0.8 /System/Library/Sounds/Glass.aiff 2>/dev/null &
+            # macOS: System sound with panning support
+            if command -v ~/.tmux/claude/os/darwin.sh >/dev/null 2>&1; then
+                # Use panning-enabled sound playback
+                (source ~/.tmux/claude/core/base.sh && source ~/.tmux/claude/os/darwin.sh && play_sound_file_with_panning "/System/Library/Sounds/Glass.aiff" "1.0" "$WINDOW_ID") &
+                sound_played=true
+            elif command -v afplay >/dev/null 2>&1 && afplay -v 1.0 /System/Library/Sounds/Glass.aiff 2>/dev/null &
             then
                 sound_played=true
             fi
@@ -258,8 +262,12 @@ notify_complete() {
             # macOS: Cleanup old notifications first
             cleanup_macos_notifications
             
-            # macOS: Completion sound + terminal-notifier (higher volume)
-            if command -v afplay >/dev/null 2>&1 && afplay -v 0.8 /System/Library/Sounds/Hero.aiff 2>/dev/null &
+            # macOS: Completion sound with panning support
+            if command -v ~/.tmux/claude/os/darwin.sh >/dev/null 2>&1; then
+                # Use panning-enabled sound playback
+                (source ~/.tmux/claude/core/base.sh && source ~/.tmux/claude/os/darwin.sh && play_sound_file_with_panning "/System/Library/Sounds/Hero.aiff" "1.0" "$WINDOW_ID") &
+                sound_played=true
+            elif command -v afplay >/dev/null 2>&1 && afplay -v 1.0 /System/Library/Sounds/Hero.aiff 2>/dev/null &
             then
                 sound_played=true
             fi
@@ -390,8 +398,12 @@ notify_status_change() {
             if [ "$os_type" = "macos" ]; then
                 cleanup_macos_notifications
                 
-                # Ping.aiff for processing/busy state (higher volume)
-                if command -v afplay >/dev/null 2>&1 && afplay -v 0.8 /System/Library/Sounds/Ping.aiff 2>/dev/null &
+                # Ping.aiff for processing/busy state with panning support
+                if command -v ~/.tmux/claude/os/darwin.sh >/dev/null 2>&1; then
+                    # Use panning-enabled sound playback
+                    (source ~/.tmux/claude/core/base.sh && source ~/.tmux/claude/os/darwin.sh && play_sound_file_with_panning "/System/Library/Sounds/Ping.aiff" "1.0" "$WINDOW_ID") &
+                    sound_played=true
+                elif command -v afplay >/dev/null 2>&1 && afplay -v 1.0 /System/Library/Sounds/Ping.aiff 2>/dev/null &
                 then
                     sound_played=true
                 fi
