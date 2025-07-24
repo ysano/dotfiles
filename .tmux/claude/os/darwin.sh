@@ -607,7 +607,7 @@ play_sound_file() {
 # パンニング対応サウンドファイル再生
 play_sound_file_with_panning() {
     local file_path="$1"
-    local volume="${2:-$(get_config "audio.volume" "0.8")}"
+    local volume="${2:-$(get_config "audio.volume" "4.0")}"
     local window_id="${3:-}"
 
     log "DEBUG" "Playing sound file with panning on macOS: $file_path, volume=$volume, window_id=$window_id"
