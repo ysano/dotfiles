@@ -69,8 +69,10 @@ detect_claude_status() {
     fi
     
     # Check for plan mode (user needs to review/approve plan)
-    if echo "$recent_output" | grep -qE '(plan mode on|⏸ plan mode|shift\+tab to cycle)'; then
-        debug_log "Detected: Waiting (plan mode - user approval needed)"
+    # Exclude settings display - only detect actual plan approval needed
+    if echo "$recent_output" | grep -qE 'plan mode.*exit.*approve' && \
+       ! echo "$recent_output" | grep -qE '(plan mode on|auto-accept.*on)'; then
+        debug_log "Detected: Waiting (plan approval needed)"
         echo "Waiting"
         return
     fi
@@ -86,6 +88,13 @@ detect_claude_status() {
     # Check for completion patterns
     if echo "$recent_output" | grep -qE '(✅.*完了|Showing detailed transcript|Ctrl\+R to toggle)'; then
         debug_log "Detected: Idle (task completed)"
+        echo "Idle"
+        return
+    fi
+    
+    # Check for ready state with shortcuts available
+    if echo "$recent_output" | grep -qE '\? for shortcuts' && echo "$recent_output" | grep -qE '>\s*$'; then
+        debug_log "Detected: Idle (ready with shortcuts available)"
         echo "Idle"
         return
     fi
