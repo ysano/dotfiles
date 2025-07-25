@@ -1,0 +1,60 @@
+=== Claude Voice Test Suite ===
+開始時刻: #午後
+
+[0;34mℹ️  INFO[0m: テスト環境初期化完了
+[0;34mℹ️  INFO[0m: CLAUDE_VOICE_HOME: /Users/yoshiaki_sano/.tmux/claude
+[0;34mℹ️  INFO[0m: テストレポート: /Users/yoshiaki_sano/.tmux/claude/tests/output/test_report_20250723_130045.txt
+[0;34mℹ️  INFO[0m: === 統合テスト開始 ===
+[0;34mℹ️  INFO[0m: test_module_integration.sh 実行中...
+✅ Module integration test passed (file structure check)
+[0;32m✅ PASS[0m: test_module_integration.sh
+[0;34mℹ️  INFO[0m: test_end_to_end.sh 実行中...
+Claude Voice End-to-End Test
+============================
+
+=== システム前提条件チェック ===
+✅ PASS: メインバイナリが実行可能
+✅ PASS: 設定ファイルが存在: claude-voice.conf
+✅ PASS: 設定ファイルが存在: claude-voice.yaml
+✅ PASS: ログディレクトリが存在
+
+=== コマンドライン引数テスト ===
+✅ PASS: ヘルプ表示の終了コード
+✅ PASS: ヘルプにタイトルが含まれる
+✅ PASS: ヘルプに使用法が含まれる
+✅ PASS: バージョン表示の終了コード
+✅ PASS: バージョン表示にタイトルが含まれる
+✅ PASS: バージョン番号が含まれる
+✅ PASS: テスト実行の終了コード
+✅ PASS: テスト出力にタイトルが含まれる
+✅ PASS: テスト完了メッセージが含まれる
+✅ PASS: ヘルスチェック実行の終了コード
+✅ PASS: ヘルスチェック出力にタイトルが含まれる
+
+=== 要約タイプ別実行テスト ===
+✅ PASS: brief 要約の終了コード
+✅ PASS: brief 要約の実行確認
+✅ PASS: brief 要約の完了確認
+✅ PASS: detailed 要約の終了コード
+✅ PASS: detailed 要約の実行確認
+✅ PASS: detailed 要約の完了確認
+✅ PASS: technical 要約の終了コード
+✅ PASS: technical 要約の実行確認
+✅ PASS: technical 要約の完了確認
+✅ PASS: デフォルト実行の終了コード
+✅ PASS: デフォルトでbrief要約が実行される
+
+=== エラーハンドリングテスト ===
+❌ FAIL: 無効なオプションで適切なエラーコード
+   期待終了コード: 1
+   実際終了コード: 0
+[0;31m❌ FAIL[0m: test_end_to_end.sh
+
+=== テスト結果サマリー ===
+実行時刻: #午後
+総テスト数: 2
+成功: 1
+失敗: 1
+スキップ: 0
+成功率: 50%
+[0;31m❌ FAIL[0m: ❌ 1個のテストが失敗しました
