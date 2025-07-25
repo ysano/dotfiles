@@ -32,16 +32,45 @@ detect_claude_status() {
     local recent_output=$(echo "$output" | tail -20)
     
     # 1. Busy: Processing with tokens and interrupt (highest priority - active processing)
+    debug_log "Checking for busy patterns in output..."
+    if echo "$output" | grep -qE '\([0-9]+s\s+·.*tokens.*interrupt\)'; then
+        debug_log "Detected: Busy (processing pattern in full output)"
+        echo "Busy"
+        return
+    fi
+    
     if echo "$recent_output" | grep -qE '\([0-9]+s\s+·.*tokens.*interrupt\)'; then
         debug_log "Detected: Busy (processing pattern in recent output)"
         echo "Busy"
         return
     fi
     
-    # 2. Waiting: User input required (interactive prompts)
-    # Look for active prompt patterns in recent output
-    if echo "$recent_output" | grep -qE '(Do you want to proceed\?|Would you like to|Continue\?.*❯|❯ 1\. Yes.*2\. Yes.*3\. No)'; then
+    # Also check for other busy indicators
+    if echo "$recent_output" | grep -qE '(Finagling|Thinking|Processing).*\([0-9]+s'; then
+        debug_log "Detected: Busy (general processing pattern)"
+        echo "Busy" 
+        return
+    fi
+    
+    # 2. Waiting: User input required (interactive prompts and plan mode)
+    # Look for active prompt patterns in recent output (but exclude processing and completion contexts)
+    if echo "$recent_output" | grep -qE '(Do you want to proceed\?|Would you like to|Continue\?.*❯)' && \
+       ! echo "$recent_output" | grep -qE '(Finagling|tokens.*interrupt|✅.*完了|Showing detailed transcript)'; then
         debug_log "Detected: Waiting (active input prompt in recent output)"
+        echo "Waiting"
+        return
+    fi
+    
+    # Specific choice prompts
+    if echo "$recent_output" | grep -qE '❯ 1\. Yes.*2\. Yes.*3\. No'; then
+        debug_log "Detected: Waiting (choice prompt)"
+        echo "Waiting"
+        return
+    fi
+    
+    # Check for plan mode (user needs to review/approve plan)
+    if echo "$recent_output" | grep -qE '(plan mode on|⏸ plan mode|shift\+tab to cycle)'; then
+        debug_log "Detected: Waiting (plan mode - user approval needed)"
         echo "Waiting"
         return
     fi
@@ -53,7 +82,15 @@ detect_claude_status() {
         return
     fi
     
-    # 3. Idle: Ready for input (prompt pattern)
+    # 3. Idle: Task completed or ready for input
+    # Check for completion patterns
+    if echo "$recent_output" | grep -qE '(✅.*完了|Showing detailed transcript|Ctrl\+R to toggle)'; then
+        debug_log "Detected: Idle (task completed)"
+        echo "Idle"
+        return
+    fi
+    
+    # Check for ready prompt pattern  
     if echo "$ui_context" | grep -qE '>\s*$'; then
         debug_log "Detected: Idle (prompt ready in UI context)"
         echo "Idle"
