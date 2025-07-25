@@ -55,8 +55,38 @@ if [ -z "$NEW_STATUS" ]; then
     NEW_STATUS=$(~/.tmux/scripts/claude-status-enhanced.sh "$WINDOW_ID")
 fi
 
-# Early exit if no change detected
-if [ "$OLD_STATUS" = "$NEW_STATUS" ]; then
+# State change detection with periodic notification for long-running states
+LAST_NOTIFY_FILE="$STATUS_DIR/.last_notify_${WINDOW_ID}"
+PERIODIC_NOTIFY_INTERVAL=300  # 5 minutes for long-running states
+
+check_notification_needed() {
+    # Always notify on state changes
+    if [ "$OLD_STATUS" != "$NEW_STATUS" ]; then
+        return 0  # Notify - state changed
+    fi
+    
+    # For same state, check if we should send periodic notification
+    if [ -n "$NEW_STATUS" ] && [ "$NEW_STATUS" != "" ]; then
+        local now=$(date +%s)
+        local last_notify=0
+        
+        if [ -f "$LAST_NOTIFY_FILE" ]; then
+            last_notify=$(cat "$LAST_NOTIFY_FILE" 2>/dev/null || echo 0)
+        fi
+        
+        # Send periodic notification for active states (Busy/Waiting)
+        if [ "$NEW_STATUS" = "⚡" ] || [ "$NEW_STATUS" = "⌛" ]; then
+            if [ $((now - last_notify)) -gt $PERIODIC_NOTIFY_INTERVAL ]; then
+                return 0  # Notify - periodic update needed
+            fi
+        fi
+    fi
+    
+    return 1  # Don't notify
+}
+
+# Check if notification is needed
+if ! check_notification_needed; then
     exit 0
 fi
 
@@ -467,8 +497,8 @@ notify_status_change() {
     esac
 }
 
-# Only notify for meaningful status changes (non-empty states)
-# Allow notifications when OLD_STATUS is empty (initial state) but NEW_STATUS is meaningful
-if [ -n "$NEW_STATUS" ] && [ "$OLD_STATUS" != "$NEW_STATUS" ]; then
-    notify_status_change
-fi
+# Execute notification based on check_notification_needed logic
+notify_status_change
+
+# Record timestamp after successful notification
+echo "$(date +%s)" > "$LAST_NOTIFY_FILE"
