@@ -1110,7 +1110,7 @@ function _gwt_status() {
 
 # 設定ファイル管理
 function _gwt_load_config() {
-    local config_file="$HOME/.config/gwt/config.yml"
+    local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/gwt/config.yml"
     
     # デフォルト設定
     GWT_CONFIG_EDITOR_DEFAULT="auto"
@@ -1153,7 +1153,7 @@ function _gwt_load_config() {
 
 # 設定ファイル初期化
 function _gwt_init_config() {
-    local config_dir="$HOME/.config/gwt"
+    local config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/gwt"
     local config_file="$config_dir/config.yml"
     local dotfiles_example="$HOME/.dotfiles/.config/gwt/config.yml.example"
     
@@ -1332,7 +1332,7 @@ function _gwt_config() {
             _gwt_init_config
             ;;
         "show"|"")
-            local config_file="$HOME/.config/gwt/config.yml"
+            local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/gwt/config.yml"
             if [[ -f "$config_file" ]]; then
                 echo "📋 現在の設定: $config_file"
                 echo ""
@@ -1343,7 +1343,7 @@ function _gwt_config() {
             fi
             ;;
         "edit")
-            local config_file="$HOME/.config/gwt/config.yml"
+            local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/gwt/config.yml"
             _gwt_init_config  # 設定ファイルがない場合は作成
             
             local selected_editor=$(_gwt_select_editor)
@@ -1368,7 +1368,7 @@ function _gwt_config() {
             fi
             ;;
         "path")
-            echo "$HOME/.config/gwt/config.yml"
+            echo "${XDG_CONFIG_HOME:-$HOME/.config}/gwt/config.yml"
             ;;
         *)
             echo "使用法: gwt config [init|show|edit|path]"

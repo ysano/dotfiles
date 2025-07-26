@@ -15,7 +15,7 @@
 # Create required directories
 setup_zinit_dirs() {
     local dirs=(
-        "$HOME/.cache/zinit/completions"
+        "${XDG_CACHE_HOME:-$HOME/.cache}/zinit/completions"
         "$ZINIT_HOME"
         "$ZINIT_BIN_DIR"
     )
@@ -265,7 +265,7 @@ optimize_zinit() {
     
     # Set up completion caching
     zstyle ':completion:*' use-cache yes
-    zstyle ':completion:*' cache-path "$HOME/.cache/zinit/zcompcache"
+    zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zinit/zcompcache"
 }
 
 # ================================
