@@ -41,7 +41,10 @@ unalias gwt gwta gwtls gwtmv gwtrm 2>/dev/null || true
 # Some environment variables
 ########################################
 
-
+# ICU4C for pkg-config (Homebrew only)
+if command -v brew >/dev/null 2>&1; then
+    export PKG_CONFIG_PATH="$(brew --prefix)/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -54,5 +57,5 @@ unalias gwt gwta gwtls gwtmv gwtrm 2>/dev/null || true
 # [[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"
 
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="$HOME/.rd/bin:$PATH"
+export PATH="/Users/yoshiaki_sano/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
