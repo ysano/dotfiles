@@ -8,24 +8,32 @@ readonly PROVIDER_OPENAI="openai"
 readonly PROVIDER_CLAUDE="claude"
 readonly PROVIDER_SIMPLE="simple"
 
-# OS固有のデフォルト設定
-case "$(uname)" in
-    "Darwin")
-        DEFAULT_OLLAMA_API="http://localhost:11434"
-        ;;
-    "Linux")
-        if grep -qi microsoft /proc/version 2>/dev/null || [[ -n "$WSL_DISTRO_NAME" ]]; then
-            # WSL環境
-            DEFAULT_OLLAMA_API="http://172.29.80.1:11434"
-        else
-            # 純粋なLinux環境
-            DEFAULT_OLLAMA_API="http://localhost:11434"
-        fi
-        ;;
-    *)
-        DEFAULT_OLLAMA_API="http://localhost:11434"
-        ;;
-esac
+# 動的Ollama API URL解決（WSL対応）
+get_default_ollama_api() {
+    case "$(uname)" in
+        "Darwin")
+            echo "http://localhost:11434"
+            ;;
+        "Linux")
+            if grep -qi microsoft /proc/version 2>/dev/null || [[ -n "$WSL_DISTRO_NAME" ]]; then
+                # WSL環境 - 動的IP解決を試行
+                if [[ -x "${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}/core/wsl_host_resolver.sh" ]]; then
+                    "${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}/core/wsl_host_resolver.sh" url 2>/dev/null || echo "http://localhost:11434"
+                else
+                    echo "http://localhost:11434"
+                fi
+            else
+                # 純粋なLinux環境
+                echo "http://localhost:11434"
+            fi
+            ;;
+        *)
+            echo "http://localhost:11434"
+            ;;
+    esac
+}
+
+DEFAULT_OLLAMA_API=$(get_default_ollama_api)
 DEFAULT_TIMEOUT=30
 DEFAULT_MAX_RETRIES=3
 
