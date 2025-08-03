@@ -80,6 +80,39 @@ gws      # gwt switch
 gwr      # gwt remove
 ```
 
+### Claude Voice統合機能（tmux）
+
+```bash
+# Claude Voice音声エンジンのテスト
+~/.tmux/claude/core/wsl_voice_engine.sh test
+
+# ステータス別効果音テスト
+~/.tmux/claude/core/wsl_voice_engine.sh sound "⚡"  # 忙しい状態
+~/.tmux/claude/core/wsl_voice_engine.sh sound "⌛"  # 待機状態  
+~/.tmux/claude/core/wsl_voice_engine.sh sound "✅"  # 完了状態
+
+# 複合通知テスト（効果音+音声合成）
+~/.tmux/claude/core/wsl_voice_engine.sh notify "処理完了" "✅" 1 "both"
+```
+
+#### tmux Claude Voiceキーバインド
+```
+Prefix + v + t       # Claude Voice統合テスト
+Prefix + v + v       # Claude Voice自動要約 ON/OFF
+Prefix + v + 1-3     # ステータス別音声 ON/OFF (1=完了, 2=待機, 3=忙しい)
+Prefix + v + s + 1-3 # 音声合成テスト (s=speech)
+Prefix + v + e + 1-3 # 効果音テスト (e=effects)  
+Prefix + v + n + 1-3 # 複合通知テスト (n=notification)
+Prefix + v + p       # パンニング機能 ON/OFF
+```
+
+#### Claude Voiceステータス音声バリエーション
+- **⚡ 忙しい状態**: 警告パターン (800Hz×2→600Hz)
+- **⌛ 待機状態**: 上昇メロディー (659Hz→880Hz→1175Hz)  
+- **✅ 完了状態**: 成功パターン (523Hz→659Hz→783Hz→1046Hz)
+- **Equal Power Pan Law**: 3dBセンター法によるステレオ配置
+- **音声合成**: Microsoft Haruka Desktopによる日本語読み上げ
+
 ## アーキテクチャ概要
 
 ### Emacs設定 (~2,500行)

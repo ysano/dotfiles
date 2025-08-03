@@ -7,14 +7,16 @@ set -euo pipefail
 # === スクリプト設定 ===
 readonly SCRIPT_VERSION="2.0.0"
 readonly SCRIPT_NAME="WSL Voice Engine v2"
-readonly CORE_DIR="$(dirname "${BASH_SOURCE[0]}")"
-readonly MODULE_DIR="$CORE_DIR/modules"
+readonly PLATFORM_DIR="$(dirname "${BASH_SOURCE[0]}")"
+readonly MODULE_DIR="$PLATFORM_DIR/modules"
+readonly CORE_DIR="$HOME/.tmux/claude/core"
 
 # === 環境変数設定 ===
 export CLAUDE_VOICE_DEBUG="${CLAUDE_VOICE_DEBUG:-false}"
 
-# === 基本ライブラリ読み込み ===
-source "$CORE_DIR/base.sh"
+# === プラットフォーム統合ライブラリ読み込み ===
+source "$CORE_DIR/platform_detector.sh"
+source "$PLATFORM_DIR/base.sh"
 
 # === モジュール読み込み ===
 source "$MODULE_DIR/wsl_environment.sh"
