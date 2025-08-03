@@ -1,98 +1,167 @@
 #!/bin/bash
-# Claude Status Smart Detection Script
-# v2.0対応のインテリジェントなステータス検出
+# Claude Status Smart Detection v2.0
+# プラットフォーム分離対応の統合ステータス管理
 
-set -euo pipefail
+# キャッシュ設定
+readonly CACHE_FILE="/tmp/.claude_status_cache_$$"
+readonly CACHE_DURATION=2  # 2秒キャッシュ
 
-# === 設定 ===
-readonly WINDOW_ID="${1:-$(tmux display-message -p '#I')}"
-readonly PANE_ID="${2:-$(tmux display-message -p '#P')}"
-readonly TMUX_CONFIG_DIR="$HOME/.tmux"
-readonly CLAUDE_CORE_DIR="$TMUX_CONFIG_DIR/claude/core"
+# プラットフォーム統合パス
+readonly CORE_DIR="$HOME/.tmux/claude/core"
+readonly PLATFORM_VOICE_ENGINE="$HOME/.tmux/claude/platforms/wsl/wsl_voice_engine_v2.sh"
+readonly FALLBACK_VOICE_ENGINE="$HOME/.tmux/claude/platforms/wsl/wsl_voice_engine.sh"
 
-# === エンジン検出と優先順位 ===
-detect_best_engine() {
-    # v2.0 モジュラーエンジンを最優先
-    if [[ -x "$CLAUDE_CORE_DIR/wsl_voice_engine_v2.sh" ]]; then
-        echo "v2"
-        return 0
-    fi
-    
-    # レガシーエンジンでフォールバック
-    if [[ -x "$CLAUDE_CORE_DIR/wsl_voice_engine.sh" ]]; then
-        echo "v1"
-        return 0
-    fi
-    
-    # Claude統合なし
-    echo "none"
-    return 1
+# プラットフォーム検出器を読み込み
+if [[ -f "$CORE_DIR/platform_detector.sh" ]]; then
+    source "$CORE_DIR/platform_detector.sh"
+fi
+
+# キャッシュ有効性チェック
+is_cache_valid() {
+    [[ -f "$CACHE_FILE" ]] && \
+    [[ $(( $(date +%s) - $(stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0) )) -lt $CACHE_DURATION ]]
 }
 
-# === ステータス検出メイン ===
-get_claude_status() {
-    local engine
-    engine=$(detect_best_engine)
+# Claude Codeステータス検出
+detect_claude_status() {
+    local window_id="${1:-1}"
+    local pane_id="${2:-0}"
     
-    case "$engine" in
-        "v2")
-            # v2.0 診断機能使用
-            if "$CLAUDE_CORE_DIR/wsl_voice_engine_v2.sh" diagnose >/dev/null 2>&1; then
-                # 詳細ステータス取得の試行
-                "$TMUX_CONFIG_DIR/scripts/claude-status-enhanced.sh" "$WINDOW_ID" "$PANE_ID" 2>/dev/null || echo ""
-            else
-                echo ""
-            fi
+    # キャッシュチェック
+    if is_cache_valid; then
+        cat "$CACHE_FILE" 2>/dev/null
+        return 0
+    fi
+    
+    local status_icon=""
+    local has_activity=false
+    
+    # tmuxペイン情報取得
+    local pane_info
+    if pane_info=$(tmux list-panes -t "$window_id" -F "#{pane_active}:#{pane_current_command}:#{pane_pid}" 2>/dev/null); then
+        
+        while IFS=':' read -r is_active command pid; do
+            [[ "$is_active" == "1" ]] || continue
+            has_activity=true
+            
+            case "$command" in
+                "claude")
+                    # Claude Code実行中 - より詳細な状態検出
+                    if ps -p "$pid" -o args= 2>/dev/null | grep -q "claude.*--"; then
+                        status_icon="⚡"  # コマンド実行中
+                    else
+                        status_icon="⌛"  # 待機中
+                    fi
+                    ;;
+                "python"|"node"|"npm"|"cargo"|"go")
+                    status_icon="⚡"  # 開発ツール実行中
+                    ;;
+                "git")
+                    status_icon="⚡"  # Git操作中
+                    ;;
+                "emacs"|"vim"|"code")
+                    status_icon="✏️"   # エディタ
+                    ;;
+                *)
+                    # その他のアクティビティ
+                    if [[ -n "$command" && "$command" != "zsh" && "$command" != "bash" ]]; then
+                        status_icon="⚡"
+                    fi
+                    ;;
+            esac
+        done <<< "$pane_info"
+    fi
+    
+    # デフォルト状態
+    if [[ -z "$status_icon" ]]; then
+        if [[ "$has_activity" == "true" ]]; then
+            status_icon="✅"  # アクティブだが特別な処理なし
+        else
+            status_icon=""    # 非アクティブ
+        fi
+    fi
+    
+    # 結果をキャッシュして出力
+    echo "$status_icon" | tee "$CACHE_FILE"
+}
+
+# プラットフォーム対応音声通知
+trigger_voice_notification() {
+    local status_icon="$1"
+    local window_id="${2:-1}"
+    
+    # 音声機能が無効な場合はスキップ
+    [[ "${CLAUDE_VOICE_ENABLED:-true}" == "false" ]] && return 0
+    
+    # 通知対象ステータスかチェック
+    case "$status_icon" in
+        "⚡"|"⌛"|"✅") 
             ;;
-        "v1")
-            # レガシーシステム使用
-            "$TMUX_CONFIG_DIR/scripts/claude-status-enhanced.sh" "$WINDOW_ID" "$PANE_ID" 2>/dev/null || echo ""
+        *)
+            return 0  # 通知不要
             ;;
-        "none")
-            # Claude統合なし
-            echo ""
+    esac
+    
+    # プラットフォーム統合音声エンジン使用
+    if [[ -f "$CORE_DIR/cross_platform_voice.sh" ]]; then
+        "$CORE_DIR/cross_platform_voice.sh" status "$status_icon" &
+    elif check_platform_capability "audio" 2>/dev/null; then
+        execute_platform_command "audio" "$status_icon" &
+    elif [[ -f "$PLATFORM_VOICE_ENGINE" ]]; then
+        # WSL v2.0エンジンを使用
+        "$PLATFORM_VOICE_ENGINE" sound "$status_icon" &
+    elif [[ -f "$FALLBACK_VOICE_ENGINE" ]]; then
+        # フォールバック: v1.0エンジン
+        "$FALLBACK_VOICE_ENGINE" sound "$status_icon" &
+    fi
+    
+    return 0
+}
+
+# メイン処理
+main() {
+    local window_id="${1:-1}"
+    local pane_id="${2:-0}"
+    local mode="${3:-display}"  # display, notify, both
+    
+    # ステータス検出
+    local status_icon
+    status_icon=$(detect_claude_status "$window_id" "$pane_id")
+    
+    # モード別処理
+    case "$mode" in
+        "display")
+            echo "$status_icon"
+            ;;
+        "notify")
+            trigger_voice_notification "$status_icon" "$window_id"
+            ;;
+        "both")
+            echo "$status_icon"
+            trigger_voice_notification "$status_icon" "$window_id"
+            ;;
+        "test")
+            echo "Testing Claude Status Detection v2.0"
+            echo "Window ID: $window_id, Pane ID: $pane_id"
+            echo "Detected Status: $status_icon"
+            echo "Platform: $(detect_platform 2>/dev/null || echo "unknown")"
+            ;;
+        *)
+            echo "Usage: $0 [window_id] [pane_id] [display|notify|both|test]"
+            exit 1
             ;;
     esac
 }
 
-# === パフォーマンス最適化 ===
-# キャッシュファイルの使用（オプション）
-readonly CACHE_FILE="$HOME/.tmux/status/smart-cache-${WINDOW_ID}.status"
-readonly CACHE_DURATION=2  # 2秒
-
-use_cache() {
-    if [[ -f "$CACHE_FILE" ]]; then
-        local cache_age
-        cache_age=$(( $(date +%s) - $(stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0) ))
-        [[ $cache_age -lt $CACHE_DURATION ]]
-    else
-        return 1
-    fi
+# クリーンアップ関数
+cleanup() {
+    [[ -f "$CACHE_FILE" ]] && rm -f "$CACHE_FILE"
 }
 
-# === メイン実行 ===
-main() {
-    # キャッシュチェック（パフォーマンス最適化）
-    if use_cache; then
-        cat "$CACHE_FILE" 2>/dev/null || get_claude_status
-    else
-        local status
-        status=$(get_claude_status)
-        
-        # キャッシュ更新
-        if [[ -n "$status" ]]; then
-            mkdir -p "$(dirname "$CACHE_FILE")"
-            echo "$status" > "$CACHE_FILE"
-        fi
-        
-        echo "$status"
-    fi
-}
+# シグナルハンドラ設定
+trap cleanup EXIT INT TERM
 
-# === エラーハンドリング ===
-trap 'echo ""' ERR
-
-# === 実行 ===
+# スクリプト実行
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
