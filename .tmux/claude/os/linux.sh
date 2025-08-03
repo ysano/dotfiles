@@ -585,7 +585,7 @@ test_linux_functions() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # 基本モジュールの読み込み
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    source "$SCRIPT_DIR/core/base.sh"
+    source "$SCRIPT_DIR/core/foundation.sh"
 
     claude_voice_init true
     test_linux_functions

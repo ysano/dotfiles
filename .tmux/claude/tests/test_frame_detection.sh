@@ -5,7 +5,7 @@
 CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}"
 
 # 基本モジュールの読み込み
-source "$CLAUDE_VOICE_HOME/core/base.sh"
+source "$CLAUDE_VOICE_HOME/core/foundation.sh"
 source "$CLAUDE_VOICE_HOME/core/screen_capture.sh"
 
 # デバッグモードを有効化

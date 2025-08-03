@@ -5,7 +5,7 @@
 CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}"
 
 # 基本モジュールの読み込み
-source "$CLAUDE_VOICE_HOME/core/base.sh"
+source "$CLAUDE_VOICE_HOME/core/foundation.sh"
 source "$CLAUDE_VOICE_HOME/os/darwin.sh"
 
 # テスト用設定の一時的有効化

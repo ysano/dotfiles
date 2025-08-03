@@ -1,94 +1,65 @@
 #!/bin/bash
-# WSL Environment Detection Module
-# WSL環境検出とWindows統合機能
+# WSL Environment Detection Module (Refactored)
+# WSL環境検出とWindows統合機能 - 統一プラットフォームユーティリティ使用版
 
 set -euo pipefail
 
-# === WSL環境検出 ===
-detect_wsl_environment() {
-    local wsl_version=""
-    
-    # WSL_DISTRO_NAMEが設定されているかチェック
-    if [[ -n "${WSL_DISTRO_NAME:-}" ]]; then
-        wsl_version="2"
-        log "DEBUG" "WSL detected via WSL_DISTRO_NAME: $WSL_DISTRO_NAME"
-        echo "wsl2"
-        return 0
-    fi
-    
-    # /proc/versionでMicrosoftが含まれるかチェック
-    if grep -qi microsoft /proc/version 2>/dev/null; then
-        if grep -qi "microsoft-standard-wsl2" /proc/version 2>/dev/null; then
-            wsl_version="2"
-        else
-            wsl_version="1"
-        fi
-        log "DEBUG" "WSL detected via /proc/version: WSL$wsl_version"
-        echo "wsl$wsl_version"
-        return 0
-    fi
-    
-    # Windows相互運用確認
-    if command -v powershell.exe >/dev/null 2>&1; then
-        log "DEBUG" "WSL detected via powershell.exe availability"
-        echo "wsl"
-        return 0
-    fi
-    
-    # WSL環境ではない
-    log "DEBUG" "Not running in WSL environment"
-    echo "none"
-    return 1
-}
+# 統一プラットフォームユーティリティの読み込み
+readonly PLATFORM_UTILS_PATH="$(dirname "$(dirname "${BASH_SOURCE[0]}")")/core/platform_utils.sh"
+if [[ -f "$PLATFORM_UTILS_PATH" ]]; then
+    source "$PLATFORM_UTILS_PATH"
+else
+    echo "ERROR: Platform utilities not found: $PLATFORM_UTILS_PATH" >&2
+    exit 1
+fi
 
-# === PowerShell実行ファイル検索 ===
-find_powershell() {
-    local powershell_paths=(
-        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-        "/mnt/c/Program Files/PowerShell/7/pwsh.exe"
-        "/mnt/c/Windows/sysnative/WindowsPowerShell/v1.0/powershell.exe"
-        "$(command -v powershell.exe 2>/dev/null || true)"
-        "$(command -v pwsh.exe 2>/dev/null || true)"
-    )
-    
-    for ps_path in "${powershell_paths[@]}"; do
-        if [[ -n "$ps_path" ]] && [[ -x "$ps_path" ]]; then
-            log "DEBUG" "PowerShell found: $ps_path"
-            echo "$ps_path"
-            return 0
-        fi
-    done
-    
-    log "ERROR" "PowerShell executable not found"
-    return 1
-}
+# === WSL固有の拡張機能 ===
+# platform_utilsの基本機能に加えて、WSL固有の機能を提供
 
-# === Windows音声システム確認 ===
-check_windows_speech() {
-    local powershell_path
-    powershell_path=$(find_powershell) || return 1
+# WSL統合状態の詳細チェック
+check_wsl_integration_status() {
+    local integration_status="unknown"
     
-    # Windows Speech API利用可能性確認
-    local speech_test='
-    try {
-        Add-Type -AssemblyName System.Speech;
-        $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer;
-        $synth.GetInstalledVoices() | Select-Object -First 1 | Out-Null;
-        Write-Output "available";
-    } catch {
-        Write-Output "unavailable";
-    }'
-    
-    local result
-    result=$("$powershell_path" -Command "$speech_test" 2>/dev/null | tr -d '\r\n')
-    
-    if [[ "$result" == "available" ]]; then
-        log "DEBUG" "Windows Speech API available"
-        return 0
+    # Windows相互運用性の確認
+    if command -v explorer.exe >/dev/null 2>&1; then
+        integration_status="full"
+    elif command -v powershell.exe >/dev/null 2>&1; then
+        integration_status="partial"
     else
-        log "WARN" "Windows Speech API unavailable"
+        integration_status="limited"
+    fi
+    
+    echo "$integration_status"
+}
+
+# WSLバージョン固有の機能確認
+get_wsl_capabilities() {
+    local wsl_type=$(detect_wsl_environment)
+    
+    case "$wsl_type" in
+        "wsl2")
+            echo "gpu_support,systemd,networking,full_filesystem"
+            ;;
+        "wsl1")
+            echo "filesystem,limited_networking"
+            ;;
+        "wsl_compatible")
+            echo "powershell_bridge"
+            ;;
+        *)
+            echo "none"
+            ;;
+    esac
+}
+
+# Windows音声デバイスの詳細情報取得
+get_windows_audio_info() {
+    if ! has_powershell; then
+        echo "powershell_unavailable"
         return 1
     fi
+    
+    get_windows_audio_devices | head -5  # 最初の5デバイスのみ
 }
 
 # === 初期化チェック ===

@@ -13,7 +13,7 @@ echo "CLAUDE_VOICE_HOME: $CLAUDE_VOICE_HOME"
 
 # Test base.sh loading with timeout
 echo "Testing base.sh loading..."
-if timeout 5 bash -c "source '$CLAUDE_VOICE_HOME/core/base.sh' && echo 'base.sh loaded successfully'" 2>/dev/null; then
+if timeout 5 bash -c "source '$CLAUDE_VOICE_HOME/core/foundation.sh' && echo 'base.sh loaded successfully'" 2>/dev/null; then
     echo "✅ base.sh loads without hanging"
 else
     echo "❌ base.sh loading failed or timed out"
@@ -21,7 +21,7 @@ fi
 
 # Test user_interface.sh loading with timeout
 echo "Testing user_interface.sh loading..."
-if timeout 5 bash -c "source '$CLAUDE_VOICE_HOME/core/base.sh' && source '$CLAUDE_VOICE_HOME/core/user_interface.sh' && echo 'user_interface.sh loaded successfully'" 2>/dev/null; then
+if timeout 5 bash -c "source '$CLAUDE_VOICE_HOME/core/foundation.sh' && source '$CLAUDE_VOICE_HOME/core/user_interface.sh' && echo 'user_interface.sh loaded successfully'" 2>/dev/null; then
     echo "✅ user_interface.sh loads without hanging"
 else
     echo "❌ user_interface.sh loading failed or timed out"

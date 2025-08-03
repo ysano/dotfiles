@@ -22,86 +22,17 @@ readonly ENGLISH_VOICES=(
     "Microsoft Mark Desktop"
 )
 
-# === WSL環境検出 ===
-detect_wsl_environment() {
-    # WSL環境の詳細検出
-    if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
-        # WSLバージョンの判定
-        if [[ -f /proc/sys/kernel/osrelease ]] && grep -qi microsoft /proc/sys/kernel/osrelease; then
-            echo "wsl1"
-        else
-            echo "wsl2"
-        fi
-        return 0
-    fi
+# === 統一プラットフォームユーティリティの読み込み ===
+readonly PLATFORM_UTILS_PATH="$(dirname "$(dirname "${BASH_SOURCE[0]}")")/core/platform_utils.sh"
+if [[ -f "$PLATFORM_UTILS_PATH" ]]; then
+    source "$PLATFORM_UTILS_PATH"
+else
+    echo "ERROR: Platform utilities not found: $PLATFORM_UTILS_PATH" >&2
+    exit 1
+fi
 
-    # 環境変数による検出
-    if [[ -n "$WSL_DISTRO_NAME" ]] || [[ -n "$WSLENV" ]]; then
-        echo "wsl2"
-        return 0
-    fi
-
-    # PowerShell可用性による検出
-    if command -v powershell.exe >/dev/null 2>&1; then
-        echo "wsl_compatible"
-        return 0
-    fi
-
-    echo "not_wsl"
-    return 1
-}
-
-# === PowerShell実行ファイルの検出 ===
-find_powershell() {
-    # 優先順位に従ってPowerShellを検索
-    local ps_candidates=(
-        "powershell.exe"
-        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-        "/mnt/c/Program Files/PowerShell/7/pwsh.exe"
-        "/mnt/c/Program Files (x86)/PowerShell/7/pwsh.exe"
-    )
-
-    for ps_path in "${ps_candidates[@]}"; do
-        if command -v "$ps_path" >/dev/null 2>&1 || [[ -f "$ps_path" ]]; then
-            echo "$ps_path"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-# === Windows音声システム検証 ===
-check_windows_speech() {
-    log "DEBUG" "Checking Windows Speech availability"
-
-    local powershell_path=$(find_powershell)
-    if [[ -z "$powershell_path" ]]; then
-        log "ERROR" "PowerShell not found"
-        echo "powershell_not_found"
-        return 1
-    fi
-
-    log "DEBUG" "Using PowerShell: $powershell_path"
-
-    local check_result=$("$powershell_path" -Command "
-        try {
-            Add-Type -AssemblyName System.Speech -ErrorAction Stop;
-            \$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer;
-            \$voices = \$synth.GetInstalledVoices() | Where-Object {\$_.Enabled};
-            if (\$voices.Count -gt 0) {
-                Write-Output 'available';
-            } else {
-                Write-Output 'no_voices';
-            }
-        } catch {
-            Write-Output 'unavailable';
-        }
-    " 2>/dev/null | tr -d '\r\n')
-
-    log "DEBUG" "Windows Speech check result: $check_result"
-    echo "$check_result"
-}
+# === Windows音声システム検証は統一ユーティリティを使用 ===
+# check_windows_speech関数はplatform_utils.shで提供
 
 # === 利用可能音声の検出 ===
 detect_available_voices() {
