@@ -167,10 +167,10 @@ detect_available_voices
 ### tmux統合の更新
 ```bash
 # ~/.tmux/shared/claude-voice-common.conf
-# 旧版
+# 旧版（非推奨）
 bind-key F4 run-shell '~/.tmux/claude/core/wsl_voice_engine.sh sound "⚡"'
 
-# 新版
+# 新版（推奨 - モジュラーアーキテクチャ）
 bind-key F4 run-shell '~/.tmux/claude/core/wsl_voice_engine_v2.sh sound "⚡"'
 ```
 

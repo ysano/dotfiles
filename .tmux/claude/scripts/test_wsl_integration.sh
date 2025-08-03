@@ -123,15 +123,15 @@ test_ollama_connection() {
 test_wsl_voice_system() {
     echo "=== WSL音声システムテスト ==="
     
-    run_test "WSL音声エンジン存在確認" '[[ -x "$CORE_DIR/wsl_voice_engine.sh" ]]'
+    run_test "WSL音声エンジンv2.0存在確認" '[[ -x "$CORE_DIR/wsl_voice_engine_v2.sh" ]]'
     
     run_test "PowerShell実行可能確認" '[[ -x "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]]'
     
     # 音声合成テスト（実際の音声出力は行わない）
-    if "$CORE_DIR/wsl_voice_engine.sh" diagnose >/dev/null 2>&1; then
-        log_success "WSL音声システム診断成功"
+    if "$CORE_DIR/wsl_voice_engine_v2.sh" diagnose >/dev/null 2>&1; then
+        log_success "WSL音声システムv2.0診断成功"
     else
-        log_warning "WSL音声システム診断で問題を検出"
+        log_warning "WSL音声システムv2.0診断で問題を検出"
     fi
     
     echo ""
