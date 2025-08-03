@@ -2,6 +2,36 @@
 # Configuration Manager Module - 設定管理機能
 # 設定ファイルの表示、編集、作成、修復を担当
 
+# WSL動的ホスト解決の読み込み
+source "${CLAUDE_VOICE_HOME}/core/wsl_host_resolver.sh" 2>/dev/null || true
+
+# === 動的設定解決機能 ===
+
+# WSL環境でのOllama URL動的解決
+resolve_ollama_url() {
+    local configured_url="${1:-}"
+    
+    # WSL環境の検出
+    if is_wsl_environment; then
+        # localhostまたは未設定の場合、動的に解決
+        if [[ -z "$configured_url" ]] || [[ "$configured_url" == *"localhost"* ]] || [[ "$configured_url" == *"127.0.0.1"* ]]; then
+            local dynamic_url
+            if dynamic_url=$(get_ollama_url 2>/dev/null); then
+                echo "$dynamic_url"
+                return 0
+            fi
+        fi
+    fi
+    
+    # 設定されたURLまたはデフォルトを返す
+    echo "${configured_url:-http://localhost:11434}"
+}
+
+# WSL環境検出
+is_wsl_environment() {
+    [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null
+}
+
 # === 設定管理機能 ===
 
 # 設定ファイルの管理（表示・編集・リセット）
