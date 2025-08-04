@@ -1,0 +1,95 @@
+# TMux Minimal Configuration - Phase 2 Unified System
+# 全設定統合版 - クロスプラットフォームOllama特化
+# Generated: 2025-08-05
+
+# ====================================
+# 基本設定 (Essential Configuration)
+# ====================================
+base:
+  prefix: "C-z"
+  mouse: true
+  shell: "zsh"
+  index_base: 1
+  terminal: "xterm-256color"
+  display_time: 2000
+
+# ====================================
+# Claude Voice統合 (Ollama専用)
+# ====================================
+claude_voice:
+  enabled: true
+  provider: "ollama"
+  
+  # ステータス別音声設定
+  states:
+    complete: { enabled: true, voice: true, sound: true }   # ✅
+    waiting:  { enabled: true, voice: true, sound: true }   # ⌛
+    busy:     { enabled: true, voice: true, sound: true }   # ⚡
+  
+  # 音声合成設定
+  voice:
+    volume: 80
+    rate: 0
+    timeout: 30
+
+# ====================================
+# Ollama統合 (クロスプラットフォーム)
+# ====================================
+ollama:
+  url: "auto"  # プラットフォーム別自動解決
+  models:
+    primary: "gemma3:1b-it-qat"
+    secondary: "gemma3:1b"
+    fallback: "gemma2:2b"
+  timeout: 30
+  max_retries: 3
+
+# ====================================
+# プラットフォーム設定
+# ====================================
+platform:
+  # WSL固有設定
+  wsl:
+    clipboard: "clip.exe"
+    host_path: "/mnt/c"
+    
+  # macOS固有設定  
+  macos:
+    voice_engine: "Kyoko"
+    
+  # Linux固有設定
+  linux:
+    audio_system: "pulseaudio"
+
+# ====================================
+# システム設定 (統合)
+# ====================================
+system:
+  # パフォーマンス
+  cache_duration: 60
+  max_memory: 50
+  
+  # ログ設定
+  log_level: "INFO"
+  log_file: "~/.tmux/claude/logs/global.log"
+  
+  # 音声・通知設定
+  audio_mode: "auto"  # auto, audio, notification, beep, silent
+  audio_panning: true
+  panning_method: "equal_power_3db"
+  
+  # キーバインド統合
+  keybindings_file: "~/.tmux/core/tmux-keybindings.conf"
+  voice_prefix: "v"          # Prefix + v + [command]
+  ollama_prefix: "o"         # Prefix + o + [command] 
+  audio_prefix: "a"          # Prefix + a + [command]
+  audio_switch: "C-n"        # Prefix + C-n でモード切り替え
+
+# ====================================
+# 統合メタデータ
+# ====================================
+metadata:
+  version: "2.0.0"
+  phase: "2"
+  last_updated: "2025-08-05"
+  unified_from: 22

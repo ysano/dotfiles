@@ -142,14 +142,14 @@ claude_voice:
     
     waiting:   # ⌛
       enabled: true
-      voice_synthesis: false
+      voice_synthesis: true
       sound_effects: true
       auto_summary: false
       sound_pattern: "waiting"  # 659Hz→880Hz→1175Hz
     
     busy:      # ⚡
-      enabled: false
-      voice_synthesis: false
+      enabled: true
+      voice_synthesis: true
       sound_effects: true
       auto_summary: false
       sound_pattern: "warning"  # 800Hz×2→600Hz
@@ -238,44 +238,14 @@ shared:
   logging:
     enabled: true
     level: "INFO"  # DEBUG/INFO/WARN/ERROR
-    file: "~/.tmux/claude/logs/session.log"
+    file: "~/.tmux/claude/logs/global.log"
     max_size_mb: 10
     rotation_count: 5
   
-  # セキュリティ設定
+  # セキュリティ設定（簡素化版）
   security:
     input_validation: true
-    max_text_length: 5000
-    allowed_commands:
-      - "clip.exe"
-      - "explorer.exe" 
-      - "powershell.exe"
-    sandbox_mode: false
-
-# ====================================
-# 移行・互換性設定
-# ====================================
-migration:
-  # 検出方法
-  detection_method: "legacy"  # legacy/modern/hybrid
-  
-  # フォールバック設定
-  rollback:
-    threshold: 5
-    enabled: true
-    auto_recovery: true
-  
-  # テスト設定
-  testing:
-    duration_sec: 300
-    ab_test_enabled: false
-    performance_baseline: ""
-  
-  # 互換性設定
-  compatibility:
-    legacy_config_support: true
-    gradual_migration: true
-    config_validation: true
+    max_text_length: 1000
 
 # ====================================
 # 拡張・プラグイン設定
@@ -311,12 +281,11 @@ development:
   testing:
     unit_tests_enabled: true
     integration_tests_enabled: true
-    performance_monitoring: true
+    performance_monitoring: false
   
   # 開発ツール
   tools:
     config_validator: true
-    performance_profiler: false
     dependency_checker: true
 
 # ====================================
