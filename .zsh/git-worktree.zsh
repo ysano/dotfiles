@@ -1898,31 +1898,25 @@ function _gwt_pr() {
     fi
 }
 
-# 環境ファイル管理システム
-# 環境ファイルパターン検出
+# ================================================================================
+# シンプルな環境ファイル管理
+# ================================================================================
+
+# 環境ファイル検出（シンプル版）
 function _gwt_detect_env_files() {
     local search_dir="${1:-.}"
-    local env_files=()
     
-    # 検出パターンの優先順位
-    local patterns=(
-        ".env.development.example"
-        ".env.local.example"
-        ".env.staging.example"
-        ".env.test.example"
-        ".env.production.example"
-        ".env.example"
-    )
+    # シンプルな検出パターン
+    local patterns=(".env" ".env.local" ".env.development" ".env.example")
+    local found_files=()
     
-    # パターンごとにファイル検索
     for pattern in "${patterns[@]}"; do
         if [[ -f "$search_dir/$pattern" ]]; then
-            local target_file=$(echo "$pattern" | sed 's/\.example$//')
-            env_files+=("$pattern:$target_file")
+            found_files+=("$pattern")
         fi
     done
     
-    echo "${env_files[@]}"
+    echo "${found_files[@]}"
 }
 
 # 既存worktreeの環境ファイル検出
@@ -2294,28 +2288,103 @@ function _gwt_env() {
     
     case "$command" in
         "detect"|"d")
-            _gwt_env_detect "$@"
+            _gwt_env_detect_simple "$@"
             ;;
-        "analyze"|"a")
-            _gwt_env_analyze "$@"
-            ;;
-        "setup"|"s")
-            _gwt_env_setup "$@"
+        "analyze"|"setup")
+            _gwt_log_error "この機能は廃止されました。シンプルな手動管理を推奨します。"
+            _gwt_env_help_simple
+            return 1
             ;;
         "help"|"h"|"")
-            _gwt_env_help
+            _gwt_env_help_simple
             ;;
         *)
-            echo "❌ 不明なサブコマンド: $command"
-            _gwt_env_help
+            _gwt_log_error "不明なサブコマンド: $command"
+            _gwt_env_help_simple
             return 1
             ;;
     esac
 }
 
+# シンプルな環境ファイル検出
+function _gwt_env_detect_simple() {
+    local search_dir="${1:-.}"
+    
+    if [[ ! -d "$search_dir" ]]; then
+        _gwt_log_error "ディレクトリが見つかりません: $search_dir"
+        return 1
+    fi
+    
+    echo "🔍 環境ファイル検出結果: $search_dir"
+    echo ""
+    
+    # 環境ファイルを検出
+    local found_files=($(_gwt_detect_env_files "$search_dir"))
+    
+    if [[ ${#found_files[@]} -gt 0 ]]; then
+        echo "📄 発見された環境ファイル:"
+        for file in "${found_files[@]}"; do
+            local full_path="$search_dir/$file"
+            local size=$(stat -f%z "$full_path" 2>/dev/null || echo "不明")
+            
+            if [[ "$file" == *.example ]]; then
+                echo "   📋 $file (${size}B) - テンプレート"
+            else
+                echo "   ✅ $file (${size}B)"
+            fi
+        done
+        echo ""
+        echo "💡 使用方法:"
+        
+        # .env.exampleがある場合のガイド
+        for file in "${found_files[@]}"; do
+            if [[ "$file" == *.example ]]; then
+                local target_file="${file%.example}"
+                if [[ ! -f "$search_dir/$target_file" ]]; then
+                    echo "   cp $file $target_file"
+                    echo "   vim $target_file  # 必要に応じて編集"
+                    break
+                fi
+            fi
+        done
+    else
+        echo "ℹ️  環境ファイルが見つかりませんでした"
+        echo ""
+        echo "💡 一般的な環境ファイル名:"
+        echo "   • .env"
+        echo "   • .env.local" 
+        echo "   • .env.development"
+        echo "   • .env.example"
+    fi
+}
+
+# シンプルなヘルプ
+function _gwt_env_help_simple() {
+    cat <<'EOF'
+
+🌍 gwt env - シンプルな環境ファイル管理
+
+📋 使用法:
+  gwt env detect [directory]     環境ファイルを検出・表示
+
+💡 使用例:
+  # 現在のディレクトリで環境ファイルを検出
+  gwt env detect
+
+  # 特定のディレクトリで検出
+  gwt env detect ./src
+
+🎯 基本的なワークフロー:
+  1. gwt env detect                    # 環境ファイルを確認
+  2. cp .env.example .env              # テンプレートをコピー
+  3. vim .env                          # 必要に応じて編集
+
+EOF
+}
+
 # 環境ファイル検出
 function _gwt_env_detect() {
-    local search_dir="${1:-.}"
+    local search_dir="."
     local show_content=false
     local recursive=false
     
@@ -2331,9 +2400,7 @@ function _gwt_env_detect() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt env detect [-c|--content] [-r|--recursive] [directory]"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt env detect [-c|--content] [-r|--recursive] [directory]"
                 ;;
             *)
                 search_dir="$1"
@@ -2355,15 +2422,17 @@ function _gwt_env_detect() {
     local -a example_files
     
     # 環境ファイルパターンの検出
-    local detected_files=($(_gwt_detect_env_files "$search_dir"))
+    local detected_entries=($(_gwt_detect_env_files "$search_dir"))
     
-    for file in "${detected_files[@]}"; do
-        if [[ -f "$file" ]]; then
-            if [[ "$file" == *.example ]]; then
-                example_files+=("$file")
-            else
-                env_files+=("$file")
-            fi
+    for entry in "${detected_entries[@]}"; do
+        local template_file="${entry%:*}"
+        local target_file="${entry#*:}"
+        
+        if [[ -f "$search_dir/$template_file" ]]; then
+            example_files+=("$template_file")
+        fi
+        if [[ -f "$search_dir/$target_file" ]]; then
+            env_files+=("$target_file")
         fi
     done
     
