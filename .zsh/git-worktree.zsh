@@ -252,7 +252,7 @@ function _gwt_create() {
             echo "🔀 切り替え: gwt switch"
         fi
     else
-        echo "❌ Worktree作成に失敗しました"
+        _gwt_log_error "Worktree作成に失敗しました"
         return 1
     fi
 }
@@ -274,22 +274,15 @@ function _gwt_list() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt list [-v|--verbose] [--path]"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt list [-v|--verbose] [--path]"
                 ;;
             *)
-                echo "❌ 不明な引数: $1"
-                echo "使用法: gwt list [-v|--verbose] [--path]"
-                return 1
+                _gwt_log_usage "不明な引数: $1" "gwt list [-v|--verbose] [--path]"
                 ;;
         esac
     done
 
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
-        return 1
-    fi
+    _gwt_validate_git_repo || return 1
 
     local current_worktree=$(git rev-parse --show-toplevel)
 
@@ -375,7 +368,7 @@ function _gwt_list() {
 # worktree切り替え（fzf使用）
 function _gwt_switch() {
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -462,17 +455,13 @@ function _gwt_remove() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt remove [-d|--delete-branch] [--force] <worktree-name>"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt remove [-d|--delete-branch] [--force] <worktree-name>"
                 ;;
             *)
                 if [[ -z "$worktree_name" ]]; then
                     worktree_name="$1"
                 else
-                    echo "❌ 引数が多すぎます"
-                    echo "使用法: gwt remove [-d|--delete-branch] [--force] <worktree-name>"
-                    return 1
+                    _gwt_log_usage "引数が多すぎます" "gwt remove [-d|--delete-branch] [--force] <worktree-name>"
                 fi
                 shift
                 ;;
@@ -480,7 +469,7 @@ function _gwt_remove() {
     done
 
     if [[ -z "$worktree_name" ]]; then
-        echo "❌ 削除するworktree名を指定してください"
+        _gwt_log_error "削除するworktree名を指定してください"
         echo "使用法: gwt remove [-d|--delete-branch] [--force] <worktree-name>"
         echo ""
         echo "オプション:"
@@ -490,10 +479,7 @@ function _gwt_remove() {
         return 1
     fi
 
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
-        return 1
-    fi
+    _gwt_validate_git_repo || return 1
 
     # worktreeが存在するかチェック
     local worktree_path=$(git worktree list --porcelain | awk -v name="$worktree_name" '/^worktree/ {path=$2} path && path~name {print path; exit}')
@@ -578,7 +564,7 @@ function _gwt_remove() {
 # メンテナンス・クリーンアップ
 function _gwt_clean() {
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -640,7 +626,7 @@ function _gwt_sync() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -839,7 +825,7 @@ function _gwt_exec() {
     fi
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -1018,7 +1004,7 @@ function _gwt_status() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -1610,7 +1596,7 @@ function _gwt_open() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -1773,7 +1759,7 @@ function _gwt_pr() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
