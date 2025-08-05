@@ -532,10 +532,10 @@ function _gwt_remove() {
 
     if [[ "$confirmation" =~ ^[yY]$ ]]; then
         # worktree削除
-        local remove_args="$worktree_path"
-        [[ "$force" == true ]] && remove_args="$remove_args --force"
+        local remove_args=""
+        [[ "$force" == true ]] && remove_args="--force"
         
-        git worktree remove $remove_args
+        git worktree remove $remove_args "$worktree_path"
         if [[ $? -eq 0 ]]; then
             echo "✅ Worktree削除完了: $worktree_path"
             

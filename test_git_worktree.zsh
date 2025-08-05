@@ -240,6 +240,39 @@ test_aliases() {
     fi
 }
 
+# テスト9: Gitオプション伝達テスト
+test_git_options() {
+    print_test_header "Gitオプション伝達テスト"
+    
+    cd "$REPO_PATH"
+    
+    # worktree作成してファイルを変更（未コミット状態）
+    gwt create dirty-test >/dev/null 2>&1
+    local worktree_path="../worktrees/test_repo-dirty-test"
+    
+    if [[ -d "$worktree_path" ]]; then
+        # 未コミットファイルを作成
+        echo "dirty content" > "$worktree_path/dirty.txt"
+        
+        # 通常の削除（失敗するはず）
+        local remove_output=$(echo "y" | gwt remove dirty-test 2>&1)
+        
+        # --forceオプションでの削除
+        echo "y" | gwt remove --force dirty-test >/dev/null 2>&1
+        local force_result=$?
+        
+        if [[ $force_result -eq 0 ]]; then
+            print_test_result "--forceオプション" "PASS"
+        else
+            print_test_result "--forceオプション" "FAIL"
+            echo "force削除結果: $force_result"
+        fi
+    else
+        print_test_result "--forceオプション" "FAIL"
+        echo "テスト用worktreeが作成されませんでした"
+    fi
+}
+
 # テスト結果サマリー表示
 print_test_summary() {
     echo ""
@@ -288,6 +321,7 @@ main() {
     test_worktree_clean
     test_non_git_directory
     test_aliases
+    test_git_options
     
     cleanup_test_environment
     print_test_summary
