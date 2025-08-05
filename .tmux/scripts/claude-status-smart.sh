@@ -11,7 +11,7 @@ readonly CORE_DIR="$HOME/.tmux/claude/core"
 readonly PLATFORM_VOICE_ENGINE="$HOME/.tmux/claude/platforms/wsl/wsl_voice_engine_v2.sh"
 readonly FALLBACK_VOICE_ENGINE="$HOME/.tmux/claude/platforms/wsl/wsl_voice_engine.sh"
 
-# プラットフォーム検出器を読み込み
+# プラットフォーム検出器を読み込み（存在する場合のみ）
 if [[ -f "$CORE_DIR/platform_detector.sh" ]]; then
     source "$CORE_DIR/platform_detector.sh"
 fi
@@ -41,7 +41,7 @@ detect_claude_status() {
     fi
     
     # pane情報の取得
-    local pane_target="${window_id}.${pane_id}"
+    local pane_target="${window_id}"
     local pane_pid=$(tmux display-message -t "$pane_target" -p '#{pane_pid}' 2>/dev/null)
     
     if [[ -z "$pane_pid" ]]; then
@@ -70,47 +70,64 @@ detect_claude_status() {
         return 0
     fi
     
-    # 高精度3状態検出
+    # 高精度3状態検出（マスターブランチ準拠の優先順位）
     local recent_output=$(echo "$terminal_output" | tail -10)
+    local last_line=$(echo "$terminal_output" | tail -1)
     local status_icon=""
     
-    # BUSY: トークン処理中
-    if echo "$recent_output" | grep -qE '\([0-9]+s\s*[·•]\s*[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
-        status_icon="⚡"
-    # BUSY: 処理中メッセージ
-    elif echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working)\.\.\.|✻\s*(Finagling|Ruminating)'; then
-        status_icon="⚡"
-    # WAITING: 選択肢プロンプト
+    # 1. BUSY: アクティブな処理中を最優先で検出（拡張パターン対応）
+    # 1-1. 視覚的インジケーター + 動詞パターン（最高優先度）
+    if echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)…\s*\([0-9]+s\s*[·•]\s*([↓⚒]\s*)?[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
+        # プロンプトが最新行にある場合は完了済みとみなす
+        if echo "$last_line" | grep -qE '>\s*'; then
+            status_icon="✅"  # 処理完了後のプロンプト
+        else
+            status_icon="⚡"  # アクティブな処理中
+        fi
+    # 1-2. 従来のトークン処理パターン（トークンカウンター検出）
+    elif echo "$recent_output" | grep -qE '\([0-9]+s\s*[·•]\s*[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
+        # プロンプトが最新行にある場合は完了済みとみなす
+        if echo "$last_line" | grep -qE '>\s*'; then
+            status_icon="✅"  # 処理完了後のプロンプト
+        else
+            status_icon="⚡"  # アクティブな処理中
+        fi
+    # 1-3. 処理中メッセージ単体（バックアップ検出）
+    elif echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)\.\.\.|[✢✻*]\s*(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)'; then
+        # 処理中メッセージの後にプロンプトがあるかチェック
+        if echo "$last_line" | grep -qE '>\s*'; then
+            status_icon="✅"  # 処理完了後のプロンプト
+        else
+            status_icon="⚡"  # 処理中
+        fi
+    # 2. WAITING: ユーザー入力が必要な状態（Busy処理完了後にチェック）
     elif echo "$recent_output" | grep -qE '(Do you want|Would you like|Should I|Continue\?|Proceed\?)' && \
-         echo "$recent_output" | grep -qE '❯\s*[0-9]+\.\s*(Yes|No|Continue)'; then
-        status_icon="⌛"
-    # WAITING: プラン承認待ち
+         echo "$recent_output" | grep -qE '❯\s*[0-9]+\.\s*(Yes|No|Continue)' && \
+         ! echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|tokens.*interrupt|✅.*完了)'; then
+        status_icon="⌛"  # 選択肢プロンプト
     elif echo "$recent_output" | grep -qE 'plan mode.*exit.*approve' && \
          ! echo "$recent_output" | grep -qE '(plan mode.*on|auto-accept.*on)' && \
-         echo "$recent_output" | grep -qE '>\s*$'; then
-        status_icon="⌛"
-    # WAITING: エラー状態
+         ! echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)'; then
+        status_icon="⌛"  # プラン承認待ち
     elif echo "$recent_output" | grep -qE '(Error|Failed|Exception).*:' && \
-         echo "$recent_output" | grep -qE '>\s*$'; then
-        status_icon="⌛"
-    # IDLE: 完了状態
+         echo "$recent_output" | grep -qE '>\s*' && \
+         ! echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)'; then
+        status_icon="⌛"  # エラー状態での入力待ち
+    # 3. IDLE: 完了状態または待機状態
     elif echo "$recent_output" | grep -qE '(✅.*完了|✅.*completed|Task completed|Successfully)'; then
-        status_icon="✅"
-    # IDLE: ショートカット案内
+        status_icon="✅"  # 明示的完了状態  
     elif echo "$recent_output" | grep -qE '\?\s*for shortcuts' && \
-         echo "$recent_output" | grep -qE '>\s*$'; then
-        status_icon="✅"
-    # IDLE: プロンプト待機
-    elif echo "$recent_output" | grep -qE '>\s*$' && \
-         ! echo "$terminal_output" | tail -30 | grep -qE '(Finagling|tokens.*interrupt|Do you want)'; then
-        status_icon="✅"
+         echo "$last_line" | grep -qE '>\s*'; then
+        status_icon="✅"  # ショートカット案内付き待機
+    elif echo "$last_line" | grep -qE '>\s*' && \
+         ! echo "$recent_output" | grep -qE '(Finagling|tokens.*interrupt|Do you want)'; then
+        status_icon="✅"  # 通常のプロンプト待機
     else
-        # デフォルト: 最新行にプロンプトがあればIdle
-        local last_line=$(echo "$terminal_output" | tail -1)
-        if echo "$last_line" | grep -qE '>\s*$'; then
-            status_icon="✅"
+        # デフォルト: 最新行の状態で判定
+        if echo "$last_line" | grep -qE '>\s*'; then
+            status_icon="✅"  # プロンプト表示中
         else
-            status_icon="⚡"  # 処理中と推定
+            status_icon="✅"  # 不明な場合はIdle
         fi
     fi
     
@@ -188,10 +205,48 @@ main() {
             trigger_voice_notification "$status_icon" "$window_id"
             ;;
         "test")
-            echo "Testing Claude Status Detection v2.0"
+            echo "Testing Claude Status Detection v2.0 Enhanced"
             echo "Window ID: $window_id, Pane ID: $pane_id"
             echo "Detected Status: $status_icon"
             echo "Platform: $(detect_platform 2>/dev/null || echo "unknown")"
+            
+            # 詳細なデバッグ情報
+            echo ""
+            echo "=== Detection Pattern Analysis ==="
+            local terminal_output=$(tmux capture-pane -p -S -50 -t "${window_id}" 2>/dev/null)
+            local recent_output=$(echo "$terminal_output" | tail -10)
+            local last_line=$(echo "$terminal_output" | tail -1)
+            
+            echo "Recent Output (last 3 lines):"
+            echo "$recent_output" | tail -3 | sed 's/^/  > /'
+            
+            echo ""
+            echo "Pattern Matches:"
+            
+            # 各パターンの検査
+            if echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)…\s*\([0-9]+s\s*[·•]\s*([↓⚒]\s*)?[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
+                echo "  ✅ Visual Indicator + Verb Pattern (Highest Priority)"
+            fi
+            
+            if echo "$recent_output" | grep -qE '\([0-9]+s\s*[·•]\s*[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
+                echo "  ✅ Token Counter Pattern"
+            fi
+            
+            if echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)\.\.\.|[✢✻*]\s*(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)'; then
+                echo "  ✅ Processing Message Pattern"
+            fi
+            
+            if echo "$recent_output" | grep -qE '(Do you want|Would you like|Should I|Continue\?|Proceed\?)'; then
+                echo "  ✅ Question Prompt Pattern"
+            fi
+            
+            if echo "$recent_output" | grep -qE '\?\s*for shortcuts'; then
+                echo "  ✅ Shortcuts Prompt Pattern"
+            fi
+            
+            if echo "$last_line" | grep -qE '>\s*'; then
+                echo "  ✅ Input Prompt Pattern"
+            fi
             ;;
         *)
             echo "Usage: $0 [window_id] [pane_id] [display|notify|both|test]"
