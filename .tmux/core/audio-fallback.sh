@@ -195,9 +195,16 @@ play_platform_audio() {
             ;;
         "wsl")
             # WSL環境ではPowerShell経由でWindows音声再生
+            local powershell_cmd=""
             if command -v powershell.exe >/dev/null 2>&1; then
+                powershell_cmd="powershell.exe"
+            elif [[ -x "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]]; then
+                powershell_cmd="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+            fi
+            
+            if [[ -n "$powershell_cmd" ]]; then
                 local ps_command="try { \$player = New-Object Media.SoundPlayer '$audio_file'; \$player.PlaySync(); } catch { exit 1 }"
-                if powershell.exe -Command "$ps_command" 2>/dev/null; then
+                if "$powershell_cmd" -Command "$ps_command" 2>/dev/null; then
                     log_audio "INFO" "WSL Windows audio played: $audio_file"
                     return 0
                 fi
@@ -237,9 +244,16 @@ send_system_notification() {
             fi
             ;;
         "wsl")
+            local powershell_cmd=""
             if command -v powershell.exe >/dev/null 2>&1; then
+                powershell_cmd="powershell.exe"
+            elif [[ -x "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]]; then
+                powershell_cmd="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+            fi
+            
+            if [[ -n "$powershell_cmd" ]]; then
                 local ps_command="Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('$message', 'TMux Status', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
-                powershell.exe -Command "$ps_command" 2>/dev/null &
+                "$powershell_cmd" -Command "$ps_command" 2>/dev/null &
                 log_audio "INFO" "WSL Windows notification sent"
                 return 0
             fi
@@ -250,15 +264,12 @@ send_system_notification() {
     return 1
 }
 
-# === 統合音声再生機能 ===
-play_status_audio() {
+# === SSH環境チェック ===
+handle_ssh_environment() {
     local status_icon="$1"
-    local mode="${2:-auto}"  # auto, audio, notification, beep, advanced, silent
-    local message="${3:-Status update}"
+    local mode="$2"
+    local message="$3"
     
-    log_audio "DEBUG" "Playing status audio: $status_icon (mode: $mode)"
-    
-    # SSH/リモート環境チェック
     if [[ -n "${SSH_CONNECTION:-}" ]] && [[ "$mode" == "auto" ]]; then
         log_audio "INFO" "SSH environment detected, using notification mode"
         if send_system_notification "$status_icon" "$message"; then
@@ -269,7 +280,15 @@ play_status_audio() {
         fi
     fi
     
-    # モード別処理
+    return 1  # SSH環境ではない、または処理されなかった
+}
+
+# === 音声モード実行 ===
+execute_audio_mode() {
+    local status_icon="$1"
+    local mode="$2"
+    local message="$3"
+    
     case "$mode" in
         "audio")
             # 音声デバイス再生のみ
@@ -291,30 +310,64 @@ play_status_audio() {
             ;;
         "beep")
             generate_fallback_beep "$status_icon"
+            return 0
             ;;
         "advanced")
             generate_advanced_fallback "$status_icon"
+            return 0
             ;;
         "silent")
             log_audio "INFO" "Silent mode, no audio output"
-            ;;
-        "auto")
-            # 自動選択戦略: 音声デバイス → システム通知 → 高度フォールバック → ビープ
-            if play_platform_audio "$status_icon"; then
-                return 0
-            elif send_system_notification "$status_icon" "$message"; then
-                return 0
-            elif command -v speaker-test >/dev/null 2>&1; then
-                generate_advanced_fallback "$status_icon"
-            else
-                generate_fallback_beep "$status_icon"
-            fi
+            return 0
             ;;
         *)
             log_audio "ERROR" "Unknown mode: $mode"
             generate_fallback_beep "$status_icon"
+            return 1
             ;;
     esac
+}
+
+# === フォールバック戦略適用 ===
+apply_fallback_strategy() {
+    local status_icon="$1"
+    local message="$2"
+    
+    # 自動選択戦略: 音声デバイス → システム通知 → 高度フォールバック → ビープ
+    if play_platform_audio "$status_icon"; then
+        return 0
+    elif send_system_notification "$status_icon" "$message"; then
+        return 0
+    elif command -v speaker-test >/dev/null 2>&1; then
+        generate_advanced_fallback "$status_icon"
+        return 0
+    else
+        generate_fallback_beep "$status_icon"
+        return 0
+    fi
+}
+
+# === 統合音声再生機能 ===
+play_status_audio() {
+    local status_icon="$1"
+    local mode="${2:-auto}"  # auto, audio, notification, beep, advanced, silent
+    local message="${3:-Status update}"
+    
+    log_audio "DEBUG" "Playing status audio: $status_icon (mode: $mode)"
+    
+    # SSH環境チェック
+    if handle_ssh_environment "$status_icon" "$mode" "$message"; then
+        return 0
+    fi
+    
+    # autoモードの場合はフォールバック戦略を適用
+    if [[ "$mode" == "auto" ]]; then
+        apply_fallback_strategy "$status_icon" "$message"
+        return 0
+    fi
+    
+    # その他のモードは直接実行
+    execute_audio_mode "$status_icon" "$mode" "$message"
 }
 
 # === 診断機能 ===
@@ -328,13 +381,22 @@ diagnose_audio() {
     echo
     
     echo "Audio Commands Availability:"
-    for cmd in afplay paplay aplay speaker-test powershell.exe; do
+    for cmd in afplay paplay aplay speaker-test; do
         if check_audio_command "$cmd"; then
             echo "  ✅ $cmd: Available"
         else
             echo "  ❌ $cmd: Not available"
         fi
     done
+    
+    # PowerShell特別チェック
+    if check_audio_command "powershell.exe"; then
+        echo "  ✅ powershell.exe: Available"
+    elif [[ -x "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]]; then
+        echo "  ✅ powershell.exe: Available (full path)"
+    else
+        echo "  ❌ powershell.exe: Not available"
+    fi
     
     echo
     echo "System Notification Commands:"
@@ -361,6 +423,8 @@ diagnose_audio() {
         "wsl")
             if command -v powershell.exe >/dev/null 2>&1; then
                 echo "  ✅ powershell.exe: Available (Windows notifications)"
+            elif [[ -x "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]]; then
+                echo "  ✅ powershell.exe: Available (full path, Windows notifications)"
             else
                 echo "  ❌ powershell.exe: Not available"
             fi
