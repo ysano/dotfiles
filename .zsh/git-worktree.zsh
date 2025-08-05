@@ -5,6 +5,76 @@
 # エイリアス競合の解決: 先にエイリアスを削除（Oh My Zsh git plugin対応）
 unalias gwt gwta gwtls gwtmv gwtrm 2>/dev/null || true
 
+# ================================================================================
+# ロギングユーティリティ関数群
+# ================================================================================
+
+# ログレベルと絵文字の対応
+_gwt_log_success() { echo "✅ $*" }
+_gwt_log_error() { echo "❌ $*" }
+_gwt_log_warning() { echo "⚠️  $*" }
+_gwt_log_info() { echo "ℹ️  $*" }
+_gwt_log_process() { echo "📋 $*" }
+_gwt_log_branch() { echo "🌿 $*" }
+_gwt_log_path() { echo "📂 $*" }
+_gwt_log_search() { echo "🔍 $*" }
+_gwt_log_tip() { echo "💡 $*" }
+_gwt_log_switch() { echo "🔀 $*" }
+_gwt_log_tool() { echo "🛠️  $*" }
+
+# インデント付きメッセージ
+_gwt_log_indent() { echo "   $*" }
+_gwt_log_indent_success() { echo "   ✅ $*" }
+_gwt_log_indent_error() { echo "   ❌ $*" }
+_gwt_log_indent_warning() { echo "   ⚠️  $*" }
+_gwt_log_indent_info() { echo "   ℹ️  $*" }
+_gwt_log_indent_path() { echo "   📂 $*" }
+_gwt_log_indent_branch() { echo "   🌿 $*" }
+
+# エラー後の使用法表示
+_gwt_log_usage() {
+    _gwt_log_error "$1"
+    echo "使用法: $2"
+    return 1
+}
+
+# ================================================================================
+# 共通検証関数群
+# ================================================================================
+
+# Gitリポジトリ内かどうかを確認
+_gwt_validate_git_repo() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        _gwt_log_error "Gitリポジトリ内で実行してください"
+        return 1
+    fi
+}
+
+# ブランチ名の妥当性チェック
+_gwt_validate_branch_name() {
+    local branch_name="$1"
+    if [[ -z "$branch_name" ]]; then
+        _gwt_log_error "ブランチ名を指定してください"
+        return 1
+    fi
+    # 無効な文字のチェック
+    if [[ "$branch_name" =~ [[:space:]] || "$branch_name" =~ [~^:?*\[\]\\] ]]; then
+        _gwt_log_error "無効なブランチ名: $branch_name"
+        return 1
+    fi
+}
+
+# worktreeパスの設定
+_gwt_setup_worktree_paths() {
+    local branch_name="$1"
+    local repo_root=$(git rev-parse --show-toplevel)
+    local worktree_root="${repo_root}/../worktrees" 
+    local repo_name=$(basename "$repo_root")
+    local worktree_dir="${worktree_root}/${repo_name}-${branch_name}"
+    
+    echo "$repo_root|$worktree_root|$worktree_dir"
+}
+
 # メイン関数
 function gwt() {
     # 設定読み込み
@@ -54,7 +124,7 @@ function gwt() {
             _gwt_help
             ;;
         *)
-            echo "❌ 不明なコマンド: $command"
+            _gwt_log_error "不明なコマンド: $command"
             _gwt_help
             return 1
             ;;
@@ -75,9 +145,7 @@ function _gwt_create() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt create [-s|--switch] <branch-name> [base-branch]"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt create [-s|--switch] <branch-name> [base-branch]"
                 ;;
             *)
                 if [[ -z "$branch_name" ]]; then
@@ -85,9 +153,7 @@ function _gwt_create() {
                 elif [[ -z "$base_branch" ]]; then
                     base_branch="$1"
                 else
-                    echo "❌ 引数が多すぎます"
-                    echo "使用法: gwt create [-s|--switch] <branch-name> [base-branch]"
-                    return 1
+                    _gwt_log_usage "引数が多すぎます" "gwt create [-s|--switch] <branch-name> [base-branch]"
                 fi
                 shift
                 ;;
@@ -99,47 +165,43 @@ function _gwt_create() {
         base_branch="$(git symbolic-ref --short HEAD 2>/dev/null || echo 'main')"
     fi
 
-    if [[ -z "$branch_name" ]]; then
-        echo "❌ ブランチ名を指定してください"
+    # 入力検証
+    _gwt_validate_branch_name "$branch_name" || {
         echo "使用法: gwt create [-s|--switch] <branch-name> [base-branch]"
         echo ""
         echo "オプション:"
         echo "  -s, --switch    作成後に新しいworktreeディレクトリに移動"
         return 1
-    fi
+    }
+    
+    _gwt_validate_git_repo || return 1
 
-    # Gitリポジトリチェック
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
-        return 1
-    fi
-
-    # worktreeディレクトリのルートを決定
-    local repo_root=$(git rev-parse --show-toplevel)
-    local worktree_root="${repo_root}/../worktrees"
-    local repo_name=$(basename "$repo_root")
-    local worktree_dir="${worktree_root}/${repo_name}-${branch_name}"
+    # worktreeパスの設定
+    local paths=($(_gwt_setup_worktree_paths "$branch_name" | tr '|' ' '))
+    local repo_root="${paths[1]}"
+    local worktree_root="${paths[2]}"
+    local worktree_dir="${paths[3]}"
 
     # worktreesディレクトリを作成
     mkdir -p "$worktree_root"
 
     # ブランチが既に存在するかチェック
     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
-        echo "📋 既存ブランチ '$branch_name' のworktreeを作成します..."
+        _gwt_log_process "既存ブランチ '$branch_name' のworktreeを作成します..."
         git worktree add "$worktree_dir" "$branch_name"
     else
-        echo "🌿 新しいブランチ '$branch_name' を '$base_branch' から作成します..."
+        _gwt_log_branch "新しいブランチ '$branch_name' を '$base_branch' から作成します..."
         git worktree add -b "$branch_name" "$worktree_dir" "$base_branch"
     fi
 
     if [[ $? -eq 0 ]]; then
-        echo "✅ Worktree作成完了:"
-        echo "   📂 パス: $worktree_dir"
-        echo "   🌿 ブランチ: $branch_name"
+        _gwt_log_success "Worktree作成完了:"
+        _gwt_log_indent_path "パス: $worktree_dir"
+        _gwt_log_indent_branch "ブランチ: $branch_name"
         echo ""
         
         # 環境ファイルの自動セットアップを試行
-        echo "🔍 環境ファイルのセットアップを確認中..."
+        _gwt_log_search "環境ファイルのセットアップを確認中..."
         local template_files=($(_gwt_detect_env_files "$repo_root" | grep '\.example$'))
         
         if [[ ${#template_files[@]} -gt 0 ]]; then
