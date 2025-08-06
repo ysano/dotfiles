@@ -5,6 +5,76 @@
 # エイリアス競合の解決: 先にエイリアスを削除（Oh My Zsh git plugin対応）
 unalias gwt gwta gwtls gwtmv gwtrm 2>/dev/null || true
 
+# ================================================================================
+# ロギングユーティリティ関数群
+# ================================================================================
+
+# ログレベルと絵文字の対応
+_gwt_log_success() { echo "✅ $*" }
+_gwt_log_error() { echo "❌ $*" }
+_gwt_log_warning() { echo "⚠️  $*" }
+_gwt_log_info() { echo "ℹ️  $*" }
+_gwt_log_process() { echo "📋 $*" }
+_gwt_log_branch() { echo "🌿 $*" }
+_gwt_log_path() { echo "📂 $*" }
+_gwt_log_search() { echo "🔍 $*" }
+_gwt_log_tip() { echo "💡 $*" }
+_gwt_log_switch() { echo "🔀 $*" }
+_gwt_log_tool() { echo "🛠️  $*" }
+
+# インデント付きメッセージ
+_gwt_log_indent() { echo "   $*" }
+_gwt_log_indent_success() { echo "   ✅ $*" }
+_gwt_log_indent_error() { echo "   ❌ $*" }
+_gwt_log_indent_warning() { echo "   ⚠️  $*" }
+_gwt_log_indent_info() { echo "   ℹ️  $*" }
+_gwt_log_indent_path() { echo "   📂 $*" }
+_gwt_log_indent_branch() { echo "   🌿 $*" }
+
+# エラー後の使用法表示
+_gwt_log_usage() {
+    _gwt_log_error "$1"
+    echo "使用法: $2"
+    return 1
+}
+
+# ================================================================================
+# 共通検証関数群
+# ================================================================================
+
+# Gitリポジトリ内かどうかを確認
+_gwt_validate_git_repo() {
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        _gwt_log_error "Gitリポジトリ内で実行してください"
+        return 1
+    fi
+}
+
+# ブランチ名の妥当性チェック
+_gwt_validate_branch_name() {
+    local branch_name="$1"
+    if [[ -z "$branch_name" ]]; then
+        _gwt_log_error "ブランチ名を指定してください"
+        return 1
+    fi
+    # 無効な文字のチェック
+    if [[ "$branch_name" =~ [[:space:]] || "$branch_name" =~ [~^:?*\[\]\\] ]]; then
+        _gwt_log_error "無効なブランチ名: $branch_name"
+        return 1
+    fi
+}
+
+# worktreeパスの設定
+_gwt_setup_worktree_paths() {
+    local branch_name="$1"
+    local repo_root=$(git rev-parse --show-toplevel)
+    local worktree_root="${repo_root}/../worktrees" 
+    local repo_name=$(basename "$repo_root")
+    local worktree_dir="${worktree_root}/${repo_name}-${branch_name}"
+    
+    echo "$repo_root|$worktree_root|$worktree_dir"
+}
+
 # メイン関数
 function gwt() {
     # 設定読み込み
@@ -54,7 +124,7 @@ function gwt() {
             _gwt_help
             ;;
         *)
-            echo "❌ 不明なコマンド: $command"
+            _gwt_log_error "不明なコマンド: $command"
             _gwt_help
             return 1
             ;;
@@ -75,9 +145,7 @@ function _gwt_create() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt create [-s|--switch] <branch-name> [base-branch]"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt create [-s|--switch] <branch-name> [base-branch]"
                 ;;
             *)
                 if [[ -z "$branch_name" ]]; then
@@ -85,9 +153,7 @@ function _gwt_create() {
                 elif [[ -z "$base_branch" ]]; then
                     base_branch="$1"
                 else
-                    echo "❌ 引数が多すぎます"
-                    echo "使用法: gwt create [-s|--switch] <branch-name> [base-branch]"
-                    return 1
+                    _gwt_log_usage "引数が多すぎます" "gwt create [-s|--switch] <branch-name> [base-branch]"
                 fi
                 shift
                 ;;
@@ -99,47 +165,43 @@ function _gwt_create() {
         base_branch="$(git symbolic-ref --short HEAD 2>/dev/null || echo 'main')"
     fi
 
-    if [[ -z "$branch_name" ]]; then
-        echo "❌ ブランチ名を指定してください"
+    # 入力検証
+    _gwt_validate_branch_name "$branch_name" || {
         echo "使用法: gwt create [-s|--switch] <branch-name> [base-branch]"
         echo ""
         echo "オプション:"
         echo "  -s, --switch    作成後に新しいworktreeディレクトリに移動"
         return 1
-    fi
+    }
+    
+    _gwt_validate_git_repo || return 1
 
-    # Gitリポジトリチェック
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
-        return 1
-    fi
-
-    # worktreeディレクトリのルートを決定
-    local repo_root=$(git rev-parse --show-toplevel)
-    local worktree_root="${repo_root}/../worktrees"
-    local repo_name=$(basename "$repo_root")
-    local worktree_dir="${worktree_root}/${repo_name}-${branch_name}"
+    # worktreeパスの設定
+    local paths=($(_gwt_setup_worktree_paths "$branch_name" | tr '|' ' '))
+    local repo_root="${paths[1]}"
+    local worktree_root="${paths[2]}"
+    local worktree_dir="${paths[3]}"
 
     # worktreesディレクトリを作成
     mkdir -p "$worktree_root"
 
     # ブランチが既に存在するかチェック
     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
-        echo "📋 既存ブランチ '$branch_name' のworktreeを作成します..."
+        _gwt_log_process "既存ブランチ '$branch_name' のworktreeを作成します..."
         git worktree add "$worktree_dir" "$branch_name"
     else
-        echo "🌿 新しいブランチ '$branch_name' を '$base_branch' から作成します..."
+        _gwt_log_branch "新しいブランチ '$branch_name' を '$base_branch' から作成します..."
         git worktree add -b "$branch_name" "$worktree_dir" "$base_branch"
     fi
 
     if [[ $? -eq 0 ]]; then
-        echo "✅ Worktree作成完了:"
-        echo "   📂 パス: $worktree_dir"
-        echo "   🌿 ブランチ: $branch_name"
+        _gwt_log_success "Worktree作成完了:"
+        _gwt_log_indent_path "パス: $worktree_dir"
+        _gwt_log_indent_branch "ブランチ: $branch_name"
         echo ""
         
         # 環境ファイルの自動セットアップを試行
-        echo "🔍 環境ファイルのセットアップを確認中..."
+        _gwt_log_search "環境ファイルのセットアップを確認中..."
         local template_files=($(_gwt_detect_env_files "$repo_root" | grep '\.example$'))
         
         if [[ ${#template_files[@]} -gt 0 ]]; then
@@ -190,7 +252,7 @@ function _gwt_create() {
             echo "🔀 切り替え: gwt switch"
         fi
     else
-        echo "❌ Worktree作成に失敗しました"
+        _gwt_log_error "Worktree作成に失敗しました"
         return 1
     fi
 }
@@ -199,6 +261,7 @@ function _gwt_create() {
 function _gwt_list() {
     local verbose=false
     local show_path=false
+    local show_remote=false
     
     # オプション解析
     while [[ $# -gt 0 ]]; do
@@ -211,25 +274,93 @@ function _gwt_list() {
                 show_path=true
                 shift
                 ;;
+            -r|--remote)
+                show_remote=true
+                shift
+                ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt list [-v|--verbose] [--path]"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt list [-v|--verbose] [--path] [-r|--remote]"
                 ;;
             *)
-                echo "❌ 不明な引数: $1"
-                echo "使用法: gwt list [-v|--verbose] [--path]"
-                return 1
+                _gwt_log_usage "不明な引数: $1" "gwt list [-v|--verbose] [--path] [-r|--remote]"
                 ;;
         esac
     done
 
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
-        return 1
-    fi
+    _gwt_validate_git_repo || return 1
 
     local current_worktree=$(git rev-parse --show-toplevel)
+
+    # リモートブランチ一覧表示の場合
+    if [[ "$show_remote" == true ]]; then
+        if [[ "$verbose" == true ]]; then
+            echo "🌐 リモートブランチ詳細一覧:"
+        else
+            echo "🌐 リモートブランチ一覧:"
+        fi
+        echo ""
+        
+        # リモートブランチ一覧を取得
+        git fetch --all --quiet 2>/dev/null || _gwt_log_warning "リモート取得に失敗しました（オフライン？）"
+        
+        local remote_branches=$(git branch -r --format='%(refname:short)' | grep -v 'HEAD' | sort)
+        if [[ -z "$remote_branches" ]]; then
+            _gwt_log_info "リモートブランチが見つかりませんでした"
+            return 0
+        fi
+        
+        local current_branch=$(git branch --show-current)
+        echo "$remote_branches" | while read -r remote_branch; do
+            local branch_name="${remote_branch#origin/}"
+            local is_current=""
+            [[ "$branch_name" == "$current_branch" ]] && is_current=" 👈 現在のブランチ"
+            
+            echo -n "🌿 $remote_branch$is_current"
+            
+            if [[ "$verbose" == true ]]; then
+                echo ""
+                
+                # 最新コミット情報
+                local last_commit=$(git log -1 --format="%h %s %an %ar" "$remote_branch" 2>/dev/null)
+                if [[ -n "$last_commit" ]]; then
+                    echo "   🕒 最新: $last_commit"
+                fi
+                
+                # ローカルブランチとの比較
+                if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+                    local ahead_behind=$(git rev-list --left-right --count "refs/heads/$branch_name"..."$remote_branch" 2>/dev/null)
+                    if [[ -n "$ahead_behind" ]]; then
+                        local ahead=$(echo "$ahead_behind" | cut -f1)
+                        local behind=$(echo "$ahead_behind" | cut -f2)
+                        if [[ "$ahead" -gt 0 ]] || [[ "$behind" -gt 0 ]]; then
+                            echo "   🔄 ローカルとの差分: ローカル+$ahead リモート+$behind"
+                        else
+                            echo "   ✅ ローカルと同期済み"
+                        fi
+                    fi
+                    echo "   📂 ローカルブランチ: あり"
+                else
+                    echo "   📂 ローカルブランチ: なし"
+                fi
+                
+                # worktreeでの使用状況
+                local worktree_info=$(git worktree list --porcelain | grep -B 1 "branch refs/heads/$branch_name" | grep "^worktree" | head -1)
+                if [[ -n "$worktree_info" ]]; then
+                    local worktree_path="${worktree_info#worktree }"
+                    echo "   🏠 使用中のworktree: $worktree_path"
+                fi
+                echo ""
+            else
+                echo ""
+            fi
+        done
+        
+        # 利用可能なコマンドの表示
+        echo "💡 利用可能なコマンド:"
+        echo "   gwt create <branch-name> - リモートブランチからworktreeを作成"
+        echo "   gwt list -rv - リモートブランチ詳細情報表示"
+        return 0
+    fi
 
     if [[ "$verbose" == true ]]; then
         echo "📋 Git Worktree詳細一覧:"
@@ -307,13 +438,14 @@ function _gwt_list() {
     echo "   gwt clean   - メンテナンス"
     if [[ "$verbose" == false ]]; then
         echo "   gwt list -v - 詳細情報表示"
+        echo "   gwt list -r - リモートブランチ一覧"
     fi
 }
 
 # worktree切り替え（fzf使用）
 function _gwt_switch() {
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -400,17 +532,13 @@ function _gwt_remove() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt remove [-d|--delete-branch] [--force] <worktree-name>"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt remove [-d|--delete-branch] [--force] <worktree-name>"
                 ;;
             *)
                 if [[ -z "$worktree_name" ]]; then
                     worktree_name="$1"
                 else
-                    echo "❌ 引数が多すぎます"
-                    echo "使用法: gwt remove [-d|--delete-branch] [--force] <worktree-name>"
-                    return 1
+                    _gwt_log_usage "引数が多すぎます" "gwt remove [-d|--delete-branch] [--force] <worktree-name>"
                 fi
                 shift
                 ;;
@@ -418,7 +546,7 @@ function _gwt_remove() {
     done
 
     if [[ -z "$worktree_name" ]]; then
-        echo "❌ 削除するworktree名を指定してください"
+        _gwt_log_error "削除するworktree名を指定してください"
         echo "使用法: gwt remove [-d|--delete-branch] [--force] <worktree-name>"
         echo ""
         echo "オプション:"
@@ -428,10 +556,7 @@ function _gwt_remove() {
         return 1
     fi
 
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
-        return 1
-    fi
+    _gwt_validate_git_repo || return 1
 
     # worktreeが存在するかチェック
     local worktree_path=$(git worktree list --porcelain | awk -v name="$worktree_name" '/^worktree/ {path=$2} path && path~name {print path; exit}')
@@ -484,10 +609,10 @@ function _gwt_remove() {
 
     if [[ "$confirmation" =~ ^[yY]$ ]]; then
         # worktree削除
-        local remove_args="$worktree_path"
-        [[ "$force" == true ]] && remove_args="$remove_args --force"
+        local remove_args=""
+        [[ "$force" == true ]] && remove_args="--force"
         
-        git worktree remove $remove_args
+        git worktree remove $remove_args "$worktree_path"
         if [[ $? -eq 0 ]]; then
             echo "✅ Worktree削除完了: $worktree_path"
             
@@ -516,7 +641,7 @@ function _gwt_remove() {
 # メンテナンス・クリーンアップ
 function _gwt_clean() {
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -578,7 +703,7 @@ function _gwt_sync() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -777,7 +902,7 @@ function _gwt_exec() {
     fi
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -956,7 +1081,7 @@ function _gwt_status() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -1548,7 +1673,7 @@ function _gwt_open() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -1711,7 +1836,7 @@ function _gwt_pr() {
     done
 
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "❌ Gitリポジトリ内で実行してください"
+        _gwt_log_error "Gitリポジトリ内で実行してください"
         return 1
     fi
 
@@ -1850,31 +1975,25 @@ function _gwt_pr() {
     fi
 }
 
-# 環境ファイル管理システム
-# 環境ファイルパターン検出
+# ================================================================================
+# シンプルな環境ファイル管理
+# ================================================================================
+
+# 環境ファイル検出（シンプル版）
 function _gwt_detect_env_files() {
     local search_dir="${1:-.}"
-    local env_files=()
     
-    # 検出パターンの優先順位
-    local patterns=(
-        ".env.development.example"
-        ".env.local.example"
-        ".env.staging.example"
-        ".env.test.example"
-        ".env.production.example"
-        ".env.example"
-    )
+    # シンプルな検出パターン
+    local patterns=(".env" ".env.local" ".env.development" ".env.example")
+    local found_files=()
     
-    # パターンごとにファイル検索
     for pattern in "${patterns[@]}"; do
         if [[ -f "$search_dir/$pattern" ]]; then
-            local target_file=$(echo "$pattern" | sed 's/\.example$//')
-            env_files+=("$pattern:$target_file")
+            found_files+=("$pattern")
         fi
     done
     
-    echo "${env_files[@]}"
+    echo "${found_files[@]}"
 }
 
 # 既存worktreeの環境ファイル検出
@@ -2246,28 +2365,103 @@ function _gwt_env() {
     
     case "$command" in
         "detect"|"d")
-            _gwt_env_detect "$@"
+            _gwt_env_detect_simple "$@"
             ;;
-        "analyze"|"a")
-            _gwt_env_analyze "$@"
-            ;;
-        "setup"|"s")
-            _gwt_env_setup "$@"
+        "analyze"|"setup")
+            _gwt_log_error "この機能は廃止されました。シンプルな手動管理を推奨します。"
+            _gwt_env_help_simple
+            return 1
             ;;
         "help"|"h"|"")
-            _gwt_env_help
+            _gwt_env_help_simple
             ;;
         *)
-            echo "❌ 不明なサブコマンド: $command"
-            _gwt_env_help
+            _gwt_log_error "不明なサブコマンド: $command"
+            _gwt_env_help_simple
             return 1
             ;;
     esac
 }
 
+# シンプルな環境ファイル検出
+function _gwt_env_detect_simple() {
+    local search_dir="${1:-.}"
+    
+    if [[ ! -d "$search_dir" ]]; then
+        _gwt_log_error "ディレクトリが見つかりません: $search_dir"
+        return 1
+    fi
+    
+    echo "🔍 環境ファイル検出結果: $search_dir"
+    echo ""
+    
+    # 環境ファイルを検出
+    local found_files=($(_gwt_detect_env_files "$search_dir"))
+    
+    if [[ ${#found_files[@]} -gt 0 ]]; then
+        echo "📄 発見された環境ファイル:"
+        for file in "${found_files[@]}"; do
+            local full_path="$search_dir/$file"
+            local size=$(stat -f%z "$full_path" 2>/dev/null || echo "不明")
+            
+            if [[ "$file" == *.example ]]; then
+                echo "   📋 $file (${size}B) - テンプレート"
+            else
+                echo "   ✅ $file (${size}B)"
+            fi
+        done
+        echo ""
+        echo "💡 使用方法:"
+        
+        # .env.exampleがある場合のガイド
+        for file in "${found_files[@]}"; do
+            if [[ "$file" == *.example ]]; then
+                local target_file="${file%.example}"
+                if [[ ! -f "$search_dir/$target_file" ]]; then
+                    echo "   cp $file $target_file"
+                    echo "   vim $target_file  # 必要に応じて編集"
+                    break
+                fi
+            fi
+        done
+    else
+        echo "ℹ️  環境ファイルが見つかりませんでした"
+        echo ""
+        echo "💡 一般的な環境ファイル名:"
+        echo "   • .env"
+        echo "   • .env.local" 
+        echo "   • .env.development"
+        echo "   • .env.example"
+    fi
+}
+
+# シンプルなヘルプ
+function _gwt_env_help_simple() {
+    cat <<'EOF'
+
+🌍 gwt env - シンプルな環境ファイル管理
+
+📋 使用法:
+  gwt env detect [directory]     環境ファイルを検出・表示
+
+💡 使用例:
+  # 現在のディレクトリで環境ファイルを検出
+  gwt env detect
+
+  # 特定のディレクトリで検出
+  gwt env detect ./src
+
+🎯 基本的なワークフロー:
+  1. gwt env detect                    # 環境ファイルを確認
+  2. cp .env.example .env              # テンプレートをコピー
+  3. vim .env                          # 必要に応じて編集
+
+EOF
+}
+
 # 環境ファイル検出
 function _gwt_env_detect() {
-    local search_dir="${1:-.}"
+    local search_dir="."
     local show_content=false
     local recursive=false
     
@@ -2283,9 +2477,7 @@ function _gwt_env_detect() {
                 shift
                 ;;
             -*)
-                echo "❌ 不明なオプション: $1"
-                echo "使用法: gwt env detect [-c|--content] [-r|--recursive] [directory]"
-                return 1
+                _gwt_log_usage "不明なオプション: $1" "gwt env detect [-c|--content] [-r|--recursive] [directory]"
                 ;;
             *)
                 search_dir="$1"
@@ -2307,15 +2499,17 @@ function _gwt_env_detect() {
     local -a example_files
     
     # 環境ファイルパターンの検出
-    local detected_files=($(_gwt_detect_env_files "$search_dir"))
+    local detected_entries=($(_gwt_detect_env_files "$search_dir"))
     
-    for file in "${detected_files[@]}"; do
-        if [[ -f "$file" ]]; then
-            if [[ "$file" == *.example ]]; then
-                example_files+=("$file")
-            else
-                env_files+=("$file")
-            fi
+    for entry in "${detected_entries[@]}"; do
+        local template_file="${entry%:*}"
+        local target_file="${entry#*:}"
+        
+        if [[ -f "$search_dir/$template_file" ]]; then
+            example_files+=("$template_file")
+        fi
+        if [[ -f "$search_dir/$target_file" ]]; then
+            env_files+=("$target_file")
         fi
     done
     

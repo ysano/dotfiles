@@ -213,7 +213,18 @@ generate_prompt() {
     # コンテキスト情報の追加
     local context_info=""
     if [[ -n "$context" ]]; then
-        context_info="コンテキスト: $context\n\n"
+        # ブランチ名から目的を推測してコンテキストに追加
+        local enhanced_context="$context"
+        if echo "$context" | grep -q "git:"; then
+            local branch_name=$(echo "$context" | grep -o "git:[^,]*" | cut -d: -f2)
+            if [[ -n "$branch_name" && ! "$branch_name" =~ ^(main|master|develop|dev)$ ]]; then
+                local purpose=$(infer_branch_purpose_simple "$branch_name")
+                if [[ -n "$purpose" ]]; then
+                    enhanced_context="$context,作業目的:$purpose"
+                fi
+            fi
+        fi
+        context_info="コンテキスト: $enhanced_context\n\n"
     fi
 
     # Claude Code状態別の特化プロンプト

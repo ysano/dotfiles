@@ -240,6 +240,39 @@ test_aliases() {
     fi
 }
 
+# テスト9: Gitオプション伝達テスト
+test_git_options() {
+    print_test_header "Gitオプション伝達テスト"
+    
+    cd "$REPO_PATH"
+    
+    # worktree作成してファイルを変更（未コミット状態）
+    gwt create dirty-test >/dev/null 2>&1
+    local worktree_path="../worktrees/test_repo-dirty-test"
+    
+    if [[ -d "$worktree_path" ]]; then
+        # 未コミットファイルを作成
+        echo "dirty content" > "$worktree_path/dirty.txt"
+        
+        # 通常の削除（失敗するはず）
+        local remove_output=$(echo "y" | gwt remove dirty-test 2>&1)
+        
+        # --forceオプションでの削除
+        echo "y" | gwt remove --force dirty-test >/dev/null 2>&1
+        local force_result=$?
+        
+        if [[ $force_result -eq 0 ]]; then
+            print_test_result "--forceオプション" "PASS"
+        else
+            print_test_result "--forceオプション" "FAIL"
+            echo "force削除結果: $force_result"
+        fi
+    else
+        print_test_result "--forceオプション" "FAIL"
+        echo "テスト用worktreeが作成されませんでした"
+    fi
+}
+
 # テスト結果サマリー表示
 print_test_summary() {
     echo ""
@@ -261,6 +294,40 @@ print_test_summary() {
     else
         echo -e "${RED}⚠️  一部のテストが失敗しました${NC}"
         return 1
+    fi
+}
+
+# テスト12: リモートブランチ一覧表示
+test_remote_branch_list() {
+    print_test_header "リモートブランチ一覧表示テスト"
+    
+    cd "$REPO_PATH"
+    
+    # 基本的なリモートブランチ一覧
+    local remote_output=$(gwt list --remote 2>&1)
+    if [[ "$remote_output" =~ "リモートブランチ一覧" ]] && ([[ "$remote_output" =~ "origin" ]] || [[ "$remote_output" =~ "リモートブランチが見つかりませんでした" ]]); then
+        print_test_result "リモートブランチ一覧表示" "PASS"
+    else
+        print_test_result "リモートブランチ一覧表示" "FAIL"
+        echo "出力: $remote_output"
+    fi
+    
+    # 短縮形-rオプション
+    local remote_short_output=$(gwt list -r 2>&1)
+    if [[ "$remote_short_output" =~ "リモートブランチ一覧" ]]; then
+        print_test_result "リモートブランチ一覧(-r)" "PASS"
+    else
+        print_test_result "リモートブランチ一覧(-r)" "FAIL"
+        echo "出力: $remote_short_output"
+    fi
+    
+    # 詳細表示
+    local remote_verbose_output=$(gwt list --remote --verbose 2>&1)
+    if [[ "$remote_verbose_output" =~ "リモートブランチ詳細一覧" ]] && ([[ "$remote_verbose_output" =~ "最新:" ]] || [[ "$remote_verbose_output" =~ "リモートブランチが見つかりませんでした" ]]); then
+        print_test_result "リモートブランチ詳細表示" "PASS"
+    else
+        print_test_result "リモートブランチ詳細表示" "FAIL"
+        echo "出力: $remote_verbose_output"
     fi
 }
 
@@ -288,6 +355,8 @@ main() {
     test_worktree_clean
     test_non_git_directory
     test_aliases
+    test_git_options
+    test_remote_branch_list
     
     cleanup_test_environment
     print_test_summary
