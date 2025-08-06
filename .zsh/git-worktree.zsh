@@ -261,6 +261,7 @@ function _gwt_create() {
 function _gwt_list() {
     local verbose=false
     local show_path=false
+    local show_remote=false
     
     # オプション解析
     while [[ $# -gt 0 ]]; do
@@ -273,11 +274,15 @@ function _gwt_list() {
                 show_path=true
                 shift
                 ;;
+            -r|--remote)
+                show_remote=true
+                shift
+                ;;
             -*)
-                _gwt_log_usage "不明なオプション: $1" "gwt list [-v|--verbose] [--path]"
+                _gwt_log_usage "不明なオプション: $1" "gwt list [-v|--verbose] [--path] [-r|--remote]"
                 ;;
             *)
-                _gwt_log_usage "不明な引数: $1" "gwt list [-v|--verbose] [--path]"
+                _gwt_log_usage "不明な引数: $1" "gwt list [-v|--verbose] [--path] [-r|--remote]"
                 ;;
         esac
     done
@@ -285,6 +290,77 @@ function _gwt_list() {
     _gwt_validate_git_repo || return 1
 
     local current_worktree=$(git rev-parse --show-toplevel)
+
+    # リモートブランチ一覧表示の場合
+    if [[ "$show_remote" == true ]]; then
+        if [[ "$verbose" == true ]]; then
+            echo "🌐 リモートブランチ詳細一覧:"
+        else
+            echo "🌐 リモートブランチ一覧:"
+        fi
+        echo ""
+        
+        # リモートブランチ一覧を取得
+        git fetch --all --quiet 2>/dev/null || _gwt_log_warning "リモート取得に失敗しました（オフライン？）"
+        
+        local remote_branches=$(git branch -r --format='%(refname:short)' | grep -v 'HEAD' | sort)
+        if [[ -z "$remote_branches" ]]; then
+            _gwt_log_info "リモートブランチが見つかりませんでした"
+            return 0
+        fi
+        
+        local current_branch=$(git branch --show-current)
+        echo "$remote_branches" | while read -r remote_branch; do
+            local branch_name="${remote_branch#origin/}"
+            local is_current=""
+            [[ "$branch_name" == "$current_branch" ]] && is_current=" 👈 現在のブランチ"
+            
+            echo -n "🌿 $remote_branch$is_current"
+            
+            if [[ "$verbose" == true ]]; then
+                echo ""
+                
+                # 最新コミット情報
+                local last_commit=$(git log -1 --format="%h %s %an %ar" "$remote_branch" 2>/dev/null)
+                if [[ -n "$last_commit" ]]; then
+                    echo "   🕒 最新: $last_commit"
+                fi
+                
+                # ローカルブランチとの比較
+                if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+                    local ahead_behind=$(git rev-list --left-right --count "refs/heads/$branch_name"..."$remote_branch" 2>/dev/null)
+                    if [[ -n "$ahead_behind" ]]; then
+                        local ahead=$(echo "$ahead_behind" | cut -f1)
+                        local behind=$(echo "$ahead_behind" | cut -f2)
+                        if [[ "$ahead" -gt 0 ]] || [[ "$behind" -gt 0 ]]; then
+                            echo "   🔄 ローカルとの差分: ローカル+$ahead リモート+$behind"
+                        else
+                            echo "   ✅ ローカルと同期済み"
+                        fi
+                    fi
+                    echo "   📂 ローカルブランチ: あり"
+                else
+                    echo "   📂 ローカルブランチ: なし"
+                fi
+                
+                # worktreeでの使用状況
+                local worktree_info=$(git worktree list --porcelain | grep -B 1 "branch refs/heads/$branch_name" | grep "^worktree" | head -1)
+                if [[ -n "$worktree_info" ]]; then
+                    local worktree_path="${worktree_info#worktree }"
+                    echo "   🏠 使用中のworktree: $worktree_path"
+                fi
+                echo ""
+            else
+                echo ""
+            fi
+        done
+        
+        # 利用可能なコマンドの表示
+        echo "💡 利用可能なコマンド:"
+        echo "   gwt create <branch-name> - リモートブランチからworktreeを作成"
+        echo "   gwt list -rv - リモートブランチ詳細情報表示"
+        return 0
+    fi
 
     if [[ "$verbose" == true ]]; then
         echo "📋 Git Worktree詳細一覧:"
@@ -362,6 +438,7 @@ function _gwt_list() {
     echo "   gwt clean   - メンテナンス"
     if [[ "$verbose" == false ]]; then
         echo "   gwt list -v - 詳細情報表示"
+        echo "   gwt list -r - リモートブランチ一覧"
     fi
 }
 

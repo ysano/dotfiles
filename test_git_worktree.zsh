@@ -297,6 +297,40 @@ print_test_summary() {
     fi
 }
 
+# テスト12: リモートブランチ一覧表示
+test_remote_branch_list() {
+    print_test_header "リモートブランチ一覧表示テスト"
+    
+    cd "$REPO_PATH"
+    
+    # 基本的なリモートブランチ一覧
+    local remote_output=$(gwt list --remote 2>&1)
+    if [[ "$remote_output" =~ "リモートブランチ一覧" ]] && ([[ "$remote_output" =~ "origin" ]] || [[ "$remote_output" =~ "リモートブランチが見つかりませんでした" ]]); then
+        print_test_result "リモートブランチ一覧表示" "PASS"
+    else
+        print_test_result "リモートブランチ一覧表示" "FAIL"
+        echo "出力: $remote_output"
+    fi
+    
+    # 短縮形-rオプション
+    local remote_short_output=$(gwt list -r 2>&1)
+    if [[ "$remote_short_output" =~ "リモートブランチ一覧" ]]; then
+        print_test_result "リモートブランチ一覧(-r)" "PASS"
+    else
+        print_test_result "リモートブランチ一覧(-r)" "FAIL"
+        echo "出力: $remote_short_output"
+    fi
+    
+    # 詳細表示
+    local remote_verbose_output=$(gwt list --remote --verbose 2>&1)
+    if [[ "$remote_verbose_output" =~ "リモートブランチ詳細一覧" ]] && ([[ "$remote_verbose_output" =~ "最新:" ]] || [[ "$remote_verbose_output" =~ "リモートブランチが見つかりませんでした" ]]); then
+        print_test_result "リモートブランチ詳細表示" "PASS"
+    else
+        print_test_result "リモートブランチ詳細表示" "FAIL"
+        echo "出力: $remote_verbose_output"
+    fi
+}
+
 # メイン実行
 main() {
     echo -e "${BLUE}🚀 Git Worktree管理コマンド テストスイート${NC}"
@@ -322,6 +356,7 @@ main() {
     test_non_git_directory
     test_aliases
     test_git_options
+    test_remote_branch_list
     
     cleanup_test_environment
     print_test_summary
