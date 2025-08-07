@@ -77,7 +77,7 @@ detect_claude_status() {
     
     # 1. BUSY: アクティブな処理中を最優先で検出（拡張パターン対応）
     # 1-1. 視覚的インジケーター + 動詞パターン（最高優先度）
-    if echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)…\s*\([0-9]+s\s*[·•]\s*([↓⚒]\s*)?[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
+    if echo "$recent_output" | grep -qE '[✢✻*✽]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)…\s*\([0-9]+s\s*[·•]\s*([↓⚒]\s*)?[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
         # プロンプトが最新行にある場合は完了済みとみなす
         if echo "$last_line" | grep -qE '>\s*'; then
             status_icon="✅"  # 処理完了後のプロンプト
@@ -93,7 +93,7 @@ detect_claude_status() {
             status_icon="⚡"  # アクティブな処理中
         fi
     # 1-3. 処理中メッセージ単体（バックアップ検出）
-    elif echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)\.\.\.|[✢✻*]\s*(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)'; then
+    elif echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)\.\.\.|[✢✻*✽]\s*(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)'; then
         # 処理中メッセージの後にプロンプトがあるかチェック
         if echo "$last_line" | grep -qE '>\s*'; then
             status_icon="✅"  # 処理完了後のプロンプト
@@ -103,15 +103,15 @@ detect_claude_status() {
     # 2. WAITING: ユーザー入力が必要な状態（Busy処理完了後にチェック）
     elif echo "$recent_output" | grep -qE '(Do you want|Would you like|Should I|Continue\?|Proceed\?)' && \
          echo "$recent_output" | grep -qE '❯\s*[0-9]+\.\s*(Yes|No|Continue)' && \
-         ! echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|tokens.*interrupt|✅.*完了)'; then
+         ! echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating|tokens.*interrupt|✅.*完了)'; then
         status_icon="⌛"  # 選択肢プロンプト
     elif echo "$recent_output" | grep -qE 'plan mode.*exit.*approve' && \
          ! echo "$recent_output" | grep -qE '(plan mode.*on|auto-accept.*on)' && \
-         ! echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)'; then
+         ! echo "$recent_output" | grep -qE '[✢✻*✽]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)'; then
         status_icon="⌛"  # プラン承認待ち
     elif echo "$recent_output" | grep -qE '(Error|Failed|Exception).*:' && \
          echo "$recent_output" | grep -qE '>\s*' && \
-         ! echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)'; then
+         ! echo "$recent_output" | grep -qE '[✢✻*✽]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)'; then
         status_icon="⌛"  # エラー状態での入力待ち
     # 3. IDLE: 完了状態または待機状態
     elif echo "$recent_output" | grep -qE '(✅.*完了|✅.*completed|Task completed|Successfully)'; then
@@ -224,7 +224,7 @@ main() {
             echo "Pattern Matches:"
             
             # 各パターンの検査
-            if echo "$recent_output" | grep -qE '[✢✻*]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating)…\s*\([0-9]+s\s*[·•]\s*([↓⚒]\s*)?[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
+            if echo "$recent_output" | grep -qE '[✢✻*✽]\s*(Thinking|Ruminating|Finagling|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)…\s*\([0-9]+s\s*[·•]\s*([↓⚒]\s*)?[0-9,.]+[km]?\s*tokens\s*[·•]\s*(esc to interrupt|interrupt)\)'; then
                 echo "  ✅ Visual Indicator + Verb Pattern (Highest Priority)"
             fi
             
@@ -232,7 +232,7 @@ main() {
                 echo "  ✅ Token Counter Pattern"
             fi
             
-            if echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)\.\.\.|[✢✻*]\s*(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating)'; then
+            if echo "$recent_output" | grep -qE '(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)\.\.\.|[✢✻*✽]\s*(Finagling|Ruminating|Thinking|Processing|Working|Sparkling|Designing|Percolating|Computing|Ideating)'; then
                 echo "  ✅ Processing Message Pattern"
             fi
             
