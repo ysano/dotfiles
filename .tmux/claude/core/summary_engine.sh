@@ -554,6 +554,108 @@ test_summary_engine() {
     echo "Summary engine test completed"
 }
 
+# ブランチ名から目的を推測する関数（シンプル版）
+infer_branch_purpose_simple() {
+    local branch_name="$1"
+    local purpose=""
+    
+    # 空またはメインブランチの場合は早期リターン
+    if [[ -z "$branch_name" ]] || [[ "$branch_name" =~ ^(main|master|develop|dev)$ ]]; then
+        echo ""
+        return
+    fi
+    
+    # ブランチ名を小文字に変換
+    local lower_branch=$(echo "$branch_name" | tr '[:upper:]' '[:lower:]')
+    
+    # プレフィックスベースの判定
+    case "$lower_branch" in
+        feature/*|feat/*)
+            purpose="機能開発"
+            ;;
+        fix/*|bugfix/*|hotfix/*)
+            purpose="バグ修正"
+            ;;
+        refactor/*|refac/*)
+            purpose="リファクタリング"
+            ;;
+        docs/*|doc/*)
+            purpose="ドキュメント更新"
+            ;;
+        test/*|tests/*)
+            purpose="テスト実装"
+            ;;
+        chore/*|maintenance/*)
+            purpose="保守作業"
+            ;;
+        perf/*|performance/*)
+            purpose="性能改善"
+            ;;
+        style/*|styling/*)
+            purpose="スタイル調整"
+            ;;
+        security/*|sec/*)
+            purpose="セキュリティ対応"
+            ;;
+        release/*|rel/*)
+            purpose="リリース準備"
+            ;;
+        config/*|configuration/*)
+            purpose="設定変更"
+            ;;
+        deploy/*|deployment/*)
+            purpose="デプロイ作業"
+            ;;
+        experiment/*|exp/*)
+            purpose="実験開発"
+            ;;
+        # キーワードベースの判定
+        *add*|*new*)
+            purpose="追加作業"
+            ;;
+        *remove*|*delete*|*del*)
+            purpose="削除作業"
+            ;;
+        *update*|*upd*)
+            purpose="更新作業"
+            ;;
+        *improve*|*enhance*)
+            purpose="改善作業"
+            ;;
+        *clean*|*cleanup*)
+            purpose="整理作業"
+            ;;
+        *migrate*|*migration*)
+            purpose="マイグレーション"
+            ;;
+        *auth*|*authentication*)
+            purpose="認証機能"
+            ;;
+        *api*)
+            purpose="API開発"
+            ;;
+        *ui*|*frontend*)
+            purpose="UI開発"
+            ;;
+        *backend*|*server*)
+            purpose="バックエンド開発"
+            ;;
+        *database*|*db*)
+            purpose="DB作業"
+            ;;
+        *)
+            # 数字のみの場合（issue番号など）
+            if [[ "$lower_branch" =~ ^[0-9]+$ ]]; then
+                purpose="課題対応"
+            else
+                purpose=""
+            fi
+            ;;
+    esac
+    
+    echo "$purpose"
+}
+
 # このスクリプトが直接実行された場合のテスト
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # 基本モジュールの読み込み
