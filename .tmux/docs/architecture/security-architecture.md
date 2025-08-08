@@ -143,7 +143,7 @@ validate_text_input() {
         '\.\.'          # Path traversal
         '/etc/'         # System file access
         'rm -rf'        # Dangerous deletion
-        'sudo'          # Privilege escalation
+        '(^|[[:space:]])sudo([[:space:]]|$)'  # Privilege escalation (command context only)
         'passwd'        # Password change
     )
     
@@ -419,16 +419,19 @@ check_api_rate_limit() {
 store_encrypted_credential() {
     local key_name="$1"
     local credential="$2"
-    local credentials_file="/home/user/.tmux/claude/config/credentials.enc"
+    local credentials_file="$HOME/.tmux/claude/config/credentials.enc"
     
     # Generate or load encryption key
+    local encryption_key_file="$HOME/.tmux/claude/config/.encryption_key"
     local encryption_key
-    if [[ -f "/home/user/.tmux/claude/config/.encryption_key" ]]; then
-        encryption_key=$(cat "/home/user/.tmux/claude/config/.encryption_key")
+    if [[ -f "$encryption_key_file" ]]; then
+        encryption_key=$(cat "$encryption_key_file")
     else
+        # Ensure directory exists
+        mkdir -p "$(dirname "$encryption_key_file")"
         encryption_key=$(openssl rand -hex 32)
-        echo "$encryption_key" > "/home/user/.tmux/claude/config/.encryption_key"
-        chmod 600 "/home/user/.tmux/claude/config/.encryption_key"
+        echo "$encryption_key" > "$encryption_key_file"
+        chmod 600 "$encryption_key_file"
     fi
     
     # Encrypt credential
@@ -442,8 +445,8 @@ store_encrypted_credential() {
 
 retrieve_encrypted_credential() {
     local key_name="$1"
-    local credentials_file="/home/user/.tmux/claude/config/credentials.enc"
-    local encryption_key_file="/home/user/.tmux/claude/config/.encryption_key"
+    local credentials_file="$HOME/.tmux/claude/config/credentials.enc"
+    local encryption_key_file="$HOME/.tmux/claude/config/.encryption_key"
     
     # Check file permissions
     [[ -f "$credentials_file" ]] || return 1
@@ -497,10 +500,10 @@ EOF
 )
     
     # Write to secure log
-    echo "$log_entry" >> "/home/user/.tmux/claude/logs/secure.jsonl"
+    echo "$log_entry" >> "$HOME/.tmux/claude/logs/secure.jsonl"
     
     # Set appropriate permissions
-    chmod 600 "/home/user/.tmux/claude/logs/secure.jsonl"
+    chmod 600 "$HOME/.tmux/claude/logs/secure.jsonl"
 }
 
 redact_sensitive_data() {
@@ -551,7 +554,7 @@ log_security_event() {
 EOF
 )
     
-    echo "$security_event" >> "/home/user/.tmux/claude/logs/security-events.jsonl"
+    echo "$security_event" >> "$HOME/.tmux/claude/logs/security-events.jsonl"
     
     # Alert on high severity events
     if [[ "$severity" == "HIGH" || "$severity" == "CRITICAL" ]]; then
@@ -561,7 +564,7 @@ EOF
 
 # Intrusion detection patterns  
 detect_suspicious_activity() {
-    local log_file="/home/user/.tmux/claude/logs/security-events.jsonl"
+    local log_file="$HOME/.tmux/claude/logs/security-events.jsonl"
     
     # Multiple failed authentication attempts
     local failed_attempts=$(grep -c "AUTHENTICATION_FAILED" "$log_file" | tail -10)
@@ -601,7 +604,7 @@ security_health_check() {
         if [[ "$owner" != "$(whoami)" ]]; then
             issues+=("WRONG_OWNER: $file owned by $owner")
         fi
-    done < <(find "/home/user/.tmux/claude" -type f -name "*.sh" -o -name "*.yaml" -o -name "*.conf")
+    done < <(find "$HOME/.tmux/claude" -type f -name "*.sh" -o -name "*.yaml" -o -name "*.conf")
     
     # Configuration security scan
     scan_all_configs_for_security_issues
@@ -618,7 +621,7 @@ security_health_check() {
 
 generate_security_report() {
     local issues=("$@")
-    local report_file="/home/user/.tmux/claude/logs/security-health-$(date +%Y%m%d-%H%M%S).txt"
+    local report_file="$HOME/.tmux/claude/logs/security-health-$(date +%Y%m%d-%H%M%S).txt"
     
     cat > "$report_file" << EOF
 ===============================================
