@@ -349,7 +349,7 @@ check_filesystem_health() {
     # 必要なファイルの確認
     local required_files=(
         "$CLAUDE_VOICE_HOME/bin/claude-voice"
-        "$CLAUDE_VOICE_HOME/core/base.sh"
+        "$CLAUDE_VOICE_HOME/core/foundation.sh"
         "$CLAUDE_VOICE_HOME/core/universal_voice.sh"
     )
 

@@ -54,7 +54,7 @@ EOF
     chmod +x "$TEST_TEMP_DIR/bin/claude-voice"
 
     # テスト用コアファイル
-    touch "$TEST_TEMP_DIR/core/base.sh"
+    touch "$TEST_TEMP_DIR/core/foundation.sh"
     touch "$TEST_TEMP_DIR/core/universal_voice.sh"
 }
 

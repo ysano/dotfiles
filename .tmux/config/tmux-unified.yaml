@@ -1,0 +1,321 @@
+# TMux Unified Configuration
+# 統一YAML設定ファイル - すべての設定を一元管理
+# Version: 1.0
+# Generated: 2025-08-03
+
+# ====================================
+# 基本設定 (Base Configuration)
+# ====================================
+base:
+  # Shell設定
+  shell:
+    default_command: "zsh"
+  
+  # プレフィックス設定
+  prefix:
+    key: "C-z"
+    enable_double_tap: true
+  
+  # インデックス設定
+  indexing:
+    window_base: 1
+    pane_base: 1
+  
+  # ターミナル設定
+  terminal:
+    default_terminal: "xterm-256color"
+    overrides:
+      - "xterm-termite:Tc"
+      - "*:U8=0"
+  
+  # 表示設定
+  display:
+    time_ms: 2000
+    titles_enabled: true
+    automatic_rename: true
+    automatic_rename_format: "#{=|-22|..;b:pane_current_path}"
+  
+  # マウス設定
+  mouse:
+    enabled: true
+    version_compatibility: true
+
+# ====================================
+# プラットフォーム固有設定
+# ====================================
+platforms:
+  # WSL設定
+  wsl:
+    # 環境変数
+    environment:
+      WSL_INTEGRATION: "enabled"
+      WINDOWS_HOST_PATH: "/mnt/c"
+    
+    # ターミナル設定
+    terminal:
+      default_terminal: "tmux-256color"
+      overrides:
+        - "xterm*:Tc"
+        - "WSL*:Tc"
+    
+    # クリップボード統合
+    clipboard:
+      enabled: true
+      command: "clip.exe"
+      mouse_integration: true
+    
+    # パフォーマンス設定
+    performance:
+      history_limit: 50000
+      display_time_ms: 3000
+      display_panes_time_ms: 3000
+      status_interval_sec: 5
+    
+    # ウィンドウステータス設定
+    window_status:
+      current_style: "fg=colour235,bg=colour117,bold"
+      style: "fg=colour250,bg=colour238"
+      activity_style: "fg=colour16,bg=colour228,bold"
+      bell_style: "fg=colour16,bg=colour202,bold"
+      format: " #I:#W#F "
+      current_format: " #I:#W#F "
+    
+    # ステータスバー設定
+    status_bar:
+      right: "#[fg=colour238,bg=colour235]#[fg=colour250,bg=colour238] 💻 #(lsb_release -rs 2>/dev/null || echo 'WSL') #[fg=yellow,bold]⚡ #(cat /proc/loadavg | cut -d ' ' -f 1-3)#[default] #[fg=cyan]🧠 #(free | awk 'NR==2{printf \\\"%.0f%%\\\", $3*100/$2}')#[default] #[fg=green]💾 #(df -h / | awk 'NR==2{print $5}')#[default] #[fg=colour117,bg=colour238]#[fg=colour235,bg=colour117,bold] %m/%d(%a) %H:%M "
+      right_length: 120
+    
+    # 固有キーバインド
+    key_bindings:
+      explorer_current_dir: "C-e"
+      copy_path_to_clipboard: "C-p"
+      goto_windows_user_dir: "C-w"
+      git_status_display: "C-g"
+      pane_split_horizontal: "|"
+      pane_split_vertical: "-"
+  
+  # macOS設定
+  macos:
+    # 環境変数
+    environment:
+      MACOS_INTEGRATION: "enabled"
+    
+    # オーディオ設定
+    audio:
+      unit_integration: true
+      background_execution: true
+    
+    # パフォーマンス設定
+    performance:
+      history_limit: 30000
+      status_interval_sec: 2
+  
+  # Linux設定
+  linux:
+    # 環境変数
+    environment:
+      LINUX_INTEGRATION: "enabled"
+    
+    # オーディオ設定
+    audio:
+      system: "pulseaudio"  # pulseaudio/alsa/oss4
+      fallback: "alsa"
+
+# ====================================
+# Claude Voice統合設定
+# ====================================
+claude_voice:
+  # マスター設定
+  master:
+    auto_summary_enabled: true
+    notification_sound_enabled: true
+    voice_engine_version: "v3.0"
+  
+  # 状態別設定
+  states:
+    complete:  # ✅
+      enabled: true
+      voice_synthesis: true
+      sound_effects: true
+      auto_summary: true
+      sound_pattern: "success"  # 523Hz→659Hz→783Hz→1046Hz
+    
+    waiting:   # ⌛
+      enabled: true
+      voice_synthesis: true
+      sound_effects: true
+      auto_summary: false
+      sound_pattern: "waiting"  # 659Hz→880Hz→1175Hz
+    
+    busy:      # ⚡
+      enabled: true
+      voice_synthesis: true
+      sound_effects: true
+      auto_summary: false
+      sound_pattern: "warning"  # 800Hz×2→600Hz
+  
+  # 通知設定
+  notification:
+    mode: "sound"  # sound/beep
+    max_text_length: 5000
+    timeout_sec: 30
+    concurrent_limit: 1
+  
+  # 音声合成設定
+  speech:
+    # WSL/Windows設定
+    windows:
+      engine: "Microsoft Haruka Desktop"
+      rate: 0
+      volume: 80
+    
+    # macOS設定
+    macos:
+      voice: "Kyoko"
+      rate: 200
+      volume: 0.8
+    
+    # Linux設定
+    linux:
+      engine: "espeak"
+      voice: "ja"
+      speed: 150
+  
+  # オーディオ設定
+  audio:
+    # Equal Power Pan Law設定
+    panning:
+      enabled: true
+      method: "equal_power_3db"
+      stereo_width: 1.0
+    
+    # サウンド効果
+    effects:
+      echo_enabled: false
+      reverb_enabled: false
+      normalize_enabled: true
+  
+  # キーバインド設定
+  key_bindings:
+    prefix: "v"  # Prefix + v + [action]
+    test: "t"                    # Prefix + v + t
+    toggle_auto_summary: "v"     # Prefix + v + v
+    toggle_complete: "1"         # Prefix + v + 1
+    toggle_waiting: "2"          # Prefix + v + 2
+    toggle_busy: "3"             # Prefix + v + 3
+    test_speech_1: "s1"          # Prefix + v + s + 1
+    test_speech_2: "s2"          # Prefix + v + s + 2
+    test_speech_3: "s3"          # Prefix + v + s + 3
+    test_effects_1: "e1"         # Prefix + v + e + 1
+    test_effects_2: "e2"         # Prefix + v + e + 2
+    test_effects_3: "e3"         # Prefix + v + e + 3
+    test_notification_1: "n1"    # Prefix + v + n + 1
+    test_notification_2: "n2"    # Prefix + v + n + 2
+    test_notification_3: "n3"    # Prefix + v + n + 3
+    toggle_panning: "p"          # Prefix + v + p
+
+# ====================================
+# 共有設定 (Shared Configuration)
+# ====================================
+shared:
+  # パフォーマンス設定
+  performance:
+    # キャッシュ設定
+    cache:
+      platform_detection_sec: 60
+      status_detection_sec: 2
+      config_memory_cache: true
+    
+    # 最適化設定
+    optimization:
+      lazy_loading: true
+      background_processing: true
+      resource_limits:
+        max_memory_mb: 100
+        max_cpu_percent: 5
+  
+  # ログ設定
+  logging:
+    enabled: true
+    level: "INFO"  # DEBUG/INFO/WARN/ERROR
+    file: "~/.tmux/claude/logs/global.log"
+    max_size_mb: 10
+    rotation_count: 5
+  
+  # セキュリティ設定（簡素化版）
+  security:
+    input_validation: true
+    max_text_length: 1000
+
+# ====================================
+# 拡張・プラグイン設定
+# ====================================
+extensions:
+  # 利用可能な拡張
+  available:
+    - "continuum"      # セッション永続化
+    - "resurrect"      # セッション復元
+    - "sensible"       # 合理的デフォルト
+  
+  # プラグイン設定
+  plugins:
+    continuum:
+      save_interval_min: 15
+      restore_on_startup: true
+    
+    resurrect:
+      capture_pane_contents: true
+      restore_processes: false
+
+# ====================================
+# 開発・デバッグ設定
+# ====================================
+development:
+  # デバッグ設定
+  debug:
+    enabled: false
+    verbose: false
+    trace_execution: false
+  
+  # テスト設定
+  testing:
+    unit_tests_enabled: true
+    integration_tests_enabled: true
+    performance_monitoring: false
+  
+  # 開発ツール
+  tools:
+    config_validator: true
+    dependency_checker: true
+
+# ====================================
+# 設定メタデータ
+# ====================================
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-08-03T00:00:00Z"
+  schema_version: "1.0"
+  checksum: ""  # 設定ファイルの整合性チェック用
+  
+  # 設定階層
+  inheritance:
+    - "base"
+    - "platforms.${PLATFORM}"
+    - "claude_voice"
+    - "shared"
+    - "user_overrides"  # ユーザー個別設定
+  
+  # 設定ソース追跡
+  sources:
+    base_conf: "/home/user/dotfiles/.tmux/base.conf"
+    wsl_conf: "/home/user/dotfiles/.tmux/os/wsl.conf"
+    migration_conf: "/home/user/dotfiles/.tmux/migration.conf"
+    
+  # 変更履歴
+  changelog:
+    - version: "1.0.0"
+      date: "2025-08-03"
+      changes:
+        - "統一YAML設定システム初回実装"
+        - "全設定の一元化と階層化"
+        - "Claude Voice統合の完全な設定化"

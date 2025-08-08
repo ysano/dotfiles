@@ -24,16 +24,14 @@ check_claude_integration() {
     return 0
 }
 
-# セッション初期化処理
-initialize_claude_session() {
-    local session_id="$1"
+# グローバル初期化処理（セッション分離機能を簡素化）
+initialize_claude_global() {
+    # グローバル設定ディレクトリの確認
+    mkdir -p "$HOME/.tmux/claude/global"
 
-    # セッション固有の設定ディレクトリ作成
-    mkdir -p "$HOME/.tmux/claude/sessions/$session_id"
-
-    # セッション開始ログ
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Claude integration initialized for session: $session_id" >> \
-        "$HOME/.tmux/claude/logs/session.log"
+    # 初期化ログ（セッションIDは記録するが分離はしない）
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Claude integration initialized" >> \
+        "$HOME/.tmux/claude/logs/global.log"
 
     # 初回ウェルカム通知（設定に基づく）
     if grep -q "^welcome_notification=true" "$HOME/.tmux/claude/config/integration.conf" 2>/dev/null; then
@@ -46,8 +44,7 @@ initialize_claude_session() {
 # メイン処理
 main() {
     if check_claude_integration; then
-        local session_id=$(tmux display-message -p '#S' 2>/dev/null || echo "default")
-        initialize_claude_session "$session_id"
+        initialize_claude_global
     fi
 }
 

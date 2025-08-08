@@ -41,9 +41,9 @@ else
     ((TESTS_FAILED++))
 fi
 
-# Test 3: cache_manager.sh
-echo -n "Testing cache_manager.sh... "
-if [[ -f "$CLAUDE_HOME/claude/core/cache_manager.sh" ]]; then
+# Test 3: integration.sh (Phase 2 core component)
+echo -n "Testing integration.sh... "
+if [[ -f "$CLAUDE_HOME/claude/core/integration.sh" ]]; then
     echo -e "${GREEN}PASS${NC}"
     ((TESTS_PASSED++))
 else
@@ -51,9 +51,9 @@ else
     ((TESTS_FAILED++))
 fi
 
-# Test 4: config_manager_v2.sh
-echo -n "Testing config_manager_v2.sh... "
-if [[ -f "$CLAUDE_HOME/claude/core/config_manager_v2.sh" ]]; then
+# Test 4: foundation.sh (Phase 2 core component)
+echo -n "Testing foundation.sh... "
+if [[ -f "$CLAUDE_HOME/claude/core/foundation.sh" ]]; then
     echo -e "${GREEN}PASS${NC}"
     ((TESTS_PASSED++))
 else
