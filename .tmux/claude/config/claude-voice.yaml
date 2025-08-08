@@ -14,7 +14,7 @@ voice:
   manual:
     mode: "brief"        # brief, detailed, technical
     lines: 25
-    model: "auto"        # auto, llama3.2:3b-instruct-q5_K_M, 7shi/tanuki-dpo-v1.0:latest
+    model: "auto"        # auto = gemma3:1b → gemma2:2b → phi4-mini → orca-mini
     voice: "Kyoko (Enhanced)"
     
   # Auto-completion settings  
@@ -22,7 +22,7 @@ voice:
     enabled: true
     mode: "brief"
     lines: 15
-    model: "auto"
+    model: "auto"        # auto = gemma3:1b → gemma2:2b → phi4-mini → orca-mini
     voice: "Kyoko (Enhanced)"
     
   # Auto-waiting settings
@@ -30,7 +30,7 @@ voice:
     enabled: true
     mode: "brief" 
     lines: 10
-    model: "auto"
+    model: "auto"        # auto = gemma3:1b → gemma2:2b → phi4-mini → orca-mini
     voice: "Kyoko (Enhanced)"
 
 # === Audio System ===
@@ -50,8 +50,11 @@ llm:
     url: "http://localhost:11434"
     timeout: 30
     max_retries: 3
-    default_model: "phi4-mini:latest"
-    fallback_model: "orca-mini:latest"
+    default_model: "gemma3:1b"         # 最優先: Google Gemma3 1B (高速・軽量)
+    fallback_models:                    # フォールバック優先順位
+      - "gemma2:2b"                    # 第2候補: Google Gemma2 2B
+      - "phi4-mini:latest"             # 第3候補: Microsoft Phi-4 Mini
+      - "orca-mini:latest"             # 第4候補: Orca Mini (最終フォールバック)
     
 # === Performance ===
 performance:
