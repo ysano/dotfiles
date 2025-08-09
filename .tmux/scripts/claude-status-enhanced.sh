@@ -25,14 +25,15 @@ detect_status() {
     fi
     
     # Claude Code is running, now determine its status
-    # Capture the visible content of the pane
-    local pane_content=$(tmux capture-pane -t "$window_id" -p 2>/dev/null || echo "")
+    # Capture only the last 10 lines of the pane to check current state
+    local pane_content=$(tmux capture-pane -t "$window_id" -p -e -S -10 2>/dev/null | tail -10 || echo "")
     
-    # Check for BUSY state - "esc to interrupt" is the clearest indicator
-    if echo "$pane_content" | grep -q "esc to interrupt" 2>/dev/null; then
+    # Check for BUSY state - "esc to interrupt" should be in the last few lines
+    # Also check for active status indicators like Running…, Whirring… etc
+    if echo "$pane_content" | tail -5 | grep -qE "(esc to interrupt|Running…|Whirring…|Thinking…|Scheming…|Puzzling…|Concocting…)" 2>/dev/null; then
         status="⚡"
-    # Check for WAITING state - menu selections or prompts
-    elif echo "$pane_content" | grep -qE "(Do you want to proceed\?|❯ 1|❯ 2|❯ 3|tell Claude what|Should I|Would you like|Yes, and|No, keep|Choose|Select|Confirm|\(esc\))" 2>/dev/null; then
+    # Check for WAITING state - menu selections or prompts (check only in recent lines)
+    elif echo "$pane_content" | tail -5 | grep -qE "(Do you want to proceed\?|❯ 1|❯ 2|❯ 3|tell Claude what|Should I|Would you like|Yes, and|No, keep|Choose an option)" 2>/dev/null; then
         status="⌛"
     # Otherwise it's IDLE (Claude Code is present but not doing anything)
     else
