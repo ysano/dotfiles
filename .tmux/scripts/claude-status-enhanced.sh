@@ -54,10 +54,8 @@ detect_status() {
             break
         # Otherwise it's IDLE (Claude Code is present but not doing anything)
         else
-            # Check if there's a prompt indicating idle state
-            if echo "$pane_content" | tail -5 | grep -qE "(>\s*$|? for shortcuts)" 2>/dev/null; then
-                status=""  # Idle - no icon
-            fi
+            # Claude Code is running but idle
+            status="✅"  # Idle - show checkmark
         fi
     done
     
