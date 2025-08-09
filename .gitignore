@@ -196,3 +196,7 @@ CLAUDE_WORKFLOWS_TEST_RESULTS.md
 
 # Additional undo-tree files
 *.~undo-tree~
+
+
+# Don't index SpecStory auto-save files, but allow explicit context inclusion via @ references
+.specstory/**
