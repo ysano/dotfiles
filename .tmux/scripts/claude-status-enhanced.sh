@@ -25,15 +25,15 @@ detect_status() {
     fi
     
     # Claude Code is running, now determine its status
-    # Capture only the last 10 lines of the pane to check current state
-    local pane_content=$(tmux capture-pane -t "$window_id" -p -e -S -10 2>/dev/null | tail -10 || echo "")
+    # Capture only the last 10 lines of the pane to check current state (without escape sequences)
+    local pane_content=$(tmux capture-pane -t "$window_id" -p -S -10 2>/dev/null | tail -10 || echo "")
     
-    # Check for BUSY state - "esc to interrupt" should be in the last few lines
+    # Check for BUSY state - "esc to interrupt" should be in the recent lines
     # Also check for active status indicators like Running…, Whirring… etc
-    if echo "$pane_content" | tail -5 | grep -qE "(esc to interrupt|Running…|Whirring…|Thinking…|Scheming…|Puzzling…|Concocting…)" 2>/dev/null; then
+    if echo "$pane_content" | grep -qE "(esc to interrupt|Running…|Whirring…|Thinking…|Scheming…|Puzzling…|Concocting…)" 2>/dev/null; then
         status="⚡"
     # Check for WAITING state - menu selections or prompts (check only in recent lines)
-    elif echo "$pane_content" | tail -5 | grep -qE "(Do you want to proceed\?|❯ 1|❯ 2|❯ 3|tell Claude what|Should I|Would you like|Yes, and|No, keep|Choose an option)" 2>/dev/null; then
+    elif echo "$pane_content" | grep -qE "(Do you want to proceed\?|❯ 1|❯ 2|❯ 3|tell Claude what|Should I|Would you like|Yes, and|No, keep|Choose an option)" 2>/dev/null; then
         status="⌛"
     # Otherwise it's IDLE (Claude Code is present but not doing anything)
     else

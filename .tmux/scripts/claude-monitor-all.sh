@@ -2,7 +2,7 @@
 # Background Claude Code Monitor for All Windows
 # Monitors status changes in all tmux windows and triggers notifications
 
-MONITOR_INTERVAL=${CLAUDE_MONITOR_INTERVAL:-3}
+MONITOR_INTERVAL=${CLAUDE_MONITOR_INTERVAL:-1}
 STATUS_DIR="$HOME/.tmux/status"
 MONITOR_PID_FILE="$STATUS_DIR/.monitor.pid"
 
