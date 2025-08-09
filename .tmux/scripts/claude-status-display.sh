@@ -1,15 +1,10 @@
 #!/bin/bash
-# Claude Code Status Display for tmux status bar (read-only)
-# This script only reads status files without triggering notifications
+# Claude Status Display - DEPRECATED
+# This script is deprecated. Please use claude-status-unified.sh instead.
+#
+# Usage migration:
+#   OLD: claude-status-display.sh
+#   NEW: claude-status-unified.sh --mode display
 
-WINDOW_ID=${1:-$(tmux display-message -p '#I')}
-STATUS_DIR="$HOME/.tmux/status"
-STATUS_FILE="$STATUS_DIR/window-${WINDOW_ID}.status"
-
-# Read current status from file
-if [ -f "$STATUS_FILE" ]; then
-    cat "$STATUS_FILE" 2>/dev/null
-else
-    # No status file exists - return empty
-    echo ""
-fi
+# Redirect to unified script
+exec "$(dirname "$0")/claude-status-unified.sh" --mode display "$@"

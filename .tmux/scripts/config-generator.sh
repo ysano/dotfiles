@@ -1,52 +1,38 @@
 #!/bin/bash
-# TMux統一設定ジェネレーター
+# TMux統一設定ジェネレーター (Refactored)
 # YAML設定から各プラットフォーム固有のtmux設定を自動生成
-# Version: 1.0
+# Version: 2.0
 
 set -euo pipefail
 
 # ====================================
-# 定数定義
+# 共通ライブラリの読み込み
 # ====================================
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/core.sh"
+source "$SCRIPT_DIR/lib/platform.sh"
+source "$SCRIPT_DIR/lib/validation.sh"
+
+# ====================================
+# 定数定義
+# ====================================
 readonly TMUX_DIR="$(dirname "$SCRIPT_DIR")"
 readonly YAML_CONFIG="$TMUX_DIR/config/tmux-unified.yaml"
 readonly OUTPUT_DIR="$TMUX_DIR/generated"
-readonly PLATFORM_UTILS="$TMUX_DIR/claude/core/platform_utils.sh"
 
 # ログ設定
-readonly LOG_FILE="$TMUX_DIR/claude/logs/config-generator.log"
-readonly LOG_LEVEL="${CONFIG_LOG_LEVEL:-INFO}"
+setup_logging "$TMUX_DIR/claude/logs/config-generator.log" "${CONFIG_LOG_LEVEL:-INFO}"
 
-# ====================================
-# ユーティリティ関数
-# ====================================
-
-# ログ出力
-log() {
-    local level="$1"
-    shift
-    local message="$*"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] [$level] $message" | tee -a "$LOG_FILE"
-}
-
-log_info() { log "INFO" "$@"; }
-log_warn() { log "WARN" "$@"; }
-log_error() { log "ERROR" "$@"; }
-log_debug() { 
-    [[ "$LOG_LEVEL" == "DEBUG" ]] && log "DEBUG" "$@" || true
-}
-
-# エラーハンドリング
-error_exit() {
-    log_error "$1"
-    exit 1
-}
+# クリーンアップ設定
+enable_cleanup
+register_cleanup "$OUTPUT_DIR/*.tmp"
 
 # 前提条件チェック
 check_prerequisites() {
     log_info "前提条件をチェック中..."
+    
+    # 必要なファイルの検証
+    require_files "$YAML_CONFIG"
     
     # YAML設定ファイルの存在確認
     [[ -f "$YAML_CONFIG" ]] || error_exit "YAML設定ファイルが見つかりません: $YAML_CONFIG"

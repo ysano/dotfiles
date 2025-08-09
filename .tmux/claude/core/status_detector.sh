@@ -31,8 +31,10 @@ detect_claude_status_pure() {
     fi
     
     # 2. Busy: トークン処理中で中断可能
-    if echo "$ui_context" | grep -qE '\([0-9]+s\s+·.*tokens.*interrupt\)'; then
-        debug_log "Detected: Busy (processing pattern)"
+    # 安定したパターン: "tokens" と "esc to interrupt" の組み合わせ
+    # 例: ✽ Imagining… (108s · ⚒ 1.5k tokens · esc to interrupt)
+    if echo "$ui_context" | grep -qE 'tokens.*esc to interrupt'; then
+        debug_log "Detected: Busy (tokens + esc to interrupt pattern)"
         echo "Busy"
         return
     fi
@@ -193,9 +195,14 @@ run_self_test() {
     
     # テスト1: 純粋関数のテスト
     echo "Test 1: Pure function tests"
-    local test_busy="✻ Ruminating… (6s · 2.8k tokens · esc to interrupt)"
-    local result=$(detect_claude_status_pure "$test_busy")
-    echo "  Busy pattern: $result (expected: Busy)"
+    # 新しいパターンと旧パターンの両方をテスト
+    local test_busy_new="✽ Imagining… (108s · ⚒ 1.5k tokens · esc to interrupt)"
+    local result=$(detect_claude_status_pure "$test_busy_new")
+    echo "  Busy pattern (new): $result (expected: Busy)"
+    
+    local test_busy_old="✻ Ruminating… (6s · 2.8k tokens · esc to interrupt)"
+    result=$(detect_claude_status_pure "$test_busy_old")
+    echo "  Busy pattern (old): $result (expected: Busy)"
     
     local test_waiting="Do you want to proceed?\n❯ 1. Yes\n  2. No"
     result=$(detect_claude_status_pure "$test_waiting")
@@ -208,7 +215,7 @@ run_self_test() {
     # テスト2: 依存性注入のテスト
     echo "Test 2: Dependency injection test"
     setup_test_mocks
-    export MOCK_TERMINAL_OUTPUT="✻ Processing… (5s · 100 tokens · esc to interrupt)"
+    export MOCK_TERMINAL_OUTPUT="✽ Imagining… (5s · ⚒ 100 tokens · esc to interrupt)"
     
     result=$(detect_claude_status_with_deps)
     echo "  With mocks: $result (expected: ⚡)"

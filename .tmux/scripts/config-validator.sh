@@ -1,81 +1,33 @@
 #!/bin/bash
-# TMux統一設定検証システム
+# TMux統一設定検証システム (Refactored)
 # YAML設定ファイルと生成された設定の整合性・安全性・パフォーマンスを検証
-# Version: 1.0
+# Version: 2.0
 
 set -euo pipefail
 
 # ====================================
-# 定数定義
+# 共通ライブラリの読み込み
 # ====================================
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/core.sh"
+source "$SCRIPT_DIR/lib/platform.sh"
+source "$SCRIPT_DIR/lib/validation.sh"
+source "$SCRIPT_DIR/lib/tmux_ops.sh"
+
+# ====================================
+# 定数定義
+# ====================================
 readonly TMUX_DIR="$(dirname "$SCRIPT_DIR")"
 readonly YAML_CONFIG="$TMUX_DIR/config/tmux-unified.yaml"
 readonly GENERATED_DIR="$TMUX_DIR/generated"
-readonly LOG_FILE="$TMUX_DIR/claude/logs/config-validator.log"
 readonly TEMP_DIR="/tmp/tmux-validator-$$"
 
-# 検証結果の定数
-readonly PASS=0
-readonly WARNING=1
-readonly ERROR=2
+# ログ設定
+setup_logging "$TMUX_DIR/claude/logs/config-validator.log" "${LOG_LEVEL:-INFO}"
 
-# ====================================
-# ユーティリティ関数
-# ====================================
-
-# ログ出力
-log() {
-    local level="$1"
-    shift
-    local message="$*"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] [$level] $message" | tee -a "$LOG_FILE"
-}
-
-log_info() { log "INFO" "$@"; }
-log_warn() { log "WARN" "$@"; }
-log_error() { log "ERROR" "$@"; }
-log_debug() { 
-    [[ "${LOG_LEVEL:-INFO}" == "DEBUG" ]] && log "DEBUG" "$@" || true
-}
-
-# 検証結果の管理
-declare -g validation_results=()
-declare -g error_count=0
-declare -g warning_count=0
-
-add_result() {
-    local severity="$1"
-    local category="$2"
-    local message="$3"
-    local suggestion="${4:-}"
-    
-    local result="[$severity] [$category] $message"
-    [[ -n "$suggestion" ]] && result="$result | 提案: $suggestion"
-    
-    validation_results+=("$result")
-    
-    case "$severity" in
-        "ERROR")
-            ((error_count++))
-            log_error "$category: $message"
-            ;;
-        "WARNING")
-            ((warning_count++))
-            log_warn "$category: $message"
-            ;;
-        "PASS")
-            log_info "$category: $message"
-            ;;
-    esac
-}
-
-# 清掃処理
-cleanup() {
-    [[ -d "$TEMP_DIR" ]] && rm -rf "$TEMP_DIR"
-}
-trap cleanup EXIT
+# クリーンアップ設定
+enable_cleanup
+register_cleanup "$TEMP_DIR"
 
 # 初期化
 initialize() {
