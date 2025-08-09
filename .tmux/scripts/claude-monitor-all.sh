@@ -49,8 +49,8 @@ while true; do
             previous_status=$(cat "$status_file" 2>/dev/null)
         fi
         
-        # Update status file
-        if [ -n "$current_status" ]; then
+        # Update status file only if status has changed
+        if [ "$current_status" != "$previous_status" ]; then
             echo "$current_status" > "$status_file"
         fi
         

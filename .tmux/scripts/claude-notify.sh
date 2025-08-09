@@ -91,9 +91,12 @@ if ! check_notification_needed; then
 fi
 
 # Save current status with error handling
-if ! echo "$NEW_STATUS" > "$STATUS_FILE" 2>/dev/null; then
-    # If we can't write status file, create directory and try again
-    mkdir -p "$STATUS_DIR" && echo "$NEW_STATUS" > "$STATUS_FILE"
+# Only write non-empty status to avoid clearing valid status
+if [ -n "$NEW_STATUS" ]; then
+    if ! echo "$NEW_STATUS" > "$STATUS_FILE" 2>/dev/null; then
+        # If we can't write status file, create directory and try again
+        mkdir -p "$STATUS_DIR" && echo "$NEW_STATUS" > "$STATUS_FILE"
+    fi
 fi
 
 # Rate limiting to prevent notification spam
