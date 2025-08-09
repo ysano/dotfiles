@@ -200,3 +200,10 @@ CLAUDE_WORKFLOWS_TEST_RESULTS.md
 
 # Don't index SpecStory auto-save files, but allow explicit context inclusion via @ references
 .specstory/**
+
+# tmux temporary and cache files
+.tmux/status/
+.tmux/cache/
+.tmux/backups/
+.tmux/*.log
+.tmux/**/*.log
