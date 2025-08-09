@@ -1,4 +1,0 @@
-[2025-08-05 06:38:15] [INFO] TMux設定検証システム開始
-[2025-08-05 06:38:15] [INFO] YAML設定: /home/user/dotfiles/.tmux/config/tmux-unified.yaml
-[2025-08-05 06:38:15] [INFO] 生成済み設定: /home/user/dotfiles/.tmux/generated
-[2025-08-05 06:38:15] [INFO] YAML構文検証を開始...
