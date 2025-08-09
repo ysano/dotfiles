@@ -28,6 +28,13 @@ detect_status() {
                 # Capture the visible content of the pane (last 20 lines for more recent status)
                 local pane_content=$(tmux capture-pane -t "$window_id.$pane_id" -p -S -20 2>/dev/null || echo "")
                 
+                # Check if this is actually Claude Code (not just a shell with similar prompt)
+                # Claude Code has specific UI elements that distinguish it from regular shells
+                if ! echo "$pane_content" | grep -qE "(⏺|✅|⚡|⌛|tell Claude what|proceed with|for shortcuts.*Bypassing Permissions|Running…|Whirring…|Shimmying…)" 2>/dev/null; then
+                    # This is not Claude Code, skip status detection
+                    continue
+                fi
+                
                 # Get only the last 5 lines for more accurate current state detection
                 local recent_content=$(echo "$pane_content" | tail -5)
                 
