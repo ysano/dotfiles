@@ -146,10 +146,14 @@ main() {
     echo "🔊 音声で読み上げ中..."
     
     # ウィンドウIDの抽出（パンニング用）
-    local window_id_for_panning=""
-    if [[ "$target_window" != "." && "$target_window" =~ ^([0-9]+)\..*$ ]]; then
+    # 環境変数から優先的に取得、なければtarget_windowから抽出
+    local window_id_for_panning="${CLAUDE_VOICE_WINDOW_ID:-}"
+    
+    if [[ -z "$window_id_for_panning" ]] && [[ "$target_window" != "." && "$target_window" =~ ^([0-9]+)\..*$ ]]; then
         window_id_for_panning="${BASH_REMATCH[1]}"
-        log "DEBUG" "Extracted window ID for panning: $window_id_for_panning"
+        log "DEBUG" "Extracted window ID from target_window: $window_id_for_panning"
+    elif [[ -n "$window_id_for_panning" ]]; then
+        log "DEBUG" "Using window ID from environment: $window_id_for_panning"
     fi
     
     if ! speak_text "$summary" "$voice" "$device" "200" "$window_id_for_panning"; then

@@ -52,7 +52,8 @@ main() {
     update_last_notification "$WINDOW_ID"
     
     # Claude Voice自動サマリーチェック（オプション）
-    check_auto_summary "$NEW_STATUS"
+    # 注: trigger_voice_notificationで処理するため、ここではコメントアウト
+    # check_auto_summary "$NEW_STATUS"
 }
 
 # サウンド付き通知
@@ -64,14 +65,20 @@ notify_with_sound() {
         "$STATUS_IDLE")
             play_complete_sound "$os_type"
             send_notification "Claude Code" "✅ Complete" "処理が完了しました"
+            # 音声読み上げを追加
+            trigger_voice_notification "complete" "$WINDOW_ID"
             ;;
         "$STATUS_WAITING")
             play_waiting_sound "$os_type"
             send_notification "Claude Code" "⌛ Waiting" "入力待ちです"
+            # 音声読み上げを追加
+            trigger_voice_notification "waiting" "$WINDOW_ID"
             ;;
         "$STATUS_BUSY")
             play_busy_sound "$os_type"
             send_notification "Claude Code" "⚡ Busy" "処理中です"
+            # 音声読み上げを追加（通常はBusyでは読み上げない）
+            # trigger_voice_notification "busy" "$WINDOW_ID"
             ;;
     esac
 }
@@ -82,7 +89,7 @@ play_complete_sound() {
     
     case "$os_type" in
         "macos")
-            play_macos_sound "/System/Library/Sounds/Hero.aiff"
+            play_macos_sound "/System/Library/Sounds/Glass.aiff"  # Glass音で完了を示す
             ;;
         "wsl")
             play_wsl_sound "complete"
@@ -102,7 +109,7 @@ play_waiting_sound() {
     
     case "$os_type" in
         "macos")
-            play_macos_sound "/System/Library/Sounds/Glass.aiff"
+            play_macos_sound "/System/Library/Sounds/Tink.aiff"  # Tink音で待機を示す
             ;;
         "wsl")
             play_wsl_sound "waiting"
@@ -122,7 +129,7 @@ play_busy_sound() {
     
     case "$os_type" in
         "macos")
-            play_macos_sound "/System/Library/Sounds/Ping.aiff"
+            play_macos_sound "/System/Library/Sounds/Basso.aiff"  # Basso音で忙しい状態を示す
             ;;
         "wsl")
             play_wsl_sound "busy"
@@ -287,6 +294,77 @@ trigger_voice_summary() {
                 "$voice_script" brief 10 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
                 ;;
         esac
+    fi
+}
+
+# 音声通知をトリガー（通知音の後に音声読み上げ）
+trigger_voice_notification() {
+    local context="$1"
+    local window_id="$2"
+    
+    # 空間音響用の音声割り当て
+    source "$CLAUDE_VOICE_HOME/core/spatial_audio.sh" 2>/dev/null || return
+    
+    # ウィンドウインデックスから音声を割り当て
+    local voice=$(assign_voice_to_window "$window_id")
+    
+    # claude-voiceコマンドを使って画面を要約
+    local voice_script="$CLAUDE_VOICE_HOME/bin/claude-voice"
+    
+    if [[ -x "$voice_script" ]]; then
+        # 0.5秒待ってから要約を生成・読み上げ（通知音の後）
+        case "$context" in
+            "complete")
+                # 完了時は最後の20行を要約（パンニング用にウィンドウIDを渡す）
+                (sleep 0.5 && TMUX_PANE="%${window_id}" CLAUDE_VOICE_WINDOW_ID="$window_id" "$voice_script" brief 20 "$voice") &
+                ;;
+            "waiting")
+                # 待機時は枠全体を取得してから要約
+                (sleep 0.5 && {
+                    # frame_detector.shを使って枠全体を取得
+                    source "$CLAUDE_VOICE_HOME/core/frame_detector.sh" 2>/dev/null
+                    
+                    # 枠全体を取得（最初15行、必要に応じて100行まで拡張）
+                    local frame_content=$(get_waiting_frame "$window_id")
+                    
+                    if [[ -n "$frame_content" ]]; then
+                        # 枠が取得できた場合は、その内容を一時ファイルに保存
+                        local temp_file="/tmp/claude_waiting_frame_${window_id}.txt"
+                        echo "$frame_content" > "$temp_file"
+                        
+                        # claude-voiceに一時ファイルから読み込ませる（パンニング用にウィンドウIDを渡す）
+                        TMUX_PANE="%${window_id}" CLAUDE_VOICE_CAPTURE_OVERRIDE="$temp_file" CLAUDE_VOICE_WINDOW_ID="$window_id" "$voice_script" brief 50 "$voice"
+                        
+                        # 一時ファイルを削除
+                        rm -f "$temp_file"
+                    else
+                        # 枠が取得できない場合は通常の15行要約（パンニング用にウィンドウIDを渡す）
+                        TMUX_PANE="%${window_id}" CLAUDE_VOICE_WINDOW_ID="$window_id" "$voice_script" brief 15 "$voice"
+                    fi
+                }) &
+                ;;
+            "busy")
+                # Busyの場合は通常読み上げない
+                ;;
+        esac
+    else
+        # フォールバック: claude-voiceが無い場合は簡単なメッセージ
+        local message=""
+        case "$context" in
+            "complete")
+                message="ウィンドウ${window_id}の処理が完了しました"
+                ;;
+            "waiting")
+                message="ウィンドウ${window_id}が入力を待っています"
+                ;;
+            "busy")
+                message="ウィンドウ${window_id}が処理中です"
+                ;;
+        esac
+        
+        if [[ -n "$message" ]]; then
+            (sleep 0.5 && say -v "$voice" -r 200 "$message" 2>/dev/null) &
+        fi
     fi
 }
 

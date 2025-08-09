@@ -8,7 +8,7 @@ create_summary_options() {
     
     # デフォルト値の設定
     options[content]=""
-    options[max_length]=50
+    options[max_length]=30
     options[context]="auto"
     options[source_type]="screen"  # screen, text, file
     options[format]="plain"  # plain, speech_optimized

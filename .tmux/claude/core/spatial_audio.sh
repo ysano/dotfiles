@@ -12,8 +12,8 @@ detect_claude_windows() {
         local pane_pids=$(tmux list-panes -t "$window_id" -F "#{pane_pid}" 2>/dev/null)
         
         for pane_pid in $pane_pids; do
-            # プロセスツリーでclaude/nodeを検索
-            if pstree -p "$pane_pid" 2>/dev/null | grep -q "node.*claude"; then
+            # プロセスツリーでclaudeを検索
+            if pstree -p "$pane_pid" 2>/dev/null | grep -q "claude"; then
                 windows+=("$window_id")
                 break
             fi
@@ -81,10 +81,22 @@ linear_to_db() {
     fi
 }
 
+# ウィンドウごとに音声を割り当て
+assign_voice_to_window() {
+    local window_index="$1"
+    
+    # OtoyaとKyoko (Enhanced)を交互に割り当て
+    if [[ $((window_index % 2)) -eq 0 ]]; then
+        echo "Otoya"
+    else
+        echo "Kyoko (Enhanced)"
+    fi
+}
+
 # 空間配置されたClaude音声を再生
 play_spatial_claude_voices() {
     local text="${1:-Claude Voice spatial audio test}"
-    local voice="${2:-Kyoko}"
+    local base_voice="${2:-auto}"  # autoの場合は自動割り当て
     local rate="${3:-200}"
     
     echo "🎧 Detecting Claude Code windows..."
@@ -116,7 +128,15 @@ play_spatial_claude_voices() {
         local left_db=$(linear_to_db "$left_gain")
         local right_db=$(linear_to_db "$right_gain")
         
-        echo "  Window $window_id: L=${left_db}dB, R=${right_db}dB"
+        # 音声を自動割り当て
+        local voice
+        if [[ "$base_voice" == "auto" ]]; then
+            voice=$(assign_voice_to_window "$index")
+        else
+            voice="$base_voice"
+        fi
+        
+        echo "  Window $window_id: Voice=${voice}, L=${left_db}dB, R=${right_db}dB"
         
         # ウィンドウ固有のテキスト
         local window_text="ウィンドウ ${window_id} からの音声です。${text}"

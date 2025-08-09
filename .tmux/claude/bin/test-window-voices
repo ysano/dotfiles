@@ -1,0 +1,166 @@
+#!/bin/bash
+# Claude Voice - Window Voice Assignment Test
+# OtoyaとKyoko (Enhanced)の音声割り当てテスト
+
+CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}"
+source "$CLAUDE_VOICE_HOME/core/spatial_audio.sh"
+
+echo "🎭 Window Voice Assignment Test"
+echo "================================"
+echo ""
+
+# 複数ウィンドウをシミュレート
+test_multiple_windows() {
+    local window_counts=(1 2 3 4 5)
+    
+    for count in "${window_counts[@]}"; do
+        echo "Testing with $count window(s):"
+        echo "----------------------------"
+        
+        for ((i=0; i<count; i++)); do
+            local voice=$(assign_voice_to_window "$i")
+            local panning=$(calculate_db_panning "$count" "$i")
+            IFS='|' read -r left right <<< "$panning"
+            local left_db=$(linear_to_db "$left")
+            local right_db=$(linear_to_db "$right")
+            
+            printf "  Window %d: Voice=%-20s Pan: L=%.1fdB, R=%.1fdB" "$i" "$voice" "$left_db" "$right_db"
+            
+            # 位置の説明を追加
+            if [[ $count -eq 1 ]]; then
+                echo " (Center)"
+            elif [[ $i -eq 0 ]]; then
+                echo " (Far Left)"
+            elif [[ $i -eq $((count-1)) ]]; then
+                echo " (Far Right)"
+            elif [[ $i -eq $((count/2)) ]]; then
+                echo " (Center)"
+            else
+                echo ""
+            fi
+        done
+        echo ""
+    done
+}
+
+# デモ音声再生
+play_demo_voices() {
+    echo "🔊 Playing Voice Demo with 3 simulated windows"
+    echo ""
+    
+    local window_count=3
+    local test_text="これはウィンドウ"
+    
+    for ((i=0; i<window_count; i++)); do
+        local voice=$(assign_voice_to_window "$i")
+        local panning=$(calculate_db_panning "$window_count" "$i")
+        IFS='|' read -r left_gain right_gain <<< "$panning"
+        
+        local position=""
+        if [[ $i -eq 0 ]]; then
+            position="左"
+        elif [[ $i -eq 1 ]]; then
+            position="中央"
+        else
+            position="右"
+        fi
+        
+        echo "  Window $i: $voice (${position})"
+        
+        # 音声を生成して再生
+        local window_text="${test_text}${i}です。${position}から聞こえます。"
+        
+        if command -v say >/dev/null 2>&1; then
+            # 一時ファイルを生成
+            local temp_audio="/tmp/claude_voice_test_${i}.aiff"
+            say -v "$voice" -r 200 -o "$temp_audio" "$window_text" 2>/dev/null
+            
+            # ffplayがある場合はパンニング付きで再生
+            if command -v ffplay >/dev/null 2>&1; then
+                ffplay -nodisp -autoexit -loglevel quiet \
+                    -af "pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0" \
+                    "$temp_audio" 2>/dev/null &
+            else
+                # フォールバック: 通常再生
+                afplay "$temp_audio" 2>/dev/null &
+            fi
+            
+            # 少し遅延を入れて識別しやすくする
+            sleep 1.5
+            
+            # 一時ファイルを削除
+            rm -f "$temp_audio"
+        else
+            echo "    ⚠️  say command not available"
+        fi
+    done
+    
+    # すべての音声再生を待つ
+    wait
+    echo ""
+    echo "✅ Demo completed"
+}
+
+# メインメニュー
+show_menu() {
+    echo ""
+    echo "Select test option:"
+    echo "  1) Show voice assignment patterns"
+    echo "  2) Play voice demo (3 windows)"
+    echo "  3) Test actual Claude Code windows"
+    echo "  4) Exit"
+    echo ""
+    echo -n "Option: "
+}
+
+# メイン処理
+main() {
+    while true; do
+        show_menu
+        read -r option
+        
+        case "$option" in
+            1)
+                echo ""
+                test_multiple_windows
+                ;;
+            2)
+                echo ""
+                play_demo_voices
+                ;;
+            3)
+                echo ""
+                echo "🔍 Detecting actual Claude Code windows..."
+                play_spatial_claude_voices "テスト音声" "auto"
+                ;;
+            4)
+                echo "Goodbye!"
+                exit 0
+                ;;
+            *)
+                echo "Invalid option"
+                ;;
+        esac
+    done
+}
+
+# コマンドライン引数処理
+if [[ $# -gt 0 ]]; then
+    case "$1" in
+        "pattern")
+            test_multiple_windows
+            ;;
+        "demo")
+            play_demo_voices
+            ;;
+        "actual")
+            play_spatial_claude_voices "テスト音声" "auto"
+            ;;
+        *)
+            echo "Usage: $(basename "$0") [pattern|demo|actual]"
+            exit 1
+            ;;
+    esac
+else
+    main
+fi

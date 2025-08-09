@@ -39,7 +39,16 @@ while true; do
         fi
         
         # Get current status for this window
-        current_status=$(~/.tmux/scripts/claude-status-enhanced.sh "$window_id")
+        # Try different status scripts in order
+        if [ -f ~/.tmux/scripts/claude-status-unified.sh ]; then
+            current_status=$(~/.tmux/scripts/claude-status-unified.sh "$window_id")
+        elif [ -f ~/.tmux/scripts/claude-status-window.sh ]; then
+            current_status=$(~/.tmux/scripts/claude-status-window.sh "$window_id")
+        elif [ -f ~/.tmux/scripts/claude-status-refactored.sh ]; then
+            current_status=$(~/.tmux/scripts/claude-status-refactored.sh "$window_id")
+        else
+            current_status=""
+        fi
         
         # Check previous status
         status_file="$STATUS_DIR/window-${window_id}.status"

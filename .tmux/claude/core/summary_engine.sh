@@ -55,7 +55,7 @@ generate_summary() {
     # LLMで要約を生成
     local summary
     if declare -f summarize_screen_content >/dev/null; then
-        summary=$(summarize_screen_content "$content" 50 "$context")
+        summary=$(summarize_screen_content "$content" 30 "$context")
     else
         # フォールバック: 簡易要約
         summary=$(echo "$content" | tail -5 | head -1)

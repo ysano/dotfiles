@@ -97,7 +97,7 @@ query_llm() {
 # スクリーンの内容を要約
 summarize_screen_content() {
     local content="$1"
-    local max_length="${2:-50}"
+    local max_length="${2:-30}"
     local context="${3:-}"
     
     # コンテンツが短い場合はそのまま返す
@@ -106,32 +106,58 @@ summarize_screen_content() {
         return
     fi
     
-    local prompt="以下のターミナル出力を${max_length}文字以内で簡潔に日本語で要約してください。"
+    local prompt="以下のターミナル出力を日本語で要約してください。
+
+要約の指針：
+- ${max_length}文字程度を目標とする
+- 文章として自然で完結していること
+- 最後の数行が最も重要（最新の状態を示す）
+- 見出し（##、===、---等）に注目する
+- 完了メッセージやエラーメッセージを優先
+
+"
     
     # コンテキストに応じてプロンプトを調整
     case "$context" in
         "complete")
-            prompt="以下の処理結果を${max_length}文字以内で簡潔に日本語で要約してください。何が完了したか明確に述べてください："
+            prompt="${prompt}最後に表示されている完了内容や結果を簡潔に述べてください："
             ;;
         "waiting")
-            prompt="以下の内容から、ユーザーに何を確認または入力を求めているか${max_length}文字以内で簡潔に日本語で説明してください："
+            prompt="${prompt}最後に表示されている質問や選択肢を簡潔に述べてください："
             ;;
         "error")
-            prompt="以下のエラー内容を${max_length}文字以内で簡潔に日本語で説明してください："
+            prompt="${prompt}最後に表示されているエラーメッセージを簡潔に述べてください："
+            ;;
+        *)
+            prompt="${prompt}最後の重要な情報を簡潔に要約してください："
             ;;
     esac
     
+    # 内容の最後の5行を抽出して強調
+    local last_lines=$(echo "$content" | tail -5)
+    
     prompt="${prompt}
 
+=== ターミナル出力 ===
 ${content}
 
-要約："
+=== 最後の5行（最重要） ===
+${last_lines}
+
+簡潔な要約（${max_length}文字程度）："
     
     local summary=$(query_llm "$prompt" 100 0.5)
     
     if [[ -n "$summary" ]]; then
         # 改行を除去して1行にする
-        echo "$summary" | tr '\n' ' ' | sed 's/  */ /g'
+        summary=$(echo "$summary" | tr '\n' ' ' | sed 's/  */ /g')
+        
+        # 文字数のログ出力（デバッグ用）
+        if [[ ${#summary} -gt $max_length ]]; then
+            log "DEBUG" "Summary is ${#summary} chars (target: ${max_length} chars)"
+        fi
+        
+        echo "$summary"
     else
         log "DEBUG" "Summary generation failed, prompt was: ${prompt:0:100}..."
         echo "要約の生成に失敗しました"
