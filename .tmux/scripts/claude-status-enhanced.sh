@@ -1,1 +1,0 @@
-/Users/yoshiaki_sano/.tmux/scripts/claude-status-refactored.sh
