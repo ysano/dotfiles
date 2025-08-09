@@ -25,14 +25,28 @@ detect_status() {
         # Check if it's likely a Claude Code related command
         case "$current_cmd" in
             *node*|*cursor*|*code*|*nvim*|*vim*|*emacs*|*python*|*ruby*|*bash*|*zsh*|*sh*)
-                # Capture the visible content of the pane
-                local pane_content=$(tmux capture-pane -t "$window_id.$pane_id" -p -S -50 2>/dev/null || echo "")
+                # Capture the visible content of the pane (last 20 lines for more recent status)
+                local pane_content=$(tmux capture-pane -t "$window_id.$pane_id" -p -S -20 2>/dev/null || echo "")
+                
+                # Get only the last 5 lines for more accurate current state detection
+                local recent_content=$(echo "$pane_content" | tail -5)
                 
                 # Detect Claude Code specific patterns
                 # Check for Claude Code UI elements and states
                 
-                # Claude Code specific busy indicators (check first - higher priority)
-                if echo "$pane_content" | grep -qE "(Running…|Whirring…|Thinking|Analyzing|Processing|Working|Generating|Creating|Building|Testing|Running|Executing|Writing|Reading|Searching|Loading|Updating|Installing|Compiling|Bypassing Permissions|\[.*▪.*\]|\[.*●.*\]|░▒▓|⣾⣽⣻⢿⡿⣟⣯⣷|⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏|◐◓◑◒|▁▂▃▄▅▆▇█|⚡)" 2>/dev/null; then
+                # First check for idle state (command prompt in recent lines)
+                if echo "$recent_content" | grep -qE "(\$\s*$|%\s*$|>\s*$|#\s*$|❯\s*$|➜\s*$|→\s*$|λ\s*$|🚀\s*$)" 2>/dev/null; then
+                    # Check if there's any active indicator in the last few lines
+                    if echo "$recent_content" | grep -qE "(Running…|Whirring…|⏺)" 2>/dev/null; then
+                        status="⚡"
+                    else
+                        # Idle - has prompt but no other activity
+                        status=""
+                    fi
+                    break
+                # Claude Code specific busy indicators (check in full content)
+                # Note: "Bypassing Permissions" is a static UI element, not a busy indicator
+                elif echo "$pane_content" | grep -qE "(Running…|Whirring…|Thinking|Analyzing|Processing|Working|Generating|Creating|Building|Testing|Executing|Writing|Reading|Searching|Loading|Updating|Installing|Compiling|\[.*▪.*\]|\[.*●.*\]|░▒▓|⣾⣽⣻⢿⡿⣟⣯⣷|⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏|◐◓◑◒|▁▂▃▄▅▆▇█)" 2>/dev/null; then
                     status="⚡"
                     break
                 # Claude Code waiting for input
@@ -43,12 +57,6 @@ detect_status() {
                 elif echo "$pane_content" | grep -qE "(Complete|Completed|Finished|Done|Success|Passed|✓|✅|Successfully|All tests passed|Build successful|0 errors|0 failures)" 2>/dev/null; then
                     status="✅"
                     # Don't break - check other panes for active states
-                # Check for idle state (command prompt)
-                elif echo "$pane_content" | tail -5 | grep -qE "(\$\s*$|%\s*$|>\s*$|#\s*$|❯\s*$|➜\s*$|→\s*$|λ\s*$|🚀\s*$)" 2>/dev/null; then
-                    # Idle - has prompt but no other activity
-                    if [ -z "$status" ]; then
-                        status=""
-                    fi
                 fi
                 ;;
         esac
