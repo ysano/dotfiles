@@ -99,7 +99,41 @@ main() {
     # 3. 要約生成
     echo "🤖 ${model}で要約を生成中..."
     local summary
-    if ! summary=$(generate_summary "$screen_text" "$summary_type" "$model" "" "$claude_status"); then
+    
+    # 統一インターフェースを使用（連想配列のサポートチェック）
+    if [[ "${BASH_VERSION%%.*}" -ge 4 ]] && declare -f create_summary_options >/dev/null && declare -f generate_unified_summary >/dev/null; then
+        # 新しい統一インターフェース（Bash 4以降）
+        declare -A summary_options
+        create_summary_options summary_options
+        
+        summary_options[content]="$screen_text"
+        summary_options[max_length]=$(summary_type_to_length "$summary_type")
+        summary_options[context]=$(status_to_context "$claude_status")
+        summary_options[format]="speech_optimized"
+        
+        summary=$(generate_unified_summary summary_options)
+    else
+        # フォールバック: 直接呼び出し
+        local max_length=50
+        case "$summary_type" in
+            "detailed") max_length=100 ;;
+            "technical") max_length=80 ;;
+            "brief"|*) max_length=50 ;;
+        esac
+        
+        local context="general"
+        if [[ "$claude_status" == "✅" ]] || [[ "$claude_status" == "Idle" ]]; then
+            context="complete"
+        elif [[ "$claude_status" == "⌛" ]] || [[ "$claude_status" == "Waiting" ]]; then
+            context="waiting"
+        elif [[ "$claude_status" == "⚡" ]] || [[ "$claude_status" == "Busy" ]]; then
+            context="busy"
+        fi
+        
+        summary=$(summarize_screen_content "$screen_text" "$max_length" "$context")
+    fi
+    
+    if [[ -z "$summary" ]] || [[ "$summary" == "要約の生成に失敗しました" ]]; then
         local error_msg="要約の生成に失敗しました。"
         echo "❌ $error_msg"
         speak_text "$error_msg" "$voice"

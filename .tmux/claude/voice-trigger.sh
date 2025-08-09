@@ -8,11 +8,12 @@ if [[ -f "$UNIVERSAL_VOICE_SCRIPT" ]]; then
     source "$UNIVERSAL_VOICE_SCRIPT"
 fi
 
-# 智的統合層の読み込み
-source "$HOME/.tmux/claude/core/integration.sh" 2>/dev/null || {
-    echo "Smart integration layer not available" >&2
-    exit 1
-}
+# 智的統合層の読み込み（オプショナル）
+INTEGRATION_AVAILABLE=false
+if [[ -f "$HOME/.tmux/claude/core/integration.sh" ]]; then
+    source "$HOME/.tmux/claude/core/integration.sh"
+    INTEGRATION_AVAILABLE=true
+fi
 
 # 設定値取得関数
 get_config_value() {
@@ -78,13 +79,19 @@ execute_voice_action_safely() {
     fi
 }
 
-# メイン処理（智的統合層を使用）
+# メイン処理
 main() {
     # ログディレクトリの確保
     mkdir -p "$HOME/.tmux/claude/logs"
 
-    # 智的統合層による音声アクション実行
-    voice_action "manual" "user_triggered"
+    # 智的統合層が利用可能な場合
+    if [[ "$INTEGRATION_AVAILABLE" == "true" ]] && declare -f voice_action >/dev/null 2>&1; then
+        # 智的統合層による音声アクション実行
+        voice_action "manual" "user_triggered"
+    else
+        # フォールバック: 直接Claude Voiceを実行
+        execute_voice_action_safely
+    fi
 }
 
 # スクリプト実行

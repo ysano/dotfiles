@@ -5,6 +5,7 @@
 # 依存モジュール
 source "$CLAUDE_VOICE_HOME/core/screen_capture.sh" 2>/dev/null || true
 source "$CLAUDE_VOICE_HOME/core/llm_manager.sh" 2>/dev/null || true
+source "$CLAUDE_VOICE_HOME/core/summary_interface.sh" 2>/dev/null || true
 
 # 要約生成の主要関数
 generate_summary() {
@@ -19,10 +20,10 @@ generate_summary() {
         window_id="${window_id%.*}"
     fi
     
-    # スクリーンコンテンツを取得
+    # スクリーンコンテンツを取得（capture_screen_textを使用）
     local content
-    if declare -f capture_pane_content >/dev/null; then
-        content=$(capture_pane_content "$window_id" "$pane_id" "$max_lines")
+    if declare -f capture_screen_text >/dev/null; then
+        content=$(capture_screen_text "${window_id}.${pane_id}" "$max_lines" true false)
     else
         # フォールバック: 直接tmuxから取得
         content=$(tmux capture-pane -t "${window_id}.${pane_id}" -p -S "-${max_lines}" 2>/dev/null || echo "")
@@ -33,16 +34,21 @@ generate_summary() {
         return 1
     fi
     
-    # コンテキストの自動判定
+    # コンテキストの自動判定（統一インターフェースを使用）
     if [[ "$context" == "auto" ]]; then
-        if echo "$content" | grep -qE "(Error|Failed|Exception|失敗|エラー)" 2>/dev/null; then
-            context="error"
-        elif echo "$content" | grep -qE "(Complete|Done|Success|完了|成功)" 2>/dev/null; then
-            context="complete"
-        elif echo "$content" | grep -qE "(\\?|Continue|Proceed|Y/N|yes/no)" 2>/dev/null; then
-            context="waiting"
+        if declare -f detect_context_from_content >/dev/null; then
+            context=$(detect_context_from_content "$content")
         else
-            context="general"
+            # フォールバック: ローカル判定
+            if echo "$content" | grep -qE "(Error|Failed|Exception|失敗|エラー)" 2>/dev/null; then
+                context="error"
+            elif echo "$content" | grep -qE "(Complete|Done|Success|完了|成功)" 2>/dev/null; then
+                context="complete"
+            elif echo "$content" | grep -qE "(\\?|Continue|Proceed|Y/N|yes/no)" 2>/dev/null; then
+                context="waiting"
+            else
+                context="general"
+            fi
         fi
     fi
     
@@ -78,18 +84,27 @@ generate_status_change_summary() {
     local new_status="$2"
     local window_id="${3:-$(tmux display-message -p '#I')}"
     
-    local context="general"
-    case "$new_status" in
-        "✅"|"Idle")
-            context="complete"
-            ;;
-        "⌛"|"Waiting")
-            context="waiting"
-            ;;
-        "⚡"|"Busy")
-            context="busy"
-            ;;
-    esac
+    # 統一インターフェースを使用
+    local context
+    if declare -f status_to_context >/dev/null; then
+        context=$(status_to_context "$new_status")
+    else
+        # フォールバック
+        case "$new_status" in
+            "✅"|"Idle")
+                context="complete"
+                ;;
+            "⌛"|"Waiting")
+                context="waiting"
+                ;;
+            "⚡"|"Busy")
+                context="busy"
+                ;;
+            *)
+                context="general"
+                ;;
+        esac
+    fi
     
     generate_brief_summary "$window_id" 1 15 "$context"
 }

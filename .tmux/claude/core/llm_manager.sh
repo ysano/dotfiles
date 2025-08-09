@@ -4,12 +4,47 @@
 
 # Ollamaサーバー設定
 OLLAMA_HOST="${OLLAMA_HOST:-http://localhost:11434}"
-OLLAMA_MODEL="${OLLAMA_MODEL:-gemma2:2b}"  # 軽量モデルをデフォルトに
+
+# モデル優先順位リスト（ハードコード）
+OLLAMA_MODEL_PRIORITY=("gemma3:1b" "gemma2:2b" "phi4-mini:latest" "orca-mini:latest")
 
 # Ollamaの状態確認
 check_ollama_health() {
     curl -s "${OLLAMA_HOST}/api/tags" >/dev/null 2>&1
     return $?
+}
+
+# 利用可能なモデルを取得
+get_available_models() {
+    curl -s "${OLLAMA_HOST}/api/tags" 2>/dev/null | jq -r '.models[].name' 2>/dev/null || echo ""
+}
+
+# モデルの存在確認
+check_model_exists() {
+    local model="$1"
+    local available_models=$(get_available_models)
+    
+    if [[ -z "$available_models" ]]; then
+        return 1
+    fi
+    
+    echo "$available_models" | grep -q "^${model}$"
+    return $?
+}
+
+# 優先順位に基づいてモデルを選択
+get_best_available_model() {
+    # 優先順位リストから最初に見つかったモデルを返す
+    for model in "${OLLAMA_MODEL_PRIORITY[@]}"; do
+        if check_model_exists "$model"; then
+            echo "$model"
+            return 0
+        fi
+    done
+    
+    # どのモデルも見つからない場合
+    log "ERROR" "No available models found from priority list"
+    return 1
 }
 
 # LLMにプロンプトを送信
@@ -23,11 +58,21 @@ query_llm() {
         return 1
     fi
     
+    # 利用可能な最適なモデルを取得
+    local model=$(get_best_available_model)
+    if [[ -z "$model" ]]; then
+        log "ERROR" "No model available"
+        return 1
+    fi
+    
+    # プロンプトをJSONエスケープ
+    local escaped_prompt=$(echo "$prompt" | jq -Rs '.')
+    
     local response=$(curl -s -X POST "${OLLAMA_HOST}/api/generate" \
         -H "Content-Type: application/json" \
         -d "{
-            \"model\": \"$OLLAMA_MODEL\",
-            \"prompt\": \"$prompt\",
+            \"model\": \"$model\",
+            \"prompt\": $escaped_prompt,
             \"stream\": false,
             \"options\": {
                 \"num_predict\": $max_tokens,
@@ -36,8 +81,15 @@ query_llm() {
         }" 2>/dev/null)
     
     if [[ -n "$response" ]]; then
-        echo "$response" | jq -r '.response // empty' 2>/dev/null
+        local result=$(echo "$response" | jq -r '.response // empty' 2>/dev/null)
+        if [[ -n "$result" ]] && [[ "$result" != "empty" ]]; then
+            echo "$result"
+        else
+            log "DEBUG" "Failed to extract response from: ${response:0:100}..."
+            return 1
+        fi
     else
+        log "DEBUG" "No response from Ollama"
         return 1
     fi
 }
@@ -71,9 +123,7 @@ summarize_screen_content() {
     
     prompt="${prompt}
 
-\`\`\`
 ${content}
-\`\`\`
 
 要約："
     
@@ -83,11 +133,15 @@ ${content}
         # 改行を除去して1行にする
         echo "$summary" | tr '\n' ' ' | sed 's/  */ /g'
     else
+        log "DEBUG" "Summary generation failed, prompt was: ${prompt:0:100}..."
         echo "要約の生成に失敗しました"
     fi
 }
 
 # エクスポート
 export -f check_ollama_health
+export -f get_available_models
+export -f check_model_exists
+export -f get_best_available_model
 export -f query_llm
 export -f summarize_screen_content
