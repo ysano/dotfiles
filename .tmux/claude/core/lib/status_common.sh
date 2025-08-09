@@ -3,6 +3,10 @@
 # ステータス検出に関する共通関数とコンスタント
 
 # ステータス定数
+# UTF-8 encoding fix
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+
 readonly STATUS_BUSY="⚡"
 readonly STATUS_WAITING="⌛"
 readonly STATUS_IDLE="✅"
