@@ -34,29 +34,26 @@ detect_status() {
                 # Detect Claude Code specific patterns
                 # Check for Claude Code UI elements and states
                 
-                # First check for idle state (command prompt in recent lines)
-                if echo "$recent_content" | grep -qE "(\$\s*$|%\s*$|>\s*$|#\s*$|❯\s*$|➜\s*$|→\s*$|λ\s*$|🚀\s*$)" 2>/dev/null; then
-                    # Check if there's any active indicator in the last few lines
-                    if echo "$recent_content" | grep -qE "(Running…|Whirring…|⏺)" 2>/dev/null; then
-                        status="⚡"
-                    else
-                        # Idle - has prompt but no other activity
-                        status=""
-                    fi
-                    break
-                # Claude Code specific busy indicators (check in full content)
-                # Note: "Bypassing Permissions" is a static UI element, not a busy indicator
-                elif echo "$pane_content" | grep -qE "(Running…|Whirring…|Thinking|Analyzing|Processing|Working|Generating|Creating|Building|Testing|Executing|Writing|Reading|Searching|Loading|Updating|Installing|Compiling|\[.*▪.*\]|\[.*●.*\]|░▒▓|⣾⣽⣻⢿⡿⣟⣯⣷|⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏|◐◓◑◒|▁▂▃▄▅▆▇█)" 2>/dev/null; then
+                # Check for active busy indicators first (highest priority) - only in recent lines
+                if echo "$recent_content" | grep -qE "(Running…|Whirring…|⏺)" 2>/dev/null; then
                     status="⚡"
                     break
-                # Claude Code waiting for input
-                elif echo "$pane_content" | grep -qE "(tell Claude what|proceed with|\(esc\)|Should I|Would you like|Please enter|Type your|Choose|Select|Confirm|Press|Continue\?|Y/N|yes/no|y/n|password:|Username:)" 2>/dev/null; then
+                # Claude Code waiting for input (check in recent lines to avoid false positives)
+                elif echo "$recent_content" | grep -qE "(tell Claude what|proceed with|\(esc\)|Should I|Would you like|Please enter|Type your|Choose|Select|Confirm|Press|Continue\?|Y/N|yes/no|y/n|password:|Username:)" 2>/dev/null; then
                     status="⌛"
+                    break
+                # Check for other busy indicators in full content
+                elif echo "$pane_content" | grep -qE "(Thinking|Analyzing|Processing|Working|Generating|Creating|Building|Testing|Executing|Writing|Reading|Searching|Loading|Updating|Installing|Compiling|\[.*▪.*\]|\[.*●.*\]|░▒▓|⣾⣽⣻⢿⡿⣟⣯⣷|⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏|◐◓◑◒|▁▂▃▄▅▆▇█)" 2>/dev/null; then
+                    status="⚡"
                     break
                 # Claude Code completion indicators
                 elif echo "$pane_content" | grep -qE "(Complete|Completed|Finished|Done|Success|Passed|✓|✅|Successfully|All tests passed|Build successful|0 errors|0 failures)" 2>/dev/null; then
                     status="✅"
                     # Don't break - check other panes for active states
+                # Finally check for idle state (command prompt)
+                elif echo "$recent_content" | grep -qE "(\$\s*$|%\s*$|>\s*$|#\s*$|❯\s*$|➜\s*$|→\s*$|λ\s*$|🚀\s*$)" 2>/dev/null; then
+                    # Idle - has prompt but no other activity
+                    status=""
                 fi
                 ;;
         esac
