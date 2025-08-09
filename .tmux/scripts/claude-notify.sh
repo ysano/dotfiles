@@ -221,7 +221,7 @@ notify_waiting() {
             cleanup_macos_notifications
             
             # macOS: System sound with panning support
-            if command -v ~/.tmux/claude/os/darwin.sh >/dev/null 2>&1; then
+            if [ -f ~/.tmux/claude/core/base.sh ] && [ -f ~/.tmux/claude/os/darwin.sh ]; then
                 # Use panning-enabled sound playback
                 (source ~/.tmux/claude/core/base.sh && source ~/.tmux/claude/os/darwin.sh && play_sound_file_with_panning "/System/Library/Sounds/Glass.aiff" "1.0" "$WINDOW_ID") &
                 sound_played=true
@@ -296,7 +296,7 @@ notify_complete() {
             cleanup_macos_notifications
             
             # macOS: Completion sound with panning support
-            if command -v ~/.tmux/claude/os/darwin.sh >/dev/null 2>&1; then
+            if [ -f ~/.tmux/claude/core/base.sh ] && [ -f ~/.tmux/claude/os/darwin.sh ]; then
                 # Use panning-enabled sound playback
                 (source ~/.tmux/claude/core/base.sh && source ~/.tmux/claude/os/darwin.sh && play_sound_file_with_panning "/System/Library/Sounds/Hero.aiff" "1.0" "$WINDOW_ID") &
                 sound_played=true
@@ -432,7 +432,7 @@ notify_status_change() {
                 cleanup_macos_notifications
                 
                 # Ping.aiff for processing/busy state with panning support
-                if command -v ~/.tmux/claude/os/darwin.sh >/dev/null 2>&1; then
+                if [ -f ~/.tmux/claude/core/base.sh ] && [ -f ~/.tmux/claude/os/darwin.sh ]; then
                     # Use panning-enabled sound playback
                     (source ~/.tmux/claude/core/base.sh && source ~/.tmux/claude/os/darwin.sh && play_sound_file_with_panning "/System/Library/Sounds/Ping.aiff" "1.0" "$WINDOW_ID") &
                     sound_played=true
