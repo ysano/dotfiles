@@ -30,13 +30,18 @@ detect_status() {
                 
                 # Check if this is actually Claude Code (not just a shell with similar prompt)
                 # Claude Code has specific UI elements that distinguish it from regular shells
-                if ! echo "$pane_content" | grep -qE "(⏺|✅|⚡|⌛|tell Claude what|proceed with|for shortcuts.*Bypassing Permissions|Running…|Whirring…|Shimmying…)" 2>/dev/null; then
+                # The most reliable indicator is the status bar with "? for shortcuts" and "Bypassing Permissions"
+                # Or active status indicators like Running…, Whirring…, Shimmying…
+                if ! echo "$pane_content" | tail -10 | grep -qE "(\? for shortcuts.*Bypassing Permissions|Running…|Whirring…|Shimmying…|Thinking…|tell Claude what)" 2>/dev/null; then
                     # This is not Claude Code, skip status detection
                     continue
                 fi
                 
                 # Get only the last 5 lines for more accurate current state detection
                 local recent_content=$(echo "$pane_content" | tail -5)
+                
+                # Get last 10 lines for menu detection (menus can be taller)
+                local menu_content=$(echo "$pane_content" | tail -10)
                 
                 # Detect Claude Code specific patterns
                 # Check for Claude Code UI elements and states
@@ -45,8 +50,8 @@ detect_status() {
                 if echo "$recent_content" | grep -qE "(Running…|Whirring…|⏺)" 2>/dev/null; then
                     status="⚡"
                     break
-                # Claude Code waiting for input (check in recent lines to avoid false positives)
-                elif echo "$recent_content" | grep -qE "(tell Claude what|proceed with|\(esc\)|Should I|Would you like|Please enter|Type your|Choose|Select|Confirm|Press|Continue\?|Y/N|yes/no|y/n|password:|Username:)" 2>/dev/null; then
+                # Claude Code waiting for input (check in last 10 lines for menus)
+                elif echo "$menu_content" | grep -qE "(tell Claude what|proceed with|\(esc\)|Should I|Would you like|Please enter|Type your|Choose|Select|Confirm|Press|Continue\?|Y/N|yes/no|y/n|password:|Username:|Yes, and|No, keep|No, and tell)" 2>/dev/null; then
                     status="⌛"
                     break
                 # Check for other busy indicators in full content
