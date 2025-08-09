@@ -112,7 +112,8 @@ summarize_screen_content() {
 - ${max_length}文字程度を目標とする
 - 文章として自然で完結していること
 - 最後の数行が最も重要（最新の状態を示す）
-- 見出し（##、===、---等）に注目する
+- 見出し（⏺、##、===、---等）に注目する
+- ⏺マークの行は特に重要な見出しです
 - 完了メッセージやエラーメッセージを優先
 
 "
@@ -133,6 +134,9 @@ summarize_screen_content() {
             ;;
     esac
     
+    # ⏺マークの見出し行を抽出（最大3行）
+    local heading_lines=$(echo "$content" | grep -E "^[[:space:]]*⏺" | tail -3)
+    
     # 内容の最後の5行を抽出して強調
     local last_lines=$(echo "$content" | tail -5)
     
@@ -140,7 +144,17 @@ summarize_screen_content() {
 
 === ターミナル出力 ===
 ${content}
-
+"
+    
+    # ⏺マークの見出しがある場合は追加
+    if [[ -n "$heading_lines" ]]; then
+        prompt="${prompt}
+=== 重要な見出し（⏺マーク） ===
+${heading_lines}
+"
+    fi
+    
+    prompt="${prompt}
 === 最後の5行（最重要） ===
 ${last_lines}
 
