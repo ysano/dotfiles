@@ -282,9 +282,18 @@ speak_text_with_panning() {
 # 音声合成実行
 speak_text() {
     local text="$1"
-    local voice="${2:-$(get_config "audio.default_voice" "Kyoko")}"
+    # audio_manager.shからパラメータを取得
+    local voice device rate
+    if declare -f get_speech_params >/dev/null; then
+        local params=$(get_speech_params "macos")
+        IFS='|' read -r default_voice default_rate default_volume <<< "$params"
+        voice="${2:-$default_voice}"
+        rate="${4:-$default_rate}"
+    else
+        voice="${2:-$(get_config "audio.default_voice" "Kyoko")}"
+        rate="${4:-$(get_config "audio.speech_rate" "200")}"
+    fi
     local device="${3:-auto}"
-    local rate="${4:-$(get_config "audio.speech_rate" "200")}"
     local window_id="${5:-}"  # ウィンドウIDによるパンニング制御
 
     log "DEBUG" "Speaking text on macOS: voice=$voice, device=$device, rate=$rate, window_id=$window_id"
@@ -600,7 +609,13 @@ system_beep() {
 # サウンドファイルの再生
 play_sound_file() {
     local file_path="$1"
-    local volume="${2:-$(get_config "audio.volume" "0.8")}"
+    # audio_manager.shが利用可能ならそちらから取得
+    local volume
+    if declare -f get_platform_volume >/dev/null; then
+        volume="${2:-$(get_platform_volume "sound" "macos")}"
+    else
+        volume="${2:-$(get_config "audio.volume" "0.3")}"
+    fi
 
     log "DEBUG" "Playing sound file on macOS: $file_path, volume=$volume"
 
@@ -629,7 +644,15 @@ play_sound_file() {
 # パンニング対応サウンドファイル再生
 play_sound_file_with_panning() {
     local file_path="$1"
-    local volume="${2:-$(get_config "audio.volume" "4.0")}"
+    # パンニング時は音量をブースト
+    local volume
+    if declare -f get_audio_config >/dev/null; then
+        local base_volume=$(get_platform_volume "sound" "macos")
+        local boost=$(get_audio_config "panning.volume_boost" "4.0")
+        volume="${2:-$(echo "$base_volume * $boost" | bc -l)}"
+    else
+        volume="${2:-$(get_config "audio.volume" "4.0")}"
+    fi
     local window_id="${3:-}"
 
     log "DEBUG" "Playing sound file with panning on macOS: $file_path, volume=$volume, window_id=$window_id"
@@ -776,9 +799,10 @@ test_dynamic_panning() {
     # 1. アクティブウィンドウの検出テスト
     echo "1. Testing active Claude windows detection..."
     local active_windows=()
+    local windows_list=$(get_active_claude_windows)
     while IFS= read -r window_id; do
         [[ -n "$window_id" ]] && active_windows+=("$window_id")
-    done < <(get_active_claude_windows)
+    done <<< "$windows_list"
     
     local window_count=${#active_windows[@]}
     echo "   Found $window_count active Claude Code windows: ${active_windows[*]}"
