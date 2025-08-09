@@ -1,0 +1,24 @@
+# Claude Voice - Runtime and Cache Files
+# これらのファイルは環境依存またはランタイム生成されるため、Git管理から除外
+
+# キャッシュファイル（環境依存）
+.config_cache
+.wsl_host_cache
+*.cache
+
+# ランタイム設定（ユーザー個別設定として扱う場合）
+# notification_mode  # これをコメントアウトすることで、デフォルト値として管理も可能
+
+# ログファイル
+*.log
+logs/
+
+# 一時ファイル
+*.tmp
+*.pid
+.*.swp
+.*.swo
+
+# テスト関連
+test_output/
+*.test.result
