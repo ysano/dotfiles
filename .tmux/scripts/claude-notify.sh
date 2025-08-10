@@ -1,372 +1,331 @@
 #!/bin/bash
-# Claude Code Notification Script - Refactored Version
-# Claude Voice統合アーキテクチャに準拠した通知スクリプト
+# Optimized Claude Code notification script with proper cleanup
 
-# ライブラリのロード
-CLAUDE_VOICE_HOME="${CLAUDE_VOICE_HOME:-$HOME/.tmux/claude}"
-source "$CLAUDE_VOICE_HOME/core/lib/status_common.sh"
-source "$CLAUDE_VOICE_HOME/core/lib/notification_common.sh"
-
-# 引数処理
 WINDOW_ID=${1:-$(tmux display-message -p '#I')}
 OLD_STATUS="$2"
 NEW_STATUS="$3"
 
-# メイン処理開始
-main() {
-    # 初期化
-    [[ ! -d "$STATUS_DIR" ]] && mkdir -p "$STATUS_DIR"
+# Status directory with better organization
+STATUS_DIR="$HOME/.tmux/status"
+STATUS_FILE="$STATUS_DIR/window-${WINDOW_ID}.status"
+CLEANUP_MARKER="$STATUS_DIR/.last_cleanup"
+
+mkdir -p "$STATUS_DIR"
+
+# Cleanup old status files periodically (once per hour)
+cleanup_old_status_files() {
+    local now=$(date +%s)
+    local last_cleanup=0
     
-    # 前回のステータスを取得（引数で渡されなかった場合）
-    if [[ -z "$OLD_STATUS" ]]; then
-        OLD_STATUS=$(load_window_status "$WINDOW_ID")
+    if [ -f "$CLEANUP_MARKER" ]; then
+        last_cleanup=$(cat "$CLEANUP_MARKER" 2>/dev/null || echo 0)
     fi
     
-    # 現在のステータスを取得（引数で渡されなかった場合）
-    if [[ -z "$NEW_STATUS" ]]; then
-        NEW_STATUS=$("$(dirname "$0")/claude-status-refactored.sh" "$WINDOW_ID")
+    # Run cleanup every hour (3600 seconds)
+    if [ $((now - last_cleanup)) -gt 3600 ]; then
+        # Remove status files for non-existent tmux windows
+        for status_file in "$STATUS_DIR"/window-*.status; do
+            [ -f "$status_file" ] || continue
+            
+            local window_id=$(basename "$status_file" | sed 's/window-\([0-9]*\)\.status/\1/')
+            
+            # Check if tmux window still exists
+            if ! tmux list-windows -F '#I' 2>/dev/null | grep -q "^${window_id}$"; then
+                rm -f "$status_file"
+            fi
+        done
+        
+        # Remove status files older than 24 hours
+        find "$STATUS_DIR" -name "window-*.status" -mtime +1 -delete 2>/dev/null
+        
+        echo "$now" > "$CLEANUP_MARKER"
     fi
-    
-    # 通知が必要かチェック
-    if ! should_notify "$WINDOW_ID" "$OLD_STATUS" "$NEW_STATUS"; then
-        exit 0
-    fi
-    
-    # ステータスを保存
-    if [[ -n "$NEW_STATUS" ]]; then
-        save_window_status "$WINDOW_ID" "$NEW_STATUS"
-    fi
-    
-    # 通知モードの確認
-    local notification_mode=$(get_notification_mode)
-    
-    if [[ "$notification_mode" == "beep" ]]; then
-        # ビープモード
-        play_beep
-    else
-        # サウンドモード
-        notify_with_sound "$NEW_STATUS"
-    fi
-    
-    # 最終通知時刻を更新
-    update_last_notification "$WINDOW_ID"
-    
-    # Claude Voice自動サマリーチェック（オプション）
-    # 注: trigger_voice_notificationで処理するため、ここではコメントアウト
-    # check_auto_summary "$NEW_STATUS"
 }
 
-# サウンド付き通知
-notify_with_sound() {
-    local status="$1"
-    local os_type=$(detect_os_with_cache)
+# Run cleanup in background to avoid blocking
+cleanup_old_status_files &
+
+# Get previous status with error handling
+if [ -z "$OLD_STATUS" ]; then
+    OLD_STATUS=$(cat "$STATUS_FILE" 2>/dev/null || echo "")
+fi
+
+# Get current status if not provided
+if [ -z "$NEW_STATUS" ]; then
+    NEW_STATUS=$(~/.tmux/scripts/claude-status.sh "$WINDOW_ID")
+fi
+
+# Early exit if no change detected
+if [ "$OLD_STATUS" = "$NEW_STATUS" ]; then
+    exit 0
+fi
+
+# Save current status with error handling
+if ! echo "$NEW_STATUS" > "$STATUS_FILE" 2>/dev/null; then
+    # If we can't write status file, create directory and try again
+    mkdir -p "$STATUS_DIR" && echo "$NEW_STATUS" > "$STATUS_FILE"
+fi
+
+# Rate limiting to prevent notification spam
+RATE_LIMIT_FILE="$STATUS_DIR/.rate_limit_${WINDOW_ID}"
+RATE_LIMIT_SECONDS=2
+
+rate_limit_check() {
+    local now=$(date +%s)
+    local last_notify=0
     
-    case "$status" in
-        "$STATUS_IDLE")
-            play_complete_sound "$os_type"
-            send_notification "Claude Code" "✅ Complete" "処理が完了しました"
-            # 音声読み上げを追加
-            trigger_voice_notification "complete" "$WINDOW_ID"
-            ;;
-        "$STATUS_WAITING")
-            play_waiting_sound "$os_type"
-            send_notification "Claude Code" "⌛ Waiting" "入力待ちです"
-            # 音声読み上げを追加
-            trigger_voice_notification "waiting" "$WINDOW_ID"
-            ;;
-        "$STATUS_BUSY")
-            play_busy_sound "$os_type"
-            send_notification "Claude Code" "⚡ Busy" "処理中です"
-            # 音声読み上げを追加（通常はBusyでは読み上げない）
-            # trigger_voice_notification "busy" "$WINDOW_ID"
-            ;;
-    esac
+    if [ -f "$RATE_LIMIT_FILE" ]; then
+        last_notify=$(cat "$RATE_LIMIT_FILE" 2>/dev/null || echo 0)
+    fi
+    
+    if [ $((now - last_notify)) -lt $RATE_LIMIT_SECONDS ]; then
+        return 1  # Rate limited
+    fi
+    
+    echo "$now" > "$RATE_LIMIT_FILE"
+    return 0  # OK to proceed
 }
 
-# 完了音再生
-play_complete_sound() {
-    local os_type="$1"
-    
-    case "$os_type" in
-        "macos")
-            play_macos_sound "/System/Library/Sounds/Glass.aiff"  # Glass音で完了を示す
+# OS Detection for notifications
+detect_os_type() {
+    case "$OSTYPE" in
+        darwin*)
+            echo "macos"
             ;;
-        "wsl")
-            play_wsl_sound "complete"
-            ;;
-        "linux")
-            play_linux_sound "complete"
+        linux*)
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+                echo "wsl"
+            else
+                echo "linux"
+            fi
             ;;
         *)
-            play_beep
+            echo "other"
             ;;
     esac
 }
 
-# 待機音再生
-play_waiting_sound() {
-    local os_type="$1"
-    
-    case "$os_type" in
-        "macos")
-            play_macos_sound "/System/Library/Sounds/Tink.aiff"  # Tink音で待機を示す
-            ;;
-        "wsl")
-            play_wsl_sound "waiting"
-            ;;
-        "linux")
-            play_linux_sound "waiting"
-            ;;
-        *)
-            play_beep
-            ;;
-    esac
-}
-
-# Busy音再生
-play_busy_sound() {
-    local os_type="$1"
-    
-    case "$os_type" in
-        "macos")
-            play_macos_sound "/System/Library/Sounds/Basso.aiff"  # Basso音で忙しい状態を示す
-            ;;
-        "wsl")
-            play_wsl_sound "busy"
-            ;;
-        "linux")
-            play_linux_sound "busy"
-            ;;
-        *)
-            play_beep
-            ;;
-    esac
-}
-
-# macOSサウンド再生
-play_macos_sound() {
-    local sound_file="$1"
-    
-    # パンニング対応再生を試みる
-    if [[ -f "$CLAUDE_VOICE_HOME/core/base.sh" ]] && [[ -f "$CLAUDE_VOICE_HOME/os/darwin.sh" ]]; then
-        (source "$CLAUDE_VOICE_HOME/core/base.sh" && \
-         source "$CLAUDE_VOICE_HOME/os/darwin.sh" && \
-         play_sound_file_with_panning "$sound_file" "1.0" "$WINDOW_ID") &
-    elif command -v afplay >/dev/null 2>&1; then
-        afplay -v 1.0 "$sound_file" 2>/dev/null &
-    else
-        play_beep
+# macOS notification cleanup function
+cleanup_macos_notifications() {
+    if command -v terminal-notifier >/dev/null 2>&1; then
+        # Remove old notifications from the same group
+        terminal-notifier -remove "claude-code-waiting" 2>/dev/null
+        terminal-notifier -remove "claude-code-complete" 2>/dev/null
+        terminal-notifier -remove "claude-code-busy" 2>/dev/null
     fi
 }
 
-# WSLサウンド再生
-play_wsl_sound() {
-    local sound_type="$1"
-    local powershell_path="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-    
-    if [[ ! -f "$powershell_path" ]]; then
-        play_beep
-        return
-    fi
-    
-    case "$sound_type" in
-        "complete")
-            "$powershell_path" -Command "[console]::beep(523,80);[console]::beep(659,80);[console]::beep(783,80);[console]::beep(1046,120)" 2>/dev/null &
-            ;;
-        "waiting")
-            "$powershell_path" -Command "[console]::beep(659,100);Start-Sleep -Milliseconds 50;[console]::beep(880,150);Start-Sleep -Milliseconds 50;[console]::beep(1175,100)" 2>/dev/null &
-            ;;
-        "busy")
-            "$powershell_path" -Command "[console]::beep(800,80);Start-Sleep -Milliseconds 30;[console]::beep(800,80);Start-Sleep -Milliseconds 30;[console]::beep(600,100)" 2>/dev/null &
-            ;;
-    esac
-}
-
-# Linuxサウンド再生
-play_linux_sound() {
-    local sound_type="$1"
-    
-    if ! command -v paplay >/dev/null 2>&1; then
-        play_beep
-        return
-    fi
-    
-    # 適切なシステムサウンドファイルを探す
-    local sound_files=()
-    case "$sound_type" in
-        "complete")
-            sound_files=("/usr/share/sounds/freedesktop/stereo/complete.oga")
-            ;;
-        "waiting")
-            sound_files=("/usr/share/sounds/freedesktop/stereo/dialog-information.oga")
-            ;;
-        "busy")
-            sound_files=("/usr/share/sounds/freedesktop/stereo/dialog-warning.oga")
-            ;;
-    esac
-    
-    for sound_file in "${sound_files[@]}"; do
-        if [[ -f "$sound_file" ]]; then
-            paplay "$sound_file" 2>/dev/null &
-            return
+# Check if Do Not Disturb is enabled on macOS
+is_dnd_enabled() {
+    if [ "$(uname)" = "Darwin" ]; then
+        # Check Do Not Disturb status via plutil
+        local dnd_status=$(plutil -extract dnd_prefs.userPref.enabled xml1 ~/Library/Preferences/com.apple.ncprefs.plist -o - 2>/dev/null | grep -o '<true/>' | head -1)
+        if [ "$dnd_status" = "<true/>" ]; then
+            return 0  # DND is enabled
         fi
-    done
-    
-    play_beep
+    fi
+    return 1  # DND is disabled or not macOS
 }
 
-# デスクトップ通知送信
-send_notification() {
+# Smart notification function that respects user preferences
+send_notification_smart() {
     local title="$1"
     local subtitle="$2"
     local message="$3"
-    local os_type=$(detect_os_with_cache)
+    local sound="$4"
+    local group="$5"
     
-    case "$os_type" in
-        "macos")
-            if command -v terminal-notifier >/dev/null 2>&1; then
-                cleanup_macos_notifications
-                terminal-notifier \
-                    -title "$title" \
-                    -subtitle "$subtitle" \
-                    -message "$message" \
-                    -group "claude-code" \
-                    -sender "com.apple.Terminal" 2>/dev/null &
-            elif command -v osascript >/dev/null 2>&1; then
-                osascript -e "display notification \"$message\" with title \"$title\" subtitle \"$subtitle\"" 2>/dev/null &
-            fi
-            ;;
-        "linux"|"wsl")
-            if command -v notify-send >/dev/null 2>&1; then
-                notify-send "$title" "$subtitle - $message" 2>/dev/null &
-            fi
-            ;;
-    esac
-}
-
-# Claude Voice自動サマリーチェック
-check_auto_summary() {
-    local status="$1"
-    
-    # 環境変数から設定を取得
-    local auto_summary=$(tmux show-environment -g CLAUDE_VOICE_AUTO_SUMMARY 2>/dev/null | cut -d= -f2 || echo "false")
-    
-    if [[ "$auto_summary" != "true" ]]; then
-        return
-    fi
-    
-    case "$status" in
-        "$STATUS_IDLE")
-            local on_complete=$(tmux show-environment -g CLAUDE_VOICE_ON_COMPLETE 2>/dev/null | cut -d= -f2 || echo "true")
-            if [[ "$on_complete" == "true" ]]; then
-                trigger_voice_summary "complete"
-            fi
-            ;;
-        "$STATUS_WAITING")
-            local on_waiting=$(tmux show-environment -g CLAUDE_VOICE_ON_WAITING 2>/dev/null | cut -d= -f2 || echo "true")
-            if [[ "$on_waiting" == "true" ]]; then
-                trigger_voice_summary "waiting"
-            fi
-            ;;
-        "$STATUS_BUSY")
-            local on_busy=$(tmux show-environment -g CLAUDE_VOICE_ON_BUSY 2>/dev/null | cut -d= -f2 || echo "false")
-            if [[ "$on_busy" == "true" ]]; then
-                trigger_voice_summary "busy"
-            fi
-            ;;
-    esac
-}
-
-# Claude Voice サマリーをトリガー
-trigger_voice_summary() {
-    local context="$1"
-    local voice_script="$CLAUDE_VOICE_HOME/bin/claude-voice"
-    
-    if [[ -x "$voice_script" ]]; then
-        case "$context" in
-            "complete")
-                "$voice_script" brief 20 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
-                ;;
-            "waiting")
-                "$voice_script" brief 15 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
-                ;;
-            "busy")
-                "$voice_script" brief 10 "Kyoko (Enhanced)" "auto" "auto" "${WINDOW_ID}.1" >/dev/null 2>&1 &
-                ;;
-        esac
-    fi
-}
-
-# 音声通知をトリガー（通知音の後に音声読み上げ）
-trigger_voice_notification() {
-    local context="$1"
-    local window_id="$2"
-    
-    # 空間音響用の音声割り当て
-    source "$CLAUDE_VOICE_HOME/core/spatial_audio.sh" 2>/dev/null || return
-    
-    # ウィンドウインデックスから音声を割り当て
-    local voice=$(assign_voice_to_window "$window_id")
-    
-    # claude-voiceコマンドを使って画面を要約
-    local voice_script="$CLAUDE_VOICE_HOME/bin/claude-voice"
-    
-    if [[ -x "$voice_script" ]]; then
-        # 0.5秒待ってから要約を生成・読み上げ（通知音の後）
-        case "$context" in
-            "complete")
-                # 完了時は最後の20行を要約（パンニング用にウィンドウIDを渡す）
-                (sleep 0.5 && TMUX_PANE="%${window_id}" CLAUDE_VOICE_WINDOW_ID="$window_id" "$voice_script" brief 20 "$voice") &
-                ;;
-            "waiting")
-                # 待機時は枠全体を取得してから要約
-                (sleep 0.5 && {
-                    # frame_detector.shを使って枠全体を取得
-                    source "$CLAUDE_VOICE_HOME/core/frame_detector.sh" 2>/dev/null
-                    
-                    # 枠全体を取得（最初15行、必要に応じて100行まで拡張）
-                    local frame_content=$(get_waiting_frame "$window_id")
-                    
-                    if [[ -n "$frame_content" ]]; then
-                        # 枠が取得できた場合は、その内容を一時ファイルに保存
-                        local temp_file="/tmp/claude_waiting_frame_${window_id}.txt"
-                        echo "$frame_content" > "$temp_file"
-                        
-                        # claude-voiceに一時ファイルから読み込ませる（パンニング用にウィンドウIDを渡す）
-                        TMUX_PANE="%${window_id}" CLAUDE_VOICE_CAPTURE_OVERRIDE="$temp_file" CLAUDE_VOICE_WINDOW_ID="$window_id" "$voice_script" brief 50 "$voice"
-                        
-                        # 一時ファイルを削除
-                        rm -f "$temp_file"
-                    else
-                        # 枠が取得できない場合は通常の15行要約（パンニング用にウィンドウIDを渡す）
-                        TMUX_PANE="%${window_id}" CLAUDE_VOICE_WINDOW_ID="$window_id" "$voice_script" brief 15 "$voice"
-                    fi
-                }) &
-                ;;
-            "busy")
-                # Busyの場合は通常読み上げない
-                ;;
-        esac
-    else
-        # フォールバック: claude-voiceが無い場合は簡単なメッセージ
-        local message=""
-        case "$context" in
-            "complete")
-                message="ウィンドウ${window_id}の処理が完了しました"
-                ;;
-            "waiting")
-                message="ウィンドウ${window_id}が入力を待っています"
-                ;;
-            "busy")
-                message="ウィンドウ${window_id}が処理中です"
-                ;;
-        esac
-        
-        if [[ -n "$message" ]]; then
-            (sleep 0.5 && say -v "$voice" -r 200 "$message" 2>/dev/null) &
+    if command -v terminal-notifier >/dev/null 2>&1; then
+        # Check if DND is enabled and user wants to respect it
+        if is_dnd_enabled && [ "${CLAUDE_RESPECT_DND:-true}" = "true" ]; then
+            # Send notification without sound if DND is enabled
+            terminal-notifier \
+                -title "$title" \
+                -subtitle "$subtitle" \
+                -message "$message" \
+                -group "$group" \
+                -sender "com.apple.Terminal" 2>/dev/null &
+        else
+            # Send full notification with sound
+            terminal-notifier \
+                -title "$title" \
+                -subtitle "$subtitle" \
+                -message "$message" \
+                -sound "$sound" \
+                -group "$group" \
+                -sender "com.apple.Terminal" \
+                -ignoreDnD 2>/dev/null &
         fi
     fi
 }
 
-# メイン処理実行
-main
+# Find PowerShell executable path for WSL
+find_powershell_path() {
+    local powershell_paths=(
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+        "/mnt/c/Windows/System32/powershell.exe"
+        "powershell.exe"
+    )
+    
+    for path in "${powershell_paths[@]}"; do
+        if [[ -f "$path" ]]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# Waiting notification (⌛) - Input required
+notify_waiting() {
+    local os_type=$(detect_os_type)
+    
+    case "$os_type" in
+        "macos")
+            # macOS: Cleanup old notifications first
+            cleanup_macos_notifications
+            
+            # macOS: System sound + terminal-notifier
+            if command -v afplay >/dev/null 2>&1; then
+                afplay /System/Library/Sounds/Glass.aiff 2>/dev/null &
+            fi
+            # Enhanced notification with terminal-notifier
+            if command -v terminal-notifier >/dev/null 2>&1; then
+                send_notification_smart "Claude Code" "⌛ Waiting" "入力待ちです" "Glass" "claude-code-waiting"
+            else
+                # Fallback to osascript if terminal-notifier not available
+                osascript -e 'display notification "入力待ちです" with title "Claude Code" subtitle "⌛ Waiting"' 2>/dev/null &
+            fi
+            ;;
+        "wsl")
+            # WSL: PowerShell beep notification sound
+            local powershell_path=$(find_powershell_path)
+            if [[ -n "$powershell_path" ]]; then
+                "$powershell_path" -Command "
+                [console]::beep(659, 100)
+                Start-Sleep -Milliseconds 50
+                [console]::beep(880, 150)
+                " 2>/dev/null &
+            else
+                echo -e "\a"
+                sleep 0.1
+                echo -e "\a"
+            fi
+            ;;
+        "linux")
+            # Linux: System sound or fallback
+            if command -v paplay >/dev/null 2>&1; then
+                paplay /usr/share/sounds/alsa/Side_Left.wav 2>/dev/null &
+            elif command -v notify-send >/dev/null 2>&1; then
+                notify-send "Claude Code" "⌛ 入力待ちです" 2>/dev/null &
+            else
+                echo -e "\a"
+                sleep 0.1
+                echo -e "\a"
+            fi
+            ;;
+        *)
+            # Fallback: Terminal bell
+            echo -e "\a"
+            sleep 0.1
+            echo -e "\a"
+            ;;
+    esac
+}
+
+# Complete notification (✅) - Task completed
+notify_complete() {
+    local os_type=$(detect_os_type)
+    
+    case "$os_type" in
+        "macos")
+            # macOS: Cleanup old notifications first
+            cleanup_macos_notifications
+            
+            # macOS: Completion sound + terminal-notifier
+            if command -v afplay >/dev/null 2>&1; then
+                afplay /System/Library/Sounds/Hero.aiff 2>/dev/null &
+            fi
+            # Enhanced notification with terminal-notifier
+            if command -v terminal-notifier >/dev/null 2>&1; then
+                send_notification_smart "Claude Code" "✅ Complete" "処理が完了しました" "Hero" "claude-code-complete"
+            else
+                # Fallback to osascript if terminal-notifier not available
+                osascript -e 'display notification "処理が完了しました" with title "Claude Code" subtitle "✅ Complete"' 2>/dev/null &
+            fi
+            ;;
+        "wsl")
+            # WSL: PowerShell completion sound (ascending melody)
+            local powershell_path=$(find_powershell_path)
+            if [[ -n "$powershell_path" ]]; then
+                "$powershell_path" -Command "
+                [console]::beep(523, 80)
+                [console]::beep(659, 80)
+                [console]::beep(783, 80)
+                [console]::beep(1046, 120)
+                " 2>/dev/null &
+            else
+                echo -e "\a"
+            fi
+            ;;
+        "linux")
+            # Linux: System sound or fallback
+            if command -v paplay >/dev/null 2>&1; then
+                paplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
+            elif command -v notify-send >/dev/null 2>&1; then
+                notify-send "Claude Code" "✅ 処理完了" 2>/dev/null &
+            else
+                echo -e "\a"
+            fi
+            ;;
+        *)
+            # Fallback: Terminal bell
+            echo -e "\a"
+            ;;
+    esac
+}
+
+# Enhanced notification function with better error handling
+notify_status_change() {
+    # Skip notification if rate limited
+    if ! rate_limit_check; then
+        return 0
+    fi
+    
+    # Check if notifications are disabled
+    if [ -f "$HOME/.tmux/notifications_disabled" ]; then
+        return 0
+    fi
+    
+    # Enhanced notification with OS-specific sounds and alerts
+    case "$NEW_STATUS" in
+        "✅")
+            # Process completed - use enhanced completion notification
+            notify_complete
+            ;;
+        "⌛")
+            # Waiting for input - use enhanced input notification
+            notify_waiting
+            ;;
+        "⚡")
+            # Process started - enhanced notification for macOS
+            local os_type=$(detect_os_type)
+            if [ "$os_type" = "macos" ]; then
+                cleanup_macos_notifications
+                if command -v terminal-notifier >/dev/null 2>&1; then
+                    send_notification_smart "Claude Code" "⚡ Busy" "処理中です" "Ping" "claude-code-busy"
+                else
+                    echo -e "\a"
+                fi
+            else
+                echo -e "\a"
+            fi
+            ;;
+    esac
+}
+
+# Only notify for meaningful status changes (non-empty states)
+if [ -n "$OLD_STATUS" ] && [ -n "$NEW_STATUS" ] && [ "$OLD_STATUS" != "$NEW_STATUS" ]; then
+    notify_status_change
+fi
