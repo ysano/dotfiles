@@ -186,24 +186,9 @@ CLAUDE_WORKFLOWS_TEST_RESULTS.md
 .cursor/cache/
 .cursor/logs/
 
-# tmux related
-.tmux/cache/
-.tmux/status/.last_cleanup
-.tmux/claude/logs/claude-voice.log
-.tmux/claude/logs/integration.log
-.tmux/claude/logs/performance.log
-.tmux/claude/logs/*.jsonl
-
 # Additional undo-tree files
 *.~undo-tree~
-
 
 # Don't index SpecStory auto-save files, but allow explicit context inclusion via @ references
 .specstory/**
 
-# tmux temporary and cache files
-.tmux/status/
-.tmux/cache/
-.tmux/backups/
-.tmux/*.log
-.tmux/**/*.log
