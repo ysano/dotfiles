@@ -1,4 +1,0 @@
-> create a new file
-
-Creating file... (Press Esc to interrupt)
-Processing request...
