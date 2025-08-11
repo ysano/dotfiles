@@ -4,12 +4,13 @@
 
 ### **Phase 1: 基本監視システム**
 
-- [ ] `main.sh`の作成（無限ループ、エラーハンドリング）
+- [ ] `polling_monitor.sh`の作成（ポーリング監視、エラーハンドリング）
 - [ ] `functions.sh`の作成（ステータス判定、状態管理）
 - [ ] 依存関係チェック機能の実装
 - [ ] ログ出力機能の実装
 - [ ] 設定値バリデーションの実装
 - [ ] 単体テストの作成
+- [ ] tmux status-right統合の確認
 
 ### **Phase 2: 音声エンジン**
 
@@ -38,11 +39,28 @@
 
 ### **Phase 5: 統合と最適化**
 
+- [ ] `integration_test.sh`の作成
 - [ ] 全ファイルの統合テスト
 - [ ] パフォーマンス最適化
 - [ ] エラーハンドリングの強化
 - [ ] ドキュメントの作成
 - [ ] エンドツーエンドテスト
+- [ ] ポーリング監視テスト
+
+## 実装済みファイル一覧
+
+### ✅ 完了済み
+
+- [x] `polling_monitor.sh` - ポーリング監視スクリプト
+- [x] `functions.sh` - 基本機能関数群
+- [x] `sound_utils.sh` - 音声エンジン
+- [x] `panning_engine.sh` - デシベルパンニングエンジン
+- [x] `ollama_utils.sh` - Ollama連携機能
+- [x] `integration_test.sh` - 統合テスト
+
+### ❌ 未実装
+
+- [ ] `toggle_notify_mode.sh` - 通知モード切り替え（オプション）
 
 ## デバッグガイド
 
@@ -58,7 +76,20 @@
    fi
    ```
 
-2. **音声が再生されない**
+2. **ポーリング監視が動作しない**
+
+   ```bash
+   # 解決方法: status-right設定の確認
+   tmux show-option -g status-right
+   
+   # 解決方法: 手動でポーリング監視をテスト
+   ~/.tmux/claude/polling_monitor.sh
+   
+   # 解決方法: システム有効化状態の確認
+   tmux show-option -gqv @claude_voice_enabled
+   ```
+
+3. **音声が再生されない**
 
    ```bash
    # 解決方法: 音声デバイスの確認
@@ -69,14 +100,14 @@
    powershell.exe -Command "Get-WmiObject -Class Win32_SoundDevice"
    ```
 
-3. **Ollamaに接続できない**
+4. **Ollamaに接続できない**
 
    ```bash
    # 解決方法: 接続テスト
    curl -s --max-time 5 "http://localhost:11434/api/tags" || echo "Ollamaサーバーに接続できません"
    ```
 
-4. **ffplayが見つからない**
+5. **ffplayが見つからない**
 
    ```bash
    # 解決方法: インストール確認
@@ -103,17 +134,97 @@ else
 fi
 ```
 
-### パフォーマンス監視
+### ポーリング監視のデバッグ
 
 ```bash
-# 実行時間の測定
-measure_execution_time() {
-    local start_time=$(date +%s.%N)
-    "$@"
-    local end_time=$(date +%s.%N)
-    local execution_time=$(echo "$end_time - $start_time" | bc)
-    log_debug "実行時間: ${execution_time}秒"
+# ポーリング監視の手動テスト
+test_polling_monitor() {
+    echo "=== ポーリング監視テスト ==="
+    
+    # 設定確認
+    echo "システム有効化状態: $(tmux show-option -gqv @claude_voice_enabled)"
+    echo "ウィンドウパターン: $(tmux show-option -gqv @claude_voice_window_pattern)"
+    
+    # ポーリング監視実行
+    if ~/.tmux/claude/polling_monitor.sh; then
+        echo "✓ ポーリング監視: 成功"
+    else
+        echo "✗ ポーリング監視: 失敗"
+        return 1
+    fi
 }
+```
+
+## ファイル構造
+
+```
+.tmux/claude/
+├── polling_monitor.sh      # ポーリング監視スクリプト
+├── functions.sh           # 基本機能関数群
+├── sound_utils.sh         # 音声エンジン
+├── panning_engine.sh      # デシベルパンニングエンジン
+├── ollama_utils.sh        # Ollama連携機能
+└── integration_test.sh    # 統合テスト
+```
+
+## 依存関係
+
+### 必須依存関係
+
+- `tmux` - ターミナルマルチプレクサ
+- `bash` - シェルスクリプト実行環境
+- `grep` - テキスト検索
+- `awk` - テキスト処理
+- `curl` - HTTP通信（Ollama連携用）
+- `jq` - JSON処理（Ollama連携用）
+
+### 音声関連依存関係
+
+- **macOS**: `say`, `ffplay` (ffmpeg)
+- **WSL**: `powershell.exe`, `ffplay` (ffmpeg)
+
+### オプション依存関係
+
+- `ollama` - ローカルLLM（要約機能用）
+- `bc` - 数値計算（パンニング計算用）
+
+## 設定ファイル例
+
+```bash
+# .tmux.conf または .tmux/claude.conf
+
+# === Claude Voice 基本設定 ===
+set -g @claude_voice_enabled "true"
+set -g @claude_voice_interval "5"
+set -g @claude_voice_window_pattern "Claude|claude|CLAUDE"
+
+# === 音声エンジン設定 ===
+set -g @claude_voice_sound_enabled "true"
+set -g @claude_voice_sound_start "Submarine"
+set -g @claude_voice_sound_complete "Funk" 
+set -g @claude_voice_sound_waiting "Basso"
+
+# === 音声合成設定 ===
+set -g @claude_voice_speech_rate "200"
+set -g @claude_voice_volume_macos "0.8"
+set -g @claude_voice_volume_wsl "80"
+set -g @claude_voice_macos_voice "Kyoko"
+set -g @claude_voice_wsl_voice "Haruka"
+
+# === デシベルパンニング設定 ===
+set -g @claude_voice_panning_enabled "true"
+set -g @claude_voice_pan_range "1.0"
+set -g @claude_voice_pan_identification "true"
+
+# === Ollama連携設定 ===
+set -g @claude_voice_ollama_host "localhost"
+set -g @claude_voice_ollama_port "11434"
+set -g @claude_voice_summary_enabled "true"
+set -g @claude_voice_summary_length "30"
+
+# === ポーリング自動監視設定 ===
+set -g status-interval 5
+set -g status-right '#(~/.tmux/claude/polling_monitor.sh)#[default] %H:%M '
 ```
 
 ## 最終確認事項
@@ -127,55 +238,9 @@ measure_execution_time() {
 - [ ] 設定値のバリデーションが実装されている
 - [ ] 単体テストがすべて成功している
 - [ ] 統合テストが成功している
+- [ ] ポーリング監視が正常に動作している
+- [ ] tmux status-right統合が正常に動作している
 - [ ] 実際のtmux環境で動作確認が完了している
 - [ ] ドキュメントが最新の状態になっている
 
 このチェックリストに従って実装することで、堅牢で保守性の高いtmux-claude-voiceシステムを構築できます。
-
-## ファイル構造の最終確認
-
-実装すべきファイル一覧：
-
-1. **`main.sh`** - メイン監視ループ
-2. **`functions.sh`** - 基本機能関数群
-3. **`sound_utils.sh`** - 音声エンジン
-4. **`panning_engine.sh`** - デシベルパンニング
-5. **`ollama_utils.sh`** - Ollama連携
-6. **`platform_utils.sh`** - プラットフォーム依存処理
-7. **`toggle_notify_mode.sh`** - 通知モード切り替え
-8. **`README.md`** - インストール・設定ガイド
-
-## 依存関係の確認
-
-必要な外部コマンド：
-
-- **基本**: `tmux`, `grep`, `bc`, `jq`, `curl`
-- **音声**: `say` (macOS), `powershell.exe` (WSL), `afplay` (macOS), `ffplay`
-- **AI**: `ollama` (オプション)
-
-## 設定ファイルの例
-
-`.tmux.conf`への追加設定例：
-
-```bash
-# Tmux Claude Voice 設定
-set -g @claude_voice_enabled "true"
-set -g @claude_voice_interval "5"
-set -g @claude_voice_window_pattern "Claude|claude|CLAUDE"
-
-# 音声設定
-set -g @claude_voice_sound_enabled "true"
-set -g @claude_voice_macos_voice "Kyoko"
-set -g @claude_voice_wsl_voice "Haruka"
-
-# Ollama設定
-set -g @claude_voice_ollama_host "localhost"
-set -g @claude_voice_ollama_port "11434"
-
-# デシベルパンニング設定
-set -g @claude_voice_panning_enabled "true"
-set -g @claude_voice_pan_dynamic "true"
-
-# キーバインド設定
-bind-key n run-shell "~/.tmux/plugins/tmux-claude-voice/toggle_notify_mode.sh"
-```

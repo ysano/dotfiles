@@ -193,17 +193,14 @@ test_real_tmux_environment() {
     # テストウィンドウ作成
     tmux new-window -t "$session_name" -n "Claude"
 
-    # システム起動
-    if start_monitoring_system "$session_name"; then
-        echo "✓ システム起動: 成功"
+    # ポーリング監視テスト
+    if test_polling_monitor "$session_name"; then
+        echo "✓ ポーリング監視: 成功"
     else
-        echo "✗ システム起動: 失敗"
+        echo "✗ ポーリング監視: 失敗"
         tmux kill-session -t "$session_name"
         return 1
     fi
-
-    # テスト実行
-    sleep 5
 
     # クリーンアップ
     tmux kill-session -t "$session_name"
@@ -211,23 +208,36 @@ test_real_tmux_environment() {
     echo "=== エンドツーエンドテスト完了 ==="
     return 0
 }
+
+# ポーリング監視テスト
+test_polling_monitor() {
+    local session_name="$1"
+    
+    # ポーリング監視を実行
+    if ~/.tmux/claude/polling_monitor.sh >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
 ```
 
 ## ファイル構造
 
 上記設計に基づき、以下の構造でスクリプトを実装してください。
 
-1.  **`main.sh`**:
-    - 設定読み込み、無限ループ、監視対象ウィンドウの特定とループ処理。
+1.  **`polling_monitor.sh`**:
+    - 設定読み込み、ポーリング監視、監視対象ウィンドウの特定と処理。
+    - `tmux status-right`から5秒間隔で呼び出される1回実行型スクリプト。
 2.  **`functions.sh`**:
     - `analyze_pane_content()`: ペインコンテンツからステータスを判定するロジック。
     - `handle_status_change()`: 状態遷移に応じた処理の振り分け。
     - `summarize_with_ollama()`: Ollama APIと連携し要約を生成する機能。
-    - `update_window_icon()`: ウィンドウ名を変更する機能。
-3.  **`platform_utils.sh`**:
-    - `get_os_type()`, `speak()`, `play_notification_sound()`, `get_ollama_host()`など、プラットフォーム依存の処理をすべてここにまとめる。
+    - `update_claude_status_icon()`: ウィンドウアイコンを更新する機能。
+3.  **`sound_utils.sh`**:
+    - `get_os_type()`, `speak()`, `play_notification_sound()`, `get_system_sound_path()`など、プラットフォーム依存の音声処理をすべてここにまとめる。
 4.  **`panning_engine.sh`**:
-    - `detect_claude_windows()`: Claude Codeウィンドウの検出。
+    - `detect_claude_windows_for_panning()`: Claude Codeウィンドウの検出。
     - `count_claude_windows()`: Claude Codeウィンドウ数のカウント。
     - `calculate_equal_spacing()`: 均等配置位置の計算。
     - `calculate_pan_position()`: 動的音像位置の計算。
@@ -239,23 +249,17 @@ test_real_tmux_environment() {
     - `get_available_ollama_models()`: 利用可能なモデルリスト取得。
     - `select_optimal_ollama_model()`: 優先順位に基づく最適なモデル選択。
     - `summarize_with_ollama()`: Ollama APIを使用した要約生成。
-6.  **`sound_utils.sh`**:
-    - `get_system_sound_path()`: プラットフォーム固有の通知音パス取得。
-    - `get_available_macos_voices()`: 利用可能なmacOS音声の取得。
-    - `get_available_windows_voices()`: 利用可能なWindows音声の取得。
-    - `speak_text()`: 設定可能な音声キャラクターでの音声合成。
-    - `play_notification_sound()`: システム通知音の再生。
-    - `apply_panning()`: Equal Power Pan Law対応のデシベルパンニング。
-    - `get_os_type()`: OS種別の判定。
-7.  **`toggle_notify_mode.sh`**:
-    - `Prefix + n`で実行される通知モード切り替えスクリプト。
-8.  **`README.md`**:
-    - インストール方法、`.tmux.conf`での設定例、依存関係（`ollama`, `ffplay`, `jq`, `curl`）について記述する。
+6.  **`integration_test.sh`**:
+    - 全ファイルの統合テスト。
+    - 単体テスト実行。
+    - エンドツーエンドテスト。
+    - ポーリング監視テスト。
 
 ## 最優先事項
 
+- **軽量性**: ポーリング方式のため、1回実行で確実に終了し、リソース消費を最小限に抑えること。
 - **堅牢性**: スクリプトがエラーで停止しないよう、コマンドの存在チェックやエラーハンドリングを適切に行うこと。
-- **パフォーマンス**: `tmux`全体のパフォーマンスに影響を与えないよう、ループ間隔やコマンド実行を効率的に行うこと。
+- **パフォーマンス**: `tmux`全体のパフォーマンスに影響を与えないよう、効率的な処理を心がけること。
 - **音声品質**: Equal Power Pan Law対応により、デシベルパンニング処理による音質劣化を最小限に抑えること。
 - **ウィンドウ識別精度**: 複数ウィンドウ間での音像位置の明確な区別を確保すること。
 - **プラットフォーム最適化**: macOS（Kyoko/Otoya Enhanced）とWSL（Haruka/Ayumi/Ichiro）の高品質音声合成を活用すること。
@@ -275,7 +279,17 @@ test_real_tmux_environment() {
    fi
    ```
 
-2. **音声が再生されない**
+2. **ポーリング監視が動作しない**
+
+   ```bash
+   # 解決方法: status-right設定の確認
+   tmux show-option -g status-right
+   
+   # 解決方法: 手動でポーリング監視をテスト
+   ~/.tmux/claude/polling_monitor.sh
+   ```
+
+3. **音声が再生されない**
 
    ```bash
    # 解決方法: 音声デバイスの確認
@@ -286,14 +300,14 @@ test_real_tmux_environment() {
    powershell.exe -Command "Get-WmiObject -Class Win32_SoundDevice"
    ```
 
-3. **Ollamaに接続できない**
+4. **Ollamaに接続できない**
 
    ```bash
    # 解決方法: 接続テスト
    curl -s --max-time 5 "http://localhost:11434/api/tags" || echo "Ollamaサーバーに接続できません"
    ```
 
-4. **ffplayが見つからない**
+5. **ffplayが見つからない**
 
    ```bash
    # 解決方法: インストール確認
@@ -333,6 +347,27 @@ measure_execution_time() {
 }
 ```
 
+### ポーリング監視のデバッグ
+
+```bash
+# ポーリング監視の手動テスト
+test_polling_monitor() {
+    echo "=== ポーリング監視テスト ==="
+    
+    # 設定確認
+    echo "システム有効化状態: $(tmux show-option -gqv @claude_voice_enabled)"
+    echo "ウィンドウパターン: $(tmux show-option -gqv @claude_voice_window_pattern)"
+    
+    # ポーリング監視実行
+    if ~/.tmux/claude/polling_monitor.sh; then
+        echo "✓ ポーリング監視: 成功"
+    else
+        echo "✗ ポーリング監視: 失敗"
+        return 1
+    fi
+}
+```
+
 ## 最終確認事項
 
 実装完了後、以下の項目を確認してください：
@@ -344,6 +379,7 @@ measure_execution_time() {
 - [ ] 設定値のバリデーションが実装されている
 - [ ] 単体テストがすべて成功している
 - [ ] 統合テストが成功している
+- [ ] ポーリング監視が正常に動作している
 - [ ] 実際のtmux環境で動作確認が完了している
 - [ ] ドキュメントが最新の状態になっている
 
