@@ -253,18 +253,52 @@ apply_panning() {
         local ffplay_pid=$!
         log_debug "ffplay開始 (PID: $ffplay_pid)"
     else
-        # WSL/Linux: ffplay使用（リアルタイム再生）
+        # WSL/Linux: PowerShell経由でWindowsネイティブ機能を使用（優先）またはffplay
         local volume=$(get_tmux_panning_option "claude_voice_volume_wsl" "80")
         
-        log_debug "Linux再生: volume=$volume%, left=$left_gain, right=$right_gain"
-        
-        ffplay -af "pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0" \
-               -volume "$volume" \
-               "$input_file" \
-               -nodisp -autoexit 2>/dev/null &
-        local ffplay_pid=$!
-        log_debug "ffplay開始 (PID: $ffplay_pid)"
+        # PowerShellが利用可能な場合はWindowsネイティブ機能を使用
+        if command -v get_powershell_path >/dev/null 2>&1; then
+            local powershell_path
+            if powershell_path=$(get_powershell_path); then
+                # Windowsネイティブの音声再生（パンニングなし）
+                local windows_path=$(echo "$input_file" | sed 's|/mnt/c/|C:/|g' | sed 's|/|\\|g')
+                log_debug "WSL再生 (PowerShell): volume=$volume%, file=$windows_path"
+                
+                "$powershell_path" -Command "
+                    try {
+                        Add-Type -AssemblyName System.Windows.Forms
+                        \$player = New-Object System.Media.SoundPlayer
+                        \$player.SoundLocation = '$windows_path'
+                        \$player.Play()
+                    } catch {
+                        Write-Error 'Failed to play sound: \$_'
+                    }
+                " 2>/dev/null &
+                local ps_pid=$!
+                log_debug "PowerShell再生開始 (PID: $ps_pid)"
+            else
+                log_debug "PowerShellが見つからないためffplayを使用"
+                goto_ffplay
+            fi
+        else
+            log_debug "get_powershell_path関数が見つからないためffplayを使用"
+            goto_ffplay
+        fi
     fi
+}
+
+# ffplayを使用した再生（フォールバック）
+goto_ffplay() {
+    local volume=$(get_tmux_panning_option "claude_voice_volume_wsl" "80")
+    
+    log_debug "Linux再生 (ffplay): volume=$volume%, left=$left_gain, right=$right_gain"
+    
+    ffplay -af "pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0" \
+           -volume "$volume" \
+           "$input_file" \
+           -nodisp -autoexit 2>/dev/null &
+    local ffplay_pid=$!
+    log_debug "ffplay開始 (PID: $ffplay_pid)"
 }
 
 # ウィンドウ識別用の音声通知を生成する関数

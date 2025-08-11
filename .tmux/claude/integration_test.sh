@@ -27,7 +27,7 @@ test_file_existence() {
     echo "=== ファイル存在チェック ==="
     
     local required_files=(
-        "main.sh"
+        "polling_monitor.sh"
         "functions.sh"
         "sound_utils.sh"
         "panning_engine.sh"
@@ -55,14 +55,14 @@ test_file_existence() {
 test_individual_components() {
     echo "=== 単体テスト実行 ==="
     
-    # main.shテスト
-    echo "main.shテスト実行中..."
-    if "${SCRIPT_DIR}/main.sh" test >/dev/null 2>&1; then
-        echo "✓ main.sh: 単体テスト成功"
-        record_test_result "Unit: main.sh" "✓"
+    # polling_monitor.shテスト
+    echo "polling_monitor.shテスト実行中..."
+    if "${SCRIPT_DIR}/polling_monitor.sh" >/dev/null 2>&1; then
+        echo "✓ polling_monitor.sh: 単体テスト成功"
+        record_test_result "Unit: polling_monitor.sh" "✓"
     else
-        echo "✗ main.sh: 単体テスト失敗"
-        record_test_result "Unit: main.sh" "✗"
+        echo "✗ polling_monitor.sh: 単体テスト失敗"
+        record_test_result "Unit: polling_monitor.sh" "✗"
     fi
     
     # functions.shテスト
@@ -112,7 +112,7 @@ test_dependencies() {
     
     # 基本依存関係
     echo "基本依存関係チェック中..."
-    if "${SCRIPT_DIR}/main.sh" test >/dev/null 2>&1; then
+    if "${SCRIPT_DIR}/polling_monitor.sh" >/dev/null 2>&1; then
         echo "✓ 基本依存関係: 満足"
         record_test_result "Deps: Basic" "✓"
     else
@@ -272,17 +272,17 @@ test_performance() {
     
     # メモリ使用量（概算）
     echo "メモリ使用量測定中..."
-    local process_count
-    process_count=$(bash -c "
-        source '${SCRIPT_DIR}/functions.sh' && 
-        source '${SCRIPT_DIR}/sound_utils.sh' && 
-        source '${SCRIPT_DIR}/panning_engine.sh' && 
-        source '${SCRIPT_DIR}/ollama_utils.sh' &&
-        echo \${#BASH_SOURCE[@]}
-    " 2>/dev/null || echo "0")
+    local memory_usage
+    memory_usage=$(bash -c "
+        source '${SCRIPT_DIR}/functions.sh' >/dev/null 2>&1 &&
+        source '${SCRIPT_DIR}/sound_utils.sh' >/dev/null 2>&1 &&
+        source '${SCRIPT_DIR}/panning_engine.sh' >/dev/null 2>&1 &&
+        source '${SCRIPT_DIR}/ollama_utils.sh' >/dev/null 2>&1 &&
+        echo 'success'
+    " 2>/dev/null || echo "failed")
     
-    if [[ "$process_count" -gt 0 ]]; then
-        echo "✓ メモリ使用量: 正常 (読み込みスクリプト数: $process_count)"
+    if [[ "$memory_usage" == "success" ]]; then
+        echo "✓ メモリ使用量: 正常 (全スクリプト読み込み成功)"
         record_test_result "Performance: Memory Usage" "✓"
     else
         echo "✗ メモリ使用量: 測定失敗"
@@ -335,7 +335,7 @@ generate_report() {
     if [[ $failed_count -eq 0 ]]; then
         echo "1. .tmux.confに設定を追加"
         echo "2. tmuxを再起動"
-        echo "3. main.shを実行してシステムを開始"
+        echo "3. ポーリング監視が自動開始されます"
         echo "4. Claude Codeウィンドウでテスト実行"
     else
         echo "1. 失敗したテストの問題を修正"

@@ -325,12 +325,73 @@ test_functions() {
     return 0
 }
 
+# 依存関係チェック機能
+check_dependencies() {
+    local deps=("tmux" "grep" "awk" "curl" "jq")
+    local missing_deps=()
+    
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing_deps[@]} -eq 0 ]]; then
+        return 0
+    else
+        log_error "依存関係が見つかりません: ${missing_deps[*]}"
+        return 1
+    fi
+}
+
+# 設定値バリデーション機能
+validate_config() {
+    local config_name="$1"
+    local config_value="$2"
+    local expected_type="$3"
+
+    case "$expected_type" in
+        "number")
+            if ! [[ "$config_value" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+                log_error "設定値が数値ではありません: $config_name = $config_value"
+                return 1
+            fi
+            ;;
+        "boolean")
+            if ! [[ "$config_value" =~ ^(true|false)$ ]]; then
+                log_error "設定値が真偽値ではありません: $config_name = $config_value"
+                return 1
+            fi
+            ;;
+        "string")
+            if [[ -z "$config_value" ]]; then
+                log_error "設定値が空です: $config_name"
+                return 1
+            fi
+            ;;
+    esac
+
+    return 0
+}
+
 # スクリプト実行時の処理
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    if [[ "$1" == "test" ]]; then
-        test_functions
-    else
-        echo "このスクリプトは直接実行できません。main.shから読み込んでください。"
-        exit 1
-    fi
+    case "$1" in
+        "test")
+            test_functions
+            ;;
+        "deps")
+            if check_dependencies; then
+                echo "✓ 基本依存関係: 満足"
+                exit 0
+            else
+                echo "✗ 基本依存関係: 不足"
+                exit 1
+            fi
+            ;;
+        *)
+            echo "このスクリプトは直接実行できません。polling_monitor.shから読み込んでください。"
+            exit 1
+            ;;
+    esac
 fi
