@@ -76,19 +76,19 @@ process_claude_window_polling() {
         # 状態を保存
         save_current_status "$session_window" "$current_status"
         
-        # ウィンドウアイコンを更新
-        update_window_icon "$session_window" "$current_status"
+        # Claude Codeステータスアイコンを更新
+        update_claude_status_icon "$session_window" "$current_status"
         
         # 音声フィードバック（非同期実行）
         trigger_audio_feedback "$session_window" "$current_status" &
     else
         # 状態変化なし：アイコン更新のみ（念のため）
-        update_window_icon "$session_window" "$current_status"
+        update_claude_status_icon "$session_window" "$current_status"
     fi
 }
 
-# ウィンドウアイコン更新
-update_window_icon() {
+# Claude Codeステータスアイコン更新（tmux変数方式）
+update_claude_status_icon() {
     local session_window="$1"
     local status="$2"
     
@@ -96,21 +96,15 @@ update_window_icon() {
     case "$status" in
         "Busy")   icon="⚡" ;;
         "Waiting") icon="⌛" ;;
-        "Idle")   icon="✅" ;;
-        *)        icon="❓" ;;
+        *)        icon="✅" ;;  # その他はすべてIdle判定
     esac
     
-    # ウィンドウ名を取得
-    local window_name
-    window_name=$(tmux display-message -t "$session_window" -p "#{window_name}" 2>/dev/null)
+    # ウィンドウインデックスを取得
+    local window_index
+    window_index=$(echo "$session_window" | cut -d':' -f2)
     
-    if [[ -n "$window_name" ]]; then
-        # アイコン付きでウィンドウ名を更新
-        local new_name="$icon $window_name"
-        # 既存のアイコンを除去してから新しいアイコンを追加
-        new_name="$icon $(echo "$window_name" | sed -E 's/^[⚡⌛✅❓] //')"
-        tmux rename-window -t "$session_window" "$new_name" 2>/dev/null
-    fi
+    # tmux変数にアイコンを保存
+    tmux set-option -g "@claude_voice_icon_$window_index" "$icon" 2>/dev/null
 }
 
 # 音声フィードバック（バックグラウンド実行）
