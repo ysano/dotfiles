@@ -41,7 +41,9 @@ polling_monitor_main() {
     claude_windows=$(detect_claude_windows)
     
     if [[ -z "$claude_windows" ]]; then
-        return 0 # Claudeウィンドウがない場合は終了
+        # Claude Codeが検出されない場合、すべてのウィンドウのアイコンをクリア
+        clear_all_claude_icons
+        return 0
     fi
     
     # 各Claudeウィンドウを処理
@@ -105,6 +107,21 @@ update_claude_status_icon() {
     
     # tmux変数にアイコンを保存
     tmux set-option -g "@claude_voice_icon_$window_index" "$icon" 2>/dev/null
+}
+
+# すべてのウィンドウのClaudeアイコンをクリア
+clear_all_claude_icons() {
+    # すべてのウィンドウのアイコン変数をクリア
+    local windows
+    windows=$(tmux list-windows -F "#{window_index}" 2>/dev/null)
+    
+    while IFS= read -r window_index; do
+        if [[ -n "$window_index" ]]; then
+            tmux set-option -g "@claude_voice_icon_$window_index" "" 2>/dev/null
+        fi
+    done <<< "$windows"
+    
+    log_debug "すべてのClaudeアイコンをクリアしました"
 }
 
 # 音声フィードバック（バックグラウンド実行）
