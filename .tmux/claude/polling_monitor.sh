@@ -36,9 +36,9 @@ polling_monitor_main() {
         return 0 # tmuxセッションがない場合は終了
     fi
     
-    # Claudeウィンドウを検出
+    # Claude Codeプロセスを検出（Window名パターンは使用しない）
     local claude_windows
-    claude_windows=$(detect_claude_windows "$CLAUDE_VOICE_WINDOW_PATTERN")
+    claude_windows=$(detect_claude_windows)
     
     if [[ -z "$claude_windows" ]]; then
         return 0 # Claudeウィンドウがない場合は終了

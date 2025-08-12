@@ -19,28 +19,47 @@ log_debug() {
     fi
 }
 
-# Claude Codeウィンドウの検出
+# Claude Codeウィンドウの検出（プロセスベース）
 detect_claude_windows() {
-    local pattern="${1:-Claude|claude|CLAUDE}"
+    log_debug "Claude Codeプロセスを検索中..."
     
-    log_debug "Claudeウィンドウを検索中: パターン='$pattern'"
+    # すべてのペインを調査してClaude Codeの実行を検出
+    local claude_panes=""
+    local panes_list
+    panes_list=$(tmux list-panes -a -F "#{session_name}:#{window_index}:#{pane_index} #{pane_current_command} #{pane_pid}" 2>/dev/null)
     
-    # tmuxウィンドウリストを取得し、パターンにマッチするウィンドウを検索
-    local windows
-    if windows=$(tmux list-windows -F "#{session_name}:#{window_index}:#{window_name}" 2>/dev/null); then
-        local claude_windows
-        claude_windows=$(echo "$windows" | grep -E ":.*($pattern)" | cut -d':' -f1,2)
-        
-        if [[ -n "$claude_windows" ]]; then
-            log_debug "検出されたClaudeウィンドウ: $claude_windows"
-            echo "$claude_windows"
-        else
-            log_debug "Claudeウィンドウが見つかりません"
-            echo ""
+    while IFS=' ' read -r pane_info cmd pid; do
+        if [[ -z "$pane_info" ]]; then
+            continue
         fi
+        
+        local session_window=$(echo "$pane_info" | cut -d':' -f1,2)
+        
+        # nodeプロセスかつClaude Codeの特徴的なパターンを含むペインを検出
+        if [[ "$cmd" == "node" ]]; then
+            # ペインの内容を確認してClaude Code特有のパターンを検索（ペイン番号を正しい形式に変換）
+            local pane_target="${session_window}.${pane_info##*:}"
+            local pane_content
+            pane_content=$(tmux capture-pane -t "$pane_target" -p 2>/dev/null | head -50)
+            
+            # Claude Code特有のパターン（tokens, esc to interrupt, K tokens, claude.ai等）
+            if echo "$pane_content" | grep -qE "(tokens.*esc to interrupt|K tokens|claude\.ai|Claude Code|⏺|⚡|⌛|✅|Update Todos|Update\(|esc to|▶|◀)"; then
+                log_debug "Claude Codeを検出: $session_window (cmd=$cmd, pid=$pid)"
+                if [[ -z "$claude_panes" ]]; then
+                    claude_panes="$session_window"
+                else
+                    claude_panes="$claude_panes\n$session_window"
+                fi
+            fi
+        fi
+    done <<< "$panes_list"
+    
+    if [[ -n "$claude_panes" ]]; then
+        log_debug "検出されたClaude Codeウィンドウ: $claude_panes"
+        echo -e "$claude_panes" | sort -u
     else
-        log_error "tmuxウィンドウリストの取得に失敗しました"
-        return 1
+        log_debug "Claude Codeプロセスが見つかりません"
+        echo ""
     fi
 }
 
