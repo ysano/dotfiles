@@ -27,22 +27,11 @@ if ! command -v get_os_type >/dev/null 2>&1; then
     get_os_type() { uname; }
 fi
 
-# 設定値取得（デフォルト値付き）
-get_tmux_panning_option() {
-    local option="$1"
-    local default_value="$2"
-    
-    local value
-    if value=$(tmux show-option -gqv "@$option" 2>/dev/null); then
-        echo "$value"
-    else
-        echo "$default_value"
-    fi
-}
+# 設定値取得は sound_utils.sh の get_tmux_sound_option() を使用
 
 # Claude Codeウィンドウを検出する関数（既存のdetect_claude_windowsと重複回避）
 detect_claude_windows_for_panning() {
-    local pattern=$(get_tmux_panning_option "claude_voice_window_pattern" "Claude|claude|CLAUDE")
+    local pattern=$(get_tmux_sound_option "claude_voice_window_pattern" "Claude|claude|CLAUDE")
     
     log_debug "Claudeウィンドウを検索中（パンニング用）: パターン='$pattern'"
     
@@ -117,7 +106,7 @@ calculate_equal_spacing() {
     fi
 
     # 均等配置の計算
-    local margin=$(get_tmux_panning_option "claude_voice_pan_margin" "0.1")
+    local margin=$(get_tmux_sound_option "claude_voice_pan_margin" "0.1")
     local usable_range
     usable_range=$(echo "scale=3; 2 * (1 - $margin)" | bc 2>/dev/null || echo "1.8")
     
@@ -142,7 +131,7 @@ calculate_equal_spacing() {
 # ウィンドウ位置に基づく音像位置を計算する関数
 calculate_pan_position() {
     local target_window="$1"
-    local dynamic_enabled=$(get_tmux_panning_option "claude_voice_pan_dynamic" "true")
+    local dynamic_enabled=$(get_tmux_sound_option "claude_voice_pan_dynamic" "true")
 
     log_debug "音像位置計算: window=$target_window, dynamic=$dynamic_enabled"
 
@@ -151,7 +140,7 @@ calculate_pan_position() {
         local position
         position=$(calculate_equal_spacing "$target_window")
         
-        local min_distance=$(get_tmux_panning_option "claude_voice_pan_min_distance" "0.15")
+        local min_distance=$(get_tmux_sound_option "claude_voice_pan_min_distance" "0.15")
 
         # 最小距離を確保するための調整
         local adjusted_position
@@ -168,7 +157,7 @@ calculate_pan_position() {
 # Equal Power Pan Law対応のゲイン計算
 calculate_pan_gains() {
     local pan_position="$1"  # -1.0 ～ +1.0
-    local pan_law=$(get_tmux_panning_option "claude_voice_pan_law" "equal_power")
+    local pan_law=$(get_tmux_sound_option "claude_voice_pan_law" "equal_power")
     
     log_debug "パンゲイン計算: position=$pan_position, law=$pan_law"
 
@@ -240,7 +229,7 @@ apply_panning() {
 
     if [[ "$os_type" == "Darwin" ]]; then
         # macOS: ffplay使用（リアルタイム再生）
-        local volume=$(get_tmux_panning_option "claude_voice_volume_macos" "0.8")
+        local volume=$(get_tmux_sound_option "claude_voice_volume_macos" "0.8")
         local volume_percent
         volume_percent=$(echo "$volume * 100" | bc 2>/dev/null || echo "80")
         
@@ -254,7 +243,7 @@ apply_panning() {
         log_debug "ffplay開始 (PID: $ffplay_pid)"
     else
         # WSL/Linux: PowerShell経由でWindowsネイティブ機能を使用（優先）またはffplay
-        local volume=$(get_tmux_panning_option "claude_voice_volume_wsl" "80")
+        local volume=$(get_tmux_sound_option "claude_voice_volume_wsl" "80")
         
         # PowerShellが利用可能な場合はWindowsネイティブ機能を使用
         if command -v get_powershell_path >/dev/null 2>&1; then
@@ -289,7 +278,7 @@ apply_panning() {
 
 # ffplayを使用した再生（フォールバック）
 goto_ffplay() {
-    local volume=$(get_tmux_panning_option "claude_voice_volume_wsl" "80")
+    local volume=$(get_tmux_sound_option "claude_voice_volume_wsl" "80")
     
     log_debug "Linux再生 (ffplay): volume=$volume%, left=$left_gain, right=$right_gain"
     
@@ -314,7 +303,7 @@ create_window_identified_sound() {
     log_debug "ウィンドウ識別音声作成: window=$target_window, type=$sound_type"
 
     # パンニングが有効かチェック
-    local panning_enabled=$(get_tmux_panning_option "claude_voice_panning_enabled" "true")
+    local panning_enabled=$(get_tmux_sound_option "claude_voice_panning_enabled" "true")
     
     if [[ "$panning_enabled" != "true" ]]; then
         log_debug "パンニング無効のため通常再生を実行"
@@ -339,13 +328,13 @@ create_window_identified_sound() {
     # 通知音ファイルを取得
     local sound_file
     if command -v get_system_sound_path >/dev/null 2>&1; then
-        # デフォルトの通知音名を決定
+        # デフォルトの通知音名を決定（sound_utils.shと統一）
         local sound_name
         case "$sound_type" in
-            "start") sound_name="Submarine" ;;
-            "complete") sound_name="Funk" ;;
-            "waiting") sound_name="Basso" ;;
-            "error") sound_name="Basso" ;;
+            "start") sound_name="Ping" ;;
+            "complete") sound_name="Glass" ;;
+            "waiting") sound_name="Funk" ;;
+            "error") sound_name="Sosumi" ;;
             *) sound_name="Submarine" ;;
         esac
         

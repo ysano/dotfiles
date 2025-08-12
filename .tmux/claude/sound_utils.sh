@@ -266,10 +266,10 @@ play_notification_sound() {
     local sound_name=$(get_tmux_sound_option "claude_voice_sound_${sound_type}" "")
     if [[ -z "$sound_name" ]]; then
         case "$sound_type" in
-            "start") sound_name="Submarine" ;;
-            "complete") sound_name="Funk" ;;
-            "waiting") sound_name="Basso" ;;
-            "error") sound_name="Basso" ;;
+            "start") sound_name="Ping" ;;
+            "complete") sound_name="Glass" ;;
+            "waiting") sound_name="Funk" ;;
+            "error") sound_name="Sosumi" ;;
             *) sound_name="Submarine" ;;
         esac
     fi
