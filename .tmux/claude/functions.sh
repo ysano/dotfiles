@@ -152,19 +152,61 @@ handle_status_change() {
     
     log_info "ステータス変化を検出: $session_window ($previous_status -> $current_status)"
     
-    # 音声通知の処理（後のフェーズで実装）
+    # 通知モードを取得
+    local notify_mode=$(tmux show-option -gqv @claude_voice_notify_mode 2>/dev/null)
+    notify_mode="${notify_mode:-sound_summary}"
+    
+    # 音声有効化状態を取得
+    local sound_enabled=$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)
+    sound_enabled="${sound_enabled:-true}"
+    
+    # 要約有効化状態を取得
+    local summary_enabled=$(tmux show-option -gqv @claude_voice_summary_enabled 2>/dev/null)
+    summary_enabled="${summary_enabled:-true}"
+    
+    log_debug "通知モード: $notify_mode, 音声: $sound_enabled, 要約: $summary_enabled"
+    
+    # 状態変化に応じた通知処理
     case "$previous_status -> $current_status" in
         "Idle -> Busy" | "Waiting -> Busy")
             log_debug "処理開始通知をトリガー"
-            # TODO: 開始通知音の再生
+            if [[ "$sound_enabled" == "true" ]]; then
+                # 開始通知音の再生
+                if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
+                    source "$SCRIPT_DIR/sound_utils.sh"
+                    play_notification_sound "start" "$session_window" 2>/dev/null &
+                fi
+            fi
             ;;
         "Busy -> Idle")
             log_debug "処理完了通知をトリガー"
-            # TODO: 完了通知音 + 要約の読み上げ
+            if [[ "$sound_enabled" == "true" ]]; then
+                # 完了通知音の再生
+                if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
+                    source "$SCRIPT_DIR/sound_utils.sh"
+                    play_notification_sound "complete" "$session_window" 2>/dev/null &
+                fi
+            fi
+            
+            # 要約読み上げの処理
+            if [[ "$summary_enabled" == "true" ]]; then
+                handle_summary_reading "$session_window" "complete"
+            fi
             ;;
         "Busy -> Waiting")
             log_debug "問い合わせ通知をトリガー"
-            # TODO: 注意通知音 + 問い合わせ内容の要約読み上げ
+            if [[ "$sound_enabled" == "true" ]]; then
+                # 注意通知音の再生
+                if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
+                    source "$SCRIPT_DIR/sound_utils.sh"
+                    play_notification_sound "waiting" "$session_window" 2>/dev/null &
+                fi
+            fi
+            
+            # 要約読み上げの処理
+            if [[ "$summary_enabled" == "true" ]]; then
+                handle_summary_reading "$session_window" "waiting"
+            fi
             ;;
     esac
     
@@ -371,6 +413,59 @@ validate_config() {
             ;;
     esac
 
+    return 0
+}
+
+# 要約読み上げ処理
+handle_summary_reading() {
+    local session_window="$1"
+    local change_type="$2"  # complete または waiting
+    
+    log_debug "要約読み上げ処理開始: $session_window ($change_type)"
+    
+    # ペインコンテンツを取得
+    local pane_content
+    if ! pane_content=$(tmux capture-pane -t "$session_window" -p 2>/dev/null); then
+        log_error "ペインコンテンツの取得に失敗: $session_window"
+        return 1
+    fi
+    
+    # 要約行数を取得
+    local summary_lines=$(tmux show-option -gqv @claude_voice_summary_lines 2>/dev/null)
+    summary_lines="${summary_lines:-20}"
+    
+    # 最後のN行を取得
+    local last_lines=$(echo "$pane_content" | tail -n "$summary_lines")
+    
+    # Ollama連携スクリプトが存在するかチェック
+    if [[ -f "$SCRIPT_DIR/ollama_utils.sh" ]]; then
+        source "$SCRIPT_DIR/ollama_utils.sh"
+        
+        # 要約を生成
+        local summary
+        if summary=$(summarize_with_ollama "$last_lines" "$change_type"); then
+            log_debug "要約生成成功: $summary"
+            
+            # 音声合成スクリプトが存在するかチェック
+            if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
+                source "$SCRIPT_DIR/sound_utils.sh"
+                
+                # 要約を音声で読み上げ
+                speak "$summary" 2>/dev/null &
+                log_debug "要約読み上げ開始"
+            else
+                log_error "sound_utils.shが見つかりません"
+                return 1
+            fi
+        else
+            log_error "要約生成に失敗しました"
+            return 1
+        fi
+    else
+        log_error "ollama_utils.shが見つかりません"
+        return 1
+    fi
+    
     return 0
 }
 

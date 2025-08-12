@@ -252,6 +252,7 @@ speak_text() {
 # 通知音を再生
 play_notification_sound() {
     local sound_type="$1"  # start, complete, waiting, error
+    local session_window="$2"  # セッション:ウィンドウ（オプション）
     local os_type=$(get_os_type)
     
     if [[ -z "$sound_type" ]]; then
@@ -280,6 +281,19 @@ play_notification_sound() {
         if [[ ! -f "$sound_file" ]]; then
             log_error "通知音ファイルが見つかりません: $sound_file"
             return 1
+        fi
+
+        # パンニング機能の統合
+        local panning_enabled=$(tmux show-option -gqv @claude_voice_panning_enabled 2>/dev/null)
+        panning_enabled="${panning_enabled:-true}"
+        
+        if [[ "$panning_enabled" == "true" && -n "$session_window" ]]; then
+            # パンニングエンジンが利用可能な場合は使用
+            if [[ -f "$SCRIPT_DIR/panning_engine.sh" ]]; then
+                source "$SCRIPT_DIR/panning_engine.sh"
+                apply_panning "$sound_file" "$session_window" "$sound_type" &
+                return 0
+            fi
         fi
 
         if [[ "$os_type" == "Darwin" ]]; then

@@ -32,6 +32,7 @@ test_file_existence() {
         "sound_utils.sh"
         "panning_engine.sh"
         "ollama_utils.sh"
+        "toggle_notify_mode.sh"
     )
     
     local all_exist=true
@@ -104,6 +105,16 @@ test_individual_components() {
         echo "✗ ollama_utils.sh: 単体テスト失敗"
         record_test_result "Unit: ollama_utils.sh" "✗"
     fi
+    
+    # toggle_notify_mode.shテスト
+    echo "toggle_notify_mode.shテスト実行中..."
+    if "${SCRIPT_DIR}/toggle_notify_mode.sh" show >/dev/null 2>&1; then
+        echo "✓ toggle_notify_mode.sh: 単体テスト成功"
+        record_test_result "Unit: toggle_notify_mode.sh" "✓"
+    else
+        echo "✗ toggle_notify_mode.sh: 単体テスト失敗"
+        record_test_result "Unit: toggle_notify_mode.sh" "✗"
+    fi
 }
 
 # 依存関係チェック
@@ -160,6 +171,7 @@ test_configuration() {
         "claude_voice_enabled:true"
         "claude_voice_interval:5"
         "claude_voice_window_pattern:Claude|claude|CLAUDE"
+        "claude_voice_notify_mode:sound_summary"
     )
     
     for option_pair in "${test_options[@]}"; do

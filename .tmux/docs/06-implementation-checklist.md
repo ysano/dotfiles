@@ -57,10 +57,11 @@
 - [x] `panning_engine.sh` - デシベルパンニングエンジン
 - [x] `ollama_utils.sh` - Ollama連携機能
 - [x] `integration_test.sh` - 統合テスト
+- [x] `toggle_notify_mode.sh` - 通知モード切り替え機能
 
 ### ❌ 未実装
 
-- [ ] `toggle_notify_mode.sh` - 通知モード切り替え（オプション）
+- [x] `toggle_notify_mode.sh` - 通知モード切り替え（実装完了）
 
 ## 統合テスト結果（2025年8月11日 最終）
 
