@@ -24,6 +24,50 @@ get_os_type() {
     uname
 }
 
+# 統一されたボリューム設定を取得（0.0-1.0の範囲で正規化）
+get_normalized_volume() {
+    local os_type=$(get_os_type)
+    local volume_raw
+    
+    if [[ "$os_type" == "Darwin" ]]; then
+        volume_raw=$(get_tmux_sound_option "claude_voice_volume_macos" "0.8")
+    else
+        volume_raw=$(get_tmux_sound_option "claude_voice_volume_wsl" "80")
+        # 0-100の範囲を0.0-1.0に変換
+        volume_raw=$(echo "scale=2; $volume_raw / 100" | bc 2>/dev/null || echo "0.8")
+    fi
+    
+    echo "$volume_raw"
+}
+
+# ffplay用ボリューム値を取得（0-100の範囲）
+get_ffplay_volume() {
+    local normalized_volume
+    normalized_volume=$(get_normalized_volume)
+    local ffplay_volume
+    ffplay_volume=$(echo "scale=0; $normalized_volume * 100" | bc 2>/dev/null || echo "80")
+    echo "$ffplay_volume"
+}
+
+# 音声タイプ別ボリューム補正を適用
+apply_volume_correction() {
+    local audio_type="$1"  # speech, notification, system
+    local base_volume="$2"
+    
+    # 音声タイプ別の補正係数
+    local correction_factor
+    case "$audio_type" in
+        "speech")     correction_factor="0.8" ;;  # 読み上げ音声は抑える
+        "notification") correction_factor="1.0" ;; # 通知音は最大
+        "system")     correction_factor="0.8" ;;  # システム音は控えめ
+        *)            correction_factor="1.0" ;;
+    esac
+    
+    local corrected_volume
+    corrected_volume=$(echo "scale=2; $base_volume * $correction_factor" | bc 2>/dev/null || echo "$base_volume")
+    echo "$corrected_volume"
+}
+
 # 設定値の取得（デフォルト値付き）
 get_tmux_sound_option() {
     local option="$1"
@@ -149,9 +193,10 @@ get_available_windows_voices() {
     fi
 }
 
-# 音声合成でテキストを読み上げ
+# 音声合成でテキストを読み上げ（パンニング対応）
 speak_text() {
     local text="$1"
+    local session_window="$2"  # session:window形式（オプション）
     local os_type=$(get_os_type)
     
     if [[ -z "$text" ]]; then
@@ -159,8 +204,12 @@ speak_text() {
         return 1
     fi
 
-    log_debug "テキストを読み上げ中: $text (OS: $os_type)"
+    log_debug "テキストを読み上げ中: $text (OS: $os_type, window: $session_window)"
 
+    # パンニング機能の確認
+    local panning_enabled=$(tmux show-option -gqv @claude_voice_panning_enabled 2>/dev/null)
+    panning_enabled="${panning_enabled:-true}"
+    
     if [[ "$os_type" == "Darwin" ]]; then
         # macOS: sayコマンド（設定可能な音声）
         local speech_rate=$(get_tmux_sound_option "claude_voice_speech_rate" "200")
@@ -175,12 +224,51 @@ speak_text() {
             esac
         fi
 
-        log_debug "macOS音声設定: voice=$voice_name, rate=$speech_rate, quality=$voice_quality"
+        log_debug "macOS音声設定: voice=$voice_name, rate=$speech_rate, quality=$voice_quality, panning=$panning_enabled"
 
         if command -v say >/dev/null 2>&1; then
-            say -v "$voice_name" -r "$speech_rate" "$text" 2>/dev/null &
-            local say_pid=$!
-            log_debug "音声再生開始 (PID: $say_pid)"
+            if [[ "$panning_enabled" == "true" && -n "$session_window" ]]; then
+                # パンニング有効時: 一時ファイルに出力してからパンニング適用
+                local temp_file="/tmp/claude_speech_${session_window//[:\/]/_}_$$.aiff"
+                log_debug "音声ファイル生成: $temp_file"
+                
+                say -v "$voice_name" -r "$speech_rate" "$text" -o "$temp_file" 2>/dev/null
+                if [[ $? -eq 0 && -f "$temp_file" ]]; then
+                    # パンニングエンジンが利用可能な場合はパンニング適用
+                    if [[ -f "$SCRIPT_DIR/panning_engine.sh" ]]; then
+                        source "$SCRIPT_DIR/panning_engine.sh"
+                        if command -v calculate_pan_position >/dev/null 2>&1; then
+                            local pan_position
+                            pan_position=$(calculate_pan_position "$session_window")
+                            apply_speech_panning "$temp_file" "$pan_position" &
+                            local panning_pid=$!
+                            log_debug "パンニング読み上げ音声再生開始 (PID: $panning_pid)"
+                        else
+                            log_debug "calculate_pan_position関数が見つからないため通常再生"
+                            afplay "$temp_file" &
+                            local afplay_pid=$!
+                            log_debug "通常音声再生開始 (PID: $afplay_pid)"
+                        fi
+                        
+                        # バックグラウンドで一時ファイルを削除
+                        (sleep 10 && rm -f "$temp_file") &
+                    else
+                        # パンニングエンジンが利用できない場合は通常再生
+                        afplay "$temp_file" &
+                        local afplay_pid=$!
+                        log_debug "通常音声再生開始 (PID: $afplay_pid)"
+                        (sleep 10 && rm -f "$temp_file") &
+                    fi
+                else
+                    log_error "音声ファイル生成に失敗: $temp_file"
+                    return 1
+                fi
+            else
+                # パンニング無効時: 直接再生
+                say -v "$voice_name" -r "$speech_rate" "$text" 2>/dev/null &
+                local say_pid=$!
+                log_debug "音声再生開始 (PID: $say_pid)"
+            fi
         else
             log_error "sayコマンドが見つかりません"
             return 1
@@ -297,10 +385,13 @@ play_notification_sound() {
         fi
 
         if [[ "$os_type" == "Darwin" ]]; then
-            # macOS: afplayを使用
+            # macOS: afplayを使用（ボリューム正規化適用）
             if command -v afplay >/dev/null 2>&1; then
-                local volume=$(get_tmux_sound_option "claude_voice_volume_macos" "0.8")
-                log_debug "macOS通知音再生: volume=$volume"
+                local base_volume
+                base_volume=$(get_normalized_volume)
+                local volume
+                volume=$(apply_volume_correction "notification" "$base_volume")
+                log_debug "macOS通知音再生: normalized_volume=$volume"
                 afplay -v "$volume" "$sound_file" 2>/dev/null &
                 local afplay_pid=$!
                 log_debug "通知音再生開始 (PID: $afplay_pid)"
@@ -511,7 +602,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             check_sound_dependencies
             ;;
         "speak")
-            speak_text "${2:-テストメッセージです}"
+            speak_text "${2:-テストメッセージです}" "${3:-}"
             ;;
         "play")
             play_notification_sound "${2:-complete}"
@@ -524,7 +615,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             echo "  test-sounds   - 通知音ファイルテスト"
             echo "  test-playback - 音声再生テスト（実際に音声が再生されます）"
             echo "  deps          - 依存関係チェック"
-            echo "  speak <text>  - テキストを音声合成"
+            echo "  speak <text> [<session:window>] - テキストを音声合成（パンニング対応）"
             echo "  play <type>   - 通知音を再生"
             exit 1
             ;;

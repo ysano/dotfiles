@@ -195,6 +195,80 @@ calculate_pan_gains() {
     fi
 }
 
+# 読み上げ音声用のパンニング適用（音声タイプ補正付き）
+apply_speech_panning() {
+    local input_file="$1"
+    local pan_position="$2"
+    local os_type=$(get_os_type)
+    
+    if [[ -z "$input_file" || -z "$pan_position" ]]; then
+        log_error "読み上げパンニング適用: パラメータが不足しています (file=$input_file, position=$pan_position)"
+        return 1
+    fi
+    
+    if [[ ! -f "$input_file" ]]; then
+        log_error "読み上げ音声ファイルが見つかりません: $input_file"
+        return 1
+    fi
+
+    log_debug "読み上げパンニング適用: file=$input_file, position=$pan_position, OS=$os_type"
+
+    # パンゲインを計算
+    local gains
+    gains=$(calculate_pan_gains "$pan_position")
+    local left_gain=$(echo "$gains" | cut -d' ' -f1)
+    local right_gain=$(echo "$gains" | cut -d' ' -f2)
+    
+    log_debug "読み上げパンゲイン: left=$left_gain, right=$right_gain"
+
+    # ffplayの存在確認
+    if ! command -v ffplay >/dev/null 2>&1; then
+        log_error "ffplayコマンドが見つかりません。apt install ffmpeg または brew install ffmpeg を実行してください"
+        return 1
+    fi
+
+    if [[ "$os_type" == "Darwin" ]]; then
+        # macOS: 読み上げ音声用ボリューム補正適用
+        local base_volume
+        if command -v get_normalized_volume >/dev/null 2>&1; then
+            base_volume=$(get_normalized_volume)
+        else
+            base_volume="0.8"  # フォールバック値
+        fi
+        
+        local corrected_volume
+        if command -v apply_volume_correction >/dev/null 2>&1; then
+            corrected_volume=$(apply_volume_correction "speech" "$base_volume")
+        else
+            corrected_volume="$base_volume"
+        fi
+        
+        local volume_percent
+        volume_percent=$(echo "scale=0; $corrected_volume * 100" | bc 2>/dev/null || echo "80")
+        
+        log_debug "macOS読み上げ再生: speech_volume=$corrected_volume, ffplay_volume=$volume_percent%, left=$left_gain, right=$right_gain"
+        
+        ffplay -af "pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0" \
+               -volume "$volume_percent" \
+               "$input_file" \
+               -nodisp -autoexit 2>/dev/null &
+        local ffplay_pid=$!
+        log_debug "読み上げffplay開始 (PID: $ffplay_pid)"
+    else
+        # WSL/Linux: フォールバック
+        local volume=$(get_tmux_sound_option "claude_voice_volume_wsl" "80")
+        
+        log_debug "Linux読み上げ再生: volume=$volume%, left=$left_gain, right=$right_gain"
+        
+        ffplay -af "pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0" \
+               -volume "$volume" \
+               "$input_file" \
+               -nodisp -autoexit 2>/dev/null &
+        local ffplay_pid=$!
+        log_debug "読み上げffplay開始 (PID: $ffplay_pid)"
+    fi
+}
+
 # デシベルパンニングを適用してファイルを再生
 apply_panning() {
     local input_file="$1"
@@ -228,12 +302,25 @@ apply_panning() {
     fi
 
     if [[ "$os_type" == "Darwin" ]]; then
-        # macOS: ffplay使用（リアルタイム再生）
-        local volume=$(get_tmux_sound_option "claude_voice_volume_macos" "0.8")
-        local volume_percent
-        volume_percent=$(echo "$volume * 100" | bc 2>/dev/null || echo "80")
+        # macOS: ffplay使用（リアルタイム再生・ボリューム正規化適用）
+        local base_volume
+        if command -v get_normalized_volume >/dev/null 2>&1; then
+            base_volume=$(get_normalized_volume)
+        else
+            base_volume="0.8"  # フォールバック値
+        fi
         
-        log_debug "macOS再生: volume=$volume_percent%, left=$left_gain, right=$right_gain"
+        local corrected_volume
+        if command -v apply_volume_correction >/dev/null 2>&1; then
+            corrected_volume=$(apply_volume_correction "notification" "$base_volume")
+        else
+            corrected_volume="$base_volume"
+        fi
+        
+        local volume_percent
+        volume_percent=$(echo "scale=0; $corrected_volume * 100" | bc 2>/dev/null || echo "80")
+        
+        log_debug "macOS再生: normalized_volume=$corrected_volume, ffplay_volume=$volume_percent%, left=$left_gain, right=$right_gain"
         
         ffplay -af "pan=stereo|c0=${left_gain}*c0|c1=${right_gain}*c0" \
                -volume "$volume_percent" \
@@ -291,6 +378,181 @@ goto_ffplay() {
 }
 
 # ウィンドウ識別用の音声通知を生成する関数
+# パンニング音声合成の作成と再生
+create_panned_speech() {
+    local text="$1"             # 読み上げテキスト
+    local target_window="$2"    # session:window形式
+    local os_type=$(get_os_type)
+    
+    if [[ -z "$text" || -z "$target_window" ]]; then
+        log_error "パンニング音声合成: パラメータが不足しています (text=$text, window=$target_window)"
+        return 1
+    fi
+
+    log_debug "パンニング音声合成作成: text=$text, window=$target_window, OS=$os_type"
+
+    # パンニングが有効かチェック
+    local panning_enabled=$(get_tmux_sound_option "claude_voice_panning_enabled" "true")
+    
+    if [[ "$panning_enabled" != "true" ]]; then
+        log_debug "パンニング無効のため通常の音声合成を実行"
+        # パンニングが無効の場合は通常の音声合成
+        if command -v speak_text >/dev/null 2>&1; then
+            speak_text "$text"
+        else
+            log_error "speak_text関数が見つかりません"
+        fi
+        return $?
+    fi
+
+    # macOSの場合のみ対応（WSLは将来対応予定）
+    if [[ "$os_type" != "Darwin" ]]; then
+        log_debug "WSL環境のため通常の音声合成を実行"
+        if command -v speak_text >/dev/null 2>&1; then
+            speak_text "$text"
+        else
+            log_error "speak_text関数が見つかりません"
+        fi
+        return $?
+    fi
+
+    # 音像位置を計算
+    local pan_position
+    pan_position=$(calculate_pan_position "$target_window")
+    
+    if [[ $? -ne 0 ]]; then
+        log_error "音像位置の計算に失敗しました"
+        return 1
+    fi
+
+    # 一時音声ファイルを生成
+    local temp_file="/tmp/claude_panning_speech_${target_window//[:\/]/_}_$$.aiff"
+    
+    # 音声設定の取得
+    local speech_rate=$(get_tmux_sound_option "claude_voice_speech_rate" "200")
+    local voice_name=$(get_tmux_sound_option "claude_voice_macos_voice" "Kyoko")
+    local voice_quality=$(get_tmux_sound_option "claude_voice_voice_quality" "enhanced")
+
+    # 音声品質に応じた音声名の選択
+    if [[ "$voice_quality" == "enhanced" ]]; then
+        case "$voice_name" in
+            "Kyoko") voice_name="Kyoko Enhanced" ;;
+            "Otoya") voice_name="Otoya Enhanced" ;;
+        esac
+    fi
+
+    log_debug "音声合成設定: voice=$voice_name, rate=$speech_rate, temp_file=$temp_file"
+    
+    # sayコマンドで一時ファイルに音声を出力
+    if ! command -v say >/dev/null 2>&1; then
+        log_error "sayコマンドが見つかりません"
+        return 1
+    fi
+    
+    say -v "$voice_name" -r "$speech_rate" "$text" -o "$temp_file" 2>/dev/null
+    
+    if [[ $? -ne 0 || ! -f "$temp_file" ]]; then
+        log_error "音声ファイルの生成に失敗しました: $temp_file"
+        return 1
+    fi
+
+    log_debug "一時音声ファイル生成成功: $temp_file ($(ls -lh "$temp_file" 2>/dev/null | awk '{print $5}' || echo 'size unknown'))"
+
+    # パンニング適用して再生
+    apply_speech_panning "$temp_file" "$pan_position" &
+    local panning_pid=$!
+    log_debug "パンニング音声再生開始 (PID: $panning_pid)"
+
+    # バックグラウンドで一時ファイルを削除（10秒後）
+    (sleep 10 && rm -f "$temp_file" 2>/dev/null && log_debug "一時音声ファイル削除: $temp_file") &
+}
+
+# パンニング音声合成（直接位置指定版）
+create_direct_panned_speech() {
+    local text="$1"           # 読み上げテキスト
+    local pan_position="$2"   # -1.0 to 1.0 のパンニング位置
+    local os_type=$(get_os_type)
+    
+    if [[ -z "$text" || -z "$pan_position" ]]; then
+        log_error "直接パンニング音声合成: パラメータが不足しています (text=$text, position=$pan_position)"
+        return 1
+    fi
+
+    # パンニング位置の範囲チェック
+    if ! echo "$pan_position" | grep -qE '^-?[0-9]*\.?[0-9]+$'; then
+        log_error "パンニング位置が無効です: $pan_position (-1.0 ～ 1.0の範囲で指定してください)"
+        return 1
+    fi
+
+    log_debug "直接パンニング音声合成: text=$text, position=$pan_position, OS=$os_type"
+
+    # パンニングが有効かチェック
+    local panning_enabled=$(get_tmux_sound_option "claude_voice_panning_enabled" "true")
+    
+    if [[ "$panning_enabled" != "true" ]]; then
+        log_debug "パンニング無効のため通常の音声合成を実行"
+        # パンニングが無効の場合は通常の音声合成
+        if command -v speak_text >/dev/null 2>&1; then
+            speak_text "$text"
+        else
+            log_error "speak_text関数が見つかりません"
+        fi
+        return $?
+    fi
+
+    # macOSの場合のみ対応（WSLは将来対応予定）
+    if [[ "$os_type" != "Darwin" ]]; then
+        log_debug "WSL環境のため通常の音声合成を実行"
+        if command -v speak_text >/dev/null 2>&1; then
+            speak_text "$text"
+        else
+            log_error "speak_text関数が見つかりません"
+        fi
+        return $?
+    fi
+
+    # 一時音声ファイルを生成
+    local temp_file="/tmp/claude_direct_speech_${pan_position//[.-]/_}_$$.aiff"
+    
+    # 音声設定の取得
+    local speech_rate=$(get_tmux_sound_option "claude_voice_speech_rate" "200")
+    local voice_name=$(get_tmux_sound_option "claude_voice_macos_voice" "Kyoko")
+    local voice_quality=$(get_tmux_sound_option "claude_voice_voice_quality" "enhanced")
+
+    # 音声品質に応じた音声名の選択
+    if [[ "$voice_quality" == "enhanced" ]]; then
+        case "$voice_name" in
+            "Kyoko") voice_name="Kyoko Enhanced" ;;
+            "Otoya") voice_name="Otoya Enhanced" ;;
+        esac
+    fi
+
+    log_debug "直接パンニング音声設定: voice=$voice_name, rate=$speech_rate, position=$pan_position"
+    
+    # sayコマンドで一時ファイルに音声を出力
+    if ! command -v say >/dev/null 2>&1; then
+        log_error "sayコマンドが見つかりません"
+        return 1
+    fi
+    
+    say -v "$voice_name" -r "$speech_rate" "$text" -o "$temp_file" 2>/dev/null
+    
+    if [[ $? -ne 0 || ! -f "$temp_file" ]]; then
+        log_error "音声ファイルの生成に失敗しました: $temp_file"
+        return 1
+    fi
+
+    log_debug "一時音声ファイル生成成功: $temp_file ($(ls -lh "$temp_file" 2>/dev/null | awk '{print $5}' || echo 'size unknown'))"
+
+    # パンニング適用して再生
+    apply_speech_panning "$temp_file" "$pan_position" &
+    local panning_pid=$!
+    log_debug "直接パンニング音声再生開始 (PID: $panning_pid)"
+
+    # バックグラウンドで一時ファイルを削除（10秒後）
+    (sleep 10 && rm -f "$temp_file" 2>/dev/null && log_debug "直接パンニング一時ファイル削除: $temp_file") &
+}
+
 create_window_identified_sound() {
     local target_window="$1"    # session:window形式
     local sound_type="$2"       # start, complete, waiting, error
@@ -504,8 +766,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             # 使用例: ./panning_engine.sh identify session:window complete
             create_window_identified_sound "${2:-test:0}" "${3:-complete}"
             ;;
+        "speak")
+            # 新しい使用例: ./panning_engine.sh speak "テキスト" [pan_position]
+            # pan_position: -1.0 to 1.0 の小数点 (省略時は0.0=中央)
+            if [[ "$3" =~ ^-?[0-9]*\.?[0-9]+$ ]]; then
+                # 第3引数が小数点の場合は直接パンニング位置として使用
+                create_direct_panned_speech "${2:-テストメッセージです}" "${3:-0.0}"
+            else
+                # 従来の互換性のため、session:window形式もサポート
+                create_panned_speech "${2:-テストメッセージです}" "${3:-test:0}"
+            fi
+            ;;
         *)
-            echo "使用方法: $0 [test|test-windows|test-positioning|test-gains|test-deps|deps|pan|identify]"
+            echo "使用方法: $0 [test|test-windows|test-positioning|test-gains|test-deps|deps|pan|identify|speak]"
             echo "  test             - 全テスト実行"
             echo "  test-windows     - ウィンドウ検出テスト"
             echo "  test-positioning - 配置計算テスト"
@@ -514,6 +787,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             echo "  deps             - 依存関係チェック"
             echo "  pan <file> <pos> - パンニング適用テスト"
             echo "  identify <win> <type> - ウィンドウ識別音声テスト"
+            echo "  speak <text> [pan_pos] - パンニング読み上げ (-1.0~1.0 or session:window)"
             exit 1
             ;;
     esac
