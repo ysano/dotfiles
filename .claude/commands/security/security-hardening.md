@@ -1,76 +1,76 @@
-# セキュリティハードニング
+# Security Hardening
 
-アプリケーションスタック全体にわたって攻撃対象領域を削減し、セキュリティポスチャを向上させるための包括的なセキュリティベストプラクティスを適用します。
+Harden application security configuration
 
-## 実行手順
+## Instructions
 
-1. **セキュリティ評価とベースライン**
-   - 現在のアプリケーションの包括的なセキュリティ監査を実施
-   - 潜在的な脆弱性と攻撃ベクトルを特定
-   - 認証・認可メカニズムの分析
-   - データハンドリングと保存手法のレビュー
-   - ネットワークセキュリティと通信プロトコルの評価
+1. **Security Assessment and Baseline**
+   - Conduct comprehensive security audit of current application
+   - Identify potential vulnerabilities and attack vectors
+   - Analyze authentication and authorization mechanisms
+   - Review data handling and storage practices
+   - Assess network security and communication protocols
 
-2. **認証・認可のハードニング**
-   - 強力なパスワードポリシーと多要素認証の実装
-   - 適切なタイムアウト設定でのセキュアなセッション管理の構成
-   - 最小権限の原則に基づく役割ベースアクセス制御（RBAC）の設定
-   - JWTセキュリティベストプラクティスまたはセキュアなセッショントークンの実装
-   - アカウントロックアウトとブルートフォース攻撃保護の構成
+2. **Authentication and Authorization Hardening**
+   - Implement strong password policies and multi-factor authentication
+   - Configure secure session management with proper timeouts
+   - Set up role-based access control (RBAC) with least privilege principle
+   - Implement JWT security best practices or secure session tokens
+   - Configure account lockout and brute force protection
 
-3. **入力検証とサニタイゼーション**
-   - すべてのユーザー入力に対する包括的な入力検証の実装
-   - パラメータ化クエリによるSQLインジェクション対策の設定
-   - 適切な出力エンコーディングによるXSS保護の構成
-   - トークンとSameSite cookieによるCSRF保護の実装
-   - タイプ検証とサンドボックス化によるファイルアップロードセキュリティの設定
+3. **Input Validation and Sanitization**
+   - Implement comprehensive input validation for all user inputs
+   - Set up SQL injection prevention with parameterized queries
+   - Configure XSS protection with proper output encoding
+   - Implement CSRF protection with tokens and SameSite cookies
+   - Set up file upload security with type validation and sandboxing
 
-4. **セキュア通信**
-   - 強力なTLS/SSL証明書によるHTTPSの構成
-   - HTTP Strict Transport Security（HSTS）の実装
-   - 適切な認証によるセキュアなAPI通信の設定
-   - モバイルアプリケーション向け証明書ピニングの構成
-   - 機密データ転送のためのエンドツーエンド暗号化の実装
+4. **Secure Communication**
+   - Configure HTTPS with strong TLS/SSL certificates
+   - Implement HTTP Strict Transport Security (HSTS)
+   - Set up secure API communication with proper authentication
+   - Configure certificate pinning for mobile applications
+   - Implement end-to-end encryption for sensitive data transmission
 
-5. **データ保護と暗号化**
-   - 機密データの保存時暗号化の実装
-   - セキュアなキー管理とローテーションの構成
-   - データベース暗号化とアクセス制御の設定
-   - 適切なシークレット管理の実装（ハードコードシークレットの回避）
-   - セキュアなバックアップと復旧手順の構成
+5. **Data Protection and Encryption**
+   - Implement encryption at rest for sensitive data
+   - Configure secure key management and rotation
+   - Set up database encryption and access controls
+   - Implement proper secrets management (avoid hardcoded secrets)
+   - Configure secure backup and recovery procedures
 
-6. **セキュリティヘッダーとポリシー**
-   - Content Security Policy（CSP）ヘッダーの構成
-   - X-Frame-OptionsおよびX-Content-Type-Optionsヘッダーの設定
-   - Referrer PolicyおよびFeature Policyヘッダーの実装
-   - 適切なオリジン検証によるCORSポリシーの構成
-   - 責任ある脆弱性開示のためのsecurity.txtファイルの設定
+6. **Security Headers and Policies**
+   - Configure Content Security Policy (CSP) headers
+   - Set up X-Frame-Options and X-Content-Type-Options headers
+   - Implement Referrer Policy and Feature Policy headers
+   - Configure CORS policies with proper origin validation
+   - Set up security.txt file for responsible disclosure
 
-7. **依存関係とサプライチェーンセキュリティ**
-   - すべての依存関係の最新セキュアバージョンへの監査と更新
-   - 依存関係脆弱性スキャンの実装
-   - 重要な依存関係の自動セキュリティ更新の構成
-   - ソフトウェア構成分析（SCA）ツールの設定
-   - 依存関係のピニングと整合性チェックの実装
+7. **Dependency and Supply Chain Security**
+   - Audit and update all dependencies to latest secure versions
+   - Implement dependency vulnerability scanning
+   - Configure automated security updates for critical dependencies
+   - Set up software composition analysis (SCA) tools
+   - Implement dependency pinning and integrity checks
 
-8. **インフラストラクチャセキュリティ**
-   - ファイアウォールルールとネットワークセグメンテーションの構成
-   - 侵入検知・防止システムの実装
-   - セキュアなログ記録と監視の設定
-   - セキュアなコンテナイメージとランタイムセキュリティの構成
-   - Infrastructure as Codeセキュリティスキャンの実装
+8. **Infrastructure Security**
+   - Configure firewall rules and network segmentation
+   - Implement intrusion detection and prevention systems
+   - Set up secure logging and monitoring
+   - Configure secure container images and runtime security
+   - Implement infrastructure as code security scanning
 
-9. **アプリケーションセキュリティ制御**
-   - レート制限とDDoS保護の実装
-   - Webアプリケーションファイアウォール（WAF）ルールの設定
-   - 情報漏洩のないセキュアなエラーハンドリングの構成
-   - セキュリティイベントの適切なログ記録の実装
-   - セキュリティ監視とアラートの設定
+9. **Application Security Controls**
+   - Implement rate limiting and DDoS protection
+   - Set up web application firewall (WAF) rules
+   - Configure secure error handling without information disclosure
+   - Implement proper logging for security events
+   - Set up security monitoring and alerting
 
-10. **セキュリティテストと検証**
-    - ペネトレーションテストと脆弱性評価の実施
-    - CI/CDパイプラインでの自動セキュリティテストの実装
-    - 静的アプリケーションセキュリティテスト（SAST）の設定
-    - 動的アプリケーションセキュリティテスト（DAST）の構成
-    - セキュリティインシデント対応計画と手順の策定
-    - セキュリティ制御とコンプライアンス要件の文書化
+10. **Security Testing and Validation**
+    - Conduct penetration testing and vulnerability assessments
+    - Implement automated security testing in CI/CD pipeline
+    - Set up static application security testing (SAST)
+    - Configure dynamic application security testing (DAST)
+    - Create security incident response plan and procedures
+    - Document security controls and compliance requirements

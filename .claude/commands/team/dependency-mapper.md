@@ -1,75 +1,74 @@
 # dependency-mapper
 
-コードベースとGitHubリポジトリ全体のIssue依存関係を可視化・管理します。
+Map and analyze project dependencies
 
-## 目的
-このコマンドはコード依存関係、git履歴、GitHub Issuesを分析して視覚的な依存関係マップを作成します。ブロッカー、循環依存関係、効率的なプロジェクト実行のための最適なIssue順序を特定するのに役立ちます。
+## Purpose
+This command analyzes code dependencies, git history, and Linear tasks to create visual dependency maps. It helps identify blockers, circular dependencies, and optimal task ordering for efficient project execution.
 
-## 使用方法
+## Usage
 ```bash
-# 特定のGitHub Issueの依存関係マップを表示
-claude "Issue #123の依存関係マップを表示"
+# Map dependencies for a specific Linear task
+claude "Show dependency map for task LIN-123"
 
-# モジュール内のコード依存関係を分析
-claude "src/authモジュールの依存関係をマップ"
+# Analyze code dependencies in a module
+claude "Map dependencies for src/auth module"
 
-# プロジェクト内の循環依存関係を検出
-claude "コードベースの循環依存関係をチェック"
+# Find circular dependencies in the project
+claude "Check for circular dependencies in the codebase"
 
-# Issue実行順序を生成
-claude "マイルストーンv2.0のIssuesを完了する最適な順序は？"
+# Generate task execution order
+claude "What's the optimal order to complete tasks in sprint SPR-45?"
 ```
 
-## 実行手順
+## Instructions
 
-### 1. コード依存関係の分析
-様々な手法で依存関係を特定：
+### 1. Analyze Code Dependencies
+Use various techniques to identify dependencies:
 
 ```bash
-# import文の検出 (JavaScript/TypeScript)
+# Find import statements (JavaScript/TypeScript)
 rg "^import.*from ['\"](\.\.?/[^'\"]+)" --type ts --type js -o | sort | uniq
 
-# require文の検出 (Node.js)
+# Find require statements (Node.js)
 rg "require\(['\"](\.\.?/[^'\"]+)['\"]" --type js -o
 
-# Pythonのimport分析
+# Analyze Python imports
 rg "^from \S+ import|^import \S+" --type py
 
-# コメント内のモジュール参照を検出
+# Find module references in comments
 rg "TODO.*depends on|FIXME.*requires|NOTE.*needs" -i
 ```
 
-### 2. GitHubからIssue依存関係を抽出
-Issue関係のためのGitHub APIクエリ：
+### 2. Extract Task Dependencies from Linear
+Query Linear for task relationships:
 
 ```javascript
-// 依存関係を含むIssueを取得
-const issue = await gh.getIssue(issueNumber, repo, {
-  include: ['linked_issues', 'project_items']
+// Get task with its dependencies
+const task = await linear.getTask(taskId, {
+  include: ['blockedBy', 'blocks', 'parent', 'children']
 });
 
-// Issue説明内の言及を検出
-const mentions = issue.body.match(/#\d+|closes #\d+|fixes #\d+/gi);
+// Find mentions in task descriptions
+const mentions = task.description.match(/(?:LIN-|#)\d+/g);
 
-// 同じマイルストーン/プロジェクトから関連Issueを取得
-const relatedIssues = await gh.searchIssues({
-  milestone: issue.milestone?.title,
-  state: 'all',
-  repo: repo
+// Get related tasks from same epic/project
+const relatedTasks = await linear.searchTasks({
+  projectId: task.projectId,
+  includeArchived: false
 });
 ```
 
-### 3. 依存関係グラフの構築
-グラフ構造を作成：
+### 3. Build Dependency Graph
+Create a graph structure:
 
 ```javascript
 class DependencyGraph {
   constructor() {
-    this.nodes = new Map(); // issueNumber -> issue details
-    this.edges = new Map(); // issueNumber -> Set of dependent issueNumbers
+    this.nodes = new Map(); // taskId -> task details
+    this.edges = new Map(); // taskId -> Set of dependent taskIds
   }
   
-  addDependency(from, to, type = 'depends_on') {
+  addDependency(from, to, type = 'blocks') {
     if (!this.edges.has(from)) {
       this.edges.set(from, new Set());
     }
@@ -150,49 +149,49 @@ class DependencyGraph {
 }
 ```
 
-### 4. 視覚的表現の生成
+### 4. Generate Visual Representations
 
-#### ASCIIツリービュー
+#### ASCII Tree View
 ```
-#123: 認証システム
-├─ #124: ユーザーモデル [CLOSED]
-├─ #125: JWT実装 [IN PROGRESS]
-│  └─ #126: トークンリフレッシュロジック [BLOCKED]
-└─ #127: ログインエンドポイント [OPEN]
-   ├─ #128: レート制限 [OPEN]
-   └─ #129: 2FAサポート [OPEN]
+LIN-123: Authentication System
+├─ LIN-124: User Model [DONE]
+├─ LIN-125: JWT Implementation [IN PROGRESS]
+│  └─ LIN-126: Token Refresh Logic [BLOCKED]
+└─ LIN-127: Login Endpoint [TODO]
+   ├─ LIN-128: Rate Limiting [TODO]
+   └─ LIN-129: 2FA Support [TODO]
 ```
 
-#### Mermaid図
+#### Mermaid Diagram
 ```mermaid
 graph TD
-    I123[認証システム] --> I124[ユーザーモデル]
-    I123 --> I125[JWT実装]
-    I123 --> I127[ログインエンドポイント]
-    I125 --> I126[トークンリフレッシュロジック]
-    I127 --> I128[レート制限]
-    I127 --> I129[2FAサポート]
+    LIN-123[Authentication System] --> LIN-124[User Model]
+    LIN-123 --> LIN-125[JWT Implementation]
+    LIN-123 --> LIN-127[Login Endpoint]
+    LIN-125 --> LIN-126[Token Refresh Logic]
+    LIN-127 --> LIN-128[Rate Limiting]
+    LIN-127 --> LIN-129[2FA Support]
     
-    style I124 fill:#90EE90
-    style I125 fill:#FFD700
-    style I126 fill:#FF6B6B
+    style LIN-124 fill:#90EE90
+    style LIN-125 fill:#FFD700
+    style LIN-126 fill:#FF6B6B
 ```
 
-#### 依存関係マトリックス
+#### Dependency Matrix
 ```
-         |  #123   |  #124   |  #125   |  #126   |  #127   |
+         | LIN-123 | LIN-124 | LIN-125 | LIN-126 | LIN-127 |
 ---------|---------|---------|---------|---------|---------|
- #123    |    -    |    →    |    →    |         |    →    |
- #124    |         |    -    |         |         |         |
- #125    |         |    ←    |    -    |    →    |         |
- #126    |         |         |    ←    |    -    |         |
- #127    |    ←    |    ←    |         |         |    -    |
+LIN-123  |    -    |    →    |    →    |         |    →    |
+LIN-124  |         |    -    |         |         |         |
+LIN-125  |         |    ←    |    -    |    →    |         |
+LIN-126  |         |         |    ←    |    -    |         |
+LIN-127  |    ←    |    ←    |         |         |    -    |
 
-凡例: → 依存、← 依存先
+Legend: → depends on, ← is dependency of
 ```
 
-### 5. ファイル依存関係の分析
-コード構造をタスクにマップ：
+### 5. Analyze File Dependencies
+Map code structure to tasks:
 
 ```javascript
 // Analyze file imports
@@ -203,7 +202,7 @@ async function analyzeFileDependencies(filePath) {
   const dependencies = {
     internal: [], // Project files
     external: [], // npm packages
-    issues: []    // Related GitHub issues
+    tasks: []     // Related Linear tasks
   };
   
   for (const imp of imports) {
@@ -213,17 +212,17 @@ async function analyzeFileDependencies(filePath) {
       dependencies.external.push(imp);
     }
     
-    // Check if file is mentioned in any issue
-    const issues = await gh.searchIssues(`"${path.basename(filePath)}"`, repo);
-    dependencies.issues.push(...issues);
+    // Check if file is mentioned in any task
+    const tasks = await linear.searchTasks(path.basename(filePath));
+    dependencies.tasks.push(...tasks);
   }
   
   return dependencies;
 }
 ```
 
-### 6. 実行順序の生成
-最適なタスクシーケンスを計算：
+### 6. Generate Execution Order
+Calculate optimal task sequence:
 
 ```javascript
 function calculateExecutionOrder(graph) {
@@ -249,107 +248,107 @@ function calculateExecutionOrder(graph) {
 }
 ```
 
-### 7. エラーハンドリング
+### 7. Error Handling
 ```javascript
-// GitHubアクセスのチェック
-if (!gh.available) {
-  console.warn("GitHub APIが利用できません、コード分析のみ使用します");
-  // コードのみの分析にフォールバック
+// Check for Linear access
+if (!linear.available) {
+  console.warn("Linear MCP not available, using code analysis only");
+  // Fall back to code-only analysis
 }
 
-// 循環依存関係の処理
+// Handle circular dependencies
 const cycles = graph.findCycles();
 if (cycles.length > 0) {
-  console.error("循環依存関係が検出されました:");
+  console.error("Circular dependencies detected:");
   cycles.forEach(cycle => {
     console.error(`  ${cycle.join(' → ')} → ${cycle[0]}`);
   });
 }
 
-// Issue存在の検証
-for (const issueNumber of mentionedIssues) {
+// Validate task existence
+for (const taskId of mentionedTasks) {
   try {
-    await gh.getIssue(issueNumber, repo);
+    await linear.getTask(taskId);
   } catch (error) {
-    console.warn(`Issue #${issueNumber} が見つからないかアクセスできません`);
+    console.warn(`Task ${taskId} not found or inaccessible`);
   }
 }
 ```
 
-## 出力例
+## Example Output
 
 ```
-マイルストーンの依存関係分析中: 認証システム (#123)
+Analyzing dependencies for Epic: Authentication System (LIN-123)
 
-📊 依存関係グラフ:
+📊 Dependency Graph:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-LIN-123: 認証システム [EPIC]
-├─ LIN-124: ユーザーモデル作成 ✅ [完了]
-│  └─ ファイル: src/models/User.ts, src/schemas/user.sql
-├─ LIN-125: JWTサービス実装 🚧 [進行中]
-│  ├─ ファイル: src/services/auth/jwt.ts
-│  ├─ 依存: LIN-124
-│  └─ LIN-126: トークンリフレッシュ追加 ⛔ [LIN-125によりブロック]
-└─ LIN-127: ログインエンドポイント作成 📋 [TODO]
-   ├─ ファイル: src/routes/auth/login.ts
-   ├─ 依存: LIN-124, LIN-125
-   ├─ LIN-128: レート制限追加 📋 [TODO]
-   └─ LIN-129: 2FA実装 📋 [TODO]
+LIN-123: Authentication System [EPIC]
+├─ LIN-124: Create User Model ✅ [DONE]
+│  └─ Files: src/models/User.ts, src/schemas/user.sql
+├─ LIN-125: Implement JWT Service 🚧 [IN PROGRESS]
+│  ├─ Files: src/services/auth/jwt.ts
+│  ├─ Depends on: LIN-124
+│  └─ LIN-126: Add Token Refresh ⛔ [BLOCKED by LIN-125]
+└─ LIN-127: Create Login Endpoint 📋 [TODO]
+   ├─ Files: src/routes/auth/login.ts
+   ├─ Depends on: LIN-124, LIN-125
+   ├─ LIN-128: Add Rate Limiting 📋 [TODO]
+   └─ LIN-129: Implement 2FA 📋 [TODO]
 
-🔄 循環依存関係: 見つかりませんでした
+🔄 Circular Dependencies: None found
 
-📈 クリティカルパス:
-1. LIN-124 (ユーザーモデル) - 2ポイント ✅
-2. LIN-125 (JWTサービス) - 3ポイント 🚧
-3. LIN-126 (トークンリフレッシュ) - 1ポイント ⛔
-4. LIN-127 (ログインエンドポイント) - 2ポイント 📋
-合計: クリティカルパス上で8ポイント
+📈 Critical Path:
+1. LIN-124 (User Model) - 2 points ✅
+2. LIN-125 (JWT Service) - 3 points 🚧
+3. LIN-126 (Token Refresh) - 1 point ⛔
+4. LIN-127 (Login Endpoint) - 2 points 📋
+Total: 8 points on critical path
 
-👥 タスク配分:
-- Alice: LIN-125 (進行中), LIN-126 (ブロック中)
-- Bob: LIN-127 (開始準備完了)
-- 未割り当て: LIN-128, LIN-129
+👥 Task Distribution:
+- Alice: LIN-125 (in progress), LIN-126 (blocked)
+- Bob: LIN-127 (ready to start)
+- Unassigned: LIN-128, LIN-129
 
-📁 ファイル依存関係:
+📁 File Dependencies:
 src/routes/auth/login.ts
-  └─ インポート元:
+  └─ imports from:
      ├─ src/models/User.ts (LIN-124) ✅
      ├─ src/services/auth/jwt.ts (LIN-125) 🚧
      └─ src/middleware/rateLimiter.ts (LIN-128) 📋
 
-⚡ 推奨アクション:
-LIN-125の完了を優先して3つの依存タスクのブロックを解除すべきです。
-BobはLIN-124の前提作業を待機中に開始できます。
+⚡ Recommended Action:
+Priority should be completing LIN-125 to unblock 3 dependent tasks.
+Bob can start on LIN-124 prerequisite work while waiting.
 ```
 
-## 高度な機能
+## Advanced Features
 
-### 影響分析
-変更によって影響を受けるタスクを表示:
+### Impact Analysis
+Show what tasks are affected by changes:
 ```bash
-# User.tsを変更した場合、どのタスクが影響を受けるか？
-claude "src/models/User.tsの変更による影響分析を表示"
+# What tasks are impacted if we change User.ts?
+claude "Show impact analysis for changes to src/models/User.ts"
 ```
 
-### スプリント計画
-スプリント容量を考慮したタスク順序の最適化:
+### Sprint Planning
+Optimize task order for sprint capacity:
 ```bash
-# 依存関係を考慮して20ポイント容量のスプリントを計画
-claude "依存関係を考慮して20ポイント容量でスプリントを計画"
+# Generate sprint plan considering dependencies
+claude "Plan sprint with 20 points capacity considering dependencies"
 ```
 
-### リスク評価
-高リスクな依存関係チェーンを特定:
+### Risk Assessment
+Identify high-risk dependency chains:
 ```bash
-# 最長の依存関係チェーンを見つける
-claude "現在のスプリントで最長の依存関係チェーンを持つタスクを表示"
+# Find longest dependency chains
+claude "Show tasks with longest dependency chains in current sprint"
 ```
 
-## ヒント
-- コードの進化に合わせて依存関係を更新する
-- コードモジュールとタスクの間で一貫した命名を使用する
-- 外部依存関係（API、サービス）を明示的にマークする
-- スプリント計画時に依存関係グラフを確認する
-- クリティカルパスのIssueを割り当てて監視する
-- 正確なマイルストーン計画に依存関係データを使用する
+## Tips
+- Update dependencies as code evolves
+- Use consistent naming between code modules and tasks
+- Mark external dependencies (APIs, services) explicitly
+- Review dependency graphs in sprint planning
+- Keep critical path tasks assigned and monitored
+- Use dependency data for accurate sprint velocity

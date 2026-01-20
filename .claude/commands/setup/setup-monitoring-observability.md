@@ -1,76 +1,76 @@
 # Setup Monitoring and Observability
 
-プロアクティブな問題検出とシステムの可視性のために、包括的な監視、ログ、トレーシングを追加します。
+Setup monitoring and observability tools
 
-## 手順
+## Instructions
 
-1. **可観測性戦略計画**
-   - アプリケーションアーキテクチャと監視要件を分析
-   - 重要成果指標（KPI）とサービスレベル目標（SLO）を定義
-   - 監視スタックアーキテクチャとデータフローを計画
-   - コンプライアンスと保持要件を評価
-   - アラート戦略とエスカレーション手順を定義
+1. **Observability Strategy Planning**
+   - Analyze application architecture and monitoring requirements
+   - Define key performance indicators (KPIs) and service level objectives (SLOs)
+   - Plan monitoring stack architecture and data flow
+   - Assess compliance and retention requirements
+   - Define alerting strategies and escalation procedures
 
-2. **メトリクス収集と監視**
-   - アプリケーションメトリクス収集（Prometheus、DataDog、New Relic）をセットアップ
-   - サーバー、コンテナ、クラウドリソースのインフラ監視を設定
-   - ビジネスメトリクスとユーザーエクスペリエンス監視をセットアップ
-   - アプリケーション固有監視用のカスタムメトリクスを設定
-   - メトリクス集約と時系列ストレージをセットアップ
+2. **Metrics Collection and Monitoring**
+   - Set up application metrics collection (Prometheus, DataDog, New Relic)
+   - Configure infrastructure monitoring for servers, containers, and cloud resources
+   - Set up business metrics and user experience monitoring
+   - Configure custom metrics for application-specific monitoring
+   - Set up metrics aggregation and time-series storage
 
-3. **ログインフラストラクチャ**
-   - 一元化ログシステム（ELK Stack、Fluentd、Splunk）をセットアップ
-   - 一貫性のあるフォーマットで構造化ログを設定
-   - 全サービスからのログ集約と転送をセットアップ
-   - ログ保持ポリシーとアーカイブ戦略を設定
-   - ログ解析、エンリッチメント、インデックシングをセットアップ
+3. **Logging Infrastructure**
+   - Set up centralized logging system (ELK Stack, Fluentd, Splunk)
+   - Configure structured logging with consistent formats
+   - Set up log aggregation and forwarding from all services
+   - Configure log retention policies and archival strategies
+   - Set up log parsing, enrichment, and indexing
 
-4. **分散トレーシング**
-   - 分散トレーシングシステム（Jaeger、Zipkin、AWS X-Ray）をセットアップ
-   - アプリケーションコードでトレース計測を設定
-   - トレースサンプリングと収集戦略をセットアップ
-   - サービス境界を跨いだトレース相関を設定
-   - トレース分析とパフォーマンス最適化をセットアップ
+4. **Distributed Tracing**
+   - Set up distributed tracing system (Jaeger, Zipkin, AWS X-Ray)
+   - Configure trace instrumentation in application code
+   - Set up trace sampling and collection strategies
+   - Configure trace correlation across service boundaries
+   - Set up trace analysis and performance optimization
 
-5. **アプリケーションパフォーマンス監視（APM）**
-   - アプリケーションパフォーマンス洞察用のAPMツールを設定
-   - エラートラッキングと例外監視をセットアップ
-   - データベースクエリ監視と最適化を設定
-   - リアルユーザー監視（RUM）とシンセティック監視をセットアップ
-   - パフォーマンスプロファイリングとボトルネック特定を設定
+5. **Application Performance Monitoring (APM)**
+   - Configure APM tools for application performance insights
+   - Set up error tracking and exception monitoring
+   - Configure database query monitoring and optimization
+   - Set up real user monitoring (RUM) and synthetic monitoring
+   - Configure performance profiling and bottleneck identification
 
-6. **インフラとシステム監視**
-   - サーバーとコンテナ監視（CPU、メモリ、ディスク、ネットワーク）をセットアップ
-   - クラウドサービス監視とコストトラッキングを設定
-   - データベース監視とパフォーマンス分析をセットアップ
-   - ネットワーク監視とセキュリティスキャンを設定
-   - 容量計画とリソース最適化をセットアップ
+6. **Infrastructure and System Monitoring**
+   - Set up server and container monitoring (CPU, memory, disk, network)
+   - Configure cloud service monitoring and cost tracking
+   - Set up database monitoring and performance analysis
+   - Configure network monitoring and security scanning
+   - Set up capacity planning and resource optimization
 
-7. **アラートと通知システム**
-   - 適切な闾値でインテリジェントアラートを設定
-   - アラートルーティングとエスカレーション手順をセットアップ
-   - 通知チャンネル（メール、Slack、PagerDuty）を設定
-   - アラート相関とノイズ削減をセットアップ
-   - オンコールスケジューリングとインシデント管理を設定
+7. **Alerting and Notification System**
+   - Configure intelligent alerting with proper thresholds
+   - Set up alert routing and escalation procedures
+   - Configure notification channels (email, Slack, PagerDuty)
+   - Set up alert correlation and noise reduction
+   - Configure on-call scheduling and incident management
 
-8. **ダッシュボードと可視化**
-   - 包括的な監視ダッシュボード（Grafana、Kibana）を作成
-   - リアルタイムシステムヘルスダッシュボードをセットアップ
-   - ビジネスメトリクスとKPI可視化を設定
-   - 異なるチーム用の役割固有ダッシュボードを作成
-   - モバイルフレンドリーな監視インターフェースをセットアップ
+8. **Dashboards and Visualization**
+   - Create comprehensive monitoring dashboards (Grafana, Kibana)
+   - Set up real-time system health dashboards
+   - Configure business metrics and KPI visualization
+   - Create role-specific dashboards for different teams
+   - Set up mobile-friendly monitoring interfaces
 
-9. **セキュリティ監視とコンプライアンス**
-   - セキュリティイベント監視とSIEM統合をセットアップ
-   - コンプライアンス監視と監査トレールを設定
-   - 脆弱性スキャンとセキュリティアラートをセットアップ
-   - アクセス監視とユーザー行動分析を設定
-   - データプライバシーと保護監視をセットアップ
+9. **Security Monitoring and Compliance**
+   - Set up security event monitoring and SIEM integration
+   - Configure compliance monitoring and audit trails
+   - Set up vulnerability scanning and security alerting
+   - Configure access monitoring and user behavior analytics
+   - Set up data privacy and protection monitoring
 
-10. **インシデント対応と自動化**
-    - 自動インシデント検出と対応をセットアップ
-    - ランブック自動化とセルフヒーリングシステムを設定
-    - インシデント管理とコミュニケーションワークフローをセットアップ
-    - インシデント後分析と改善プロセスを設定
-    - 監視メンテナンスと最適化手順を作成
-    - 監視ツールとインシデント対応手順についてチームをトレーニング
+10. **Incident Response and Automation**
+    - Set up automated incident detection and response
+    - Configure runbook automation and self-healing systems
+    - Set up incident management and communication workflows
+    - Configure post-incident analysis and improvement processes
+    - Create monitoring maintenance and optimization procedures
+    - Train team on monitoring tools and incident response procedures

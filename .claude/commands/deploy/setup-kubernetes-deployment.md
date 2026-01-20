@@ -1,76 +1,76 @@
 # Setup Kubernetes Deployment
 
-ベストプラクティスに従って、スケーラブルでプロダクション対応のKubernetesデプロイメントのマニフェストを生成し、設定します。
+Configure Kubernetes deployment manifests
 
-## 手順
+## Instructions
 
-1. **Kubernetesアーキテクチャ計画**
-   - アプリケーションアーキテクチャとデプロイメント要件を分析
-   - リソース要件（CPU、メモリ、ストレージ、ネットワーク）を定義
-   - ネームスペース構成とマルチテナント戦略を計画
-   - 高可用性と災害復旧要件を評価
-   - スケーリング戦略とパフォーマンス要件を定義
+1. **Kubernetes Architecture Planning**
+   - Analyze application architecture and deployment requirements
+   - Define resource requirements (CPU, memory, storage, network)
+   - Plan namespace organization and multi-tenancy strategy
+   - Assess high availability and disaster recovery requirements
+   - Define scaling strategies and performance requirements
 
-2. **クラスターセットアップと設定**
-   - Kubernetesクラスターをセットアップ（マネージドまたはセルフホスト）
-   - クラスターネットワーキングとCNIプラグインを設定
-   - クラスターストレージクラスと永続ボリュームをセットアップ
-   - クラスターセキュリティポリシーとRBACを設定
-   - クラスター監視とログインフラストラクチャをセットアップ
+2. **Cluster Setup and Configuration**
+   - Set up Kubernetes cluster (managed or self-hosted)
+   - Configure cluster networking and CNI plugin
+   - Set up cluster storage classes and persistent volumes
+   - Configure cluster security policies and RBAC
+   - Set up cluster monitoring and logging infrastructure
 
-3. **アプリケーションのコンテナ化**
-   - アプリケーションが適切にコンテナ化されていることを確認
-   - Kubernetesデプロイメント用にコンテナイメージを最適化
-   - マルチステージビルドとセキュリティスキャンを設定
-   - コンテナレジストリとイメージ管理をセットアップ
-   - イメージプルポリシーとシークレットを設定
+3. **Application Containerization**
+   - Ensure application is properly containerized
+   - Optimize container images for Kubernetes deployment
+   - Configure multi-stage builds and security scanning
+   - Set up container registry and image management
+   - Configure image pull policies and secrets
 
-4. **Kubernetesマニフェスト作成**
-   - 適切なリソース制限を持つDeploymentマニフェストを作成
-   - 内部および外部通信用のServiceマニフェストをセットアップ
-   - 設定管理用のConfigMapとSecretsを設定
-   - データストレージ用のPersistentVolumeClaimsを作成
-   - セキュリティと分離のためのNetworkPoliciesをセットアップ
+4. **Kubernetes Manifest Creation**
+   - Create Deployment manifests with proper resource limits
+   - Set up Service manifests for internal and external communication
+   - Configure ConfigMaps and Secrets for configuration management
+   - Create PersistentVolumeClaims for data storage
+   - Set up NetworkPolicies for security and isolation
 
-5. **ロードバランシングとIngress**
-   - Ingressコントローラーとルーティングルールを設定
-   - SSL/TLS終端と証明書管理をセットアップ
-   - ロードバランシング戦略とセッションアフィニティを設定
-   - 外部DNSとドメイン管理をセットアップ
-   - トラフィック管理とカナリアデプロイメントを設定
+5. **Load Balancing and Ingress**
+   - Configure Ingress controllers and routing rules
+   - Set up SSL/TLS termination and certificate management
+   - Configure load balancing strategies and session affinity
+   - Set up external DNS and domain management
+   - Configure traffic management and canary deployments
 
-6. **オートスケーリング設定**
-   - メトリクスベースのHorizontal Pod Autoscaler (HPA)をセットアップ
-   - リソース最適化のためのVertical Pod Autoscaler (VPA)を設定
-   - ノードスケーリング用のCluster Autoscalerをセットアップ
-   - カスタムメトリクスとスケーリングポリシーを設定
-   - リソースクォータと制限をセットアップ
+6. **Auto-scaling Configuration**
+   - Set up Horizontal Pod Autoscaler (HPA) based on metrics
+   - Configure Vertical Pod Autoscaler (VPA) for resource optimization
+   - Set up Cluster Autoscaler for node scaling
+   - Configure custom metrics and scaling policies
+   - Set up resource quotas and limits
 
-7. **ヘルスチェックと監視**
-   - livenessとreadinessプローブを設定
-   - 起動が遅いアプリケーション用のstartupプローブをセットアップ
-   - ヘルスチェックエンドポイントと監視を設定
-   - アプリケーションメトリクス収集をセットアップ
-   - アラートと通知システムを設定
+7. **Health Checks and Monitoring**
+   - Configure liveness and readiness probes
+   - Set up startup probes for slow-starting applications
+   - Configure health check endpoints and monitoring
+   - Set up application metrics collection
+   - Configure alerting and notification systems
 
-8. **セキュリティとコンプライアンス**
-   - Pod Security Standardsとポリシーを設定
-   - ネットワークセグメンテーションとセキュリティポリシーをセットアップ
-   - サービスアカウントとRBAC権限を設定
-   - シークレット管理とローテーションをセットアップ
-   - セキュリティスキャンとコンプライアンス監視を設定
+8. **Security and Compliance**
+   - Configure Pod Security Standards and policies
+   - Set up network segmentation and security policies
+   - Configure service accounts and RBAC permissions
+   - Set up secret management and rotation
+   - Configure security scanning and compliance monitoring
 
-9. **CI/CD統合**
-   - 自動化されたKubernetesデプロイメントパイプラインをセットアップ
-   - ArgoCDやFluxでGitOpsワークフローを設定
-   - Kubernetes環境での自動テストをセットアップ
-   - ブルーグリーンとカナリアデプロイメント戦略を設定
-   - ロールバックと災害復旧手順をセットアップ
+9. **CI/CD Integration**
+   - Set up automated Kubernetes deployment pipelines
+   - Configure GitOps workflows with ArgoCD or Flux
+   - Set up automated testing in Kubernetes environments
+   - Configure blue-green and canary deployment strategies
+   - Set up rollback and disaster recovery procedures
 
-10. **運用と保守**
-    - クラスター保守と更新手順をセットアップ
-    - バックアップと災害復旧戦略を設定
-    - コスト最適化とリソース管理をセットアップ
-    - 運用ランブックとトラブルシューティングガイドを作成
-    - Kubernetes運用とベストプラクティスについてチームをトレーニング
-    - クラスターライフサイクル管理とガバナンスをセットアップ
+10. **Operations and Maintenance**
+    - Set up cluster maintenance and update procedures
+    - Configure backup and disaster recovery strategies
+    - Set up cost optimization and resource management
+    - Create operational runbooks and troubleshooting guides
+    - Train team on Kubernetes operations and best practices
+    - Set up cluster lifecycle management and governance

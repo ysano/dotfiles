@@ -1,84 +1,84 @@
-# 開発環境セットアップコマンド
+# Setup Development Environment
 
-チームの即座の生産性向上のために必要なツール、設定、ワークフローを含む包括的な開発環境を構成します。
+Setup complete development environment
 
-## 実行手順
+## Instructions
 
-1. **環境分析と要件**
-   - 現在のプロジェクト構造と技術スタックを分析
-   - 必要な開発ツールと依存関係を特定
-   - 既存の開発環境設定を確認
-   - チームサイズとコラボレーション要件を決定
-   - プラットフォーム要件を評価 (Windows, macOS, Linux)
+1. **Environment Analysis and Requirements**
+   - Analyze current project structure and technology stack
+   - Identify required development tools and dependencies
+   - Check existing development environment configuration
+   - Determine team size and collaboration requirements
+   - Assess platform requirements (Windows, macOS, Linux)
 
-2. **コア開発ツールのインストール**
-   - 必要なランタイム環境を確認・インストール (Node.js, Python, Java, etc.)
-   - 適切なバージョンでパッケージマネージャーをセットアップ (npm, yarn, pnpm, pip, maven, etc.)
-   - バージョン管理ツールをインストール・設定 (Git, Git LFS)
-   - ワークスペース固有の設定でコードエディターをセットアップ (VSCode, IntelliJ)
-   - ターミナルとシェル環境を設定
+2. **Core Development Tools Installation**
+   - Verify and install required runtime environments (Node.js, Python, Java, etc.)
+   - Set up package managers with proper versions (npm, yarn, pnpm, pip, maven, etc.)
+   - Install and configure version control tools (Git, Git LFS)
+   - Set up code editors with workspace-specific settings (VSCode, IntelliJ)
+   - Configure terminal and shell environment
 
-3. **プロジェクト固有のツール設定**
-   - プロジェクトの依存関係とdev依存関係をインストール
-   - ビルドツールとタスクランナーをセットアップ
-   - バンドラーとモジュールシステムを設定
-   - テストフレームワークとランナーをインストール
-   - デバッグツールと拡張機能をセットアップ
-   - プロファイリングとパフォーマンス監視ツールを設定
+3. **Project-Specific Tooling**
+   - Install project dependencies and dev dependencies
+   - Set up build tools and task runners
+   - Configure bundlers and module systems
+   - Install testing frameworks and runners
+   - Set up debugging tools and extensions
+   - Configure profiling and performance monitoring tools
 
-4. **コード品質と標準**
-   - lintingツールをインストール・設定 (ESLint, Pylint, etc.)
-   - コードフォーマッティングツールをセットアップ (Prettier, Black, etc.)
-   - Huskyまたは類似ツールでpre-commitフックを設定
-   - コードスペルチェックと文法ツールをセットアップ
-   - importソートと整理ツールを設定
-   - コード複雑度と品質メトリクスをセットアップ
+4. **Code Quality and Standards**
+   - Install and configure linting tools (ESLint, Pylint, etc.)
+   - Set up code formatting tools (Prettier, Black, etc.)
+   - Configure pre-commit hooks with Husky or similar
+   - Set up code spell checking and grammar tools
+   - Configure import sorting and organization tools
+   - Set up code complexity and quality metrics
 
-5. **開発サーバーとデータベース**
-   - ホットリロード付きローカル開発サーバーをセットアップ
-   - データベースサーバーと管理ツールを設定
-   - コンテナ化された開発環境をセットアップ (Docker)
-   - APIモッキングとテストツールを設定
-   - HTTPS開発用のローカルSSL証明書をセットアップ
-   - 環境変数管理を設定
+5. **Development Server and Database**
+   - Set up local development server with hot reloading
+   - Configure database server and management tools
+   - Set up containerized development environment (Docker)
+   - Configure API mocking and testing tools
+   - Set up local SSL certificates for HTTPS development
+   - Configure environment variable management
 
-6. **IDEとエディター設定**
-   - ワークスペース設定と拡張機能を設定
-   - 言語固有のプラグインとシンタックスハイライトをセットアップ
-   - IntelliSenseと自動補完を設定
-   - デバッグ設定とブレークポイントをセットアップ
-   - 統合ターミナルとタスク実行を設定
-   - コードスニペットとテンプレートをセットアップ
+6. **IDE and Editor Configuration**
+   - Configure workspace settings and extensions
+   - Set up language-specific plugins and syntax highlighting
+   - Configure IntelliSense and auto-completion
+   - Set up debugging configurations and breakpoints
+   - Configure integrated terminal and task running
+   - Set up code snippets and templates
 
-7. **環境変数とシークレット**
-   - 異なる環境用の.envテンプレートファイルを作成
-   - ローカル環境変数管理をセットアップ
-   - 開発用のシークレット管理を設定
-   - APIキーとサービス認証情報をセットアップ
-   - 環境固有の設定ファイルを設定
-   - 必要な環境変数を文書化
+7. **Environment Variables and Secrets**
+   - Create .env template files for different environments
+   - Set up local environment variable management
+   - Configure secrets management for development
+   - Set up API keys and service credentials
+   - Configure environment-specific configuration files
+   - Document required environment variables
 
-8. **ドキュメントとナレッジベース**
-   - 包括的なセットアップドキュメントを作成
-   - 一般的な開発ワークフローを文書化
-   - プロジェクトwikiまたはナレッジベースをセットアップ
-   - 一般的な問題のトラブルシューティングガイドを作成
-   - コーディング標準とベストプラクティスを文書化
-   - 新規チームメンバー向けのオンボーディングチェックリストをセットアップ
+8. **Documentation and Knowledge Base**
+   - Create comprehensive setup documentation
+   - Document common development workflows
+   - Set up project wiki or knowledge base
+   - Create troubleshooting guides for common issues
+   - Document coding standards and best practices
+   - Set up onboarding checklist for new team members
 
-9. **コラボレーションとコミュニケーションツール**
-   - チームコミュニケーションチャンネルを設定
-   - コードレビューワークフローとツールをセットアップ
-   - 課題追跡とプロジェクト管理を設定
-   - 共有開発リソースとサービスをセットアップ
-   - チームカレンダーと会議ツールを設定
-   - 共有ドキュメントとファイルストレージをセットアップ
+9. **Collaboration and Communication Tools**
+   - Configure team communication channels
+   - Set up code review workflows and tools
+   - Configure issue tracking and project management
+   - Set up shared development resources and services
+   - Configure team calendars and meeting tools
+   - Set up shared documentation and file storage
 
-10. **検証とテスト**
-    - すべてのツールと依存関係が適切にインストールされていることを確認
-    - 開発サーバーの起動とホットリロードをテスト
-    - データベース接続とデータアクセスを検証
-    - ビルドプロセスとデプロイワークフローをテスト
-    - コード品質ツールが正しく動作することを確認
-    - コラボレーションワークフローとチームアクセスをテスト
-    - 開発環境ヘルスチェックスクリプトを作成
+10. **Validation and Testing**
+    - Verify all tools and dependencies are properly installed
+    - Test development server startup and hot reloading
+    - Validate database connections and data access
+    - Test build processes and deployment workflows
+    - Verify code quality tools are working correctly
+    - Test collaboration workflows and team access
+    - Create development environment health check script

@@ -1,18 +1,18 @@
 # Setup Linting Command
 
-一貫したコード標準を維持するために、任意のプロジェクトに包括的なlintingとコード品質ツールを設定します。
+Setup code linting and quality tools
 
-## 手順
+## Instructions
 
-linting設定に以下の体系的なアプローチに従ってください： **$ARGUMENTS**
+Follow this systematic approach to setup linting: **$ARGUMENTS**
 
-1. **プロジェクト分析**
-   - プログラミング言語とフレームワークを特定
-   - 既存のlinting設定を確認
-   - 現在のコードスタイルとパターンを確認
-   - チームの好みと要件を評価
+1. **Project Analysis**
+   - Identify programming languages and frameworks
+   - Check existing linting configuration
+   - Review current code style and patterns
+   - Assess team preferences and requirements
 
-2. **言語別ツール選択**
+2. **Tool Selection by Language**
 
    **JavaScript/TypeScript:**
    ```bash
@@ -27,11 +27,11 @@ linting設定に以下の体系的なアプローチに従ってください： 
 
    **Java:**
    ```bash
-   # pom.xml または build.gradle に追加
+   # Add to pom.xml or build.gradle
    # Checkstyle, SpotBugs, PMD
    ```
 
-3. **設定セットアップ**
+3. **Configuration Setup**
 
    **ESLint (.eslintrc.json):**
    ```json
@@ -51,12 +51,12 @@ linting設定に以下の体系的なアプローチに従ってください： 
    }
    ```
 
-4. **IDE統合**
-   - VS Code設定を構成
-   - 保存時自動修正を設定
-   - 関連する拡張機能をインストール
+4. **IDE Integration**
+   - Configure VS Code settings
+   - Setup auto-fix on save
+   - Install relevant extensions
 
-5. **CI/CD統合**
+5. **CI/CD Integration**
    ```yaml
    - name: Lint code
      run: npm run lint
@@ -73,4 +73,4 @@ linting設定に以下の体系的なアプローチに従ってください： 
    }
    ```
 
-チームの好みに基づいてルールをカスタマイズし、段階的により厳格な標準を実施することを忘れないでください。
+Remember to customize rules based on team preferences and gradually enforce stricter standards.

@@ -1,76 +1,76 @@
-# TypeScriptへの移行
+# Migrate to TypeScript
 
-適切な設定、型定義、段階的な移行戦略でJavaScriptプロジェクトをTypeScriptに変換します。
+Migrate JavaScript project to TypeScript
 
-## 実行手順
+## Instructions
 
-1. **プロジェクト分析と移行計画**
-   - 現在のJavaScriptコードベースの構造と複雑度を分析
-   - 外部依存関係とそのTypeScriptサポートを特定
-   - プロジェクトサイズを評価し、移行アプローチを決定（段階的 vs 完全）
-   - 既存のビルドシステムとバンドル設定をレビュー
-   - 移行タイムラインと段階的アプローチ計画を作成
+1. **Project Analysis and Migration Planning**
+   - Analyze current JavaScript codebase structure and complexity
+   - Identify external dependencies and their TypeScript support
+   - Assess project size and determine migration approach (gradual vs. complete)
+   - Review existing build system and bundling configuration
+   - Create migration timeline and phased approach plan
 
-2. **TypeScriptインストールと設定**
-   - TypeScriptと関連依存関係（@typesパッケージ）をインストール
-   - 厳格な設定で包括的なtsconfig.jsonを作成
-   - パスマッピングとモジュール解決を設定
-   - インクリメンタルコンパイルとビルド最適化をセットアップ
-   - 異なる環境（開発、本番、テスト）用にTypeScriptを設定
+2. **TypeScript Installation and Configuration**
+   - Install TypeScript and related dependencies (@types packages)
+   - Create comprehensive tsconfig.json with strict configuration
+   - Configure path mapping and module resolution
+   - Set up incremental compilation and build optimization
+   - Configure TypeScript for different environments (development, production, testing)
 
-3. **ビルドシステム統合**
-   - TypeScriptコンパイルをサポートするようにビルドツールを更新
-   - TypeScript用にwebpack、Vite、または他のバンドラーを設定
-   - TypeScriptサポート付きの開発サーバーをセットアップ
-   - TypeScriptファイル用のホットモジュール置換を設定
-   - ビルドスクリプトとpackage.json設定を更新
+3. **Build System Integration**
+   - Update build tools to support TypeScript compilation
+   - Configure webpack, Vite, or other bundlers for TypeScript
+   - Set up development server with TypeScript support
+   - Configure hot module replacement for TypeScript files
+   - Update build scripts and package.json configurations
 
-4. **ファイル移行戦略**
-   - 設定ファイルとユーティリティモジュールから開始
-   - 最もシンプルなモジュールから最も複雑なモジュールへ移行
-   - .jsファイルを.ts/.tsxに段階的にリネーム
-   - import/export文をTypeScript構文を使用するように更新
-   - 移行期間中の混合JavaScript/TypeScriptコードベースを処理
+4. **File Migration Strategy**
+   - Start with configuration files and utility modules
+   - Migrate from least to most complex modules
+   - Rename .js files to .ts/.tsx incrementally
+   - Update import/export statements to use TypeScript syntax
+   - Handle mixed JavaScript/TypeScript codebase during transition
 
-5. **型定義とインターフェース**
-   - プロジェクト固有の型のための包括的な型定義を作成
-   - 外部依存関係用の@typesパッケージをインストール
-   - APIレスポンスとデータ構造のインターフェースを定義
-   - 型なしライブラリのカスタム型宣言を作成
-   - モジュール間で共有される型とインターフェースをセットアップ
+5. **Type Definitions and Interfaces**
+   - Create comprehensive type definitions for project-specific types
+   - Install @types packages for external dependencies
+   - Define interfaces for API responses and data structures
+   - Create custom type declarations for untyped libraries
+   - Set up shared types and interfaces across modules
 
-6. **コード変換と型注釈**
-   - 関数パラメーターと戻り値の型に明示的な型注釈を追加
-   - JavaScriptクラスを適切な型付けでTypeScriptに変換
-   - オブジェクトリテラルを型付きインターフェースに変換
-   - 再利用可能なコンポーネントと関数のジェネリック型を追加
-   - ユニオン型、マップ型、条件型などの複雑な型を処理
+6. **Code Transformation and Type Annotation**
+   - Add explicit type annotations to function parameters and return types
+   - Convert JavaScript classes to TypeScript with proper typing
+   - Transform object literals to typed interfaces
+   - Add generic types for reusable components and functions
+   - Handle complex types like union types, mapped types, and conditional types
 
-7. **エラー解決と型安全性**
-   - TypeScriptコンパイラエラーを体系的に解決
-   - 型の不一致と未定義動作を修正
-   - 厳密なnullチェックでnullとundefined値を処理
-   - TypeScriptベストプラクティスのESLintルールを設定
-   - CI/CDパイプラインで型チェックをセットアップ
+7. **Error Resolution and Type Safety**
+   - Resolve TypeScript compiler errors systematically
+   - Fix type mismatches and undefined behavior
+   - Handle null and undefined values with strict null checks
+   - Configure ESLint rules for TypeScript best practices
+   - Set up type checking in CI/CD pipeline
 
-8. **テストと検証**
-   - テストファイルをTypeScriptに更新
-   - TypeScriptサポート用にテストフレームワークを設定
-   - tsdや@typescript-eslintなどのツールで型テストを追加
-   - テストスイートで型安全性を検証
-   - 型カバレッジレポートをセットアップ
+8. **Testing and Validation**
+   - Update test files to TypeScript
+   - Configure testing framework for TypeScript support
+   - Add type testing with tools like tsd or @typescript-eslint
+   - Validate type safety in test suites
+   - Set up type coverage reporting
 
-9. **開発者エクスペリエンスの向上**
-   - 最適なTypeScriptサポート用にIDE/エディターを設定
-   - IntelliSenseと自動補完をセットアップ
-   - TypeScriptソースマップのデバッグを設定
-   - 型を認識するリントとフォーマットをセットアップ
-   - TypeScript固有のコードスニペットとテンプレートを作成
+9. **Developer Experience Enhancement**
+   - Configure IDE/editor for optimal TypeScript support
+   - Set up IntelliSense and auto-completion
+   - Configure debugging for TypeScript source maps
+   - Set up type-aware linting and formatting
+   - Create TypeScript-specific code snippets and templates
 
-10. **ドキュメンテーションとチームオンボーディング**
-    - TypeScriptセットアップ用にプロジェクトドキュメンテーションを更新
-    - TypeScriptコーディング標準とベストプラクティスガイドを作成
-    - 移行決定と型システムアーキテクチャを文書化
-    - 型ドキュメンテーション生成をセットアップ
-    - TypeScript開発ワークフローでチームメンバーをトレーニング
-    - 一般的なTypeScript問題のトラブルシューティングガイドを作成
+10. **Documentation and Team Onboarding**
+    - Update project documentation for TypeScript setup
+    - Create TypeScript coding standards and best practices guide
+    - Document migration decisions and type system architecture
+    - Set up type documentation generation
+    - Train team members on TypeScript development workflows
+    - Create troubleshooting guide for common TypeScript issues

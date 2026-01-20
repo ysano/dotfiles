@@ -1,41 +1,41 @@
-# 複雑タスク用高度AIモード
+# Enhanced AI Mode for Complex Tasks
 
-複雑タスク用高度AIモード
+Enhanced AI mode for complex tasks
 
-*コマンド原作者: IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
+*Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 
-## 実行手順
+## Instructions
 
-包括的なプロジェクトコンテキストを持つ新しいClaude Codeセッションを初期化：
+Initialize a new Claude Code session with comprehensive project context:
 
-1. **コードベース構造の分析**
-   - `git ls-files`を実行してファイル構成とプロジェクトレイアウトを理解
-   - ディレクトリツリーコマンド（利用可能な場合）で視覚的構造を確認
-   - 主要ディレクトリとその目的を特定
-   - 使用中の技術スタックとフレームワークを記録
+1. **Analyze Codebase Structure**
+   - Run `git ls-files` to understand file organization and project layout
+   - Execute directory tree commands (if available) for visual structure
+   - Identify key directories and their purposes
+   - Note the technology stack and frameworks in use
 
-2. **プロジェクトドキュメントの読み込み**
-   - README.mdでプロジェクト概要とセットアップ手順を確認
-   - docs/やai_docs/の追加ドキュメントをチェック
-   - CONTRIBUTING.mdや開発ガイドをレビュー
-   - アーキテクチャや設計ドキュメントを検索
+2. **Read Project Documentation**
+   - Read README.md for project overview and setup instructions
+   - Check for any additional documentation in docs/ or ai_docs/
+   - Review any CONTRIBUTING.md or development guides
+   - Look for architecture or design documents
 
-3. **プロジェクトコンテキストの理解**
-   - プロジェクトの主要目的と目標を特定
-   - 特別なセットアップ要件や依存関係を記録
-   - 環境設定ニーズを確認
-   - CI/CD設定ファイルをレビュー
+3. **Understand Project Context**
+   - Identify the project's primary purpose and goals
+   - Note any special setup requirements or dependencies
+   - Check for environment configuration needs
+   - Review any CI/CD configuration files
 
-4. **簡潔な概要の提供**
-   - プロジェクトの目的を2-3文で要約
-   - 主要技術とフレームワークをリスト
-   - 重要なセットアップ手順を強調
-   - コードベースの主要領域を記録
+4. **Provide Concise Overview**
+   - Summarize the project's purpose in 2-3 sentences
+   - List the main technologies and frameworks
+   - Highlight any important setup steps
+   - Note key areas of the codebase
 
-このコマンドは以下の場合にコンテキストを迅速に確立するのに役立ちます：
-- 新しいプロジェクトで作業を開始する時
-- 時間を空けてプロジェクトに戻る時
-- 新しいチームメンバーのオンボーディング時
-- 深い技術作業の準備時
+This command helps establish context quickly when:
+- Starting work on a new project
+- Returning to a project after time away
+- Onboarding new team members
+- Preparing for deep technical work
 
-目標は、より効果的な支援のためにAIアシスタントに重要なプロジェクト知識で「準備」させることです。
+The goal is to "prime" the AI assistant with essential project knowledge for more effective assistance.

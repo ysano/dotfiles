@@ -1,15 +1,15 @@
-# パフォーマンス監視の追加
+# Add Performance Monitoring
 
-プロアクティブなパフォーマンス問題の検出と解決のための詳細なパフォーマンス監視とアラート機能を実装します。
+Setup application performance monitoring
 
-## 実行手順
+## Instructions
 
-1. **パフォーマンス監視戦略**
-   - 主要パフォーマンス指標（KPI）とサービスレベル目標（SLO）の定義
-   - 重要なユーザージャーニーとパフォーマンスボトルネックの特定
-   - 監視アーキテクチャとデータ収集戦略の計画
-   - 既存の監視インフラと統合ポイントの評価
-   - アラート閾値とエスカレーション手順の定義
+1. **Performance Monitoring Strategy**
+   - Define key performance indicators (KPIs) and service level objectives (SLOs)
+   - Identify critical user journeys and performance bottlenecks
+   - Plan monitoring architecture and data collection strategy
+   - Assess existing monitoring infrastructure and integration points
+   - Define alerting thresholds and escalation procedures
 
 2. **Application Performance Monitoring (APM)**
    - Set up comprehensive APM monitoring:

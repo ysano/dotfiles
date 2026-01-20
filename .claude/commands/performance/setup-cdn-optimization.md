@@ -1,18 +1,18 @@
-# CDN最適化セットアップ
+# Setup CDN Optimization
 
-より高速なパフォーマンスと帯域コストの削減のために、最適なキャッシュ、圧縮、グローバルコンテンツ配信でCDNを設定します。
+Configure CDN for optimal delivery
 
-## 実行手順
+## Instructions
 
-1. **CDN戦略とプロバイダー選定**
-   - アプリケーションのトラフィックパターンとグローバルユーザー分布の分析
-   - CDNプロバイダーの評価（CloudFlare、AWS CloudFront、Fastly、KeyCDN）
-   - コンテンツタイプとキャッシュ要件の評価
-   - CDNアーキテクチャとエッジロケーション戦略の計画
-   - パフォーマンスとコスト最適化目標の定義
+1. **CDN Strategy and Provider Selection**
+   - Analyze application traffic patterns and global user distribution
+   - Evaluate CDN providers (CloudFlare, AWS CloudFront, Fastly, KeyCDN)
+   - Assess content types and caching requirements
+   - Plan CDN architecture and edge location strategy
+   - Define performance and cost optimization goals
 
-2. **CDN設定とセットアップ**
-   - 最適な設定でCDNを設定：
+2. **CDN Configuration and Setup**
+   - Configure CDN with optimal settings:
 
    **CloudFlare Configuration:**
    ```javascript
@@ -93,8 +93,8 @@
                  MaxTTL: 31536000
    ```
 
-3. **静的アセットの最適化**
-   - CDN配信用にアセットを最適化：
+3. **Static Asset Optimization**
+   - Optimize assets for CDN delivery:
 
    **Asset Build Process:**
    ```javascript
@@ -188,8 +188,8 @@
    });
    ```
 
-4. **圧縮と最適化**
-   - 最適な圧縮設定の設定：
+4. **Compression and Optimization**
+   - Configure optimal compression settings:
 
    **Gzip/Brotli Compression:**
    ```javascript
@@ -258,8 +258,8 @@
    };
    ```
 
-5. **キャッシュヘッダーとポリシー**
-   - 最適なキャッシュ戦略の設定：
+5. **Cache Headers and Policies**
+   - Configure optimal caching strategies:
 
    **Smart Cache Headers:**
    ```javascript
@@ -326,8 +326,8 @@
    });
    ```
 
-6. **画像最適化と配信**
-   - 高度な画像最適化の実装：
+6. **Image Optimization and Delivery**
+   - Implement advanced image optimization:
 
    **Responsive Image Delivery:**
    ```javascript
@@ -398,8 +398,8 @@
    }
    ```
 
-7. **CDNパージとキャッシュ無効化**
-   - インテリジェントなキャッシュ無効化の実装：
+7. **CDN Purging and Cache Invalidation**
+   - Implement intelligent cache invalidation:
 
    **CloudFlare Cache Purging:**
    ```javascript
@@ -471,8 +471,8 @@
    }
    ```
 
-8. **パフォーマンス監視と分析**
-   - CDNパフォーマンス監視のセットアップ：
+8. **Performance Monitoring and Analytics**
+   - Set up CDN performance monitoring:
 
    **CDN Performance Tracking:**
    ```javascript
@@ -541,8 +541,8 @@
    }
    ```
 
-9. **セキュリティとアクセス制御**
-   - CDNセキュリティ機能の設定：
+9. **Security and Access Control**
+   - Configure CDN security features:
 
    **CDN Security Configuration:**
    ```javascript
@@ -591,8 +591,8 @@
    }
    ```
 
-10. **コスト最適化と監視**
-    - CDNコスト最適化の実装：
+10. **Cost Optimization and Monitoring**
+    - Implement CDN cost optimization:
 
     **Cost Monitoring:**
     ```javascript

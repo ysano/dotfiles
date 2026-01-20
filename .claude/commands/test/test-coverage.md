@@ -1,73 +1,73 @@
-# テストカバレッジコマンド
+# Test Coverage Command
 
-包括的なレポートと実行可能な推奨事項で、あらゆるコードベースのテストカバレッジを分析・改善します。
+Analyze and report test coverage
 
-## 実行手順
+## Instructions
 
-テストカバレッジを分析・改善するための体系的アプローチに従ってください： **$ARGUMENTS**
+Follow this systematic approach to analyze and improve test coverage: **$ARGUMENTS**
 
-1. **カバレッジツールの設定**
-   - 適切なカバレッジツールの特定と構成：
+1. **Coverage Tool Setup**
+   - Identify and configure appropriate coverage tools:
      - JavaScript/Node.js: Jest, NYC, Istanbul
      - Python: Coverage.py, pytest-cov
      - Java: JaCoCo, Cobertura
      - C#: dotCover, OpenCover
      - Ruby: SimpleCov
-   - カバレッジレポート形式の構成（HTML、XML、JSON）
-   - カバレッジ闾値と品質ゲートの設定
+   - Configure coverage reporting formats (HTML, XML, JSON)
+   - Set up coverage thresholds and quality gates
 
-2. **ベースラインカバレッジ分析**
-   - カバレッジレポートで既存テストを実行
-   - 包括的なカバレッジレポートの生成
-   - 現在のカバレッジ率の文書化：
-     - 行カバレッジ
-     - ブランチカバレッジ
-     - 関数カバレッジ
-     - ステートメントカバレッジ
-   - カバーされていないコード領域の特定
+2. **Baseline Coverage Analysis**
+   - Run existing tests with coverage reporting
+   - Generate comprehensive coverage reports
+   - Document current coverage percentages:
+     - Line coverage
+     - Branch coverage
+     - Function coverage
+     - Statement coverage
+   - Identify uncovered code areas
 
-3. **カバレッジレポート分析**
-   - ファイル・ディレクトリ別の詳細カバレッジレポートのレビュー
-   - 重要なカバーされていないコードパスの特定
-   - 条件ロジックのブランチカバレッジ分析
-   - テストされていない関数とメソッドの検出
-   - 時間経過によるカバレッジトレンドの検査
+3. **Coverage Report Analysis**
+   - Review detailed coverage reports by file and directory
+   - Identify critical uncovered code paths
+   - Analyze branch coverage for conditional logic
+   - Find untested functions and methods
+   - Examine coverage trends over time
 
-4. **クリティカルパスの特定**
-   - カバレッジが不足しているビジネスクリティカルなコードの特定
-   - 高リスク・低カバレッジ領域の優先順位付け
-   - パブリックAPIとインターフェースに焦点を当てる
-   - エラーハンドリングとエッジケースをターゲット
-   - セキュリティに敏感なコードパスの検査
+4. **Critical Path Identification**
+   - Identify business-critical code that lacks coverage
+   - Prioritize high-risk, low-coverage areas
+   - Focus on public APIs and interfaces
+   - Target error handling and edge cases
+   - Examine security-sensitive code paths
 
-5. **テストギャップ分析**
-   - カバーされていないコードの分類：
-     - 早急なテストが必要なビジネスロジック
-     - エラーハンドリングと例外パス
-     - 設定とセットアップコード
-     - ユーティリティ関数とヘルパー
-     - 削除すべきデッドまたは旧式コード
+5. **Test Gap Analysis**
+   - Categorize uncovered code:
+     - Business logic requiring immediate testing
+     - Error handling and exception paths
+     - Configuration and setup code
+     - Utility functions and helpers
+     - Dead or obsolete code to remove
 
-6. **戦略的テスト作成**
-   - カバーされていないビジネスロジックの単体テスト作成
-   - カバーされていないワークフローの結合テスト追加
-   - エラー状態とエッジケースのテスト作成
-   - 設定と環境固有コードのテスト
-   - バグが起きやすい領域のリグレッションテスト追加
+6. **Strategic Test Writing**
+   - Write unit tests for uncovered business logic
+   - Add integration tests for uncovered workflows
+   - Create tests for error conditions and edge cases
+   - Test configuration and environment-specific code
+   - Add regression tests for bug-prone areas
 
-7. **ブランチカバレッジの改善**
-   - カバーされていない条件ブランチの特定
-   - trueとfalse両方の条件のテスト
-   - すべてのswitch/case文のカバー
-   - 例外ハンドリングパスのテスト
-   - ループ条件と反復の検証
+7. **Branch Coverage Improvement**
+   - Identify uncovered conditional branches
+   - Test both true and false conditions
+   - Cover all switch/case statements
+   - Test exception handling paths
+   - Verify loop conditions and iterations
 
-8. **エッジケーステスト**
-   - 境界条件と制限のテスト
-   - null、空、無効入力のテスト
-   - タイムアウトとネットワーク障害シナリオのテスト
-   - リソース枚渇状態のテスト
-   - 同時アクセスと競合状態のテスト
+8. **Edge Case Testing**
+   - Test boundary conditions and limits
+   - Test null, empty, and invalid inputs
+   - Test timeout and network failure scenarios
+   - Test resource exhaustion conditions
+   - Test concurrent access and race conditions
 
 9. **Mock and Stub Strategy**
    - Mock external dependencies for better isolation

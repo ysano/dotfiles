@@ -1,83 +1,83 @@
-# トラブルシューティングガイド生成コマンド
+# Troubleshooting Guide Generator Command
 
-あらゆるシステム、アプリケーション、コードベースのための包括的なトラブルシューティングドキュメンテーションを作成します。
+Generate troubleshooting documentation
 
-## 実行手順
+## Instructions
 
-トラブルシューティングガイドを作成するために以下の体系的アプローチに従ってください：**$ARGUMENTS**
+Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
 
-1. **システム概要とアーキテクチャ**
-   - システムアーキテクチャとコンポーネントを文書化する
-   - 依存関係と統合をマッピングする
-   - 重要パスと故障ポイントを特定する
-   - システムトポロジ図を作成する
-   - データフローと通信パターンを文書化する
+1. **System Overview and Architecture**
+   - Document the system architecture and components
+   - Map out dependencies and integrations
+   - Identify critical paths and failure points
+   - Create system topology diagrams
+   - Document data flow and communication patterns
 
-2. **一般的な問題の特定**
-   - 過去のサポートチケットと問題を収集する
-   - 頻繁な問題についてチームメンバーにインタビューする
-   - エラーログと監視データを分析する
-   - ユーザーフィードバックと苦情をレビューする
-   - システム故障のパターンを特定する
+2. **Common Issues Identification**
+   - Collect historical support tickets and issues
+   - Interview team members about frequent problems
+   - Analyze error logs and monitoring data
+   - Review user feedback and complaints
+   - Identify patterns in system failures
 
-3. **トラブルシューティングフレームワーク**
-   - 体系的な診断手順を確立する
-   - 問題分離方法論を作成する
-   - エスカレーションパスと手順を文書化する
-   - ログ出力と監視チェックポイントを設定する
-   - 重大度レベルと対応時間を定義する
+3. **Troubleshooting Framework**
+   - Establish systematic diagnostic procedures
+   - Create problem isolation methodologies
+   - Document escalation paths and procedures
+   - Set up logging and monitoring checkpoints
+   - Define severity levels and response times
 
-4. **診断ツールとコマンド**
+4. **Diagnostic Tools and Commands**
    
    ```markdown
-   ## 必須診断コマンド
+   ## Essential Diagnostic Commands
    
-   ### システムヘルス
+   ### System Health
    ```bash
-   # システムリソースチェック
-   top                    # CPUとメモリ使用率
-   df -h                 # ディスク容量
-   free -m               # メモリ使用率
-   netstat -tuln         # ネットワーク接続
+   # Check system resources
+   top                    # CPU and memory usage
+   df -h                 # Disk space
+   free -m               # Memory usage
+   netstat -tuln         # Network connections
    
-   # アプリケーションログ
+   # Application logs
    tail -f /var/log/app.log
    journalctl -u service-name -f
    
-   # データベース接続
+   # Database connectivity
    mysql -u user -p -e "SELECT 1"
    psql -h host -U user -d db -c "SELECT 1"
    ```
    ```
 
-5. **問題カテゴリと解決策**
+5. **Issue Categories and Solutions**
 
-   **パフォーマンス問題:**
+   **Performance Issues:**
    ```markdown
-   ### レスポンス時間の遅延
+   ### Slow Response Times
    
-   **症状:**
-   - APIレスポンスが5秒以上
-   - ユーザーインターフェースのフリーズ
-   - データベースタイムアウト
+   **Symptoms:**
+   - API responses > 5 seconds
+   - User interface freezing
+   - Database timeouts
    
-   **診断手順:**
-   1. システムリソースをチェック（CPU、メモリ、ディスク）
-   2. アプリケーションログでエラーをレビュー
-   3. データベースクエリパフォーマンスを分析
-   4. ネットワーク接続とレイテンシをチェック
+   **Diagnostic Steps:**
+   1. Check system resources (CPU, memory, disk)
+   2. Review application logs for errors
+   3. Analyze database query performance
+   4. Check network connectivity and latency
    
-   **一般的な原因:**
-   - データベースコネクションプールの果尽
-   - 非効率なデータベースクエリ
-   - アプリケーションのメモリリーク
-   - ネットワーク帯域の制限
+   **Common Causes:**
+   - Database connection pool exhaustion
+   - Inefficient database queries
+   - Memory leaks in application
+   - Network bandwidth limitations
    
-   **解決策:**
-   - アプリケーションサービスを再起動
-   - データベースクエリを最適化
-   - コネクションプールサイズを増加
-   - インフラストラクチャリソースをスケール
+   **Solutions:**
+   - Restart application services
+   - Optimize database queries
+   - Increase connection pool size
+   - Scale infrastructure resources
    ```
 
 6. **Error Code Documentation**
@@ -347,9 +347,9 @@ strace -p [PID]
 perf record -p [PID]
 ```
 
-以下を必ず実行してください:
-- トラブルシューティングガイドを最新に保つ
-- 文書化されたすべての手順を定期的にテストする
-- ユーザーからフィードバックを収集し、ガイドを改善する
-- 有用な場合はスクリーンショットと視覚的補助を含める
-- ガイドを検索可能で整理された状態にする
+Remember to:
+- Keep troubleshooting guides up-to-date
+- Test all documented procedures regularly
+- Collect feedback from users and improve guides
+- Include screenshots and visual aids where helpful
+- Make guides searchable and well-organized

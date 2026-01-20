@@ -1,78 +1,78 @@
 # Setup Visual Testing
 
-意図しないビジュアル変更を自動的に検出するためのUIコンポーネントのビジュアル回帰テストを設定します。
+Setup visual regression testing
 
-## 手順
+## Instructions
 
-1. **ビジュアルテスト戦略分析**
-   - 現在のUI/コンポーネント構造とテストニーズを分析
-   - 重要なユーザーインターフェースとビジュアルコンポーネントを特定
-   - テスト範囲（コンポーネント、ページ、ユーザーフロー）を決定
-   - 既存のテストインフラストラクチャと統合ポイントを評価
-   - ビジュアルテストカバレッジとベースライン作成戦略を計画
+1. **Visual Testing Strategy Analysis**
+   - Analyze current UI/component structure and testing needs
+   - Identify critical user interfaces and visual components
+   - Determine testing scope (components, pages, user flows)
+   - Assess existing testing infrastructure and integration points
+   - Plan visual testing coverage and baseline creation strategy
 
-2. **ビジュアルテストツール選択**
-   - プロジェクト要件に基づいてビジュアルテストツールを評価：
-     - **Chromatic**: Storybook統合とコンポーネントテスト用
-     - **Percy**: 包括的なビジュアルテストとCI統合用
-     - **Playwright**: 組み込み機能を持つブラウザベースビジュアルテスト用
-     - **BackstopJS**: 軽量ビジュアル回帰テスト用
-     - **Applitools**: AI駆動ビジュアルテストとクロスブラウザサポート用
-   - 考慮要素：予算、チームサイズ、CI/CD統合、ブラウザサポート
+2. **Visual Testing Tool Selection**
+   - Evaluate visual testing tools based on project requirements:
+     - **Chromatic**: For Storybook integration and component testing
+     - **Percy**: For comprehensive visual testing and CI integration
+     - **Playwright**: For browser-based visual testing with built-in capabilities
+     - **BackstopJS**: For lightweight visual regression testing
+     - **Applitools**: For AI-powered visual testing and cross-browser support
+   - Consider factors: budget, team size, CI/CD integration, browser support
 
-3. **ビジュアルテストフレームワークインストール**
-   - 選択したビジュアルテストツールと依存関係をインストール
-   - テストフレームワーク統合（Jest、Playwright、Cypress）を設定
-   - ブラウザ自動化とスクリーンショット機能をセットアップ
-   - テスト環境とビューポート設定を構成
-   - テストランナーと実行環境をセットアップ
+3. **Visual Testing Framework Installation**
+   - Install chosen visual testing tool and dependencies
+   - Configure testing framework integration (Jest, Playwright, Cypress)
+   - Set up browser automation and screenshot capabilities
+   - Configure testing environment and viewport settings
+   - Set up test runner and execution environment
 
-4. **ベースライン作成と管理**
-   - すべての重要なUIコンポーネントの初期ビジュアルベースラインを作成
-   - ベースライン承認ワークフローと確認プロセスを確立
-   - ベースラインバージョン管理とストレージをセットアップ
-   - ベースライン更新とメンテナンス手順を設定
-   - 機能開発用のベースラインブランチ戦略を実装
+4. **Baseline Creation and Management**
+   - Create initial visual baselines for all critical UI components
+   - Establish baseline approval workflow and review process
+   - Set up baseline version control and storage
+   - Configure baseline updates and maintenance procedures
+   - Implement baseline branching strategy for feature development
 
-5. **テスト設定とセットアップ**
-   - ビジュアルテストパラメータ（ビューポート、ブラウザ、デバイス）を設定
-   - ビジュアル差分閾値と感度設定をセットアップ
-   - スクリーンショット撮影設定と最適化を構成
-   - 一貫したテストのためのテストデータと状態管理をセットアップ
-   - 非同期ロードとタイミング処理を設定
+5. **Test Configuration and Setup**
+   - Configure visual testing parameters (viewports, browsers, devices)
+   - Set up visual diff thresholds and sensitivity settings
+   - Configure screenshot capture settings and optimization
+   - Set up test data and state management for consistent testing
+   - Configure async loading and timing handling
 
-6. **コンポーネントとページテスト**
-   - 個々のUIコンポーネント用のビジュアルテストを作成
-   - 重要なユーザーフロー用のページレベルビジュアルテストをセットアップ
-   - 異なるビューポート間でのレスポンシブデザインテストを設定
-   - クロスブラウザビジュアルテストを実装
-   - アクセシビリティとカラーコントラストビジュアル検証をセットアップ
+6. **Component and Page Testing**
+   - Create visual tests for individual UI components
+   - Set up page-level visual testing for critical user flows
+   - Configure responsive design testing across different viewports
+   - Implement cross-browser visual testing
+   - Set up accessibility and color contrast visual validation
 
-7. **CI/CDパイプライン統合**
-   - CI/CDパイプラインで自動化ビジュアルテストを設定
-   - プルリクエストでのビジュアルテスト実行をセットアップ
-   - テスト結果レポートと通知を設定
-   - 失敗したビジュアルテストのデプロイメントブロッキングをセットアップ
-   - パフォーマンス向上のための並列テスト実行を実装
+7. **CI/CD Pipeline Integration**
+   - Configure automated visual testing in CI/CD pipeline
+   - Set up visual test execution on pull requests
+   - Configure test result reporting and notifications
+   - Set up deployment blocking for failed visual tests
+   - Implement parallel test execution for performance
 
-8. **確認と承認ワークフロー**
-   - ビジュアル差分確認と承認プロセスをセットアップ
-   - ビジュアル変更のチーム通知を設定
-   - 承認権限と確認ガイドラインを確立
-   - 軽微な許容可能変更の自動承認をセットアップ
-   - 変更ドキュメントと追跡を設定
+8. **Review and Approval Workflow**
+   - Set up visual diff review and approval process
+   - Configure team notifications for visual changes
+   - Establish approval authority and review guidelines
+   - Set up automated approval for minor acceptable changes
+   - Configure change documentation and tracking
 
-9. **監視とメンテナンス**
-   - ビジュアルテストパフォーマンス監視をセットアップ
-   - テスト不安定性検出と解決を設定
-   - ベースラインクリーンアップとメンテナンス手順を実装
-   - ビジュアルテストメトリクスとレポートをセットアップ
-   - テスト失敗と問題のアラートを設定
+9. **Monitoring and Maintenance**
+   - Set up visual test performance monitoring
+   - Configure test flakiness detection and resolution
+   - Implement baseline cleanup and maintenance procedures
+   - Set up visual testing metrics and reporting
+   - Configure alerting for test failures and issues
 
-10. **ドキュメントとチームトレーニング**
-    - 包括的なビジュアルテストドキュメントを作成
-    - ベースライン作成と更新手順を文書化
-    - 一般的なビジュアルテスト問題のトラブルシューティングガイドを作成
-    - ビジュアルテストワークフローとベストプラクティスについてチームをトレーニング
-    - ビジュアルテスト標準と規約をセットアップ
-    - ビジュアルテストメンテナンスと最適化手順を文書化
+10. **Documentation and Team Training**
+    - Create comprehensive visual testing documentation
+    - Document baseline creation and update procedures
+    - Create troubleshooting guide for common visual testing issues
+    - Train team on visual testing workflows and best practices
+    - Set up visual testing standards and conventions
+    - Document visual testing maintenance and optimization procedures

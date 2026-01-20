@@ -1,34 +1,34 @@
-# ディレクトリ詳細分析
+# Directory Deep Dive
 
-ディレクトリ構造と目的を分析します
+Analyze directory structure and purpose
 
-## 実行手順
+## Instructions
 
-1. **対象ディレクトリ**
-   - 指定されたディレクトリ `$ARGUMENTS` または現在の作業ディレクトリに焦点を当てる
+1. **Target Directory**
+   - Focus on the specified directory `$ARGUMENTS` or the current working directory
 
-2. **アーキテクチャの調査**
-   - このディレクトリとそのサブディレクトリのコードの実装原理とアーキテクチャを分析
-   - 以下を探す：
-     - 使用されているデザインパターン
-     - 依存関係とその目的
-     - 主要な抽象化とインターフェース
-     - 命名規則とコード組織
+2. **Investigate Architecture**
+   - Analyze the implementation principles and architecture of the code in this directory and its subdirectories
+   - Look for:
+     - Design patterns being used
+     - Dependencies and their purposes
+     - Key abstractions and interfaces
+     - Naming conventions and code organization
 
-3. **ドキュメントの作成または更新**
-   - この知識を取り込んだCLAUDE.mdファイルを作成
-   - 既に存在する場合は、新たに発見した情報で更新
-   - 以下を含める：
-     - このモジュールの目的と責任
-     - 主要なアーキテクチャ上の決定
-     - 重要な実装詳細
-     - コード全体で使用される共通パターン
-     - 落とし穴や非自明な動作
+3. **Create or Update Documentation**
+   - Create a CLAUDE.md file capturing this knowledge
+   - If one already exists, update it with newly discovered information
+   - Include:
+     - Purpose and responsibility of this module
+     - Key architectural decisions
+     - Important implementation details
+     - Common patterns used throughout the code
+     - Any gotchas or non-obvious behaviors
 
-4. **適切な配置の確保**
-   - 分析されるディレクトリにCLAUDE.mdファイルを配置
-   - これにより、その特定の領域で作業する際にコンテキストが読み込まれることを保証
+4. **Ensure Proper Placement**
+   - Place the CLAUDE.md file in the directory being analyzed
+   - This ensures the context is loaded when working in that specific area
 
-## クレジット
+## Credit
 
-このコマンドはThomas Landgrafの作業に基づいています: https://thomaslandgraf.substack.com/p/claude-codes-memory-working-with
+This command is based on the work of Thomas Landgraf: https://thomaslandgraf.substack.com/p/claude-codes-memory-working-with

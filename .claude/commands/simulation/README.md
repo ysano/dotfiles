@@ -1,82 +1,82 @@
-# シミュレーションコマンド
+# Simulation Commands
 
-*AI News & Strategy Daily | Nate B. Jones による「AI agents at their most under-leveraged point」にインスパイア*  
-*出典: https://www.youtube.com/watch?v=duA2AwL7keg*
+*Inspired by "AI agents at their most under-leveraged point" by AI News & Strategy Daily | Nate B. Jones*  
+*Source: https://www.youtube.com/watch?v=duA2AwL7keg*
 
-AIエージェントを現実シミュレーターとして活用 - 実行から意思決定価値の指数的向上へのモデリング。
+AI agents as reality simulators - moving beyond execution to exponential decision value through modeling.
 
-## 哲学
+## Philosophy
 
-従来のAIエージェントは実行に焦点を当てていました - 10分のメール作業を0分にするようなことです。これらのシミュレーションコマンドは、AIエージェントを単なるタスク実行者ではなく**世界モデラー**として使用することで、指数的なレバレッジを開放します。
+Traditional AI agents focus on execution - turning a 10-minute email into a zero-minute email. These simulation commands unlock exponential leverage by using AI agents as **world modelers** rather than just task executors.
 
-核となるコンセプト: `LLM + ツール + ガイダンス + シミュレートされた世界 = 現実シミュレーター`
+The core concept: `LLM + Tools + Guidance + Simulated World = Reality Simulator`
 
-## 価値レバー
+## Value Levers
 
-### 1. 代替タイムラインの優位性
-- コミット前に複数のビジネスシナリオを探索
-- 製品ローンチ、マーケティングキャンペーン、戦略的決定をテスト
-- 異なる市場条件下での「もしも」分析を実行
+### 1. Alternate Timeline Advantage
+- Explore multiple business scenarios before commitment
+- Test product launches, marketing campaigns, and strategic decisions
+- Run "what-if" analyses across different market conditions
 
-### 2. 時間圧縮  
-- 競合他社が3回のイテレーションを実行する間に、あなたは300回実行
-- 10年の市場サイクルを10時間のシミュレーションに圧縮
-- 製品だけでなく戦略の高速プロトタイピング
+### 2. Time Compression  
+- Your competitor runs 3 iterations, you run 300
+- Compress 10-year market cycles into 10-hour simulations
+- Rapid prototyping for strategies, not just products
 
-### 3. 複合インテリジェンス
-- 各シミュレーションが意思決定のより良い事前知識を発達
-- 価格の断崖、隠れた市場セグメント、ブレークスルー機会を発見
-- 線形実行アプローチでは見えないパターンを発見
+### 3. Compounding Intelligence
+- Each simulation develops better priors for decision-making
+- Find pricing cliffs, hidden market segments, breakthrough opportunities
+- Discover patterns invisible to linear execution approaches
 
-## 利用可能なコマンド
+## Available Commands
 
-### コアシミュレーションツール
-- `business-scenario-explorer` - 制約検証を伴うマルチタイムラインビジネス探索
-- `digital-twin-creator` - データ品質チェックを伴う体系的デジタルツイン作成
-- `decision-tree-explorer` - 確率重み付けを伴う決定分岐分析
-- `market-response-modeler` - セグメント分析を伴う顧客・市場反応シミュレーション
+### Core Simulation Tools
+- `business-scenario-explorer` - Multi-timeline business exploration with constraint validation
+- `digital-twin-creator` - Systematic digital twin creation with data quality checks
+- `decision-tree-explorer` - Decision branch analysis with probability weighting
+- `market-response-modeler` - Customer/market response simulation with segment analysis
 
-### 高度なモデリング
-- `timeline-compressor` - 信頼区間を伴う加速シナリオテスト  
-- `constraint-modeler` - 仮定検証を伴う世界制約モデリング
-- `future-scenario-generator` - もっともらしさスコアリングを伴うシナリオ生成
-- `simulation-calibrator` - シミュレーション精度のテストと改良
+### Advanced Modeling
+- `timeline-compressor` - Accelerated scenario testing with confidence intervals  
+- `constraint-modeler` - World constraint modeling with assumption validation
+- `future-scenario-generator` - Scenario generation with plausibility scoring
+- `simulation-calibrator` - Test and refine simulation accuracy
 
-## 主要機能
+## Key Features
 
-すべてのシミュレーションコマンドには以下が含まれます:
+All simulation commands include:
 
-- **入力検証**: 重要な情報が不足している場合のインテリジェントガイダンス
-- **プログレッシブクエスチョニング**: コンテキストに基づく適応的フォローアップ質問
-- **品質ゲート**: 貧弱なシミュレーションにつながる可能性のある入力に対する警告
-- **校正ガイダンス**: 現実に対する仮定をテストするためのヘルプ
-- **信頼度スコアリング**: シミュレーション出力の信頼性指標
-- **イテレーションループ**: 継続的改善のためのガイド付き改良サイクル
+- **Input Validation**: Intelligent guidance when critical information is missing
+- **Progressive Questioning**: Adaptive follow-up questions based on context
+- **Quality Gates**: Warnings about inputs that could lead to poor simulations
+- **Calibration Guidance**: Help test assumptions against reality
+- **Confidence Scoring**: Reliability indicators for simulation outputs
+- **Iteration Loops**: Guided refinement cycles for continuous improvement
 
-## 開始方法
+## Getting Started
 
-1. **シミュレーション初心者？** 実践的な例については[SIMULATION_EXAMPLES.md](./SIMULATION_EXAMPLES.md)から始める
-2. **制約を理解する** - `constraint-modeler`を使用して決定環境をマップ
-3. **仮定をテスト** - `simulation-calibrator`を使用してデータ品質を検証
-4. **特定ツールを適用** - シナリオに基づいてシミュレーションコマンドを選択
-5. **イテレートして改良** - 実世界のフィードバックに基づいて改善
+1. **New to simulation?** Start with [SIMULATION_EXAMPLES.md](./SIMULATION_EXAMPLES.md) for practical examples
+2. **Understand your constraints** - Use `constraint-modeler` to map your decision environment
+3. **Test assumptions** - Use `simulation-calibrator` to validate your data quality
+4. **Apply specific tools** - Choose simulation commands based on your scenario
+5. **Iterate and refine** - Improve based on real-world feedback
 
-## 📖 ドキュメント
+## 📖 Documentation
 
-- **[SIMULATION_EXAMPLES.md](./SIMULATION_EXAMPLES.md)** - 包括的な例と使用パターン
-- **個別コマンドドキュメント** - 各コマンドには詳細な説明と例があります
+- **[SIMULATION_EXAMPLES.md](./SIMULATION_EXAMPLES.md)** - Comprehensive examples and usage patterns
+- **Individual command docs** - Each command has detailed instructions and examples
 
-## 業界からの例
+## Examples from Industry
 
-- **ルノー**: デジタルツインでクラッシュ結果を予測し、車両開発時間を60%短縮
-- **BMW**: 最適なレイアウトのために工場ラインの変更を一晩でシミュレート
-- **フォーミュラ1**: エネルギー配分最適化のためのリアルタイムピット戦略シミュレーション
-- **広告ネットワーク**: 支出なしでROI最適化のためにクリエイティブミックスを事前テスト
+- **Renault**: Cut vehicle development time 60% with digital twins predicting crash outcomes
+- **BMW**: Simulated thousands of factory line changes overnight for optimal layouts
+- **Formula 1**: Real-time pit strategy simulations for energy allocation optimization
+- **Ad Networks**: Pre-test creative mixes for ROI optimization without spend
 
-## 実践における哲学
+## Philosophy in Practice
 
-> 「より明確な先見性を持つ能力があるのに、それを使わないことを選択するなら、これは将来のタイムラインに対する道徳的責任を高めるのではないか？私たちには今、より深く考えるための計算能力があります - そしてそれを使うべきです。」
+> "If we have the capability to have clearer foresight and choose not to use it, does this raise our moral responsibility for future timelines? We now have the compute to think more deeply - and we should use it."
 
-「AIがこのタスクをどのように実行できるか？」と尋ねるのをやめてください。「AIが異なる未来を示し、より良い決定を下すのにどのように役立つか？」と尋ね始めてください。
+Stop asking "How can AI do this task?" Start asking "How can AI show me different futures and help me make better decisions?"
 
-デジタルツインは、次の大きな間違いからあなたを救うためにどこで使えるでしょうか？
+Where would a digital twin save you from your next big mistake?

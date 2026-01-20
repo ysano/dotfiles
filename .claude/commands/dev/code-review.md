@@ -1,56 +1,56 @@
-# コードレビューコマンド
+# Comprehensive Code Quality Review
 
-あらゆるリポジトリの包括的なコードレビューを実行し、コード品質、ベストプラクティス、潜在的な改善点を分析します。
+Perform comprehensive code quality review
 
-## 実行手順
+## Instructions
 
-徹底的なコードレビューを実施するために以下の手順に従ってください：
+Follow these steps to conduct a thorough code review:
 
-1. **リポジトリ分析**
-   - リポジトリ構造を調査し、主要な言語/フレームワークを特定
-   - 設定ファイルのチェック（package.json、requirements.txt、Cargo.toml等）
-   - コンテキスト把握のためREADMEとドキュメントのレビュー
+1. **Repository Analysis**
+   - Examine the repository structure and identify the primary language/framework
+   - Check for configuration files (package.json, requirements.txt, Cargo.toml, etc.)
+   - Review README and documentation for context
 
-2. **コード品質評価**
-   - コードの悪臭、アンチパターン、潜在的バグのスキャン
-   - 一貫したコーディングスタイルと命名規約のチェック
-   - 未使用のimport、変数、デッドコードの特定
-   - エラーハンドリングとログ記録プラクティスのレビュー
+2. **Code Quality Assessment**
+   - Scan for code smells, anti-patterns, and potential bugs
+   - Check for consistent coding style and naming conventions
+   - Identify unused imports, variables, or dead code
+   - Review error handling and logging practices
 
-3. **セキュリティレビュー**
-   - 一般的なセキュリティ脆弱性の確認（SQLインジェクション、XSS等）
-   - ハードコードされた秘密情報、APIキー、パスワードのチェック
-   - 認証・認可ロジックのレビュー
-   - 入力検証とサニタイゼーションの調査
+3. **Security Review**
+   - Look for common security vulnerabilities (SQL injection, XSS, etc.)
+   - Check for hardcoded secrets, API keys, or passwords
+   - Review authentication and authorization logic
+   - Examine input validation and sanitization
 
-4. **パフォーマンス分析**
-   - 潜在的なパフォーマンスボトルネックの特定
-   - 非効率なアルゴリズムやデータベースクエリのチェック
-   - メモリ使用パターンと潜在的リークのレビュー
-   - バンドルサイズと最適化機会の分析
+4. **Performance Analysis**
+   - Identify potential performance bottlenecks
+   - Check for inefficient algorithms or database queries
+   - Review memory usage patterns and potential leaks
+   - Analyze bundle size and optimization opportunities
 
-5. **アーキテクチャと設計**
-   - コード組織と関心の分離の評価
-   - 適切な抽象化とモジュール性のチェック
-   - 依存関係管理と結合度のレビュー
-   - スケーラビリティと保守性の評価
+5. **Architecture & Design**
+   - Evaluate code organization and separation of concerns
+   - Check for proper abstraction and modularity
+   - Review dependency management and coupling
+   - Assess scalability and maintainability
 
-6. **テストカバレッジ**
-   - 既存のテストカバレッジと品質のチェック
-   - 適切なテストが不足している領域の特定
-   - テスト構造と組織のレビュー
-   - 追加のテストシナリオの提案
+6. **Testing Coverage**
+   - Check existing test coverage and quality
+   - Identify areas lacking proper testing
+   - Review test structure and organization
+   - Suggest additional test scenarios
 
-7. **ドキュメントレビュー**
-   - コードコメントとインラインドキュメントの評価
-   - APIドキュメントの完全性チェック
-   - READMEとセットアップ手順のレビュー
-   - より良いドキュメントが必要な領域の特定
+7. **Documentation Review**
+   - Evaluate code comments and inline documentation
+   - Check API documentation completeness
+   - Review README and setup instructions
+   - Identify areas needing better documentation
 
-8. **推奨事項**
-   - 問題を重要度別に優先順位付け（重要、高、中、低）
-   - 具体的で実行可能な推奨事項の提供
-   - 改善のためのツールとプラクティスの提案
-   - 次のステップを含む要約レポートの作成
+8. **Recommendations**
+   - Prioritize issues by severity (critical, high, medium, low)
+   - Provide specific, actionable recommendations
+   - Suggest tools and practices for improvement
+   - Create a summary report with next steps
 
-建設的なフィードバックを心がけ、該当する場合はファイルパスと行番号を含む具体的な例を提供することを忘れずに。
+Remember to be constructive and provide specific examples with file paths and line numbers where applicable.

@@ -1,396 +1,396 @@
-# 決定木エクスプローラー
+# Decision Tree Explorer
 
-確率重み付け、期待値分析、シナリオベース最適化を伴う決定分岐を探索します。
+Explore decision branches with probability weighting, expected value analysis, and scenario-based optimization.
 
-## 指示
+## Instructions
 
-複雑な決定シナリオを探索し、選択結果を最適化するための包括的な決定木分析を作成する任務を負っています。以下の体系的アプローチに従ってください: **$ARGUMENTS**
+You are tasked with creating a comprehensive decision tree analysis to explore complex decision scenarios and optimize choice outcomes. Follow this systematic approach: **$ARGUMENTS**
 
-### 1. 前提条件評価
+### 1. Prerequisites Assessment
 
-**重要決定コンテキスト検証:**
+**Critical Decision Context Validation:**
 
-- **決定範囲**: どのような具体的決定を下す必要があるか？
-- **ステークホルダー**: この決定により誰が影響を受け、誰が関与するか？
-- **時間制約**: 決定期限と実装タイムラインは何か？
-- **成功基準**: 決定の成功または失敗をどのように測定するか？
-- **リソース制約**: 利用可能なオプションに影響する制限は何か？
+- **Decision Scope**: What specific decision(s) need to be made?
+- **Stakeholders**: Who will be affected by and involved in this decision?
+- **Time Constraints**: What are the decision deadlines and implementation timelines?
+- **Success Criteria**: How will you measure decision success or failure?
+- **Resource Constraints**: What limitations affect available options?
 
-**コンテキストが不明確な場合、体系的にガイド:**
+**If any context is unclear, guide systematically:**
 
 ```
-決定範囲不足:
-「分析している決定を明確にする必要があります。以下を指定してください:
-- 主要決定: 下す必要がある主な選択
-- 決定レベル: 戦略的、戦術的、または運用的
-- 決定タイプ: 実行/非実行、リソース配分、優先順位付け、またはオプション選択
-- 代替オプション: 検討している選択肢は何か？
+Missing Decision Scope:
+"I need clarity on the decision you're analyzing. Please specify:
+- Primary Decision: The main choice you need to make
+- Decision Level: Strategic, tactical, or operational
+- Decision Type: Go/no-go, resource allocation, priority ranking, or option selection
+- Alternative Options: What choices are you considering?
 
-例:
-- 戦略的: '来年ヨーロッパ市場に参入すべきか？'
-- 投資: '3つの製品機能のうちどれを最初に構築すべきか？'
-- 運用: 'マイクロサービスに移行するか、モノリスを改善すべきか？'
-- 危機: '新しい競合他社のローンチにどう対応すべきか？'」
+Examples:
+- Strategic: 'Should we enter the European market next year?'
+- Investment: 'Which of 3 product features should we build first?'
+- Operational: 'Should we migrate to microservices or improve the monolith?'
+- Crisis: 'How should we respond to the new competitor launch?'"
 
-成功基準不足:
-「この決定が成功したかどうかをどのように評価しますか？
-- 財務指標: 収益影響、コスト削減、ROI目標
-- 戦略指標: 市場シェア、競争ポジション、能力構築
-- 運用指標: 効率向上、品質改善、リスク軽減
-- タイムライン指標: 市場投入速度、実装時間、投資回収期間」
+Missing Success Criteria:
+"How will you evaluate if this decision was successful?
+- Financial Metrics: Revenue impact, cost savings, ROI targets
+- Strategic Metrics: Market share, competitive position, capability building
+- Operational Metrics: Efficiency gains, quality improvements, risk reduction
+- Timeline Metrics: Speed to market, implementation time, payback period"
 
-リソースコンテキスト不足:
-「決定オプションを制限する制約は何ですか？
-- 予算: 利用可能な投資資本と運用資金
-- 時間: 実装期限とリソース利用可能ウィンドウ
-- 能力: チームスキル、技術インフラ、運用容量
-- 規制: コンプライアンス要件と承認プロセス」
+Missing Resource Context:
+"What constraints limit your decision options?
+- Budget: Available investment capital and operating funds
+- Time: Implementation deadlines and resource availability windows
+- Capabilities: Team skills, technology infrastructure, operational capacity
+- Regulatory: Compliance requirements and approval processes"
 ```
 
-### 2. 決定アーキテクチャマッピング
+### 2. Decision Architecture Mapping
 
-**決定を体系的に構造化:**
+**Structure the decision systematically:**
 
-#### 決定階層
-- 主要決定ポイントと核となる質問
-- 主要選択から続く副次決定
-- 第三段階決定と実装詳細
-- 決定依存関係と順序要件
-- オプション組み合わせと相互作用効果
+#### Decision Hierarchy
+- Primary decision point and core question
+- Secondary decisions that follow from primary choice
+- Tertiary decisions and implementation details
+- Decision dependencies and sequencing requirements
+- Option combinations and interaction effects
 
-#### ステークホルダー影響分析
-- 決定者と承認権限者
-- 実装チームとリソース所有者
-- 影響を受ける顧客とエンドユーザー
-- 外部パートナーと依存関係
-- 競争環境への影響
+#### Stakeholder Impact Analysis
+- Decision makers and approval authorities
+- Implementation teams and resource owners
+- Customers and end users affected
+- External partners and dependencies
+- Competitive landscape implications
 
-#### 制約識別
-- ハード制約（違反不可能）
-- ソフト制約（好みとトレードオフ）
-- 時間的制約（タイミングと順序）
-- リソース制約（予算、容量、能力）
-- 規制とコンプライアンス制約
+#### Constraint Identification
+- Hard constraints (cannot be violated)
+- Soft constraints (preferences and trade-offs)
+- Temporal constraints (timing and sequencing)
+- Resource constraints (budget, capacity, capabilities)
+- Regulatory and compliance constraints
 
-### 3. オプション生成と構造化
+### 3. Option Generation and Structuring
 
-**決定代替案を体系的に識別し整理:**
+**Systematically identify and organize decision alternatives:**
 
-#### 包括的オプション開発
-- 目標達成への直接的アプローチ
-- 複数アプローチを組み合わせたハイブリッド解決策
-- 段階的実装を伴う段階的アプローチ
-- ニーズにより良く対応する可能性がある代替目標
-- 比較用の「何もしない」ベースライン
+#### Comprehensive Option Development
+- Direct approaches to achieving the goal
+- Hybrid solutions combining multiple approaches
+- Phased approaches with incremental implementation
+- Alternative goals that might better serve needs
+- "Do nothing" baseline for comparison
 
-#### オプション分類
-- 迅速な成果 vs. 長期戦略的動き
-- 高リスク/高リターン vs. 安全/段階的オプション
-- リソース集約的 vs. リーンアプローチ
-- 内部開発 vs. 外部パートナーシップ
-- 実証済みアプローチ vs. 革新的実験
+#### Option Categorization
+- Quick wins vs. long-term strategic moves
+- High-risk/high-reward vs. safe/incremental options
+- Resource-intensive vs. lean approaches
+- Internal development vs. external partnerships
+- Proven approaches vs. innovative experiments
 
-#### オプション実行可能性評価
+#### Option Feasibility Assessment
 ```
-各オプションについて評価:
-- 技術的実行可能性: これは実際に実装可能か？
-- 経済的実行可能性: 利益はコストを正当化するか？
-- 運用実行可能性: 実行する能力があるか？
-- タイムライン実行可能性: 利用可能時間内で実行可能か？
-- 政治的実行可能性: ステークホルダーはこれを支持するか？
+For each option, evaluate:
+- Technical Feasibility: Can this actually be implemented?
+- Economic Feasibility: Do benefits justify costs?
+- Operational Feasibility: Do we have capability to execute?
+- Timeline Feasibility: Can this be done in available time?
+- Political Feasibility: Will stakeholders support this?
 
-実行可能性スコアリング（1-10スケール）:
-オプション: [名前]
-- 技術的: [スコア] - [理由]
-- 経済的: [スコア] - [理由]
-- 運用: [スコア] - [理由]
-- タイムライン: [スコア] - [理由]
-- 政治的: [スコア] - [理由]
-全体実行可能性: [平均スコア]
-```
-
-### 4. 確率評価フレームワーク
-
-**体系的確率推定を適用:**
-
-#### ベースレート分析
-- 類似決定の歴史的成功率
-- 業界ベンチマークと比較データ
-- 専門家判断とドメイン知識
-- 市場調査と顧客検証データ
-- 内部能力評価と実績
-
-#### シナリオ確率重み付け
-- 最良ケースシナリオ確率（楽観的結果）
-- 最可能性シナリオ確率（ベースケース期待）
-- 最悪ケースシナリオ確率（悲観的結果）
-- ブラックスワン事象確率（極端シナリオ）
-- 競争反応確率
-
-#### 確率校正方法
-```
-複数の推定アプローチを使用:
-
-1. 歴史データ分析:
-   - 類似過去決定と結果
-   - 比較可能状況での成功/失敗率
-   - 類似オファリングの市場採用パターン
-
-2. 専門家相談:
-   - ドメイン専門家確率推定
-   - 機能横断チーム入力と視点
-   - 外部アドバイザーとコンサルタント洞察
-
-3. 市場検証:
-   - 顧客調査とフィードバック
-   - 競合分析と市場ダイナミクス
-   - 規制と環境要因評価
-
-4. モンテカルロシミュレーション:
-   - 複数確率シナリオ実行
-   - 仮定変更に対する感度テスト
-   - 推定の信頼区間生成
+Feasibility Scoring (1-10 scale):
+Option: [name]
+- Technical: [score] - [reasoning]
+- Economic: [score] - [reasoning]
+- Operational: [score] - [reasoning]
+- Timeline: [score] - [reasoning]
+- Political: [score] - [reasoning]
+Overall Feasibility: [average score]
 ```
 
-### 5. 期待値計算
+### 4. Probability Assessment Framework
 
-**決定結果を体系的に定量化:**
+**Apply systematic probability estimation:**
 
-#### 結果定量化
-- 財務リターンとコスト影響
-- 戦略価値と競争優位性
-- リスク軽減とオプション価値創造
-- 時間節約と効率改善
-- 学習価値と能力構築
+#### Base Rate Analysis
+- Historical success rates for similar decisions
+- Industry benchmarks and comparative data
+- Expert judgment and domain knowledge
+- Market research and customer validation data
+- Internal capability assessment and track record
 
-#### 多次元価値評価
+#### Scenario Probability Weighting
+- Best case scenario probabilities (optimistic outcomes)
+- Most likely scenario probabilities (base case expectations)
+- Worst case scenario probabilities (pessimistic outcomes)
+- Black swan event probabilities (extreme scenarios)
+- Competitive response probabilities
+
+#### Probability Calibration Methods
 ```
-価値計算フレームワーク:
+Use multiple estimation approaches:
 
-財務価値:
-- 直接収益影響: $[金額] ± [不確実性範囲]
-- コスト削減: $[金額] ± [不確実性範囲]
-- 必要投資: $[金額]とタイムライン
-- NPV計算: [期間]における$[正味現在価値]
+1. Historical Data Analysis:
+   - Similar past decisions and outcomes
+   - Success/failure rates in comparable situations
+   - Market adoption patterns for similar offerings
 
-戦略価値:
-- 市場ポジション改善: [定性的 + 定量的]
-- 競争優位性創造: [持続可能な差別化]
-- 能力構築: [新スキルとインフラ]
-- オプション価値: [可能になる将来機会]
+2. Expert Consultation:
+   - Domain expert probability estimates
+   - Cross-functional team input and perspectives
+   - External advisor and consultant insights
 
-リスク価値:
-- リスク軽減: [定量化されたリスク軽減]
-- 下振れ保護: [最悪ケースシナリオコスト]
-- 機会コスト: [諦める代替オプション]
-- 可逆性: [方向転換のコストと困難]
-```
+3. Market Validation:
+   - Customer research and feedback
+   - Competitive analysis and market dynamics
+   - Regulatory and environmental factor assessment
 
-#### 期待値統合
-```
-期待値公式適用:
-EV = Σ(確率 × 結果価値) すべてのシナリオについて
-
-計算例:
-オプションA: 新製品ローンチ
-- 最良ケース（20%確率）: 1000万ドル収益、80%マージン = 800万ドル利益
-- ベースケース（60%確率）: 500万ドル収益、70%マージン = 350万ドル利益  
-- 最悪ケース（20%確率）: 100万ドル収益、50%マージン = 50万ドル利益
-
-期待値 = (0.20 × 800万ドル) + (0.60 × 350万ドル) + (0.20 × 50万ドル)
-= 160万ドル + 210万ドル + 10万ドル = 380万ドル
-
-必要投資: 200万ドル
-正味期待値: 180万ドル
+4. Monte Carlo Simulation:
+   - Run multiple probability scenarios
+   - Test sensitivity to assumption changes
+   - Generate confidence intervals for estimates
 ```
 
-### 6. リスク分析と感度テスト
+### 5. Expected Value Calculation
 
-**決定リスクを包括的に評価:**
+**Quantify decision outcomes systematically:**
 
-#### リスク識別マトリックス
-- 実装リスク（実行課題）
-- 市場リスク（需要、競争、経済変化）
-- 技術リスク（技術実行可能性、陳腐化）
-- 規制リスク（コンプライアンス、承認、政策変化）
-- リソースリスク（可用性、能力、コスト超過）
+#### Outcome Quantification
+- Financial returns and cost implications
+- Strategic value and competitive advantages
+- Risk reduction and option value creation
+- Time savings and efficiency improvements
+- Learning value and capability building
 
-#### 感度分析
-- 主要仮定ストレステスト
-- 重要変数の損益分岐点分析
-- パラメータ変動によるシナリオ分析
-- 結果の信頼区間計算
-- 異なる条件下での堅牢性テスト
-
-#### リスク軽減戦略開発
+#### Multi-Dimensional Value Assessment
 ```
-リスク軽減フレームワーク:
+Value Calculation Framework:
 
-各重要リスクについて:
-1. リスク説明: [具体的リスクシナリオ]
-2. 確率評価: [発生可能性]
-3. 影響評価: [発生時の重大度]
-4. 早期警告指標: [監視すべき兆候]
-5. 予防戦略: [確率を下げる行動]
-6. 軽減戦略: [影響を下げる行動]
-7. 緊急計画: [リスクが現実化した時の対応]
-8. リスク所有権: [監視と対応の責任者]
-```
+Financial Value:
+- Direct Revenue Impact: $[amount] ± [uncertainty range]
+- Cost Savings: $[amount] ± [uncertainty range]
+- Investment Required: $[amount] and timeline
+- NPV Calculation: $[net present value] over [timeframe]
 
-### 7. 決定木可視化と分析
+Strategic Value:
+- Market Position Improvement: [qualitative + quantitative]
+- Competitive Advantage Creation: [sustainable differentiation]
+- Capability Building: [new skills and infrastructure]
+- Option Value: [future opportunities enabled]
 
-**明確な決定木表現を作成:**
-
-#### 木構造設計
-```
-決定木フォーマット:
-
-[決定ポイント] 
-├── オプションA [確率: X%]
-│   ├── シナリオA1 [確率: Y%] → 結果: $Z
-│   ├── シナリオA2 [確率: Y%] → 結果: $Z
-│   └── シナリオA3 [確率: Y%] → 結果: $Z
-├── オプションB [確率: X%]
-│   ├── シナリオB1 [確率: Y%] → 結果: $Z
-│   └── シナリオB2 [確率: Y%] → 結果: $Z
-└── オプションC [確率: X%]
-    └── シナリオC1 [確率: Y%] → 結果: $Z
-
-期待値:
-- オプションA: $[計算されたEV]
-- オプションB: $[計算されたEV]  
-- オプションC: $[計算されたEV]
+Risk Value:
+- Risk Reduction: [quantified risk mitigation]
+- Downside Protection: [worst-case scenario costs]
+- Opportunity Cost: [alternative options foregone]
+- Reversibility: [cost and difficulty of changing course]
 ```
 
-#### 決定経路分析
-- 期待値に基づく最適経路識別
-- 許容可能なリスク/リターンプロファイルを持つ代替経路
-- 初期決定結果に基づく緊急時ルーティング
-- 情報価値分析（追加調査の価値）
-- リアルオプション評価（決定遅延の価値）
-
-### 8. 最適化と推奨エンジン
-
-**データ駆動型決定推奨を生成:**
-
-#### 多基準決定分析
-- 複数決定基準にわたる重み付けスコアリング
-- 競合目標間のトレードオフ分析
-- 効率的解決策のパレート境界識別
-- ステークホルダー好み統合
-- 異なる重み付けスキームでのシナリオ堅牢性
-
-#### 推奨生成
+#### Expected Value Integration
 ```
-決定推奨フォーマット:
+Expected Value Formula Application:
+EV = Σ(Probability × Outcome Value) for all scenarios
 
-## 主要推奨: [選択されたオプション]
+Example Calculation:
+Option A: New Product Launch
+- Best Case (20% probability): $10M revenue, 80% margin = $8M profit
+- Base Case (60% probability): $5M revenue, 70% margin = $3.5M profit  
+- Worst Case (20% probability): $1M revenue, 50% margin = $0.5M profit
 
-### エグゼクティブサマリー
-- 推奨決定: [具体的選択と根拠]
-- 期待値: $[金額] [信頼レベル]%
-- 主要成功要因: [成功のための重要要件]
-- 主要リスク: [主要懸念と軽減アプローチ]
-- 実装タイムライン: [主要マイルストーンと依存関係]
+Expected Value = (0.20 × $8M) + (0.60 × $3.5M) + (0.20 × $0.5M)
+= $1.6M + $2.1M + $0.1M = $3.8M
 
-### 支援分析
-- 期待値計算: [詳細内訳]
-- 確率評価: [主要仮定とソース]
-- リスク評価: [主要リスクと軽減戦略]
-- 感度分析: [重要変数と損益分岐点]
-- 代替オプション: [他の実行可能選択肢とトレードオフ]
-
-### 実装ガイダンス
-- 即座の次ステップ: [必要な具体的行動]
-- 成功指標: [進捗の測定可能指標]
-- 決定ポイント: [将来の選択ポイントとトリガー]
-- リソース要件: [予算、チーム、タイムラインニーズ]
-- ステークホルダーコミュニケーション: [整合と賛同戦略]
-
-### 緊急時計画
-- プランBオプション: [主要が失敗した場合の代替アプローチ]
-- 早期警告システム: [リスク監視とトリガー]
-- 決定撤回: [出口戦略と切り替えコスト]
-- 適応戦略: [変化する条件に対する調整メカニズム]
+Investment Required: $2M
+Net Expected Value: $1.8M
 ```
 
-### 9. 決定品質検証
+### 6. Risk Analysis and Sensitivity Testing
 
-**堅牢な意思決定プロセスを確保:**
+**Comprehensively assess decision risks:**
 
-#### プロセス品質チェックリスト
-- [ ] すべての関連ステークホルダーが相談されている
-- [ ] 包括的オプション生成が完了している
-- [ ] 確率評価がデータで校正されている
-- [ ] 価値計算がすべての重要要因を含んでいる
-- [ ] リスクが識別され軽減が計画されている
-- [ ] 仮定が明示的に文書化されテストされている
-- [ ] 決定基準が明確に定義され重み付けされている
-- [ ] 実装実行可能性が検証されている
+#### Risk Identification Matrix
+- Implementation risks (execution challenges)
+- Market risks (demand, competition, economic changes)
+- Technology risks (technical feasibility, obsolescence)
+- Regulatory risks (compliance, approval, policy changes)
+- Resource risks (availability, capability, cost overruns)
 
-#### バイアス検出と軽減
-- 確証バイアス: 好みを支持する情報を求める
-- 固定バイアス: 最初に受け取った情報に過度に依存
-- 利用可能性バイアス: 思い出しやすい例を過重視
-- 楽観バイアス: 正の結果を過大評価
-- サンクコスト誤謬: 失敗したアプローチを継続
-- 分析麻痺: 決定ではなく過度な分析
+#### Sensitivity Analysis
+- Key assumption stress testing
+- Break-even analysis for critical variables
+- Scenario analysis with parameter variations
+- Confidence interval calculation for outcomes
+- Robustness testing across different conditions
 
-#### 決定文書化
-- 決定根拠と支援分析
-- 主要仮定と確率評価
-- 検討され拒否された代替オプション
-- ステークホルダー入力と相談プロセス
-- リスク評価と軽減戦略
-- 実装計画と成功指標
+#### Risk Mitigation Strategy Development
+```
+Risk Mitigation Framework:
 
-### 10. 学習とフィードバック統合
+For each significant risk:
+1. Risk Description: [specific risk scenario]
+2. Probability Assessment: [likelihood of occurrence]
+3. Impact Assessment: [severity if it occurs]
+4. Early Warning Indicators: [signals to watch for]
+5. Prevention Strategies: [actions to reduce probability]
+6. Mitigation Strategies: [actions to reduce impact]
+7. Contingency Plans: [responses if risk materializes]
+8. Risk Ownership: [who monitors and responds]
+```
 
-**決定品質改善を確立:**
+### 7. Decision Tree Visualization and Analysis
 
-#### 決定結果追跡
-- 実際 vs. 予測結果測定
-- 実際結果に対する仮定検証
-- 決定タイミングと実装効果
-- ステークホルダー満足と支援レベル
-- 意図しない結果と副作用
+**Create clear decision tree representations:**
 
-#### 継続改善
-- 意思決定プロセス改良
-- 時間経過による確率校正改善
-- リスク評価精度向上
-- ステークホルダーエンゲージメント最適化
-- ツールとフレームワーク進化
+#### Tree Structure Design
+```
+Decision Tree Format:
 
-## 使用例
+[Decision Point] 
+├── Option A [probability: X%]
+│   ├── Scenario A1 [probability: Y%] → Outcome: $Z
+│   ├── Scenario A2 [probability: Y%] → Outcome: $Z
+│   └── Scenario A3 [probability: Y%] → Outcome: $Z
+├── Option B [probability: X%]
+│   ├── Scenario B1 [probability: Y%] → Outcome: $Z
+│   └── Scenario B2 [probability: Y%] → Outcome: $Z
+└── Option C [probability: X%]
+    └── Scenario C1 [probability: Y%] → Outcome: $Z
+
+Expected Values:
+- Option A: $[calculated EV]
+- Option B: $[calculated EV]  
+- Option C: $[calculated EV]
+```
+
+#### Decision Path Analysis
+- Optimal path identification based on expected value
+- Alternative paths with acceptable risk/return profiles
+- Contingency routing based on early decision outcomes
+- Information value analysis (worth of additional research)
+- Real option valuation (value of delaying decisions)
+
+### 8. Optimization and Recommendation Engine
+
+**Generate data-driven decision recommendations:**
+
+#### Multi-Criteria Decision Analysis
+- Weighted scoring across multiple decision criteria
+- Trade-off analysis between competing objectives
+- Pareto frontier identification for efficient solutions
+- Stakeholder preference integration
+- Scenario robustness across different weighting schemes
+
+#### Recommendation Generation
+```
+Decision Recommendation Format:
+
+## Primary Recommendation: [Selected Option]
+
+### Executive Summary
+- Recommended Decision: [specific choice and rationale]
+- Expected Value: $[amount] with [confidence level]%
+- Key Success Factors: [critical requirements for success]
+- Major Risks: [primary concerns and mitigation approaches]
+- Implementation Timeline: [key milestones and dependencies]
+
+### Supporting Analysis
+- Expected Value Calculation: [detailed breakdown]
+- Probability Assessments: [key assumptions and sources]
+- Risk Assessment: [major risks and mitigation strategies]
+- Sensitivity Analysis: [critical variables and break-even points]
+- Alternative Options: [other viable choices and trade-offs]
+
+### Implementation Guidance
+- Immediate Next Steps: [specific actions required]
+- Success Metrics: [measurable indicators of progress]
+- Decision Points: [future choice points and triggers]
+- Resource Requirements: [budget, team, timeline needs]
+- Stakeholder Communication: [alignment and buy-in strategies]
+
+### Contingency Planning
+- Plan B Options: [alternative approaches if primary fails]
+- Early Warning Systems: [risk monitoring and triggers]
+- Decision Reversal: [exit strategies and switching costs]
+- Adaptive Strategies: [adjustment mechanisms for changing conditions]
+```
+
+### 9. Decision Quality Validation
+
+**Ensure robust decision-making process:**
+
+#### Process Quality Checklist
+- [ ] All relevant stakeholders consulted
+- [ ] Comprehensive option generation completed
+- [ ] Probability assessments calibrated with data
+- [ ] Value calculations include all material factors
+- [ ] Risks identified and mitigation planned
+- [ ] Assumptions explicitly documented and tested
+- [ ] Decision criteria clearly defined and weighted
+- [ ] Implementation feasibility validated
+
+#### Bias Detection and Mitigation
+- Confirmation bias: Seeking information that supports preferences
+- Anchoring bias: Over-relying on first information received
+- Availability bias: Overweighting easily recalled examples
+- Optimism bias: Overestimating positive outcomes
+- Sunk cost fallacy: Continuing failed approaches
+- Analysis paralysis: Over-analyzing instead of deciding
+
+#### Decision Documentation
+- Decision rationale and supporting analysis
+- Key assumptions and probability assessments
+- Alternative options considered and rejected
+- Stakeholder input and consultation process
+- Risk assessment and mitigation strategies
+- Implementation plan and success metrics
+
+### 10. Learning and Feedback Integration
+
+**Establish decision quality improvement:**
+
+#### Decision Outcome Tracking
+- Actual vs. predicted outcomes measurement
+- Assumption validation against real results
+- Decision timing and implementation effectiveness
+- Stakeholder satisfaction and support levels
+- Unintended consequences and side effects
+
+#### Continuous Improvement
+- Decision-making process refinement
+- Probability calibration improvement over time
+- Risk assessment accuracy enhancement
+- Stakeholder engagement optimization
+- Tool and framework evolution
+
+## Usage Examples
 
 ```bash
-# 戦略的ビジネス決定
-/simulation:decision-tree-explorer 競合他社Xを5000万ドルで買収するか、競合製品を内部構築するか？
+# Strategic business decision
+/simulation:decision-tree-explorer Should we acquire competitor X for $50M or build competing product internally?
 
-# 製品開発優先順位付け
-/simulation:decision-tree-explorer 限られたエンジニアリングリソースで5つの製品機能のうちどれを最初に構築すべきか？
+# Product development prioritization
+/simulation:decision-tree-explorer Which of 5 product features should we build first given limited engineering resources?
 
-# 技術アーキテクチャ選択
-/simulation:decision-tree-explorer 新プラットフォームでマイクロサービス vs モノリスアーキテクチャ？
+# Technology architecture choice
+/simulation:decision-tree-explorer Microservices vs monolith architecture for our new platform?
 
-# 市場拡大決定
-/simulation:decision-tree-explorer ヨーロッパ市場参入戦略: 直接拡大 vs パートナーシップ vs 買収？
+# Market expansion decision
+/simulation:decision-tree-explorer European market entry strategy: direct expansion vs partnership vs acquisition?
 ```
 
-## 品質指標
+## Quality Indicators
 
-- **緑**: 包括的オプション、校正された確率、定量化された結果、文書化された仮定
-- **黄**: 良好なオプションカバレッジ、合理的確率推定、部分的に定量化された結果
-- **赤**: 限定的オプション、校正されていない確率、定性的のみの結果
+- **Green**: Comprehensive options, calibrated probabilities, quantified outcomes, documented assumptions
+- **Yellow**: Good option coverage, reasonable probability estimates, partially quantified outcomes
+- **Red**: Limited options, uncalibrated probabilities, qualitative-only outcomes
 
-## 避けるべき一般的な落とし穴
+## Common Pitfalls to Avoid
 
-- 分析麻痺: 適時決定ではなく過度な分析
-- 偽精度: 不確実な推定に正確な数値を使用  
-- オプショントンネル視野: 創造的代替案を考慮しない
-- 確率誤校正: 可能性推定の過信
-- 価値トンネル視野: 財務結果のみに焦点
-- 実装盲目: 実行課題を考慮しない
+- Analysis paralysis: Over-analyzing instead of making timely decisions
+- False precision: Using precise numbers for uncertain estimates  
+- Option tunnel vision: Not considering creative alternatives
+- Probability miscalibration: Overconfidence in likelihood estimates
+- Value tunnel vision: Focusing only on financial outcomes
+- Implementation blindness: Not considering execution challenges
 
-複雑な決定を体系的分析に変換し、指数的により良い選択結果を実現する。
+Transform complex decisions into systematic analysis for exponentially better choice outcomes.

@@ -1,202 +1,317 @@
-# 意思決定品質分析
+# Decision Quality Analyzer
 
-シナリオテスト、バイアス検出、チーム意思決定プロセス最適化による意思決定品質を分析します。
+Analyze decision quality with scenario testing, bias detection, and team decision-making process optimization.
 
-## 実行手順
+## Instructions
 
-シナリオ分析、バイアス検出、プロセス最適化を通じてチームの意思決定品質を体系的に分析・改善します。以下のアプローチに従ってください: **$ARGUMENTS**
+You are tasked with systematically analyzing and improving team decision quality through scenario analysis, bias detection, and process optimization. Follow this approach: **$ARGUMENTS**
 
-### 1. 意思決定コンテキスト評価
+### 1. Decision Context Assessment
 
-**重要な意思決定品質コンテキスト:**
+**Critical Decision Quality Context:**
 
-- **意思決定タイプ**: どのカテゴリの意思決定を分析していますか？
-- **意思決定プロセス**: チームは現在どのようにこのタイプの意思決定を行っていますか？
-- **ステークホルダー**: これらの意思決定に参加し、影響を受けるのは誰ですか？
-- **成功指標**: 意思決定の品質と結果をどのように測定しますか？
-- **履歴データ**: 学習機会を提供する過去の意思決定は何ですか？
+- **Decision Type**: What category of decision are you analyzing?
+- **Decision Process**: How does the team currently make this type of decision?
+- **Stakeholders**: Who participates in and is affected by these decisions?
+- **Success Metrics**: How do you measure decision quality and outcomes?
+- **Historical Data**: What past decisions provide learning opportunities?
 
-**コンテキストが不明な場合は、体系的にガイド:**
+**If context is unclear, guide systematically:**
 
 ```
-意思決定タイプが不明:
-「どのタイプのチーム意思決定の品質分析が必要ですか？
-- 戦略的意思決定: 製品方向性、市場ポジショニング、技術選択
-- 運用的意思決定: プロセス改善、リソース配分、優先順位設定
-- 人事的意思決定: 採用、チーム構造、役割割り当て、パフォーマンス管理
-- 技術的意思決定: アーキテクチャ選択、ツール選定、実装アプローチ
+Missing Decision Type:
+"What type of team decision needs quality analysis?
+- Strategic Decisions: Product direction, market positioning, technology choices
+- Operational Decisions: Process improvements, resource allocation, priority setting
+- Personnel Decisions: Hiring, team structure, role assignments, performance management
+- Technical Decisions: Architecture choices, tool selection, implementation approaches
 
-意思決定の範囲と典型的な複雑度レベルを指定してください。」
+Please specify the decision scope and typical complexity level."
 
-意思決定プロセスが不明:
-「チームは現在どのようにこれらの意思決定を行っていますか？
-- 個人権限: 相談を伴う単一意思決定者
-- コンセンサス構築: 合意に達するまでのグループディスカッション
-- 多数決: 正式または非正式な投票による民主的プロセス
-- 委任権限: 特定の役割や委員会に割り当てられた意思決定権
-- データ駆動: 体系的分析と証拠に基づくアプローチ」
+Missing Decision Process:
+"How does your team currently make these decisions?
+- Individual Authority: Single decision maker with consultation
+- Consensus Building: Group discussion until agreement is reached
+- Majority Vote: Democratic process with formal or informal voting
+- Delegated Authority: Decision rights assigned to specific roles or committees
+- Data-Driven: Systematic analysis and evidence-based approaches"
 ```
 
-### 2. 意思決定品質フレームワーク
+### 2. Decision Quality Framework
 
-**体系的意思決定評価手法:**
+**Systematic decision evaluation methodology:**
 
-#### 品質次元評価
+#### Quality Dimension Assessment
 ```
-多次元意思決定品質:
+Multi-Dimensional Decision Quality:
 
-プロセス品質 (25% 重み):
-- 情報収集: データ収集の完全性と正確性
-- ステークホルダー関与: 適切な参加と視点の包含
-- 代替案生成: オプション開発の創造性と包括性
-- 分析の厳密性: 体系的評価とトレードオフ評価
+Process Quality (25% weight):
+- Information Gathering: Completeness and accuracy of data collection
+- Stakeholder Involvement: Appropriate participation and perspective inclusion
+- Alternative Generation: Creativity and comprehensiveness of option development
+- Analysis Rigor: Systematic evaluation and trade-off assessment
 
-結果品質 (25% 重み):
-- 目標達成: 意図した目的の達成における成功
-- 意図しない結果: 二次的影響と副次的インパクトの管理
-- ステークホルダー満足度: 影響を受ける当事者からの受容と支持
-- 長期持続可能性: 意思決定結果の耐久性と適応性
+Outcome Quality (25% weight):
+- Goal Achievement: Success in reaching intended objectives
+- Unintended Consequences: Management of secondary effects and side impacts
+- Stakeholder Satisfaction: Acceptance and support from affected parties
+- Long-term Sustainability: Durability and adaptability of decision outcomes
 
-タイミング品質 (25% 重み):
-- 意思決定速度: 緊急性と複雑性に適したペース
-- 情報タイミング: 速度と追加情報の最適バランス
-- 実装タイミング: 市場状況と組織の準備状況との調整
-- レビュータイミング: 意思決定評価と調整の適切なスケジュール
+Timing Quality (25% weight):
+- Decision Speed: Appropriate pace for urgency and complexity
+- Information Timing: Optimal balance of speed vs additional information
+- Implementation Timing: Coordination with market conditions and organizational readiness
+- Review Timing: Appropriate schedule for decision assessment and adjustment
 
-学習品質 (25% 重み):
-- 知識捕捉: ドキュメント化と組織学習
-- バイアス認識: 認知バイアスの認識と軽減
-- プロセス改善: 結果に基づく手法の向上
-- 能力構築: チーム意思決定スキルの開発
-```
-
-#### 意思決定成功指標
-- 定量的結果（財務、運用、パフォーマンス指標）
-- 定性的結果（満足度、エンゲージメント、戦略的整合性）
-- プロセス効率（意思決定までの時間、リソース活用）
-- 学習結果（獲得した知識、開発された能力）
-
-### 3. バイアス検出と軽減
-
-**体系的認知バイアス識別:**
-
-#### 一般的意思決定バイアス
-```
-チーム意思決定バイアスフレームワーク:
-
-個人認知バイアス:
-- 確証バイアス: 先入観を支持する情報の探求
-- アンカリングバイアス: 最初に受け取った情報への過度の依存
-- 利用可能性バイアス: 思い出しやすい例の過大評価
-- 過信バイアス: 判断精度への過度の確信
-- サンクコスト誤謬: 過去の投資による失敗アプローチの継続
-
-グループ意思決定バイアス:
-- 集団思考: 調和を求める圧力による批判的評価の減少
-- リスキーシフト: 個人よりリスクの高い意思決定をするグループ
-- 権威バイアス: 証拠ではなく階層への服従
-- 社会的証明: 独立分析なしに他者の意思決定に従うこと
-- 計画誤謬: 時間とリソースの体系的過小評価
-
-組織バイアス:
-- 現状維持バイアス: 変化より現在の状態を好む
-- NIH症候群: 外部のアイデアとソリューションの拒絶
-- 生存者バイアス: 成功例のみに焦点を当てる
-- 帰属バイアス: 成功と失敗の原因の誤った帰属
-- 政治的バイアス: 組織政治に影響される意思決定
+Learning Quality (25% weight):
+- Knowledge Capture: Documentation and institutional learning
+- Bias Recognition: Awareness and mitigation of cognitive biases
+- Process Improvement: Methodology enhancement based on outcomes
+- Capability Building: Team decision-making skill development
 ```
 
-#### バイアス軽減戦略
+#### Decision Success Metrics
+- Quantitative outcomes (financial, operational, performance metrics)
+- Qualitative outcomes (satisfaction, engagement, strategic alignment)
+- Process efficiency (time to decision, resource utilization)
+- Learning outcomes (knowledge gained, capability developed)
+
+### 3. Bias Detection and Mitigation
+
+**Systematic cognitive bias identification:**
+
+#### Common Decision Biases
 ```
-体系的バイアス削減:
+Team Decision Bias Framework:
 
-プロセスベース軽減:
-- 悪魔の代弁者: 指定された批判的評価役割
-- レッドチーム分析: 前提と結論の体系的挑戦
-- 多様な視点: 多機能・多層レベル入力
-- 匿名入力: 社会的圧力と階層効果の削減
+Individual Cognitive Biases:
+- Confirmation Bias: Seeking information that supports preconceptions
+- Anchoring Bias: Over-relying on first information received
+- Availability Bias: Overweighting easily recalled examples
+- Overconfidence Bias: Excessive certainty in judgment accuracy
+- Sunk Cost Fallacy: Continuing failed approaches due to past investment
 
-ツールベース軽減:
-- 決定ツリー: 体系的オプション評価と比較
-- プレモーテム分析: 失敗シナリオと予防の想像
-- 参照クラス予測: 類似の歴史的例の使用
-- 外部視点: 外部の視点とベンチマーキング
+Group Decision Biases:
+- Groupthink: Pressure for harmony reducing critical evaluation
+- Risky Shift: Groups making riskier decisions than individuals
+- Authority Bias: Deferring to hierarchy rather than evidence
+- Social Proof: Following others' decisions without independent analysis
+- Planning Fallacy: Systematic underestimation of time and resources
 
-文化的軽減:
-- 心理的安全性: 異議と批判的思考の奨励
-- 学習志向: 失敗からの学習の称賛
-- 証拠ベース文化: 直感や政治より데이터の価値
-- 継続的改善: 定期的プロセス評価と向上
-```
-
-### 4. シナリオベース意思決定テスト
-
-**仮想シナリオを通じた意思決定品質テスト:**
-
-#### 意思決定シナリオフレームワーク
-```
-包括的意思決定テスト:
-
-履歴シナリオテスト:
-- 過去の意思決定に現在の意思決定プロセスを適用
-- 予測結果と実際の結果を比較
-- 役に立ったであろうプロセス改善を特定
-- 意思決定の信頼性と正確性を較正
-
-仮想シナリオテスト:
-- 練習用の現実的な意思決定シナリオを作成
-- 異なる条件下でチームプロセスをテスト
-- プロセスの強みと弱みを特定
-- チーム意思決定能力を構築
-
-ストレステストシナリオ:
-- 時間的圧力と緊急性制約
-- 不完全な情報と高い不確実性
-- 相反するステークホルダーの利益と優先順位
-- 重大な結果を伴う高リスク意思決定
-
-学習シナリオ:
-- 成功した意思決定分析とパターン認識
-- 失敗した意思決定のポストモーテムと教訓抽出
-- ニアミス分析と改善識別
-- ベストプラクティス共有と能力移転
+Organizational Biases:
+- Status Quo Bias: Preferring current state over change
+- Not Invented Here: Rejecting external ideas and solutions
+- Survivorship Bias: Focusing only on successful cases
+- Attribution Bias: Misattributing success and failure causes
+- Political Bias: Decisions influenced by organizational politics
 ```
 
-### 5. チーム意思決定プロセス最適化
-
-**意思決定ワークフローの体系的改善:**
-
-#### プロセス強化フレームワーク
+#### Bias Mitigation Strategies
 ```
-意思決定プロセス最適化:
+Systematic Bias Reduction:
 
-情報管理:
-- データ収集: 関連情報の体系的収集
-- 情報品質: 正確性、完全性、適時性評価
-- バイアス検出: 情報源バイアスの認識
-- 知識統合: 多様な情報源の統合
+Process-Based Mitigation:
+- Devil's Advocate: Designated critical evaluation role
+- Red Team Analysis: Systematic challenge of assumptions and conclusions
+- Diverse Perspectives: Multi-functional and multi-level input
+- Anonymous Input: Reducing social pressure and hierarchy effects
 
-ステークホルダーエンゲージメント:
-- 識別: 影響を受け影響を与える当事者の完全マッピング
-- 相談: 体系的な入力収集と視点統合
-- コミュニケーション: プロセスと意思決定根拠の明確な説明
-- 賛同: 実装への支持とコミットメントの構築
+Tool-Based Mitigation:
+- Decision Trees: Systematic option evaluation and comparison
+- Pre-mortem Analysis: Imagining failure scenarios and prevention
+- Reference Class Forecasting: Using similar historical examples
+- Outside View: External perspective and benchmarking
 
-分析と評価:
-- オプション生成: 創造的で包括的な代替案開発
-- 基準定義: 明確な成功指標と評価基準
-- トレードオフ分析: コストと利益の体系的比較
-- リスク評価: 潜在的問題の識別と軽減
-
-意思決定実装:
-- 計画: 詳細な実装戦略とタイムライン
-- リソース配分: 適切なスタッフィングと予算割り当て
-- 監視: 進捗追跡と結果測定
-- 適応: 結果と学習に基づくコース修正
+Cultural Mitigation:
+- Psychological Safety: Encouraging dissent and critical thinking
+- Learning Orientation: Celebrating learning from failures
+- Evidence-Based Culture: Valuing data over intuition and politics
+- Continuous Improvement: Regular process assessment and enhancement
 ```
 
-このコマンドは以下の改善に役立ちます：
-- 意思決定の品質と一貫性
-- チームの認知バイアス認識
-- 意思決定プロセスの効率性
-- 組織学習と能力開発
+### 4. Scenario-Based Decision Testing
+
+**Test decision quality through hypothetical scenarios:**
+
+#### Decision Scenario Framework
+```
+Comprehensive Decision Testing:
+
+Historical Scenario Testing:
+- Apply current decision process to past decisions
+- Compare predicted vs actual outcomes
+- Identify process improvements that would have helped
+- Calibrate decision confidence and accuracy
+
+Hypothetical Scenario Testing:
+- Create realistic decision scenarios for practice
+- Test team process under different conditions
+- Identify process strengths and weaknesses
+- Build team decision-making capability
+
+Stress Test Scenarios:
+- Time pressure and urgency constraints
+- Incomplete information and high uncertainty
+- Conflicting stakeholder interests and priorities
+- High-stakes decisions with significant consequences
+
+Learning Scenarios:
+- Successful decision analysis and pattern recognition
+- Failed decision post-mortem and lesson extraction
+- Near-miss analysis and improvement identification
+- Best practice sharing and capability transfer
+```
+
+#### Simulation-Based Improvement
+- Role-playing exercises for complex decision scenarios
+- Process experimentation with low-stakes decisions
+- A/B testing of different decision methodologies
+- Scenario planning for future decision situations
+
+### 5. Team Decision Process Optimization
+
+**Systematic improvement of decision-making workflows:**
+
+#### Process Enhancement Framework
+```
+Decision Process Optimization:
+
+Information Management:
+- Data Collection: Systematic gathering of relevant information
+- Information Quality: Accuracy, completeness, and timeliness assessment
+- Bias Detection: Recognition of information source biases
+- Knowledge Synthesis: Integration of diverse information sources
+
+Stakeholder Engagement:
+- Identification: Complete mapping of affected and influential parties
+- Consultation: Systematic input gathering and perspective integration
+- Communication: Clear explanation of process and decision rationale
+- Buy-in: Building support and commitment for implementation
+
+Analysis and Evaluation:
+- Option Generation: Creative and comprehensive alternative development
+- Criteria Definition: Clear success metrics and evaluation standards
+- Trade-off Analysis: Systematic comparison of costs and benefits
+- Risk Assessment: Identification and mitigation of potential problems
+
+Decision Implementation:
+- Planning: Detailed implementation strategy and timeline
+- Resource Allocation: Appropriate staffing and budget assignment
+- Monitoring: Progress tracking and outcome measurement
+- Adaptation: Course correction based on results and learning
+```
+
+#### Team Capability Building
+- Decision-making skill training and development
+- Process facilitation and meeting effectiveness
+- Critical thinking and analytical capability enhancement
+- Communication and stakeholder management improvement
+
+### 6. Output Generation and Recommendations
+
+**Present decision quality insights in actionable format:**
+
+```
+## Decision Quality Analysis: [Decision Type/Process]
+
+### Current State Assessment
+- Decision Process Maturity: [evaluation of current methodology]
+- Quality Dimension Scores: [process, outcome, timing, learning ratings]
+- Bias Vulnerability: [key cognitive biases affecting decisions]
+- Stakeholder Satisfaction: [feedback on decision process and outcomes]
+
+### Key Findings
+
+#### Decision Process Strengths:
+- Effective Practices: [what works well in current process]
+- Quality Outcomes: [successful decisions and positive patterns]
+- Team Capabilities: [strong skills and effective behaviors]
+- Stakeholder Engagement: [successful involvement and communication]
+
+#### Improvement Opportunities:
+- Process Gaps: [missing steps or inadequate methodology]
+- Bias Vulnerabilities: [cognitive biases affecting decision quality]
+- Information Deficits: [data gaps and analysis weaknesses]
+- Implementation Challenges: [execution and follow-through issues]
+
+### Optimization Recommendations
+
+#### Immediate Improvements (0-30 days):
+- Process Quick Fixes: [simple methodology enhancements]
+- Bias Mitigation: [specific techniques for bias reduction]
+- Tool Implementation: [decision aids and analytical frameworks]
+- Communication Enhancement: [stakeholder engagement improvements]
+
+#### Medium-term Development (1-6 months):
+- Capability Building: [training and skill development programs]
+- Process Standardization: [consistent methodology across decisions]
+- Quality Measurement: [metrics and feedback systems]
+- Cultural Development: [decision-making mindset and values]
+
+#### Long-term Transformation (6+ months):
+- Organizational Learning: [institutional knowledge and capability]
+- Advanced Analytics: [data-driven decision support systems]
+- Innovation Integration: [new methodologies and tools]
+- Competitive Advantage: [decision-making as strategic capability]
+
+### Success Metrics and Monitoring
+- Decision Quality KPIs: [measurable indicators of improvement]
+- Process Efficiency Metrics: [speed and resource utilization]
+- Outcome Tracking: [business results and stakeholder satisfaction]
+- Learning Indicators: [capability development and knowledge capture]
+
+### Implementation Roadmap
+- Phase 1: [immediate process improvements and bias mitigation]
+- Phase 2: [capability building and measurement system]
+- Phase 3: [advanced methodology and cultural transformation]
+- Success Criteria: [specific goals and achievement measures]
+```
+
+### 7. Continuous Learning Integration
+
+**Establish ongoing decision quality improvement:**
+
+#### Decision Outcome Tracking
+- Systematic monitoring of decision results and impacts
+- Correlation analysis between process quality and outcomes
+- Pattern recognition for successful vs unsuccessful decisions
+- Feedback integration for process refinement and enhancement
+
+#### Organizational Learning
+- Best practice identification and knowledge sharing
+- Decision case study development and team learning
+- Cross-functional learning and capability transfer
+- Industry benchmark comparison and competitive analysis
+
+## Usage Examples
+
+```bash
+# Product strategy decision analysis
+/team:decision-quality-analyzer Analyze product roadmap prioritization decisions for bias and process improvement opportunities
+
+# Technical architecture decision assessment
+/team:decision-quality-analyzer Evaluate technology stack decisions using scenario testing and stakeholder satisfaction analysis
+
+# Hiring process decision optimization
+/team:decision-quality-analyzer Optimize candidate evaluation and selection process through bias detection and outcome tracking
+
+# Investment decision quality improvement
+/team:decision-quality-analyzer Improve capital allocation decisions through process standardization and learning integration
+```
+
+## Quality Indicators
+
+- **Green**: Comprehensive bias analysis, validated process improvements, outcome tracking
+- **Yellow**: Basic bias recognition, some process enhancement, limited outcome measurement
+- **Red**: Minimal bias awareness, ad-hoc process, no systematic improvement
+
+## Common Pitfalls to Avoid
+
+- Analysis paralysis: Over-analyzing decisions instead of improving decision-making
+- Bias blindness: Not recognizing team and organizational cognitive biases
+- Process rigidity: Creating inflexible procedures that slow appropriate decisions
+- Outcome fixation: Judging process quality only by outcomes rather than methodology
+- Individual focus: Ignoring group dynamics and organizational factors
+- One-size-fits-all: Using same process for all decision types and contexts
+
+Transform team decision-making from intuition-based guessing into systematic, evidence-driven capability that creates sustainable competitive advantage.

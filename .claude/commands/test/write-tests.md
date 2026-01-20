@@ -1,123 +1,123 @@
-# テスト作成コマンド
+# Write Tests Command
 
-テストのベストプラクティスとフレームワークの規約に従って、あらゆるコードベースのための包括的なテストを生成します。
+Write unit and integration tests
 
-## 実行手順
+## Instructions
 
-効果的なテストを作成するために以下の体系的アプローチに従ってください：**$ARGUMENTS**
+Follow this systematic approach to write effective tests: **$ARGUMENTS**
 
-1. **テストフレームワーク検出**
-   - 使用中のテストフレームワークを特定する（Jest、Mocha、PyTest、RSpecなど）
-   - 既存のテスト構造と規約をレビューする
-   - テスト設定ファイルとセットアップを確認する
-   - プロジェクト固有のテストパターンを理解する
+1. **Test Framework Detection**
+   - Identify the testing framework in use (Jest, Mocha, PyTest, RSpec, etc.)
+   - Review existing test structure and conventions
+   - Check test configuration files and setup
+   - Understand project-specific testing patterns
 
-2. **テスト対象コードの分析**
-   - テストが必要なコードを分析する
-   - publicインターフェースと重要なビジネスロジックを特定する
-   - 依存関係と外部との相互作用をマッピングする
-   - エラー条件とエッジケースを理解する
+2. **Code Analysis for Testing**
+   - Analyze the code that needs testing
+   - Identify public interfaces and critical business logic
+   - Map out dependencies and external interactions
+   - Understand error conditions and edge cases
 
-3. **テスト戦略計画**
-   - 必要なテストレベルを決定する:
-     - 個別の関数/メソッドのunit test
-     - コンポーネント間の相互作用のintegration test
-     - ユーザーワークフローのend-to-end test
-   - テストカバレッジの目標と優先順位を計画する
-   - mockとstubの要件を特定する
+3. **Test Strategy Planning**
+   - Determine test levels needed:
+     - Unit tests for individual functions/methods
+     - Integration tests for component interactions
+     - End-to-end tests for user workflows
+   - Plan test coverage goals and priorities
+   - Identify mock and stub requirements
 
-4. **Unit Test実装**
-   - 個別の関数とメソッドを分離してテストする
-   - まずhappy pathシナリオをカバーする
-   - エッジケースと境界条件をテストする
-   - エラー条件と例外処理をテストする
-   - 適切なassertionと期待値を使用する
+4. **Unit Test Implementation**
+   - Test individual functions and methods in isolation
+   - Cover happy path scenarios first
+   - Test edge cases and boundary conditions
+   - Test error conditions and exception handling
+   - Use proper assertions and expectations
 
-5. **テスト構造と組織化**
-   - AAAパターン（Arrange、Act、Assert）に従う
-   - シナリオを説明する記述的なテスト名を使用する
-   - test suite/describeブロックで関連テストをグループ化する
-   - テストを集中的かつアトミックで保つ
+5. **Test Structure and Organization**
+   - Follow the AAA pattern (Arrange, Act, Assert)
+   - Use descriptive test names that explain the scenario
+   - Group related tests using test suites/describe blocks
+   - Keep tests focused and atomic
 
-6. **MockingとStubbing**
-   - 外部依存とサービスをmockする
-   - unit testのために複雑な操作をstubする
-   - 信頼性のあるテストのために適切な分離を使用する
-   - テストを脆弱にするover-mockingを避ける
+6. **Mocking and Stubbing**
+   - Mock external dependencies and services
+   - Stub complex operations for unit tests
+   - Use proper isolation for reliable tests
+   - Avoid over-mocking that makes tests brittle
 
-7. **データセットアップとクリーンアップ**
-   - テストフィクスチャとサンプルデータを作成する
-   - テスト環境を清潔にsetupとteardownする
-   - 複雑なテストデータにはfactoryやbuilderを使用する
-   - テスト同士が干渉しないようにする
+7. **Data Setup and Teardown**
+   - Create test fixtures and sample data
+   - Set up and tear down test environments cleanly
+   - Use factories or builders for complex test data
+   - Ensure tests don't interfere with each other
 
-8. **Integration Test作成**
-   - コンポーネント間の相互作用とデータフローをテストする
-   - 様々なシナリオでAPIエンドポイントをテストする
-   - データベース操作とトランザクションをテストする
-   - 外部サービス統合をテストする
+8. **Integration Test Writing**
+   - Test component interactions and data flow
+   - Test API endpoints with various scenarios
+   - Test database operations and transactions
+   - Test external service integrations
 
-9. **エラーと例外テスト**
-   - すべてのエラー条件と例外パスをテストする
-   - 適切なエラーメッセージとコードを検証する
-   - エラー復旧とフォールバックメカニズムをテストする
-   - バリデーションとセキュリティシナリオをテストする
+9. **Error and Exception Testing**
+   - Test all error conditions and exception paths
+   - Verify proper error messages and codes
+   - Test error recovery and fallback mechanisms
+   - Test validation and security scenarios
 
-10. **パフォーマンスと負荷テスト**
-    - 重要な操作のパフォーマンステストを追加する
-    - 異なる負荷条件下でテストする
-    - メモリ使用量とリソースクリーンアップを検証する
-    - タイムアウトとレート制限シナリオをテストする
+10. **Performance and Load Testing**
+    - Add performance tests for critical operations
+    - Test under different load conditions
+    - Verify memory usage and resource cleanup
+    - Test timeout and rate limiting scenarios
 
-11. **セキュリティテスト**
-    - 認証と許可をテストする
-    - 入力検証とサニタイゼーションをテストする
-    - 一般的なセキュリティ脆弱性をテストする
-    - アクセス制御と権限をテストする
+11. **Security Testing**
+    - Test authentication and authorization
+    - Test input validation and sanitization
+    - Test for common security vulnerabilities
+    - Test access control and permissions
 
-12. **アクセシビリティテスト（UI向け）**
-    - キーボードナビゲーションとスクリーンリーダーをテストする
-    - 色のコントラストと視覚的アクセシビリティをテストする
-    - ARIA属性とセマンティックマークアップをテストする
-    - 支援技術シミュレーションでテストする
+12. **Accessibility Testing (for UI)**
+    - Test keyboard navigation and screen readers
+    - Test color contrast and visual accessibility
+    - Test ARIA attributes and semantic markup
+    - Test with assistive technology simulations
 
-13. **クロスプラットフォームテスト**
-    - 異なるオペレーティングシステムでテストする
-    - 異なるブラウザ（Webアプリ用）でテストする
-    - 異なるデバイスサイズと解像度でテストする
-    - 異なるバージョンの依存関係でテストする
+13. **Cross-Platform Testing**
+    - Test on different operating systems
+    - Test on different browsers (for web apps)
+    - Test on different device sizes and resolutions
+    - Test with different versions of dependencies
 
-14. **テストユーティリティとヘルパー**
-    - 再利用可能なテストユーティリティとヘルパーを作成する
-    - テストデータfactoryとbuilderを構築する
-    - カスタムmatcherとassertionを作成する
-    - 共通のテストsetupとteardown関数を設定する
+14. **Test Utilities and Helpers**
+    - Create reusable test utilities and helpers
+    - Build test data factories and builders
+    - Create custom matchers and assertions
+    - Set up common test setup and teardown functions
 
-15. **スナップショットとビジュアルテスト**
-    - UIコンポーネントのスナップショットテストを使用する
-    - ビジュアルリグレッションテストを実装する
-    - レンダリングされた出力とマークアップをテストする
-    - スナップショットを適切にバージョン管理する
+15. **Snapshot and Visual Testing**
+    - Use snapshot testing for UI components
+    - Implement visual regression testing
+    - Test rendered output and markup
+    - Version control snapshots properly
 
-16. **非同期テスト**
-    - 非同期操作を適切にテストする
-    - 適切な非同期テストパターンを使用する
-    - Promiseの解決と拒否をテストする
-    - コールバックとイベント駆動コードをテストする
+16. **Async Testing**
+    - Test asynchronous operations properly
+    - Use appropriate async testing patterns
+    - Test promise resolution and rejection
+    - Test callback and event-driven code
 
-17. **テストドキュメンテーション**
-    - 複雑なテストシナリオと理由を文書化する
-    - 自明でないテストロジックにコメントを追加する
-    - チーム参照用のテストドキュメンテーションを作成する
-    - テストデータの要件とセットアップを文書化する
+17. **Test Documentation**
+    - Document complex test scenarios and reasoning
+    - Add comments for non-obvious test logic
+    - Create test documentation for team reference
+    - Document test data requirements and setup
 
-18. **テストメンテナンス**
-    - コード変更に合わせてテストを最新に保つ
-    - コードをリファクタリングする際にテストもリファクタリングする
-    - 廃止されたテストを削除し、assertionを更新する
-    - 不安定なテストを監視し、修正する
+18. **Test Maintenance**
+    - Keep tests up to date with code changes
+    - Refactor tests when code is refactored
+    - Remove obsolete tests and update assertions
+    - Monitor and fix flaky tests
 
-**フレームワーク固有のガイドライン:**
+**Framework-Specific Guidelines:**
 
 **Jest/JavaScript:**
 ```javascript
@@ -169,4 +169,4 @@ RSpec.describe ClassName do
 end
 ```
 
-重要なビジネスロジックとユーザー向け機能のテストを最優先し、その後でサポートコードにカバレッジを拡大することを確実に実行してください。
+Remember to prioritize testing critical business logic and user-facing functionality first, then expand coverage to supporting code.

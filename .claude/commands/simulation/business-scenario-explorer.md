@@ -1,329 +1,329 @@
-# ビジネスシナリオエクスプローラー
+# Business Scenario Explorer
 
-制約検証と意思決定最適化を伴う複数のビジネスタイムラインシナリオを探索します。
+Explore multiple business timeline scenarios with constraint validation and decision optimization.
 
-## 指示
+## Instructions
 
-複数の将来タイムラインを探索し、より良い戦略的決定を下すための包括的なビジネスシナリオシミュレーションを作成する任務を負っています。以下の体系的なアプローチに従ってください: **$ARGUMENTS**
+You are tasked with creating a comprehensive business scenario simulation to help explore multiple future timelines and make better strategic decisions. Follow this systematic approach: **$ARGUMENTS**
 
-### 1. 前提条件評価
+### 1. Prerequisites Assessment
 
-**続行前に、これらの重要な入力を検証:**
+**Before proceeding, validate these critical inputs:**
 
-- **ビジネスコンテキスト**: 核となるビジネスモデルと業界が明確に定義されているか？
-- **時間軸**: 計画タイムライン（四半期、年、市場サイクル）は何か？
-- **重要変数**: 結果を変更する可能性がある主要因子は何か？
-- **成功指標**: シナリオの成功/失敗をどのように測定するか？
-- **決定ポイント**: どのような特定の決定を下す必要があるか？
+- **Business Context**: Is the core business model and industry clearly defined?
+- **Time Horizon**: What is the planning timeline (quarters, years, market cycles)?
+- **Key Variables**: What are the primary factors that could change outcomes?
+- **Success Metrics**: How will you measure scenario success/failure?
+- **Decision Points**: What specific decisions need to be made?
 
-**これらのいずれかが不明確な場合、プログレッシブクエスチョニングを使用:**
-
-```
-ビジネスコンテキスト不足:
-「あなたのビジネスモデルをより良く理解する必要があります。以下を説明してください:
-- 主要な収益ストリーム
-- 主要なコスト要因 
-- 主な競争優位性
-- ターゲット市場セグメント」
-
-時間軸不足:
-「どの計画期間をシミュレートすべきですか？
-- 短期（3-6ヶ月）: 市場反応、製品ローンチ
-- 中期（1-2年）: 戦略的イニシアチブ、市場拡大  
-- 長期（3-5年以上）: 業界変革、市場サイクル」
-
-重要変数不足:
-「あなたのビジネスに大きな影響を与える可能性がある要因は何ですか？
-- 市場条件（成長、不況、破壊）
-- 競争環境の変化
-- 規制の変化
-- 技術の採用
-- 顧客行動の進化」
-```
-
-### 2. 制約モデリング
-
-**体系的制約分析で決定環境をマップ:**
-
-#### 外部制約
-- 市場規模と成長ダイナミクス
-- 競争ポジショニングと反応
-- 規制環境とコンプライアンス要件
-- 経済条件とサイクル
-- 技術採用曲線
-- サプライチェーン依存関係
-
-#### 内部制約  
-- 財務リソースとバーンレート
-- チーム能力と容量
-- 技術インフラの制限
-- ブランドポジショニングと評判
-- 顧客ベースの特徴
-- 運用スケーラビリティ要因
-
-#### 時間的制約
-- 製品開発サイクル
-- 市場タイミングウィンドウ
-- 季節的ビジネスパターン
-- 契約とパートナーシップのタイムライン
-- 規制承認プロセス
-
-**品質ゲート**: 制約が以下であることを検証:
-- 具体的で測定可能
-- 可能な限り実データに基づく
-- 範囲/不確実性境界を含む
-- 相互依存関係を考慮
-
-### 3. シナリオアーキテクチャ
-
-**複数のタイムライン分岐を体系的に設計:**
-
-#### ベースケースシナリオ
-- 現在の軌道を考慮した最も可能性の高い結果
-- 主要変数に関する保守的な仮定
-- 歴史的パターンの外挿
-- リスク調整された予測
-
-#### 楽観的シナリオ（2-3バリアント）
-- 最良の市場条件
-- すべてのイニシアチブの成功実行
-- 有利な競争ダイナミクス
-- 加速された採用/成長
-
-#### 悲観的シナリオ（2-3バリアント）
-- 経済低迷の影響
-- 競争の激化
-- 実行上の課題
-- 規制の逆風
-
-#### 破壊シナリオ（2-3バリアント）
-- 技術ブレークスルーの影響
-- 新しい市場参入者
-- ビジネスモデルのシフト
-- ブラックスワン事象
-
-**プログレッシブ深度**: 3-5の高レベルシナリオから始め、最も影響力のあるものを詳しく掘り下げる。
-
-### 4. タイムライン圧縮シミュレーション
-
-**加速シナリオテストを実行:**
-
-#### 四半期ごとの分析
-- 各シナリオ下での収益進行
-- コスト構造の進化
-- 市場シェアダイナミクス
-- 主要マイルストーンの達成
-
-#### 決定ポイントマッピング
-- 各タイムライン接合部で必要な重要決定
-- オプション価値と決定木
-- 後戻りできないポイントの識別
-- ピボット機会ウィンドウ
-
-#### フィードバックループモデリング
-- 初期結果が後の決定にどう影響するか
-- 適応的戦略調整
-- 学習と改良サイクル
-
-### 5. 定量的モデリング
-
-**シナリオに体系的測定を適用:**
-
-#### 財務予測
-- 収益成長軌道
-- 利益率の進化
-- キャッシュフローダイナミクス
-- 投資要件
-- タイムライン全体のROI計算
-
-#### 市場ダイナミクス
-- 市場シェア進行
-- 顧客獲得コスト
-- ライフタイムバリューの進化
-- 競争反応モデリング
-
-#### 運用指標
-- チームスケーリング要件
-- インフラ容量ニーズ
-- 効率改善
-- 品質指標
-
-**信頼度スコアリング**: 以下に基づいて各予測を1-10で評価:
-- 仮定を支えるデータ品質
-- 利用可能な歴史的先例  
-- 受信した専門家検証
-- 他の仮定との論理的一貫性
-
-### 6. リスク評価と軽減
-
-**シナリオリスクを体系的に評価:**
-
-#### 確率重み付け
-- 各シナリオに現実的な確率を割り当て
-- 類似状況からのベースレート分析を使用
-- 計画の誤謬と楽観バイアスを考慮
-- 専門家意見と市場調査を含む
-
-#### 影響分析
-- 各シナリオの潜在的上昇/下降を定量化
-- ビジネス重要故障モードを特定
-- カスケード効果とドミノリスクをマップ
-- シナリオ全体の期待値を計算
-
-#### 軽減戦略
-- 各シナリオの早期警告指標を特定
-- 適応的対応とピボット戦略を設計
-- 計画にオプション価値と柔軟性を構築
-- リスク監視ダッシュボードを作成
-
-### 7. 決定最適化
-
-**実行可能な戦略ガイダンスを生成:**
-
-#### 戦略堅牢性テスト
-- 複数のシナリオで良好なパフォーマンスを示す戦略は？
-- 主要な感度要因は何か？
-- 最高レバレッジの決定ポイントはどこか？
-- 各タイムラインで競争の堀を作るものは何か？
-
-#### リソース配分最適化
-- シナリオ全体の最適予算配分
-- 投資順序とタイミング
-- 能力構築優先順位
-- パートナーシップと買収戦略
-
-#### 緊急時計画
-- 各シナリオの具体的行動トリガー
-- リソース再配分フレームワーク
-- 異なる結果のコミュニケーション戦略
-- ステークホルダー管理アプローチ
-
-### 8. 校正と検証
-
-**シミュレーションの品質と精度を確保:**
-
-#### 仮定テスト
-- 主要仮定を歴史的データと比較
-- ドメイン専門家とステークホルダーで検証
-- 重要仮定をストレステスト
-- 信頼レベルとソースを文書化
-
-#### シナリオもっともらしさチェック
-- シナリオは論理的進行に従うか？
-- 相互依存関係が適切にモデル化されているか？
-- 財務予測はバランスが取れているか？
-- タイムラインは制約を考慮して現実的か？
-
-#### バイアス検出
-- 現在の状態への固定をチェック
-- 有利なシナリオでの確証バイアスを特定  
-- 悲観的シナリオが極端すぎないか検証
-- シナリオが可能性空間全体をカバーすることを確実に
-
-### 9. 出力生成
-
-**構造化された実行可能な形式で所見を提示:**
+**If any of these are unclear, use progressive questioning:**
 
 ```
-## ビジネスシナリオ分析: [ビジネス名]
+Missing Business Context:
+"I need to understand your business model better. Please describe:
+- Your primary revenue streams
+- Key cost drivers 
+- Main competitive advantages
+- Target market segments"
 
-### エグゼクティブサマリー
-- 計画期間: [タイムライン]
-- モデル化されたシナリオ: [数とタイプ]
-- 主要決定ポイント: [重要決定]
-- 推奨戦略: [具体的アプローチ]
+Missing Time Horizon:
+"What planning period should we simulate?
+- Short-term (3-6 months): Market response, product launches
+- Medium-term (1-2 years): Strategic initiatives, market expansion  
+- Long-term (3-5+ years): Industry transformation, market cycles"
 
-### シナリオ結果マトリックス
-
-| シナリオ | 確率 | 1年目収益 | 2年目収益 | 主要リスク | 成功要因 |
-|----------|------|-----------|-----------|------------|-----------|
-| ベースケース | 40% | $X | $Y | [リスク] | [要因] |
-| 楽観的A | 20% | $X | $Y | [リスク] | [要因] |
-| 悲観的A | 25% | $X | $Y | [リスク] | [要因] |
-| 破壊A | 15% | $X | $Y | [リスク] | [要因] |
-
-### 戦略提案
-
-**堅牢な戦略**（シナリオ全体で良好なパフォーマンス）:
-1. [信頼度スコア付き戦略]
-2. [信頼度スコア付き戦略]
-3. [信頼度スコア付き戦略]
-
-**シナリオ固有戦術**:
-- ベースケースの場合: [具体的行動]
-- 楽観的な場合: [具体的行動]  
-- 悲観的な場合: [具体的行動]
-- 破壊的な場合: [具体的行動]
-
-**重要決定ポイント**:
-- 3ヶ月目: [決定] - 先行指標: [指標]
-- 9ヶ月目: [決定] - 先行指標: [指標]
-- 18ヶ月目: [決定] - 先行指標: [指標]
-
-### リスク軽減フレームワーク
-- 各シナリオの早期警告指標
-- 具体的対応トリガーと行動
-- リソース再配分手順
-- ステークホルダーコミュニケーションプロトコル
-
-### 信頼度評価
-- 高信頼度予測: [リスト]
-- 中信頼度予測: [リスト]  
-- 低信頼度予測: [リスト]
-- 追加調査が必要な分野: [リスト]
+Missing Key Variables:
+"What factors could significantly impact your business?
+- Market conditions (growth, recession, disruption)
+- Competitive landscape changes
+- Regulatory shifts
+- Technology adoption
+- Customer behavior evolution"
 ```
 
-### 10. イテレーションと改良
+### 2. Constraint Modeling
 
-**継続的シナリオ改善を確立:**
+**Map the decision environment with systematic constraint analysis:**
 
-#### フィードバック統合
-- 実際の結果に対する月次仮定検証
-- 四半期シナリオ確率更新
-- 年次包括的シナリオリフレッシュ
-- シナリオ精度からの継続学習
+#### External Constraints
+- Market size and growth dynamics
+- Competitive positioning and responses
+- Regulatory environment and compliance requirements
+- Economic conditions and cycles
+- Technology adoption curves
+- Supply chain dependencies
 
-#### モデル強化
-- 利用可能になった新データソースを組み込み
-- 経験に基づいて制約モデリングを改良
-- 結果に基づいて確率評価を更新
-- 決定ポイント識別を強化
+#### Internal Constraints  
+- Financial resources and burn rate
+- Team capabilities and capacity
+- Technology infrastructure limitations
+- Brand positioning and reputation
+- Customer base characteristics
+- Operational scalability factors
 
-**成功指標**: 
-- 時間経過によるシナリオ精度
-- 決定品質改善
-- 戦略オプション価値実現
-- リスク事象予測成功
+#### Temporal Constraints
+- Product development cycles
+- Market timing windows
+- Seasonal business patterns
+- Contract and partnership timelines
+- Regulatory approval processes
 
-## 使用例
+**Quality Gate**: Validate that constraints are:
+- Specific and measurable
+- Based on real data where possible
+- Include ranges/uncertainty bounds
+- Account for interdependencies
+
+### 3. Scenario Architecture
+
+**Design multiple timeline branches systematically:**
+
+#### Base Case Scenario
+- Most likely outcome given current trajectory
+- Conservative assumptions about key variables
+- Historical pattern extrapolation
+- Risk-adjusted projections
+
+#### Optimistic Scenarios (2-3 variants)
+- Best-case market conditions
+- Successful execution of all initiatives
+- Favorable competitive dynamics
+- Accelerated adoption/growth
+
+#### Pessimistic Scenarios (2-3 variants)
+- Economic downturn impact
+- Increased competition
+- Execution challenges
+- Regulatory headwinds
+
+#### Disruption Scenarios (2-3 variants)
+- Technology breakthrough impacts
+- New market entrants
+- Business model shifts
+- Black swan events
+
+**Progressive Depth**: Start with 3-5 high-level scenarios, then drill into the most impactful ones.
+
+### 4. Timeline Compression Simulation
+
+**Run accelerated scenario testing:**
+
+#### Quarter-by-Quarter Analysis
+- Revenue progression under each scenario
+- Cost structure evolution
+- Market share dynamics
+- Key milestone achievement
+
+#### Decision Point Mapping
+- Critical decisions required at each timeline juncture
+- Option values and decision trees
+- Point-of-no-return identification
+- Pivot opportunity windows
+
+#### Feedback Loop Modeling
+- How early results would inform later decisions
+- Adaptive strategy adjustments
+- Learning and refinement cycles
+
+### 5. Quantitative Modeling
+
+**Apply systematic measurement to scenarios:**
+
+#### Financial Projections
+- Revenue growth trajectories
+- Profit margin evolution
+- Cash flow dynamics
+- Investment requirements
+- ROI calculations across timelines
+
+#### Market Dynamics
+- Market share progression
+- Customer acquisition costs
+- Lifetime value evolution
+- Competitive response modeling
+
+#### Operational Metrics
+- Team scaling requirements
+- Infrastructure capacity needs
+- Efficiency improvements
+- Quality indicators
+
+**Confidence Scoring**: Rate each projection 1-10 based on:
+- Data quality supporting the assumption
+- Historical precedent availability  
+- Expert validation received
+- Logical consistency with other assumptions
+
+### 6. Risk Assessment & Mitigation
+
+**Systematically evaluate scenario risks:**
+
+#### Probability Weighting
+- Assign realistic probabilities to each scenario
+- Use base rate analysis from similar situations
+- Account for planning fallacy and optimism bias
+- Include expert opinion and market research
+
+#### Impact Analysis
+- Quantify potential upside/downside for each scenario
+- Identify business-critical failure modes
+- Map cascade effects and domino risks
+- Calculate expected value across scenarios
+
+#### Mitigation Strategies
+- Identify early warning indicators for each scenario
+- Design adaptive responses and pivot strategies
+- Build option values and flexibility into plans
+- Create risk monitoring dashboards
+
+### 7. Decision Optimization
+
+**Generate actionable strategic guidance:**
+
+#### Strategy Robustness Testing
+- Which strategies perform well across multiple scenarios?
+- What are the key sensitivity factors?
+- Where are the highest-leverage decision points?
+- What creates competitive moats in each timeline?
+
+#### Resource Allocation Optimization
+- Optimal budget allocation across scenarios
+- Investment sequencing and timing
+- Capability building priorities
+- Partnership and acquisition strategies
+
+#### Contingency Planning
+- Specific action triggers for each scenario
+- Resource reallocation frameworks
+- Communication strategies for different outcomes
+- Stakeholder management approaches
+
+### 8. Calibration and Validation
+
+**Ensure simulation quality and accuracy:**
+
+#### Assumption Testing
+- Compare key assumptions to historical data
+- Validate with domain experts and stakeholders
+- Stress-test critical assumptions
+- Document confidence levels and sources
+
+#### Scenario Plausibility Check
+- Do scenarios follow logical progression?
+- Are interdependencies properly modeled?
+- Do financial projections balance?
+- Are timelines realistic given constraints?
+
+#### Bias Detection
+- Check for anchoring on current state
+- Identify confirmation bias in favorable scenarios  
+- Validate pessimistic scenarios aren't too extreme
+- Ensure scenarios cover full possibility space
+
+### 9. Output Generation
+
+**Present findings in structured, actionable format:**
+
+```
+## Business Scenario Analysis: [Business Name]
+
+### Executive Summary
+- Planning horizon: [timeline]
+- Scenarios modeled: [count and types]
+- Key decision points: [critical decisions]
+- Recommended strategy: [specific approach]
+
+### Scenario Outcomes Matrix
+
+| Scenario | Probability | Year 1 Revenue | Year 2 Revenue | Key Risks | Success Factors |
+|----------|-------------|----------------|----------------|-----------|-----------------|
+| Base Case | 40% | $X | $Y | [risks] | [factors] |
+| Optimistic A | 20% | $X | $Y | [risks] | [factors] |
+| Pessimistic A | 25% | $X | $Y | [risks] | [factors] |
+| Disruption A | 15% | $X | $Y | [risks] | [factors] |
+
+### Strategic Recommendations
+
+**Robust Strategies** (perform well across scenarios):
+1. [Strategy with confidence score]
+2. [Strategy with confidence score]
+3. [Strategy with confidence score]
+
+**Scenario-Specific Tactics**:
+- If Base Case: [specific actions]
+- If Optimistic: [specific actions]  
+- If Pessimistic: [specific actions]
+- If Disruption: [specific actions]
+
+**Critical Decision Points**:
+- Month 3: [decision] - Leading indicators: [metrics]
+- Month 9: [decision] - Leading indicators: [metrics]
+- Month 18: [decision] - Leading indicators: [metrics]
+
+### Risk Mitigation Framework
+- Early warning indicators for each scenario
+- Specific response triggers and actions
+- Resource reallocation procedures
+- Stakeholder communication protocols
+
+### Confidence Assessment
+- High confidence projections: [list]
+- Medium confidence projections: [list]  
+- Low confidence projections: [list]
+- Areas requiring additional research: [list]
+```
+
+### 10. Iteration and Refinement
+
+**Establish ongoing scenario improvement:**
+
+#### Feedback Integration
+- Monthly assumption validation against actual results
+- Quarterly scenario probability updates
+- Annual comprehensive scenario refresh
+- Continuous learning from scenario accuracy
+
+#### Model Enhancement
+- Incorporate new data sources as available
+- Refine constraint modeling based on experience
+- Update probability assessments based on outcomes
+- Enhance decision point identification
+
+**Success Metrics**: 
+- Scenario accuracy over time
+- Decision quality improvement
+- Strategic option value realization
+- Risk event prediction success
+
+## Usage Examples
 
 ```bash
-# 戦略的ビジネス計画
-/simulation:business-scenario-explorer 今後2年間のSaaSヨーロッパ市場拡大を評価
+# Strategic business planning
+/simulation:business-scenario-explorer Evaluate SaaS expansion into European markets over next 2 years
 
-# 製品ローンチ計画
-/simulation:business-scenario-explorer 異なる市場条件下でのAI機能ローンチの結果をモデル化
+# Product launch planning
+/simulation:business-scenario-explorer Model outcomes for AI-powered feature launch across different market conditions
 
-# 投資決定
-/simulation:business-scenario-explorer 市場条件全体でのシリーズA資金調達500万ドルのROIシナリオを分析
+# Investment decision
+/simulation:business-scenario-explorer Analyze ROI scenarios for $5M Series A funding across market conditions
 
-# 市場参入戦略
-/simulation:business-scenario-explorer 既存プレイヤーとしてのフィンテック市場参入のタイムラインシナリオを探索
+# Market entry strategy
+/simulation:business-scenario-explorer Explore timeline scenarios for entering fintech market as established player
 ```
 
-## 品質指標
+## Quality Indicators
 
-- **緑**: 主要仮定80%以上の信頼度、完全制約モデリング、5以上のシナリオ分析
-- **黄**: 60-80%信頼度、部分制約マッピング、3-4シナリオ
-- **赤**: 60%未満信頼度、重要制約不足、3未満シナリオ
+- **Green**: 80%+ confidence in key assumptions, full constraint modeling, 5+ scenarios analyzed
+- **Yellow**: 60-80% confidence, partial constraint mapping, 3-4 scenarios
+- **Red**: <60% confidence, missing critical constraints, <3 scenarios
 
-## 避けるべき一般的な落とし穴
+## Common Pitfalls to Avoid
 
-- 計画の誤謬: 過度に楽観的なタイムライン
-- 固定バイアス: 現在の状態に近すぎるシナリオ
-- 確証バイアス: 好ましい結果を好む
-- 制約不足: 規制/競争要因の無視
-- ポイント推定: 確率分布を使用しない
-- 静的思考: 適応的対応をモデル化しない
+- Planning fallacy: Overly optimistic timelines
+- Anchoring bias: Scenarios too close to current state
+- Confirmation bias: Favoring pleasant outcomes
+- Missing constraints: Ignoring regulatory/competitive factors
+- Point estimates: Not using probability distributions
+- Static thinking: Not modeling adaptive responses
 
-10年の市場サイクルを10時間のシミュレーションに変換し、指数的により良い戦略決定を下す。
+Transform your 10-year market cycle into a 10-hour simulation and make exponentially better strategic decisions.

@@ -25,7 +25,7 @@ SOURCE_TYPE="$3"
 AUTHOR="${4:-Local}"
 
 # カテゴリ検証
-VALID_CATEGORIES="deploy dev docs performance project security setup team test"
+VALID_CATEGORIES="boundary context deploy dev docs memory orchestration performance project reasoning rust security semantic setup simulation skills spec-workflow svelte sync team test wfgy"
 if ! echo "$VALID_CATEGORIES" | grep -w "$CATEGORY" > /dev/null; then
     echo "❌ 無効なカテゴリ: $CATEGORY"
     echo "有効なカテゴリ: $VALID_CATEGORIES"

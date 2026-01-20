@@ -1,18 +1,18 @@
-# レート制限セットアップ
+# Setup Rate Limiting
 
-不正使用から保護し、公平なリソース使用を確保するために、包括的なレート制限とAPIスロットリングを実装します。
+Implement API rate limiting
 
-## 実行手順
+## Instructions
 
-1. **レート制限戦略と計画**
-   - APIエンドポイントとトラフィックパターンの分析
-   - 異なるユーザータイプとエンドポイントのレート制限ポリシーを定義
-   - 複数サーバー間での分散レート制限の計画
-   - 異なるレート制限アルゴリズムの検討（トークンバケット、スライディングウィンドウなど）
-   - 信頼できるクライアントのためのレート制限バイパス機構の設計
+1. **Rate Limiting Strategy and Planning**
+   - Analyze API endpoints and traffic patterns
+   - Define rate limiting policies for different user types and endpoints
+   - Plan for distributed rate limiting across multiple servers
+   - Consider different rate limiting algorithms (token bucket, sliding window, etc.)
+   - Design rate limiting bypass mechanisms for trusted clients
 
-2. **Express.jsレート制限実装**
-   - 包括的なレート制限ミドルウェアのセットアップ：
+2. **Express.js Rate Limiting Implementation**
+   - Set up comprehensive rate limiting middleware:
 
    **Basic Rate Limiting Setup:**
    ```javascript
@@ -139,8 +139,8 @@
    module.exports = new RateLimiter();
    ```
 
-3. **高度なレート制限アルゴリズム**
-   - 洗練されたレート制限戦略の実装：
+3. **Advanced Rate Limiting Algorithms**
+   - Implement sophisticated rate limiting strategies:
 
    **Token Bucket Implementation:**
    ```javascript
@@ -317,8 +317,8 @@
    module.exports = SlidingWindowRateLimiter;
    ```
 
-4. **カスタムレート制限ミドルウェア**
-   - 柔軟なレート制限ソリューションの構築：
+4. **Custom Rate Limiting Middleware**
+   - Build flexible rate limiting solutions:
 
    **Advanced Rate Limiting Middleware:**
    ```javascript
@@ -480,8 +480,8 @@
    module.exports = AdvancedRateLimiter;
    ```
 
-5. **APIクォータ管理**
-   - 包括的なクォータシステムの実装：
+5. **API Quota Management**
+   - Implement comprehensive quota systems:
 
    **Quota Management System:**
    ```javascript
@@ -710,8 +710,8 @@
    module.exports = QuotaManager;
    ```
 
-6. **異なるサービスのレート制限**
-   - サービス固有のレート制限の実装：
+6. **Rate Limiting for Different Services**
+   - Implement service-specific rate limiting:
 
    **Database Rate Limiting:**
    ```javascript
@@ -971,8 +971,8 @@
    }
    ```
 
-7. **レート制限ダッシュボードと分析**
-   - レート制限の有効性の監視と分析：
+7. **Rate Limiting Dashboard and Analytics**
+   - Monitor and analyze rate limiting effectiveness:
 
    **Rate Limiting Analytics:**
    ```javascript
@@ -1169,8 +1169,8 @@
    module.exports = RateLimitAnalytics;
    ```
 
-8. **レート制限設定管理**
-   - 動的なレート制限設定：
+8. **Rate Limiting Configuration Management**
+   - Dynamic rate limit configuration:
 
    **Configuration Manager:**
    ```javascript
@@ -1382,8 +1382,8 @@
    module.exports = RateLimitConfigManager;
    ```
 
-9. **レート制限のテスト**
-   - 包括的なレート制限テスト：
+9. **Testing Rate Limits**
+   - Comprehensive rate limiting tests:
 
    **Rate Limiting Test Suite:**
    ```javascript
@@ -1637,8 +1637,8 @@
    });
    ```
 
-10. **本番環境の監視とアラート**
-    - レート制限の有効性を監視：
+10. **Production Monitoring and Alerting**
+    - Monitor rate limiting effectiveness:
 
     **Rate Limiting Monitoring:**
     ```javascript

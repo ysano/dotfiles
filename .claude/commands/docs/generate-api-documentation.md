@@ -1,80 +1,80 @@
-# APIドキュメント生成
+# Generate API Documentation
 
-インタラクティブな例と常に最新の仕様で、コードから包括的なAPIドキュメントを自動生成します。
+Auto-generate API reference documentation
 
-## 手順
+## Instructions
 
-1. **APIドキュメント戦略分析**
-   - 現在のAPI構造とエンドポイントを分析
-   - ドキュメント要件（REST、GraphQL、gRPCなど）を特定
-   - 既存のコードアノテーションとドキュメントを評価
-   - ドキュメント出力フォーマットとホスティング要件を決定
-   - ドキュメント自動化とメンテナンス戦略を計画
+1. **API Documentation Strategy Analysis**
+   - Analyze current API structure and endpoints
+   - Identify documentation requirements (REST, GraphQL, gRPC, etc.)
+   - Assess existing code annotations and documentation
+   - Determine documentation output formats and hosting requirements
+   - Plan documentation automation and maintenance strategy
 
-2. **ドキュメントツール選択**
-   - 適切なAPIドキュメントツールを選択：
-     - **OpenAPI/Swagger**: Swagger UI付きREST APIドキュメント
-     - **Redoc**: モダンなOpenAPIドキュメントレンダラー
-     - **GraphQL**: GraphiQL、Apollo Studio、GraphQL Playground
-     - **Postman**: コレクション付きAPIドキュメント
-     - **Insomnia**: APIドキュメントとテスト
-     - **API Blueprint**: MarkdownベースAPIドキュメント
-     - **JSDoc/TSDoc**: コードファーストドキュメント生成
-   - 考慮要素：APIタイプ、チームワークフロー、ホスティング、インタラクティビティ
+2. **Documentation Tool Selection**
+   - Choose appropriate API documentation tools:
+     - **OpenAPI/Swagger**: REST API documentation with Swagger UI
+     - **Redoc**: Modern OpenAPI documentation renderer
+     - **GraphQL**: GraphiQL, Apollo Studio, GraphQL Playground
+     - **Postman**: API documentation with collections
+     - **Insomnia**: API documentation and testing
+     - **API Blueprint**: Markdown-based API documentation
+     - **JSDoc/TSDoc**: Code-first documentation generation
+   - Consider factors: API type, team workflow, hosting, interactivity
 
-3. **コードアノテーションとスキーマ定義**
-   - APIエンドポイントの包括的なコードアノテーションを追加
-   - リクエスト/レスポンススキーマとデータモデルを定義
-   - パラメーター説明と検証ルールを追加
-   - 認証・認可要件を文書化
-   - リクエストとレスポンスの例を追加
+3. **Code Annotation and Schema Definition**
+   - Add comprehensive code annotations for API endpoints
+   - Define request/response schemas and data models
+   - Add parameter descriptions and validation rules
+   - Document authentication and authorization requirements
+   - Add example requests and responses
 
-4. **API仕様生成**
-   - コードからの自動API仕様生成を設定
-   - OpenAPI/Swagger仕様生成を設定
-   - スキーマ検証と一貫性チェックを設定
-   - APIバージョニングと変更履歴生成を設定
-   - 仕様ファイル管理とバージョン管理を設定
+4. **API Specification Generation**
+   - Set up automated API specification generation from code
+   - Configure OpenAPI/Swagger specification generation
+   - Set up schema validation and consistency checking
+   - Configure API versioning and changelog generation
+   - Set up specification file management and version control
 
-5. **インタラクティブドキュメント設定**
-   - 試行機能付きインタラクティブAPIドキュメントを設定
-   - APIテストと例実行を設定
-   - ドキュメント内での認証処理を設定
-   - リクエスト/レスポンス検証と例を設定
-   - APIエンドポイントの分類と整理を設定
+5. **Interactive Documentation Setup**
+   - Configure interactive API documentation with try-it-out functionality
+   - Set up API testing and example execution
+   - Configure authentication handling in documentation
+   - Set up request/response validation and examples
+   - Configure API endpoint categorization and organization
 
-6. **ドキュメント内容の拡充**
-   - 包括的なAPIガイドとチュートリアルを追加
-   - 認証・認可ドキュメントを作成
-   - エラーハンドリングとステータスコードドキュメントを追加
-   - SDKとクライアントライブラリドキュメントを作成
-   - レート制限と使用ガイドラインを追加
+6. **Documentation Content Enhancement**
+   - Add comprehensive API guides and tutorials
+   - Create authentication and authorization documentation
+   - Add error handling and status code documentation
+   - Create SDK and client library documentation
+   - Add rate limiting and usage guidelines
 
-7. **ドキュメントホスティングとデプロイメント**
-   - ドキュメントホスティングとデプロイメントを設定
-   - ドキュメントウェブサイト生成とスタイリングを設定
-   - カスタムドメインとSSL設定を設定
-   - ドキュメント検索とナビゲーションを設定
-   - ドキュメント分析と使用追跡を設定
+7. **Documentation Hosting and Deployment**
+   - Set up documentation hosting and deployment
+   - Configure documentation website generation and styling
+   - Set up custom domain and SSL configuration
+   - Configure documentation search and navigation
+   - Set up documentation analytics and usage tracking
 
-8. **自動化とCI/CD統合**
-   - CI/CDパイプラインでの自動ドキュメント生成を設定
-   - ドキュメントデプロイメント自動化を設定
-   - ドキュメント検証と品質チェックを設定
-   - ドキュメント変更検出と通知を設定
-   - ドキュメントテストとリンク検証を設定
+8. **Automation and CI/CD Integration**
+   - Configure automated documentation generation in CI/CD pipeline
+   - Set up documentation deployment automation
+   - Configure documentation validation and quality checks
+   - Set up documentation change detection and notifications
+   - Configure documentation testing and link validation
 
-9. **マルチフォーマットドキュメント生成**
-   - 複数形式（HTML、PDF、Markdown）でドキュメントを生成
-   - ダウンロード可能なドキュメントパッケージを設定
-   - オフラインドキュメントアクセスを設定
-   - プログラマティックアクセス用ドキュメントAPIを設定
-   - ドキュメント配信と流通を設定
+9. **Multi-format Documentation Generation**
+   - Generate documentation in multiple formats (HTML, PDF, Markdown)
+   - Set up downloadable documentation packages
+   - Configure offline documentation access
+   - Set up documentation API for programmatic access
+   - Configure documentation syndication and distribution
 
-10. **メンテナンスと品質保証**
-    - ドキュメント品質監視と検証を設定
-    - ドキュメントフィードバックと改善ワークフローを設定
-    - ドキュメント分析と使用メトリクスを設定
-    - ドキュメントメンテナンス手順とガイドラインを作成
-    - ドキュメントベストプラクティスとツールについてチームを訓練
-    - ドキュメントレビューと承認プロセスを設定
+10. **Maintenance and Quality Assurance**
+    - Set up documentation quality monitoring and validation
+    - Configure documentation feedback and improvement workflows
+    - Set up documentation analytics and usage metrics
+    - Create documentation maintenance procedures and guidelines
+    - Train team on documentation best practices and tools
+    - Set up documentation review and approval processes

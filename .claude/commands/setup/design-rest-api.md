@@ -1,18 +1,18 @@
-# REST API設計
+# Design REST API
 
-スケーラブルで保守性の高いAPI開発のための適切な構造、ドキュメンテーション、ベストプラクティスを備えたRESTful APIを設計します。
+Design RESTful API architecture
 
-## 実行手順
+## Instructions
 
-1. **API設計戦略と計画**
-   - ビジネス要件を分析し、APIのスコープを定義
-   - リソース、エンティティ、およびその関係の特定
-   - APIバージョニング戦略と後方互換性の計画
-   - 認証と許可要件の定義
-   - スケーラビリティ、レート制限、パフォーマンスの計画
+1. **API Design Strategy and Planning**
+   - Analyze business requirements and define API scope
+   - Identify resources, entities, and their relationships
+   - Plan API versioning strategy and backward compatibility
+   - Define authentication and authorization requirements
+   - Plan for scalability, rate limiting, and performance
 
-2. **RESTfulリソース設計**
-   - REST原則に従ったRESTfulエンドポイントの設計：
+2. **RESTful Resource Design**
+   - Design RESTful endpoints following REST principles:
 
    **Express.js API Structure:**
    ```javascript
@@ -97,8 +97,8 @@
    module.exports = router;
    ```
 
-3. **リクエスト/レスポンスデータモデル**
-   - 包括的なデータモデルとバリデーションの定義：
+3. **Request/Response Data Models**
+   - Define comprehensive data models and validation:
 
    **Data Validation with Joi:**
    ```javascript
@@ -205,8 +205,8 @@
    };
    ```
 
-4. **コントローラー実装**
-   - 堅牢なコントローラーロジックの実装：
+4. **Controller Implementation**
+   - Implement robust controller logic:
 
    **User Controller Example:**
    ```javascript
@@ -380,8 +380,8 @@
    module.exports = new UserController();
    ```
 
-5. **APIレスポンスの標準化**
-   - 一貫したレスポンスフォーマットの実装：
+5. **API Response Standardization**
+   - Implement consistent response formats:
 
    **API Response Utilities:**
    ```javascript
@@ -502,8 +502,8 @@
    };
    ```
 
-6. **認証と許可**
-   - 包括的な認証システムの実装：
+6. **Authentication and Authorization**
+   - Implement comprehensive auth system:
 
    **JWT Authentication Middleware:**
    ```javascript
@@ -643,8 +643,8 @@
    module.exports = AuthMiddleware;
    ```
 
-7. **OpenAPI/Swaggerを使用したAPIドキュメンテーション**
-   - 包括的なAPIドキュメンテーションの生成：
+7. **API Documentation with OpenAPI/Swagger**
+   - Generate comprehensive API documentation:
 
    **Swagger Configuration:**
    ```javascript
@@ -981,8 +981,8 @@
     */
    ```
 
-8. **APIテストと品質保証**
-   - 包括的なAPIテストの実装：
+8. **API Testing and Quality Assurance**
+   - Implement comprehensive API testing:
 
    **API Test Suite:**
    ```javascript
@@ -1169,8 +1169,8 @@
    });
    ```
 
-9. **APIバージョニング戦略**
-   - 柔軟なAPIバージョニングの実装：
+9. **API Versioning Strategy**
+   - Implement flexible API versioning:
 
    **Version Management:**
    ```javascript
@@ -1264,8 +1264,8 @@
    module.exports = ApiVersioning;
    ```
 
-10. **本番環境の監視と分析**
-    - API監視と分析の実装：
+10. **Production Monitoring and Analytics**
+    - Implement API monitoring and analytics:
 
     **API Analytics Middleware:**
     ```javascript

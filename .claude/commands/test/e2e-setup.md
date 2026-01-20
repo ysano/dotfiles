@@ -1,55 +1,55 @@
-# エンドツーエンドテストセットアップコマンド
+# End-to-End Testing Setup Command
 
-任意のWebアプリケーションやサービス用の包括的なエンドツーエンドテストインフラストラクチャを設定します。
+Configure end-to-end testing suite
 
-## 手順
+## Instructions
 
-E2Eテストを実装するための体系的なアプローチに従ってください： **$ARGUMENTS**
+Follow this systematic approach to implement E2E testing: **$ARGUMENTS**
 
-1. **技術スタック評価**
-   - アプリケーションタイプ（Webアプリ、モバイルアプリ、APIサービス）を特定
-   - 既存のテストインフラストラクチャを確認
-   - 対象ブラウザとデバイスを決定
-   - 現在のデプロイメントとステージング環境を評価
+1. **Technology Stack Assessment**
+   - Identify the application type (web app, mobile app, API service)
+   - Review existing testing infrastructure
+   - Determine target browsers and devices
+   - Assess current deployment and staging environments
 
-2. **E2Eフレームワーク選択**
-   - スタックに基づいて適切なE2Eテストフレームワークを選択：
-     - **Playwright**: モダンで高速、複数ブラウザサポート
-     - **Cypress**: 開発者フレンドリー、優れたデバッグツール
-     - **Selenium WebDriver**: クロスブラウザ、成熟したエコシステム
-     - **Puppeteer**: Chrome特化、パフォーマンステストに適している
-     - **TestCafe**: WebDriver不要、簡単セットアップ
-   - チームの専門知識とプロジェクト要件を考慮
+2. **E2E Framework Selection**
+   - Choose appropriate E2E testing framework based on stack:
+     - **Playwright**: Modern, fast, supports multiple browsers
+     - **Cypress**: Developer-friendly, great debugging tools
+     - **Selenium WebDriver**: Cross-browser, mature ecosystem
+     - **Puppeteer**: Chrome-focused, good for performance testing
+     - **TestCafe**: No WebDriver needed, easy setup
+   - Consider team expertise and project requirements
 
-3. **テスト環境セットアップ**
-   - 専用のテスト環境（ステージング、QA）を設定
-   - サンプルデータを含むテストデータベースの設定
-   - 環境変数と設定の構成
-   - 環境の分離と再現性の確保
+3. **Test Environment Setup**
+   - Set up dedicated testing environments (staging, QA)
+   - Configure test databases with sample data
+   - Set up environment variables and configuration
+   - Ensure environment isolation and reproducibility
 
-4. **フレームワークのインストールと設定**
+4. **Framework Installation and Configuration**
    
-   **Playwright用:**
+   **For Playwright:**
    ```bash
    npm install -D @playwright/test
    npx playwright install
-   npx playwright codegen # テストの記録
+   npx playwright codegen # Record tests
    ```
 
-   **Cypress用:**
+   **For Cypress:**
    ```bash
    npm install -D cypress
    npx cypress open
    ```
 
-   **Selenium用:**
+   **For Selenium:**
    ```bash
    npm install -D selenium-webdriver
-   # ブラウザドライバのインストール
+   # Install browser drivers
    ```
 
-5. **テスト構造の整理**
-   - 論理的なテストフォルダ構造の作成:
+5. **Test Structure Organization**
+   - Create logical test folder structure:
      ```
      e2e/
      ├── tests/
@@ -62,16 +62,16 @@ E2Eテストを実装するための体系的なアプローチに従ってく�
      │   └── page-objects/
      └── config/
      ```
-   - 機能またはユーザージャーニーごとにテストを整理
-   - APIテストとUIテストを分離
+   - Organize tests by feature or user journey
+   - Separate API tests from UI tests
 
-6. **ページオブジェクトモデルの実装**
-   - 保守性向上のためのページオブジェクトクラスの作成
-   - 要素セレクターとインタラクションのカプセル化
-   - 共通アクションのための再利用可能なメソッドの実装
-   - ページオブジェクトの単一責任原則の遵守
+6. **Page Object Model Implementation**
+   - Create page object classes for better maintainability
+   - Encapsulate element selectors and interactions
+   - Implement reusable methods for common actions
+   - Follow single responsibility principle for page objects
 
-   **ページオブジェクトの例:**
+   **Example Page Object:**
    ```javascript
    class LoginPage {
      constructor(page) {
@@ -89,28 +89,28 @@ E2Eテストを実装するための体系的なアプローチに従ってく�
    }
    ```
 
-7. **テストデータ管理**
-   - テストフィクスチャとサンプルデータの作成
-   - 動的テストデータのためのデータファクトリの実装
-   - 一貫したテスト状態のためのデータベースシーディングの設定
-   - 環境固有のテストデータの使用
-   - テストデータクリーンアップ戦略の実装
+7. **Test Data Management**
+   - Create test fixtures and sample data
+   - Implement data factories for dynamic test data
+   - Set up database seeding for consistent test states
+   - Use environment-specific test data
+   - Implement test data cleanup strategies
 
-8. **コアユーザージャーニーテスト**
-   - 重要なユーザーフローの実装:
-     - ユーザー登録と認証
-     - メインアプリケーションワークフロー
-     - 支払いと取引フロー
-     - 検索とフィルタリング機能
-     - フォーム送信と検証
+8. **Core User Journey Testing**
+   - Implement critical user flows:
+     - User registration and authentication
+     - Main application workflows
+     - Payment and transaction flows
+     - Search and filtering functionality
+     - Form submissions and validations
 
-9. **クロスブラウザテストセットアップ**
-   - 複数ブラウザでのテスト設定
-   - ブラウザ固有の設定
-   - レスポンシブデザインテストの実装
-   - 異なるビューポートサイズでのテスト
+9. **Cross-Browser Testing Setup**
+   - Configure testing across multiple browsers
+   - Set up browser-specific configurations
+   - Implement responsive design testing
+   - Test on different viewport sizes
 
-   **Playwrightブラウザ設定:**
+   **Playwright Browser Configuration:**
    ```javascript
    module.exports = {
      projects: [
@@ -122,37 +122,37 @@ E2Eテストを実装するための体系的なアプローチに従ってく�
    };
    ```
 
-10. **APIテスト統合**
-    - UIテストと併行したAPIエンドポイントのテスト
-    - APIリクエスト/レスポンス検証の実装
-    - 認証と認可のテスト
-    - APIとUI間のデータ整合性の検証
+10. **API Testing Integration**
+    - Test API endpoints alongside UI tests
+    - Implement API request/response validation
+    - Test authentication and authorization
+    - Verify data consistency between API and UI
 
-11. **ビジュアルテストセットアップ**
-    - スクリーンショット比較テストの実装
-    - ビジュアルリグレッションテストの設定
-    - ビジュアル変更の許容レベルの設定
-    - ビジュアルベースラインと更新の整理
+11. **Visual Testing Setup**
+    - Implement screenshot comparison testing
+    - Set up visual regression testing
+    - Configure tolerance levels for visual changes
+    - Organize visual baselines and updates
 
-12. **テストユーティリティとヘルパー**
-    - カスタムコマンドとユーティリティの作成
-    - 共通アサーションヘルパーの実装
-    - 認証ヘルパーの設定
-    - データベースと状態管理ユーティリティの作成
+12. **Test Utilities and Helpers**
+    - Create custom commands and utilities
+    - Implement common assertion helpers
+    - Set up authentication helpers
+    - Create database and state management utilities
 
-13. **エラーハンドリングとデバッグ**
-    - 適切なエラーレポートとスクリーンショットの設定
-    - 失敗したテストの動画記録の設定
-    - 不安定なテストの再試行メカニズムの実装
-    - デバッグツールとヘルパーの作成
+13. **Error Handling and Debugging**
+    - Configure proper error reporting and screenshots
+    - Set up video recording for failed tests
+    - Implement retry mechanisms for flaky tests
+    - Create debugging tools and helpers
 
-14. **CI/CD統合**
-    - CI/CDパイプラインでのE2Eテストの設定
-    - 並列テスト実行の設定
-    - 適切なテストレポートの実装
-    - テスト環境プロビジョニングの設定
+14. **CI/CD Integration**
+    - Configure E2E tests in CI/CD pipeline
+    - Set up parallel test execution
+    - Implement proper test reporting
+    - Configure test environment provisioning
 
-   **GitHub Actionsの例:**
+   **GitHub Actions Example:**
    ```yaml
    - name: Run Playwright tests
      run: npx playwright test
@@ -163,64 +163,64 @@ E2Eテストを実装するための体系的なアプローチに従ってく�
        path: playwright-report/
    ```
 
-15. **パフォーマンステスト統合**
-    - E2Eテストへのパフォーマンスアサーションの追加
-    - ページロード時間とメトリクスの監視
-    - 異なるネットワーク条件下でのテスト
-    - Lighthouse監査統合の実装
+15. **Performance Testing Integration**
+    - Add performance assertions to E2E tests
+    - Monitor page load times and metrics
+    - Test under different network conditions
+    - Implement lighthouse audits integration
 
-16. **アクセシビリティテスト**
-    - アクセシビリティテストツール（axe-core）の統合
-    - キーボードナビゲーションフローのテスト
-    - スクリーンリーダー互換性の検証
-    - 色コントラストとWCAG準拠のチェック
+16. **Accessibility Testing**
+    - Integrate accessibility testing tools (axe-core)
+    - Test keyboard navigation flows
+    - Verify screen reader compatibility
+    - Check color contrast and WCAG compliance
 
-17. **モバイルテストセットアップ**
-    - モバイルデバイスエミュレーションの設定
-    - レスポンシブデザインブレークポイントのテスト
-    - タッチジェスチャーテストの実装
-    - モバイル固有機能のテスト
+17. **Mobile Testing Setup**
+    - Configure mobile device emulation
+    - Test responsive design breakpoints
+    - Implement touch gesture testing
+    - Test mobile-specific features
 
-18. **レポートと監視**
-    - 包括的なテストレポートの設定
-    - テスト結果通知の設定
-    - テストメトリクスと分析の実装
-    - テストヘルス監視のダッシュボード作成
+18. **Reporting and Monitoring**
+    - Set up comprehensive test reporting
+    - Configure test result notifications
+    - Implement test metrics and analytics
+    - Create dashboards for test health monitoring
 
-19. **テストメンテナンス戦略**
-    - テスト安定性監視の実装
-    - UI変更に対する自動テスト更新の設定
-    - テストレビューと更新プロセスの作成
-    - テストメンテナンス手順の文書化
+19. **Test Maintenance Strategy**
+    - Implement test stability monitoring
+    - Set up automatic test updates for UI changes
+    - Create test review and update processes
+    - Document test maintenance procedures
 
-20. **セキュリティテスト統合**
-    - 認証と認可フローのテスト
-    - セキュリティヘッダー検証の実装
-    - 入力サニタイゼーションとXSS防止のテスト
-    - HTTPSとセキュアクッキー処理の検証
+20. **Security Testing Integration**
+    - Test authentication and authorization flows
+    - Implement security headers validation
+    - Test input sanitization and XSS prevention
+    - Verify HTTPS and secure cookie handling
 
-**E2Eテストのサンプル:**
+**Sample E2E Test:**
 ```javascript
-test('ユーザーが購入フローを完了できること', async ({ page }) => {
-  // ナビゲーションとログイン
+test('user can complete purchase flow', async ({ page }) => {
+  // Navigate and login
   await page.goto('/login');
   await page.fill('#email', 'test@example.com');
   await page.fill('#password', 'password');
   await page.click('#login-btn');
 
-  // カートに商品を追加
+  // Add item to cart
   await page.goto('/products');
   await page.click('[data-testid="product-1"]');
   await page.click('#add-to-cart');
 
-  // チェックアウト完了
+  // Complete checkout
   await page.goto('/checkout');
   await page.fill('#card-number', '4111111111111111');
   await page.click('#place-order');
 
-  // 成功を確認
+  // Verify success
   await expect(page.locator('#order-confirmation')).toBeVisible();
 });
 ```
 
-重要なユーザージャーニーから始めて、徐々にカバレッジを拡張することを忘れないでください。実際の価値を提供する安定した保守可能なテストに焦点を当てましょう。
+Remember to start with critical user journeys and gradually expand coverage. Focus on stable, maintainable tests that provide real value.

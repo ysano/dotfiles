@@ -1,354 +1,354 @@
-# 未来シナリオジェネレーター
+# Future Scenario Generator
 
-もっともらしさスコアリング、トレンド統合、不確実性定量化を伴う未来シナリオを生成し分析します。
+Generate and analyze future scenarios with plausibility scoring, trend integration, and uncertainty quantification.
 
-## 指示
+## Instructions
 
-潜在的発展を探索し複数の可能性ある未来に備えるため、包括的な未来シナリオを体系的に生成する任務を負っています。以下のアプローチに従ってください: **$ARGUMENTS**
+You are tasked with systematically generating comprehensive future scenarios to explore potential developments and prepare for multiple possible futures. Follow this approach: **$ARGUMENTS**
 
-### 1. 前提条件評価
+### 1. Prerequisites Assessment
 
-**重要シナリオコンテキスト検証:**
+**Critical Scenario Context Validation:**
 
-- **時間軸**: どの未来時間枠を探索するか（1-3-5-10年以上）？
-- **ドメイン焦点**: 分析する具体的分野/業界/システムは何か？
-- **重要変数**: 未来を大きく形作る可能性がある要因は何か？
-- **決定影響**: これらのシナリオは具体的決定にどう情報提供するか？
-- **不確実性レベル**: シナリオ不確実性の許容範囲は何か？
+- **Time Horizon**: What future timeframe are you exploring (1-3-5-10+ years)?
+- **Domain Focus**: What specific area/industry/system are you analyzing?
+- **Key Variables**: What factors could significantly shape the future?
+- **Decision Impact**: How will these scenarios inform specific decisions?
+- **Uncertainty Level**: What's the acceptable range of scenario uncertainty?
 
-**コンテキストが不明確な場合、体系的にガイド:**
+**If context is unclear, guide systematically:**
 
 ```
-時間軸不足:
-「どの未来時間枠を探索すべきですか？
-- 近期（1-2年）: 市場シフト、競争動向、技術採用
-- 中期（3-5年）: 業界変革、規制変化、世代交代  
-- 長期（5-10年以上）: 根本的技術破壊、社会変化、パラダイムシフト
+Missing Time Horizon:
+"What future timeframe should we explore?
+- Near-term (1-2 years): Market shifts, competitive moves, technology adoption
+- Medium-term (3-5 years): Industry transformation, regulatory changes, generational shifts  
+- Long-term (5-10+ years): Fundamental technology disruption, societal changes, paradigm shifts
 
-各時間枠は異なるシナリオ方法論と不確実性管理が必要です。」
+Each timeframe requires different scenario methodologies and uncertainty management."
 
-ドメイン焦点不足:
-「どの具体的ドメインまたはシステムの未来シナリオをモデル化すべきですか？
-- ビジネス/業界: 市場進化、競争環境、顧客行動
-- 技術: プラットフォームシフト、能力開発、採用パターン
-- 社会/文化: 人口動態変化、価値観シフト、行動進化
-- 経済/政策: 規制変化、経済サイクル、政治発展」
+Missing Domain Focus:
+"What specific domain or system should we model future scenarios for?
+- Business/Industry: Market evolution, competitive landscape, customer behavior
+- Technology: Platform shifts, capability development, adoption patterns
+- Society/Culture: Demographic changes, value shifts, behavior evolution
+- Economy/Policy: Regulatory changes, economic cycles, political developments"
 ```
 
-### 2. トレンド分析基盤
+### 2. Trend Analysis Foundation
 
-**現在のトレンドをシナリオ構築ブロックとして体系的に分析:**
+**Systematically analyze current trends as scenario building blocks:**
 
-#### トレンド識別フレームワーク
+#### Trend Identification Framework
 ```
-多次元トレンド分析:
+Multi-Dimensional Trend Analysis:
 
-技術トレンド:
-- 新興技術と採用曲線
-- インフラ開発と能力拡張
-- プラットフォームシフトとエコシステム進化
-- イノベーションサイクルとブレークスルー可能性
+Technology Trends:
+- Emerging technologies and adoption curves
+- Infrastructure development and capability expansion
+- Platform shifts and ecosystem evolution
+- Innovation cycles and breakthrough potential
 
-社会/文化トレンド:
-- 人口動態シフトと世代変化
-- 価値システム進化と優先順位シフト
-- 行動パターン変化とライフスタイル適応
-- コミュニケーションと相互作用パターン進化
+Social/Cultural Trends:
+- Demographic shifts and generational changes
+- Value system evolution and priority shifts
+- Behavior pattern changes and lifestyle adaptation
+- Communication and interaction pattern evolution
 
-経済トレンド:
-- 市場構造変化と業界進化
-- 投資パターンと資本配分シフト
-- グローバル化と貿易パターン修正
-- 経済サイクル位置付けと政策方向
+Economic Trends:
+- Market structure changes and industry evolution
+- Investment patterns and capital allocation shifts
+- Globalization and trade pattern modifications
+- Economic cycle positioning and policy directions
 
-規制/政策トレンド:
-- 規制環境進化とコンプライアンス要件
-- 政策方向変化と政府優先順位
-- 国際関係と貿易協定影響
-- 法的フレームワーク開発と執行パターン
-```
-
-#### トレンド軌道モデリング
-- 線形進行シナリオ（現在のトレンドが継続）
-- 加速シナリオ（トレンドが劇的に速くなる）
-- 減速シナリオ（トレンドが遅くなるか頭打ち）
-- 逆転シナリオ（トレンドが方向転換）
-- 破壊シナリオ（トレンドが根本的に変更）
-
-### 3. シナリオアーキテクチャ設計
-
-**包括的シナリオフレームワークを構造化:**
-
-#### シナリオ生成方法論
-```
-体系的シナリオ構築:
-
-クロスインパクト分析:
-- 主要駆動力と変数を識別
-- 異なるトレンド間の相互作用効果を分析
-- 強化と競合するトレンド組み合わせをマップ
-- カスケード効果と二次影響をモデル化
-
-形態学的分析:
-- 未来変動の主要次元を定義
-- 各次元の可能な状態を識別
-- シナリオ組み合わせを体系的に生成
-- シナリオの一貫性ともっともらしさを評価
-
-ナラティブシナリオ開発:
-- 魅力的な未来ストーリーとビジョンを作成
-- 定量的トレンドと定性的洞察を統合
-- シナリオロジックと因果ナラティブを開発
-- シナリオ多様性と包括的カバレッジを確保
+Regulatory/Policy Trends:
+- Regulatory environment evolution and compliance requirements
+- Policy direction changes and government priorities
+- International relations and trade agreement impacts
+- Legal framework development and enforcement patterns
 ```
 
-#### シナリオ分類フレームワーク
+#### Trend Trajectory Modeling
+- Linear progression scenarios (current trends continue)
+- Acceleration scenarios (trends speed up dramatically)
+- Deceleration scenarios (trends slow down or plateau)
+- Reversal scenarios (trends change direction)
+- Disruption scenarios (trends are fundamentally altered)
+
+### 3. Scenario Architecture Design
+
+**Structure comprehensive scenario frameworks:**
+
+#### Scenario Generation Methodology
 ```
-シナリオポートフォリオ構造:
+Systematic Scenario Construction:
 
-ベースラインシナリオ（ポートフォリオの30-40%）:
-- 現在のトレンドの継続と通常変動
-- 既存パラダイム内での進化的変化
-- 中程度の不確実性と予測可能な発展パターン
+Cross-Impact Analysis:
+- Identify key driving forces and variables
+- Analyze interaction effects between different trends
+- Map reinforcing and conflicting trend combinations
+- Model cascade effects and secondary impacts
 
-楽観的シナリオ（ポートフォリオの20-25%）:
-- 有利なトレンド収束と正の発展
-- ブレークスルーイノベーションと加速機会
-- 最良ケース結果実現とシナジー効果
+Morphological Analysis:
+- Define key dimensions of future variation
+- Identify possible states for each dimension
+- Generate scenario combinations systematically
+- Evaluate scenario consistency and plausibility
 
-悲観的シナリオ（ポートフォリオの20-25%）:
-- 不利なトレンド組み合わせと負の発展
-- 危機シナリオとシステムストレス条件
-- 最悪ケース結果実現とカスケード故障
-
-変革シナリオ（ポートフォリオの15-20%）:
-- パラダイムシフトと根本的システム変化
-- 破壊的イノベーションと市場再構築
-- ワイルドカード事象とブラックスワン発展
-```
-
-### 4. もっともらしさ評価フレームワーク
-
-**シナリオ信頼性を体系的に評価:**
-
-#### もっともらしさスコアリング方法論
-```
-多基準もっともらしさ評価:
-
-歴史的先例（25%重み）:
-- 歴史的コンテキストでの類似パターンと発展
-- 類似状況と結果パターン
-- 過去のトレンド進化とシナリオ実現からの学習
-
-論理的一貫性（25%重み）:
-- 内部シナリオロジックと因果関係
-- 異なるシナリオ要素間の一貫性
-- 論理的矛盾と不可能な組み合わせの不在
-
-専門家検証（25%重み）:
-- ドメイン専門家評価と信頼性評価
-- ステークホルダー入力と視点統合
-- 専門的判断と経験ベース検証
-
-実証的支援（25%重み）:
-- シナリオ要素を支援する現在のデータとトレンド証拠
-- 定量的モデル出力と統計予測
-- 研究所見と学術文献支援
-
-もっともらしさスコア = （歴史的 × 0.25）+（論理的 × 0.25）+（専門家 × 0.25）+（実証的 × 0.25）
+Narrative Scenario Development:
+- Create compelling future stories and visions
+- Integrate quantitative trends with qualitative insights
+- Develop scenario logic and causal narratives
+- Ensure scenario diversity and comprehensive coverage
 ```
 
-#### 不確実性定量化
-- 主要シナリオパラメータの信頼区間
-- 重要仮定の感度分析
-- 確率分布のモンテカルロシミュレーション
-- 主観的確率評価の専門家聞き取り
-
-### 5. ワイルドカードと破壊モデリング
-
-**低確率・高影響事象を組み込み:**
-
-#### ワイルドカード事象フレームワーク
+#### Scenario Categorization Framework
 ```
-体系的破壊分析:
+Scenario Portfolio Structure:
 
-技術ワイルドカード:
-- ブレークスルーイノベーションとパラダイムシフト
-- 技術収束と予期しない能力
-- プラットフォーム破壊とエコシステム変革
-- 人工知能と自動化ブレークスルー
+Baseline Scenarios (30-40% of portfolio):
+- Continuation of current trends with normal variation
+- Evolutionary change within existing paradigms
+- Moderate uncertainty and predictable development patterns
 
-社会ワイルドカード:
-- 世代価値シフトと行動変化
-- 社会運動出現と文化変革
-- 人口動態サプライズと移住パターン
-- コミュニケーションと社会相互作用破壊
+Optimistic Scenarios (20-25% of portfolio):
+- Favorable trend convergence and positive developments
+- Breakthrough innovations and acceleration opportunities
+- Best-case outcome realization and synergy effects
 
-経済ワイルドカード:
-- 金融システム破壊と市場構造変化
-- リソース不足または豊富サプライズ
-- 通貨と金融システム変革
-- 貿易パターン破壊と経済ブロック変化
+Pessimistic Scenarios (20-25% of portfolio):
+- Adverse trend combinations and negative developments
+- Crisis scenarios and system stress conditions
+- Worst-case outcome realization and cascade failures
 
-環境/政治ワイルドカード:
-- 気候変動加速または軽減ブレークスルー
-- 地政学シフトと国際関係変化
-- 自然災害とパンデミック影響
-- 規制サプライズと政策パラダイムシフト
+Transformation Scenarios (15-20% of portfolio):
+- Paradigm shifts and fundamental system changes
+- Disruptive innovation and market restructuring
+- Wild card events and black swan developments
 ```
 
-#### 破壊影響モデリング
-- 主要シナリオ変数への直接影響評価
-- システム依存関係を通じたカスケード効果分析
-- 適応と回復シナリオ開発
-- 回復力と脆弱性分析
+### 4. Plausibility Assessment Framework
 
-### 6. シナリオ統合と合成
+**Systematically evaluate scenario credibility:**
 
-**シナリオを包括的未来景観に結合:**
-
-#### シナリオ間分析
+#### Plausibility Scoring Methodology
 ```
-シナリオポートフォリオ分析:
+Multi-Criteria Plausibility Assessment:
 
-シナリオクラスタリング:
-- 類似シナリオをグループ化し共通パターンを識別
-- シナリオ分岐点と分岐要因を分析
-- シナリオ遷移確率と経路をマップ
-- 複数シナリオ全体の堅牢な戦略を識別
+Historical Precedent (25% weight):
+- Similar patterns and developments in historical context
+- Analogous situations and outcome patterns
+- Learning from past trend evolution and scenario realization
 
-シナリオ相互作用効果:
-- シナリオがどのように組み合わさるか相互影響するか
-- 順次シナリオ開発と進化パターン
-- シナリオ切り替えトリガーと遷移指標
-- シナリオ多様化のポートフォリオ効果
+Logical Consistency (25% weight):
+- Internal scenario logic and causal relationships
+- Consistency between different scenario elements
+- Absence of logical contradictions and impossible combinations
 
-主要洞察合成:
-- シナリオ全体の共通テーマとパターン
-- 重要不確実性と決定関連要因
-- ほとんどのシナリオに現れる堅牢なトレンド
-- 戦略的含意と機会識別
+Expert Validation (25% weight):
+- Domain expert assessment and credibility evaluation
+- Stakeholder input and perspective integration
+- Professional judgment and experience-based validation
+
+Empirical Support (25% weight):
+- Current data and trend evidence supporting scenario elements
+- Quantitative model outputs and statistical projections
+- Research findings and academic literature support
+
+Plausibility Score = (Historical × 0.25) + (Logical × 0.25) + (Expert × 0.25) + (Empirical × 0.25)
 ```
 
-#### シナリオナラティブ開発
-- 複数トレンドを統合する魅力的な未来ストーリー
-- キャラクターとステークホルダー視点統合
-- タイムライン開発とマイルストーン識別
-- シナリオを記憶に残り実行可能にする鮮明な詳細
+#### Uncertainty Quantification
+- Confidence intervals for key scenario parameters
+- Sensitivity analysis for critical assumptions
+- Monte Carlo simulation for probability distributions
+- Expert elicitation for subjective probability assessment
 
-### 7. 決定統合フレームワーク
+### 5. Wild Card and Disruption Modeling
 
-**シナリオを実行可能な戦略洞察に接続:**
+**Incorporate low-probability, high-impact events:**
 
-#### シナリオに対する戦略テスト
+#### Wild Card Event Framework
 ```
-シナリオベース戦略評価:
+Systematic Disruption Analysis:
 
-戦略堅牢性分析:
-- 現在の戦略はシナリオ全体でどの程度良好に機能するか？
-- どのシナリオが最大の戦略課題をもたらすか？
-- どの戦略修正がシナリオ横断パフォーマンスを改善するか？
-- 最大の戦略脆弱性と依存関係はどこか？
+Technology Wild Cards:
+- Breakthrough innovations and paradigm shifts
+- Technology convergence and unexpected capabilities
+- Platform disruptions and ecosystem transformations
+- Artificial intelligence and automation breakthroughs
 
-オプション価値分析:
-- どの戦略オプションが複数シナリオで価値を提供するか？
-- どの投資が異なる未来の柔軟性を維持するか？
-- 戦略を適応能力のために設計するには？
-- どの早期警告システムが戦略調整を可能にするか？
+Social Wild Cards:
+- Generational value shifts and behavior changes
+- Social movement emergence and cultural transformations
+- Demographic surprises and migration patterns
+- Communication and social interaction disruptions
 
-緊急時計画:
-- 異なるシナリオ実現のための具体的対応戦略
-- シナリオと戦略オプション全体のリソース配分
-- 決定トリガー識別と監視システム
-- シナリオ固有戦略の実装準備
-```
+Economic Wild Cards:
+- Financial system disruptions and market structure changes
+- Resource scarcity or abundance surprises
+- Currency and monetary system transformations
+- Trade pattern disruptions and economic bloc changes
 
-#### 戦略推奨生成
-```
-シナリオ情報戦略フレームワーク:
-
-## 未来シナリオ分析: [ドメイン/プロジェクト名]
-
-### シナリオポートフォリオサマリー
-- 時間軸: [分析期間]
-- 主要駆動力: [分析された主変数]
-- 生成されたシナリオ: [数とタイプ]
-- もっともらしさ範囲: [信頼レベル]
-
-### 高影響シナリオ
-
-#### シナリオ1: [名前 - もっともらしさスコア]
-- タイムライン: [主要発展マイルストーン]
-- 駆動力: [主要トレンドと要因]
-- 主要特徴: [特徴的機能]
-- 戦略的含意: [決定影響]
-
-[トップ4-6シナリオで繰り返し]
-
-### シナリオ横断洞察
-- 堅牢なトレンド: [ほとんどのシナリオに現れるパターン]
-- 重要不確実性: [シナリオ結果を決定する要因]
-- 戦略的脆弱性: [シナリオ全体のリスク分野]
-- 機会収束: [シナリオ全体の機会分野]
-
-### 戦略推奨
-- 核戦略: [複数シナリオで機能するアプローチ]
-- シナリオ固有戦術: [異なるシナリオの適応]
-- 早期警告指標: [シナリオ実現のシグナル]
-- 戦略オプション: [柔軟性を維持する投資]
-
-### 監視と適応フレームワーク
-- 主要指標: [シナリオ発展を追跡する指標]
-- 決定トリガー: [シグナルに基づく戦略調整時期]
-- 緊急計画: [異なるシナリオの具体的対応]
-- レビュースケジュール: [シナリオ分析更新時期]
+Environmental/Political Wild Cards:
+- Climate change acceleration or mitigation breakthroughs
+- Geopolitical shifts and international relation changes
+- Natural disasters and pandemic impacts
+- Regulatory surprises and policy paradigm shifts
 ```
 
-### 8. 継続的シナリオ進化
+#### Disruption Impact Modeling
+- Direct impact assessment on key scenario variables
+- Cascade effect analysis through system dependencies
+- Adaptation and recovery scenario development
+- Resilience and vulnerability analysis
 
-**継続的シナリオ改良と更新を確立:**
+### 6. Scenario Integration and Synthesis
 
-#### 実世界検証
-- シナリオ予測に対する実際の発展を追跡
-- 新たな証拠に基づくシナリオ確率更新
-- 実世界フィードバックに基づくシナリオ仮定改良
-- シナリオ精度と予測品質からの学習
+**Combine scenarios into comprehensive future landscape:**
 
-#### 適応的シナリオ管理
-- 定期的シナリオリフレッシュと更新サイクル
-- 新情報統合とシナリオ修正
-- ステークホルダーフィードバック組み込みと視点更新
-- シナリオパフォーマンスに基づく方法論改善
+#### Cross-Scenario Analysis
+```
+Scenario Portfolio Analysis:
 
-## 使用例
+Scenario Clustering:
+- Group similar scenarios and identify common patterns
+- Analyze scenario divergence points and branching factors
+- Map scenario transition probabilities and pathways
+- Identify robust strategies across multiple scenarios
+
+Scenario Interaction Effects:
+- How scenarios might combine or influence each other
+- Sequential scenario development and evolution patterns
+- Scenario switching triggers and transition indicators
+- Portfolio effects of scenario diversification
+
+Key Insight Synthesis:
+- Common themes and patterns across scenarios
+- Critical uncertainties and decision-relevant factors
+- Robust trends that appear in most scenarios
+- Strategic implications and opportunity identification
+```
+
+#### Scenario Narrative Development
+- Compelling future stories that integrate multiple trends
+- Character and stakeholder perspective integration
+- Timeline development and milestone identification
+- Vivid details that make scenarios memorable and actionable
+
+### 7. Decision Integration Framework
+
+**Connect scenarios to actionable strategic insights:**
+
+#### Strategy Testing Against Scenarios
+```
+Scenario-Based Strategy Evaluation:
+
+Strategy Robustness Analysis:
+- How well do current strategies perform across scenarios?
+- Which scenarios pose the greatest strategic challenges?
+- What strategy modifications improve cross-scenario performance?
+- Where are the greatest strategy vulnerabilities and dependencies?
+
+Option Value Analysis:
+- What strategic options provide value across multiple scenarios?
+- Which investments maintain flexibility for different futures?
+- How can strategies be designed for adaptive capability?
+- What early warning systems enable strategy adjustment?
+
+Contingency Planning:
+- Specific response strategies for different scenario realizations
+- Resource allocation across scenarios and strategy options
+- Decision trigger identification and monitoring systems
+- Implementation readiness for scenario-specific strategies
+```
+
+#### Strategic Recommendation Generation
+```
+Scenario-Informed Strategy Framework:
+
+## Future Scenario Analysis: [Domain/Project Name]
+
+### Scenario Portfolio Summary
+- Time Horizon: [analysis period]
+- Key Driving Forces: [primary variables analyzed]
+- Scenarios Generated: [number and types]
+- Plausibility Range: [confidence levels]
+
+### High-Impact Scenarios
+
+#### Scenario 1: [Name - Plausibility Score]
+- Timeline: [key development milestones]
+- Driving Forces: [primary trends and factors]
+- Key Characteristics: [distinctive features]
+- Strategic Implications: [decision impacts]
+
+[Repeat for top 4-6 scenarios]
+
+### Cross-Scenario Insights
+- Robust Trends: [patterns appearing in most scenarios]
+- Critical Uncertainties: [factors determining scenario outcomes]
+- Strategic Vulnerabilities: [areas of risk across scenarios]
+- Opportunity Convergence: [areas of opportunity across scenarios]
+
+### Strategic Recommendations
+- Core Strategy: [approach that works across multiple scenarios]
+- Scenario-Specific Tactics: [adaptations for different scenarios]
+- Early Warning Indicators: [signals for scenario realization]
+- Strategic Options: [investments that maintain flexibility]
+
+### Monitoring and Adaptation Framework
+- Key Indicators: [metrics to track scenario development]
+- Decision Triggers: [when to adjust strategy based on signals]
+- Contingency Plans: [specific responses for different scenarios]
+- Review Schedule: [when to update scenario analysis]
+```
+
+### 8. Continuous Scenario Evolution
+
+**Establish ongoing scenario refinement and updating:**
+
+#### Real-World Validation
+- Track actual developments against scenario predictions
+- Update scenario probabilities based on emerging evidence
+- Refine scenario assumptions based on real-world feedback
+- Learn from scenario accuracy and prediction quality
+
+#### Adaptive Scenario Management
+- Regular scenario refresh and update cycles
+- New information integration and scenario modification
+- Stakeholder feedback incorporation and perspective updates
+- Methodology improvement based on scenario performance
+
+## Usage Examples
 
 ```bash
-# 業界変革シナリオ
-/simulation:future-scenario-generator 今後10年間のAIの医療業界への影響シナリオを生成
+# Industry transformation scenarios
+/simulation:future-scenario-generator Generate scenarios for AI's impact on healthcare industry over next 10 years
 
-# 技術採用シナリオ
-/simulation:future-scenario-generator リモートワーク技術採用と職場進化の未来シナリオをモデル化
+# Technology adoption scenarios
+/simulation:future-scenario-generator Model future scenarios for remote work technology adoption and workplace evolution
 
-# 市場進化シナリオ  
-/simulation:future-scenario-generator 持続可能エネルギー市場発展と規制変化のシナリオを探索
+# Market evolution scenarios  
+/simulation:future-scenario-generator Explore scenarios for sustainable energy market development and regulatory changes
 
-# 競争環境シナリオ
-/simulation:future-scenario-generator フィンテック業界進化と従来銀行破壊のシナリオを生成
+# Competitive landscape scenarios
+/simulation:future-scenario-generator Generate scenarios for fintech industry evolution and traditional banking disruption
 ```
 
-## 品質指標
+## Quality Indicators
 
-- **緑**: 多様なシナリオポートフォリオ、検証されたもっともらしさスコア、統合されたワイルドカード
-- **黄**: 良好なシナリオ多様性、合理的もっともらしさ評価、一部破壊モデリング
-- **赤**: 限定的シナリオ多様性、未検証仮定、破壊分析不足
+- **Green**: Diverse scenario portfolio, validated plausibility scores, integrated wild cards
+- **Yellow**: Good scenario variety, reasonable plausibility assessment, some disruption modeling
+- **Red**: Limited scenario diversity, unvalidated assumptions, missing disruption analysis
 
-## 避けるべき一般的な落とし穴
+## Common Pitfalls to Avoid
 
-- 現在バイアス: 現在の条件を未来に過度に強く投影
-- 線形思考: トレンドが加速や破壊なしに変わらず続くと仮定
-- 確率錯覚: 特定シナリオ可能性の過信
-- 複雑性過小評価: トレンド間の相互作用効果をモデル化しない
-- ワイルドカード盲目: 低確率・高影響事象の無視
-- 行動麻痺: 決定に接続せずにシナリオを生成
+- Present bias: Projecting current conditions too strongly into the future
+- Linear thinking: Assuming trends continue unchanged without acceleration or disruption
+- Probability illusion: Being overconfident in specific scenario likelihoods
+- Complexity underestimation: Not modeling interaction effects between trends
+- Wild card blindness: Ignoring low-probability, high-impact events
+- Action paralysis: Generating scenarios without connecting to decisions
 
-体系的未来シナリオ探索と準備により不確実性を戦略的優位性に変換する。
+Transform uncertainty into strategic advantage through systematic future scenario exploration and preparation.

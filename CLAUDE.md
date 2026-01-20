@@ -207,9 +207,173 @@ Prefix + v + p       # パンニング機能 ON/OFF
 
 ### 出典確認
 ```bash
-# 出典統計
+# 出典統計（Commands/Agents/Hooks/Skills）
 ./scripts/check_command_sources.sh
 
 # 新規追加
 ./scripts/add_new_command.sh <category> <name> <source>
+```
+
+## Claude-Command-Suite統合機能（2026-01-20追加）
+
+### 統合規模
+- Commands: 208ファイル（119ファイル追加）
+- Agents: 128ファイル（新規）
+- Hooks: 24ファイル + スクリプト（新規）
+- Skills: 2スキル（新規）
+
+詳細は`.claude/INTEGRATION_REPORT.md`を参照してください。
+
+### 新規カテゴリー（12個追加）
+
+#### アーキテクチャ・セマンティック系
+- `/boundary:detect` - アーキテクチャ境界検出
+- `/boundary:risk-assess` - 境界リスク評価
+- `/semantic:tree-view` - セマンティックツリー表示
+- `/semantic:node-build` - セマンティックノード構築
+
+#### コンテキスト・メモリ管理
+- `/context:optimize-prompt` - プロンプト最適化（トークン効率化）
+- `/memory:checkpoint` - コンテキストチェックポイント作成
+- `/memory:compress` - メモリ圧縮
+- `/memory:recall` - メモリ呼び出し
+
+#### ワークフロー・統合
+- `/orchestration:start` - マルチエージェントタスク開始
+- `/orchestration:status` - タスクステータス確認
+- `/sync:bidirectional-sync` - GitHub-Linear双方向同期
+- `/sync:linear-task-to-issue` - LinearタスクをGitHub Issueに変換
+
+#### 言語・フレームワーク特化
+- `/rust:audit-clean-arch` - Rustクリーンアーキテクチャ監査
+- `/rust:suggest-refactor` - Rustリファクタリング提案
+- `/svelte:component` - Svelteコンポーネント作成
+- `/svelte:storybook` - Storybook統合
+
+#### 推論・ワークフロー
+- `/reasoning:multi-path` - 多経路推論
+- `/wfgy:init` - WFGY推論システム初期化
+- `/spec-workflow:parallel-tasks` - 並列タスク実行
+
+#### スキル管理
+- `/skills:build-skill` - 新規スキル作成
+- `/skills:package-skill` - スキルパッケージ化
+
+### エージェント機能（128ファイル）
+
+Claude Codeの専門化エージェント（独立実行可能）:
+
+**開発系**
+- backend-architect: バックエンドアーキテクチャ設計
+- full-stack-developer: フルスタック開発
+- golang-pro: Go言語専門家
+- legacy-modernizer: レガシーコード現代化
+
+**データ/AI系**
+- data-scientist: データ分析・機械学習
+- ml-engineer: MLモデル開発
+- database-optimizer: データベース最適化
+- graphql-architect: GraphQL設計
+
+**インフラ・DevOps系**
+- devops-engineer: CI/CD・インフラ自動化
+- kubernetes-specialist: K8sクラスター管理
+- cloud-architect: クラウドアーキテクチャ
+
+**品質・セキュリティ系**
+- test-engineer: テスト戦略・自動化
+- security-auditor: セキュリティ監査
+- code-reviewer: コード品質レビュー
+
+### フック機能（24ファイル）
+
+Claude Codeのイベント駆動型自動化:
+
+**主要フック**
+- **SessionStart**: セッション開始時の自動設定（プロジェクト情報読み込み、環境チェック）
+- **PreToolUse**: ツール実行前の承認・検証（危険なコマンド警告）
+- **Stop**: エージェント停止時の完了度チェック（未完了タスク警告）
+
+**設定方法**
+`.claude/hooks/README.md`を参照してください。
+
+**例: Svelte特化フック**
+```bash
+# Svelte開発用フックのインストール
+./.claude/hooks/install-svelte-hooks.sh
+```
+
+### スキル機能（2スキル）
+
+専門知識パッケージ:
+
+#### cloudflare-manager
+Cloudflare Workers/KV/R2/Pages管理
+
+**機能**:
+- Workers デプロイ・管理
+- KV Storage 操作
+- R2 オブジェクトストレージ
+- Pages デプロイ
+- DNS/ルート設定
+
+**要件**:
+- Bun ランタイム
+- CLOUDFLARE_API_KEY 環境変数
+
+#### linear-todo-sync
+Linear-GitHub Todo同期
+
+**機能**:
+- Linear API から割り当てタスク取得
+- マークダウンTodoリスト生成
+- プロジェクトルートに自動配置
+
+**要件**:
+- Python 3.7+
+- LINEAR_API_KEY 環境変数
+
+**使用方法**:
+```bash
+# Linearタスク同期
+/linear-todo-sync
+```
+
+### 翻訳機能
+
+統合されたファイルは英語のままですが、必要に応じて日本語化できます:
+
+```bash
+# セクションヘッダーのみ翻訳（辞書ベース）
+./scripts/translate_command.sh .claude/commands/dev/git-status.md
+
+# Ollamaで完全翻訳（本文も含む）
+./scripts/translate_command.sh .claude/commands/dev/git-status.md --full-translate
+```
+
+翻訳辞書: `scripts/dictionary.json`
+
+### カテゴリー統合スクリプト
+
+新しいカテゴリーを一括統合:
+
+```bash
+# カテゴリー別統合
+./scripts/integrate_category.sh <category>
+
+# 翻訳なしで統合
+./scripts/integrate_category.sh <category> --no-translate
+
+# バックアップなしで統合
+./scripts/integrate_category.sh <category> --no-backup
+```
+
+### 統合検証
+
+```bash
+# 統合状態の検証
+./scripts/validate_integration.sh
+
+# カテゴリー別検証
+./scripts/validate_integration.sh dev
 ```
