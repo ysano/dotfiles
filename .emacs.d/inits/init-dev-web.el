@@ -59,12 +59,6 @@
   :custom
   (css-indent-offset 2))
 
-(use-package scss-mode
-  :ensure t
-  :defer t
-  :mode ("\\.scss\\'" "\\.sass\\'")
-  :custom
-  (scss-compile-at-save nil))
 
 ;; --------------------------------
 ;; Emmet for HTML expansion
@@ -78,35 +72,6 @@
   :bind (:map emmet-mode-keymap
               ("C-j" . emmet-expand-line)))
 
-;; --------------------------------
-;; JavaScript Frameworks
-;; --------------------------------
-
-;; Vue.js support
-(use-package vue-mode
-  :ensure t
-  :defer t
-  :mode "\\.vue\\'"
-  :custom
-  (mmm-submode-decoration-level 2)
-  :config
-  (add-hook 'vue-mode-hook #'add-node-modules-path)
-  (add-hook 'vue-mode-hook 'flycheck-mode)
-  (add-hook 'vue-mode-hook 
-            (lambda () 
-              (local-set-key (kbd "TAB") 'indent-relative-first-indent-point)))
-  (flycheck-add-mode 'javascript-eslint 'vue-mode)
-  (flycheck-add-mode 'javascript-eslint 'vue-html-mode)
-  (flycheck-add-mode 'javascript-eslint 'css-mode))
-
-;; React/JSX support
-(use-package rjsx-mode
-  :ensure t
-  :defer t
-  :mode (("\\.js\\'" . js-mode)
-         ("\\.jsx\\'" . rjsx-mode))
-  :config
-  (add-hook 'rjsx-mode-hook #'add-node-modules-path))
 
 ;; --------------------------------
 ;; JSON
@@ -137,13 +102,6 @@
   :defer t
   :mode "\\.toml\\'")
 
-;; --------------------------------
-;; GraphQL
-;; --------------------------------
-(use-package graphql-mode
-  :ensure t
-  :defer t
-  :mode "\\.graphql\\'")
 
 ;; --------------------------------
 ;; REST Client
@@ -154,57 +112,13 @@
   :mode ("\\.http\\'" "\\.rest\\'")
   :commands restclient-mode)
 
-;; --------------------------------
-;; CSS Preprocessing
-;; --------------------------------
-(use-package less-css-mode
-  :ensure t
-  :defer t
-  :mode "\\.less\\'")
-
-(use-package stylus-mode
-  :ensure t
-  :defer t
-  :mode "\\.styl\\'")
-
-;; --------------------------------
-;; Template Engines
-;; --------------------------------
-;; Mustache/Handlebars
-(use-package mustache-mode
-  :ensure t
-  :defer t
-  :mode ("\\.mustache\\'" "\\.hbs\\'" "\\.handlebars\\'"))
-
-;; Pug (formerly Jade)
-(use-package pug-mode
-  :ensure t
-  :defer t
-  :mode ("\\.pug\\'" "\\.jade\\'"))
 
 ;; --------------------------------
 ;; Build Tools and Package Managers
 ;; --------------------------------
-;; npm/yarn support
-(use-package npm-mode
-  :ensure t
-  :defer t
-  :hook ((js-mode typescript-mode web-mode vue-mode) . npm-mode))
-
 ;; Webpack config (manual mode for webpack.config.js)
 (add-to-list 'auto-mode-alist '("webpack\\.config\\.js\\'" . js-mode))
 
-;; --------------------------------
-;; Browser Integration
-;; --------------------------------
-;; Live browser sync
-(use-package skewer-mode
-  :ensure t
-  :defer t
-  :commands (skewer-mode skewer-html-mode skewer-css-mode)
-  :hook ((js-mode . skewer-mode)
-         (css-mode . skewer-css-mode)
-         (html-mode . skewer-html-mode)))
 
 ;; --------------------------------
 ;; Server Configuration Files
@@ -227,15 +141,12 @@
 ;; --------------------------------
 ;; API Documentation
 ;; --------------------------------
-;; OpenAPI/Swagger
-(use-package yaml-mode
-  :defer t
-  :config
-  (add-hook 'yaml-mode-hook
-            (lambda ()
-              (when (and buffer-file-name
-                         (string-match-p "swagger\\|openapi" buffer-file-name))
-                (flycheck-mode 1)))))
+;; OpenAPI/Swagger - flycheck hook added to yaml-mode above
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (when (and buffer-file-name
+                       (string-match-p "swagger\\|openapi" buffer-file-name))
+              (flycheck-mode 1))))
 
 ;; --------------------------------
 ;; Version Control for Web Assets
