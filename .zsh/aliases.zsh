@@ -165,6 +165,10 @@ if has_command mysql; then
     alias mysql="mysql --pager='less -S -n -i -F -X'"
 fi
 
+# .orig cleanup (created by link.sh)
+alias clean-orig='find ~ -maxdepth 1 -name "*.orig" -print -exec rm -rf {} \;'
+alias clean-orig-dry='find ~ -maxdepth 1 -name "*.orig" -print'
+
 # ================================
 # Color and Terminal Setup
 # ================================
