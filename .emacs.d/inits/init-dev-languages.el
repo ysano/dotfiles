@@ -15,13 +15,6 @@
   (ruby-indent-level 2)
   (ruby-indent-tabs-mode nil))
 
-(use-package ruby-compilation
-  :ensure t
-  :after ruby-mode
-  :defer t
-  :bind (:map ruby-mode-map
-              ("C-x t" . ruby-compilation-this-buffer)
-              ("C-x T" . ruby-compilation-this-test)))
 
 ;; --------------------------------
 ;; Python
@@ -34,18 +27,6 @@
   (python-indent-offset 4)
   (python-shell-interpreter "python3"))
 
-(use-package py-yapf
-  :ensure t
-  :after python
-  :defer t
-  :hook (python-mode . py-yapf-enable-on-save))
-
-;; Virtual environment support
-(use-package pyvenv
-  :ensure t
-  :after python
-  :defer t
-  :commands (pyvenv-activate pyvenv-deactivate pyvenv-workon))
 
 ;; --------------------------------
 ;; Go
@@ -66,12 +47,6 @@
   :defer t
   :hook (go-mode . go-eldoc-setup))
 
-;; Go playground
-(use-package go-playground
-  :ensure t
-  :after go-mode
-  :defer t
-  :commands (go-playground go-playground-download))
 
 ;; --------------------------------
 ;; PHP
@@ -206,30 +181,6 @@
          ("\\.cl\\'" . lisp-mode))
   :hook ((emacs-lisp-mode lisp-mode) . eldoc-mode))
 
-;; Common Lisp support
-(use-package slime
-  :ensure t
-  :defer t
-  :commands slime
-  :custom
-  (inferior-lisp-program "sbcl"))
-
-;; --------------------------------
-;; Clojure
-;; --------------------------------
-(use-package clojure-mode
-  :ensure t
-  :defer t
-  :mode (("\\.clj\\'" . clojure-mode)
-         ("\\.cljs\\'" . clojure-mode)
-         ("\\.cljc\\'" . clojure-mode)
-         ("\\.edn\\'" . clojure-mode)))
-
-(use-package cider
-  :ensure t
-  :after clojure-mode
-  :defer t
-  :commands (cider-jack-in cider-connect))
 
 ;; --------------------------------
 ;; Scheme
@@ -239,55 +190,6 @@
   :mode "\\.scm\\'"
   :interpreter "scheme")
 
-;; --------------------------------
-;; Haskell
-;; --------------------------------
-(use-package haskell-mode
-  :ensure t
-  :defer t
-  :mode (("\\.hs\\'" . haskell-mode)
-         ("\\.lhs\\'" . literate-haskell-mode))
-  :hook (haskell-mode . haskell-indentation-mode))
-
-;; --------------------------------
-;; Erlang/Elixir
-;; --------------------------------
-(use-package erlang
-  :ensure t
-  :defer t
-  :mode (("\\.erl\\'" . erlang-mode)
-         ("\\.hrl\\'" . erlang-mode)))
-
-(use-package elixir-mode
-  :ensure t
-  :defer t
-  :mode "\\.exs?\\'"
-  :hook (elixir-mode . subword-mode))
-
-;; --------------------------------
-;; Scala
-;; --------------------------------
-(use-package scala-mode
-  :ensure t
-  :defer t
-  :mode "\\.scala\\'"
-  :interpreter "scala")
-
-;; --------------------------------
-;; Kotlin
-;; --------------------------------
-(use-package kotlin-mode
-  :ensure t
-  :defer t
-  :mode "\\.kt\\'")
-
-;; --------------------------------
-;; Swift
-;; --------------------------------
-(use-package swift-mode
-  :ensure t
-  :defer t
-  :mode "\\.swift\\'")
 
 ;; --------------------------------
 ;; PowerShell (Windows)
@@ -321,38 +223,6 @@
   :ensure t
   :defer t
   :mode "Dockerfile\\'")
-
-;; --------------------------------
-;; Markdown
-;; --------------------------------
-(use-package markdown-mode
-  :ensure t
-  :defer t
-  :mode (("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode)
-         ("README\\.md\\'" . gfm-mode))
-  :custom
-  (markdown-command "multimarkdown")
-  (markdown-fontify-code-blocks-natively t))
-
-;; --------------------------------
-;; Language Server Protocol (LSP) Integration
-;; --------------------------------
-(use-package lsp-mode
-  :ensure t
-  :defer t
-  :commands lsp
-  :hook ((go-mode rust-mode python-mode typescript-mode js-mode) . lsp-deferred)
-  :custom
-  (lsp-keymap-prefix "C-c l")
-  (lsp-auto-guess-root t)
-  (lsp-keep-workspace-alive nil)
-  (lsp-signature-auto-activate nil)
-  (lsp-signature-render-documentation nil)
-  (lsp-completion-provider :capf)
-  (lsp-idle-delay 0.5)
-  :config
-  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map))
 
 (provide 'init-dev-languages)
 ;;; init-dev-languages.el ends here
