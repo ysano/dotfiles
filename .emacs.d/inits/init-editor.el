@@ -14,17 +14,6 @@
   :config
   (show-paren-mode 1))
 
-;; Auto-pair parentheses
-(use-package electric
-  :config
-  (electric-pair-mode 1))
-
-;; Rainbow delimiters for better bracket visibility
-(use-package rainbow-delimiters
-  :ensure t
-  :diminish
-  :hook (prog-mode . rainbow-delimiters-mode))
-
 ;; Highlight color strings with their color
 (use-package rainbow-mode
   :ensure t
@@ -73,6 +62,7 @@
 ;; Beacon - flash cursor when switching windows
 (use-package beacon
   :ensure t
+  :defer 2
   :custom
   (beacon-color "yellow")
   :config
@@ -84,13 +74,6 @@
   :diminish subword-mode
   :config
   (global-subword-mode))
-
-;; EditorConfig support
-(use-package editorconfig
-  :ensure t
-  :diminish "EC"
-  :config
-  (editorconfig-mode 1))
 
 ;; Sudo edit files
 (use-package sudo-edit
@@ -205,14 +188,6 @@
 ;; --------------------------------
 ;; Modern Display Features
 ;; --------------------------------
-;; Enhanced line numbers (Emacs 26+)
-(when (>= emacs-major-version 26)
-  (use-package display-line-numbers
-    :custom
-    (display-line-numbers-type 'relative)      ;; Relative line numbers
-    (display-line-numbers-width-start t)       ;; Auto-adjust width
-    :hook (prog-mode . display-line-numbers-mode)))
-
 ;; Modern window and frame handling
 (use-package window
   :custom
