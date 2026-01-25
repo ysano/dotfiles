@@ -191,6 +191,25 @@ setup_local_completions() {
 }
 
 # ================================
+# Modern CLI Tools Integration
+# ================================
+
+setup_modern_cli_tools() {
+    # fzf key bindings and completion
+    if has_command fzf; then
+        zinit ice wait lucid
+        zinit snippet https://github.com/junegunn/fzf/blob/master/shell/key-bindings.zsh
+        zinit ice wait lucid
+        zinit snippet https://github.com/junegunn/fzf/blob/master/shell/completion.zsh
+    fi
+
+    # zoxide initialization
+    if has_command zoxide; then
+        eval "$(zoxide init zsh)"
+    fi
+}
+
+# ================================
 # Platform-Specific Setup
 # ================================
 
@@ -293,7 +312,10 @@ main() {
     
     # Local completions
     setup_local_completions
-    
+
+    # Modern CLI tools (fzf, zoxide)
+    setup_modern_cli_tools
+
     # Platform-specific
     setup_macos_tools
     

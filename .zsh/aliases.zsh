@@ -210,11 +210,36 @@ setup_truecolor() {
 }
 
 # ================================
+# Modern CLI Tools
+# ================================
+
+# eza (ls replacement with icons)
+if has_command eza; then
+    alias ls='eza --icons --group-directories-first'
+    alias ll='eza -l --icons --group-directories-first --git'
+    alias la='eza -la --icons --group-directories-first --git'
+    alias lt='eza --tree --level=2 --icons'
+    alias lta='eza --tree --level=3 --icons -a'
+fi
+
+# tldr (man alternative with practical examples)
+if has_command tldr; then
+    alias help='tldr'
+fi
+
+# dust (du replacement with visual output)
+if has_command dust; then
+    alias du='dust'
+fi
+
+# ================================
 # Performance Monitoring
 # ================================
 
 # System monitoring aliases
-if has_command htop; then
+if has_command btm; then
+    alias top='btm'
+elif has_command htop; then
     alias top='htop'
 fi
 

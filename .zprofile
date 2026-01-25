@@ -205,6 +205,26 @@ setup_flutter() {
 }
 
 # ================================
+# Modern CLI Tools Environment
+# ================================
+
+setup_modern_cli() {
+    # bat
+    export BAT_THEME="Dracula"
+
+    # ripgrep
+    export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+
+    # fzf
+    if has_command fzf; then
+        export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+        export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+        export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+        export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+    fi
+}
+
+# ================================
 # Legacy and Optional Tools
 # ================================
 
@@ -225,11 +245,14 @@ setup_legacy_tools() {
 
 # Core development environments
 setup_go
-setup_rust  
+setup_rust
 setup_node
 setup_ruby
 setup_android
 setup_flutter
+
+# Modern CLI tools
+setup_modern_cli
 
 # Optional/legacy tools
 setup_legacy_tools

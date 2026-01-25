@@ -7,6 +7,7 @@
 [core]
 	autocrlf = input
 	quotepath = false
+	pager = delta
 [alias]
 	co = checkout
 	ci = commit
@@ -15,9 +16,20 @@
 	diffc = diff --cached
 	lg = log --oneline --decorate --graph
 	lga = log --oneline --decorate --graph --branches --tags --remotes
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	light = false
+	side-by-side = true
+	line-numbers = true
+	syntax-theme = Dracula
+
 [merge]
 	tool = emerge
 	autoCRLF = false
+	conflictstyle = diff3
 [push]
 	default = simple
 [http]
@@ -25,6 +37,7 @@
 [diff]
 	compactionHeuristic = true
 	renames = true
+	colorMoved = default
 [pull]
 	rebase = true
 [credential "https://github.com"]
