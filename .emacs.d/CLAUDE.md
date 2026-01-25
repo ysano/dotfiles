@@ -5,6 +5,12 @@
 - **PHP Tests:** `F5` (phpunit-current-test), `Shift-F5` (phpunit-current-project)
 - **Go Build:** `go build -v && go test -v && go vet`
 - **Git:** `C-x g` (magit-status), chord `sg` (hydra-git-gutter)
+- **Forge (PR/Issue):**
+  - `@ @` forge-dispatch メニュー
+  - `@ p f` PRとIssue情報を取得
+  - `' p` PR一覧表示
+  - `' i` Issue一覧表示
+  - `sg` → `f` hydra経由でforge-dispatch
 
 ## Code Style
 - **Indent:** 4 spaces (no tabs), except Terraform (2 spaces)
@@ -12,7 +18,7 @@
 - **Encoding:** UTF-8 UNIX
 - **PHP Style:** PSR-2 standard
 - **Go Style:** Use gofmt (auto runs before save)
-- **Python Style:** Use py-yapf (auto runs on save)
+- **Python Style:** Use LSP/black (configure externally)
 - **Ruby Style:** Use Rubocop for linting
 - **Editor Config:** Enabled globally
 
@@ -40,38 +46,7 @@
 - `jk` chord for hydra-general movement
 
 ## AI Assistance
-- **Claude Code Integration:**
-  - `C-c C-b` send buffer for analysis
-  - `C-c C-r` review selected code
-  - `C-c C-f` explain function at point
-  - `C-c C-q` query Claude Code
-  - `C-c C-d` generate documentation
-
-- **Advanced Claude Code Workflows (`C-c c w` prefix):**
-  - `C-c c w RET` auto workflow (context-aware)
-  - `C-c c w p` send project overview
-  - `C-c c w g d` review git diff
-  - `C-c c w g s` review staged changes
-  - `C-c c w g c` suggest commit message
-  - `C-c c w t g` generate tests
-  - `C-c c w t f` explain test failures
-  - `C-c c w q s` security review
-  - `C-c c w q p` performance review
-  - `C-c c w q a` accessibility review
-  - `C-c c w a a` architecture analysis
-  - `C-c c w a d` design patterns
-  - `C-c c w D r` generate README
-  - `C-c c w D a` generate API docs
-
 - **Unified AI Tools (`C-c a` prefix):**
-  - `C-c a c` Claude Code toggle
-  - `C-c a r` code review with Claude
-  - `C-c a f` explain function
-  - `C-c a d` generate documentation
-  - `C-c a R` refactor with diff preview
-  - `C-c a D` show last diff
-  - `C-c a h` show change history
-  - `C-c a u` undo last change
   - `C-c a C` toggle Copilot mode
   - `C-c a a` accept Copilot completion
   - `C-c a l` Ellama chat
