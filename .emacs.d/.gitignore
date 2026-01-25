@@ -21,3 +21,4 @@ custom-settings.el
 recentf
 history
 places
+forge-database.sqlite
