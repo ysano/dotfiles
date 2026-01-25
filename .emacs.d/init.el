@@ -92,8 +92,7 @@
   ;; Call manually with M-x auto-package-update-now when needed
   )
 
-;; For diminishing minor modes in modeline
-(use-package diminish :ensure t)
+;; For diminishing minor modes in modeline (using delight only)
 (use-package delight :ensure t)
 
 ;; --------------------------------
@@ -122,7 +121,8 @@
 ;; Memory management
 (use-package gcmh
   :ensure t
-  :diminish
+  :defer 0.5
+  :delight
   :custom
   (gcmh-verbose t)
   (gcmh-high-cons-threshold (* 16 1024 1024)) ;; 16MB
@@ -216,7 +216,6 @@
 (require 'init-text-modes)
 (require 'init-org-simple)
 (require 'init-ai)
-(require 'init-claude-code)
 (require 'init-japanese)
 (require 'init-platform)
 

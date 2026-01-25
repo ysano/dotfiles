@@ -31,11 +31,15 @@
   (magit-diff-refine-hunk t)                 ;; Show word-level diffs
   (magit-save-repository-buffers 'dontask))  ;; Auto-save buffers
 
-;; Git time machine for viewing file history
-(use-package git-timemachine
+
+;; GitHub/GitLab integration - Forge
+(use-package forge
   :ensure t
-  :defer t
-  :commands git-timemachine)
+  :after magit
+  :custom
+  (forge-topic-list-limit '(60 . 0))  ;; 60 open, 0 closed
+  :config
+  (setq auth-sources '("~/.netrc" "~/.authinfo.gpg" "~/.authinfo")))
 
 ;; Git gutter for showing changes in the buffer
 (use-package git-gutter
@@ -64,12 +68,12 @@
   ;; Git gutter hydra for quick access
   (defhydra hydra-git-gutter (:color red :hint nil)
     "
-_m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tage  _r_evert  pop_u_p  _SPC_:toggle
+_m_agit  _b_lame  _d_ispatch  _f_orge  |  hunk: _p_revious  _n_ext  _s_tage  _r_evert  pop_u_p  _SPC_:toggle
 "
     ("m" magit-status :exit t)
     ("b" magit-blame :exit t)
-    ("t" git-timemachine :exit t)
     ("d" magit-dispatch :exit t)
+    ("f" forge-dispatch :exit t)
     ("p" git-gutter:previous-hunk)
     ("n" git-gutter:next-hunk)
     ("s" git-gutter:stage-hunk)
@@ -82,22 +86,6 @@ _m_agit  _b_lame  _d_ispatch  _t_imemachine  |  hunk: _p_revious  _n_ext  _s_tag
                 (git-gutter:previous-hunk 1)))
     ("R" git-gutter:set-start-revision)
     ("q" nil :color blue)))
-
-;; --------------------------------
-;; Project Management
-;; --------------------------------
-(use-package projectile
-  :ensure t
-  :defer t
-  :commands (projectile-mode projectile-find-file projectile-switch-project)
-  :delight '(:eval (concat " " (projectile-project-name)))
-  :bind-keymap ("C-c p" . projectile-command-map)
-  :custom
-  (projectile-completion-system 'ivy)
-  (projectile-cache-file (concat user-emacs-directory "projectile.cache"))
-  (projectile-known-projects-file (concat user-emacs-directory "projectile-bookmarks.eld"))
-  :config
-  (projectile-mode 1))
 
 ;; --------------------------------
 ;; Password / Secret Management

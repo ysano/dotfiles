@@ -53,22 +53,6 @@
       (eww-hatebu-setup))))
 
 ;; --------------------------------
-;; LaTeX support
-;; --------------------------------
-;; AUCTeX is disabled in the original file, but ready for future use
-(use-package auctex
-  :ensure nil
-  :disabled
-  :defer t)
-
-(use-package cdlatex
-  :ensure nil
-  :disabled
-  :after auctex
-  :hook ((LaTeX-mode . turn-on-cdlatex)
-         (latex-mode . turn-on-cdlatex)))
-
-;; --------------------------------
 ;; Octave/Matlab mode
 ;; --------------------------------
 (use-package octave-mode

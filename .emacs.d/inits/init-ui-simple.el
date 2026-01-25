@@ -30,7 +30,7 @@
 ;; --------------------------------
 ;; Unified Font Management
 ;; --------------------------------
-(defvar my-ui-scale-factor 2.0
+(defvar my-ui-scale-factor 1.0
   "Global UI scale factor for all font sizes and UI elements.")
 
 (defvar my-base-font-size 16
@@ -117,16 +117,6 @@
 (use-package rainbow-delimiters
   :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
-
-;; --------------------------------
-;; Whitespace visualization
-;; --------------------------------
-(use-package whitespace
-  :custom
-  (whitespace-style '(face tabs spaces trailing space-before-tab
-                      indentation empty space-after-tab))
-  (whitespace-space-regexp "\\( +\\)")
-  :hook (prog-mode . whitespace-mode))
 
 ;; --------------------------------
 ;; Dashboard
