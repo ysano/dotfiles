@@ -62,11 +62,6 @@
          :embedding-model "aya:8b-23-q4_K_S")))
 
 ;; --------------------------------
-;; Claude Code Integration Note
-;; --------------------------------
-;; Claude Code integration is now handled in init-claude-code.el
-
-;; --------------------------------
 ;; AI Tools Integration and Keybindings
 ;; --------------------------------
 ;; Unified AI tool access under C-c a prefix
@@ -83,16 +78,6 @@
 (define-key ai-tools-map (kbd "s") 'ellama-summarize)              ;; Summarize text
 (define-key ai-tools-map (kbd "w") 'ellama-write)                  ;; Write with AI
 
-;; Claude Code bindings (new integration)
-(define-key ai-tools-map (kbd "c") 'claude-code-toggle)            ;; Claude Code
-(define-key ai-tools-map (kbd "r") 'claude-code-send-region-for-review) ;; Review code
-(define-key ai-tools-map (kbd "f") 'claude-code-explain-function)  ;; Explain function
-(define-key ai-tools-map (kbd "d") 'claude-code-generate-docstring) ;; Generate docs
-(define-key ai-tools-map (kbd "R") 'claude-code-refactor-with-diff) ;; Refactor with diff
-(define-key ai-tools-map (kbd "D") 'claude-code-show-last-diff)     ;; Show last diff
-(define-key ai-tools-map (kbd "h") 'claude-code-show-change-history) ;; Change history
-(define-key ai-tools-map (kbd "u") 'claude-code-undo-last-change)   ;; Undo last change
-
 ;; Copilot bindings (existing code completion)
 (define-key ai-tools-map (kbd "C") 'copilot-mode)                  ;; Toggle Copilot
 (define-key ai-tools-map (kbd "a") 'copilot-accept-completion)     ;; Accept completion
@@ -108,8 +93,6 @@
   (let ((indicators '()))
     (when (and (boundp 'copilot-mode) copilot-mode)
       (push "Co" indicators))
-    (when (and (boundp 'claude-code-active) claude-code-active)
-      (push "CC" indicators))
     (when (and (boundp 'ellama-mode) ellama-mode)
       (push "El" indicators))
     (when indicators
