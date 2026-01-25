@@ -1,7 +1,42 @@
 #!/usr/bin/env zsh
+
+# ================================
+# Configuration
+# ================================
+
+# ホーム直下のファイル
 files=(.zshrc .zprofile .gitconfig .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
+
+# ホーム直下のディレクトリ
 dirs=(.zsh .emacs.d .tmux)
+
+# XDG_CONFIG_HOME配下のディレクトリ
+config_dirs=(gwt bat ripgrep)
+
 dotfiles=dotfiles
+
+# ================================
+# Helper Functions
+# ================================
+
+backup_if_exists() {
+    local target="$1"
+    if [[ -e "$target" && ! -L "$target" ]]; then
+        mv "$target" "${target}.orig"
+    elif [[ -L "$target" ]]; then
+        rm "$target"
+    fi
+}
+
+ensure_parent_dir() {
+    local target="$1"
+    local parent="$(dirname "$target")"
+    [[ ! -d "$parent" ]] && mkdir -p "$parent"
+}
+
+# ================================
+# Main Logic
+# ================================
 
 case "${OSTYPE}" in
     msys)
@@ -13,14 +48,28 @@ case "${OSTYPE}" in
         done
         ;;
     *)
+        # ホーム直下ファイル
         for f in $files; do
-            [[ -f $HOME/$f ]] && mv $HOME/$f $HOME/$f.orig
-            ln -s $dotfiles/$f $HOME/$f
+            backup_if_exists "$HOME/$f"
+            ln -s "$dotfiles/$f" "$HOME/$f"
         done
+
+        # ホーム直下ディレクトリ
         for d in $dirs; do
-            [[ -d $HOME/$d ]] && mv $HOME/$d $HOME/$d.orig
-            ln -s $dotfiles/$d $HOME/$d
+            backup_if_exists "$HOME/$d"
+            ln -s "$dotfiles/$d" "$HOME/$d"
+        done
+
+        # XDG_CONFIG_HOME配下
+        local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+        for d in $config_dirs; do
+            local src="$HOME/$dotfiles/.config/$d"
+            local dst="$config_home/$d"
+            if [[ -d "$src" ]]; then
+                ensure_parent_dir "$dst"
+                backup_if_exists "$dst"
+                ln -s "$src" "$dst"
+            fi
         done
         ;;
 esac
-
