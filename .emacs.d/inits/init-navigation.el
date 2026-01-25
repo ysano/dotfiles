@@ -50,7 +50,7 @@
   ;; Better counsel-find-file behavior
   (counsel-find-file-at-point t)
   (counsel-preselect-current-file t)
-  :bind (("<f2> u" . counsel-unicode-char)
+  :bind (("C-c u" . counsel-unicode-char)  ;; Changed from <f2> u (conflicts with copilot)
          ("C-c g" . counsel-git)
          ("C-c j" . counsel-git-grep)
          ("C-c k" . counsel-ag)
@@ -89,22 +89,11 @@
   :bind-keymap ("C-c p" . projectile-command-map)
   :custom
   (projectile-completion-system 'ivy)
+  (projectile-cache-file (concat user-emacs-directory "projectile.cache"))
+  (projectile-known-projects-file (concat user-emacs-directory "projectile-bookmarks.eld"))
   :config
-  (projectile-mode))
+  (projectile-mode 1))
 
-;; --------------------------------
-;; Tags and Definitions
-;; --------------------------------
-(use-package counsel-gtags
-  :ensure t
-  :diminish (counsel-gtags-mode . "Gtags")
-  :after counsel
-  :hook ((prog-mode php-mode) . counsel-gtags-mode)
-  :bind (:map counsel-gtags-mode-map
-              ("M-t" . counsel-gtags-find-definition)
-              ("M-r" . counsel-gtags-find-reference)
-              ("M-s" . counsel-gtags-find-symbol)
-              ("M-," . counsel-gtags-go-backward)))
 
 ;; --------------------------------
 ;; File browsing
@@ -118,8 +107,7 @@
 ;; --------------------------------
 ;; Recent Files
 ;; --------------------------------
-(use-package recentf-ext
-  :ensure t
+(use-package recentf
   :custom
   (recentf-max-saved-items 50)
   :config
@@ -175,17 +163,12 @@
 ;; --------------------------------
 ;; TRAMP remote editing
 ;; --------------------------------
-(use-package counsel-tramp
-  :ensure t
+(use-package tramp
   :defer t
-  :after counsel
-  :bind ("C-c s" . counsel-tramp)
   :config
   (if (eq window-system 'w32)
       (setq tramp-default-method "plinkx")
-    (setq tramp-default-method "sshx"))
-  (setq make-backup-files nil)
-  (setq create-lockfiles nil))
+    (setq tramp-default-method "sshx")))
 
 (provide 'init-navigation)
 ;;; init-navigation.el ends here

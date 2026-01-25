@@ -8,16 +8,16 @@
 ;; --------------------------------
 (use-package company
   :ensure t
-  :diminish "cm"
+  :defer t
+  :delight "cm"
   :hook (prog-mode . company-mode)
   :custom
-  (company-idle-delay 0)                 ;; No delay
+  (company-idle-delay 0.2)               ;; Slight delay for CPU efficiency
   (company-minimum-prefix-length 2)      ;; Start completing after 2 chars
   (company-selection-wrap-around t)      ;; Wrap around completion list
   (company-show-numbers t)               ;; Show numbers for quick selection
   (company-transformers '(company-sort-by-backend-importance))
   :config
-  (global-company-mode)
   ;; Disable inline preview
   (delq 'company-preview-if-just-one-frontend company-frontends)
   :bind (:map company-active-map
@@ -77,8 +77,9 @@
   (lsp-signature-auto-activate nil)  ;; Improve performance
   (lsp-signature-render-documentation nil)
   (lsp-completion-provider :capf)    ;; Use capf for better performance
+  (lsp-idle-delay 0.5)               ;; Delay for better performance
   :hook
-  ((js-mode typescript-mode) . lsp)
+  ((go-mode rust-mode python-mode typescript-mode js-mode) . lsp-deferred)
   (lsp-mode . lsp-enable-which-key-integration)
   :config
   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map))
@@ -97,21 +98,6 @@
   :ensure t
   :commands lsp-ivy-workspace-symbol)
 
-;; LSP with Treemacs integration
-(use-package lsp-treemacs
-  :ensure t
-  :commands lsp-treemacs-errors-list)
-
-;; --------------------------------
-;; Which Key
-;; --------------------------------
-(use-package which-key
-  :ensure t
-  :diminish
-  :custom
-  (which-key-idle-delay 0.5)
-  :config
-  (which-key-mode 1))
 
 ;; --------------------------------
 ;; Spell checking
@@ -138,19 +124,6 @@
   ((prog-mode . flyspell-prog-mode)
    (text-mode . flyspell-mode)))
 
-;; --------------------------------
-;; Translation
-;; --------------------------------
-(use-package google-translate
-  :ensure t
-  :defer t
-  :commands (google-translate-at-point google-translate-query-translate)
-  :custom
-  (google-translate-default-source-language "en")
-  (google-translate-default-target-language "ja")
-  :bind
-  (("C-c t" . google-translate-at-point)
-   ("C-c T" . google-translate-query-translate)))
 
 (provide 'init-completion)
 ;;; init-completion.el ends here
