@@ -1,5 +1,8 @@
 # Linux specific aliases
-alias ls='ls --color=auto'
+# Only set ls alias if eza is not available (eza alias is set in aliases.zsh)
+if ! has_command eza; then
+    alias ls='ls --color=auto'
+fi
 alias whoislistening="netstat -pntl |grep \$PORT"
 
 # WSL specific aliases (if needed)
