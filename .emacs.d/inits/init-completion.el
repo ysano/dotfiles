@@ -56,11 +56,10 @@
               ("C-g" . copilot-clear-overlay))
   :hook (prog-mode . copilot-mode)
   :config
-  ;; Only enable in specific modes for security
-  (setq copilot-enable-predicates
-        '(evil-insert-state-p
-          (lambda () (not (or (org-mode-p) (buffer-file-name))))
-          (lambda () (not (string-match-p "secret\\|password\\|token" (buffer-name)))))))
+  ;; Disable in sensitive buffers
+  (setq copilot-disable-predicates
+        '((lambda () (derived-mode-p 'org-mode))
+          (lambda () (string-match-p "secret\\|password\\|token\\|\\.env" (buffer-name))))))
 
 ;; --------------------------------
 ;; LSP Mode
