@@ -5,13 +5,13 @@
 # ================================
 
 # ホーム直下のファイル
-files=(.zshrc .zprofile .gitconfig .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
+files=(.zshrc .zprofile .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
 
 # ホーム直下のディレクトリ
 dirs=(.zsh .emacs.d .tmux)
 
 # XDG_CONFIG_HOME配下のディレクトリ
-config_dirs=(gwt bat ripgrep)
+config_dirs=(gwt bat ripgrep git)
 
 dotfiles=dotfiles
 
