@@ -965,7 +965,8 @@ function _gwt_exec() {
                     cd "$worktree_path" 2>/dev/null
                     if [[ $? -eq 0 ]]; then
                         echo "   ▶️  実行中..." > "$output_file"
-                        eval "$command_to_exec" >> "$output_file" 2>&1
+                        # サブシェルで実行（eval直接使用を回避）
+                        zsh -c "$command_to_exec" >> "$output_file" 2>&1
                         echo "exit_code:$?" >> "$output_file"
                     else
                         echo "   ❌ ディレクトリへの移動に失敗" > "$output_file"
@@ -979,7 +980,8 @@ function _gwt_exec() {
                 echo "   ▶️  実行中..."
                 cd "$worktree_path" 2>/dev/null
                 if [[ $? -eq 0 ]]; then
-                    eval "$command_to_exec"
+                    # サブシェルで実行（eval直接使用を回避）
+                    zsh -c "$command_to_exec"
                     local exit_code=$?
                     if [[ $exit_code -eq 0 ]]; then
                         echo "   ✅ 成功"
