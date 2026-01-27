@@ -23,11 +23,15 @@
 (with-eval-after-load 'ellama
   (require 'llm)
   (require 'llm-ollama)
-  
+
+  ;; Ollama host configuration (環境変数OLLAMA_HOSTを優先、未設定時はWSL用デフォルト)
+  (defvar my/ollama-host (or (getenv "OLLAMA_HOST") "172.29.80.1")
+    "Ollama server host. Set OLLAMA_HOST environment variable to override.")
+
   ;; Default model
   (setq ellama-provider
         (make-llm-ollama
-         :host "172.29.80.1"
+         :host my/ollama-host
          :chat-model "llama3.1:8b-instruct-q4_K_S"
          :embedding-model "nomic-embed-text"
          :default-chat-non-standard-params '(("num_ctx" . 8192))))
