@@ -25,9 +25,5 @@ fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
 # symlinks) that have the executable bit on (the executable bit is not
 # necessary, but gives you an easy way to stop the autoloading of a
 # particular shell function). $fpath should not be empty for this to work.
-
-# for func in $^fpath/*(N-.x:t); autoload $func
-### managed by Zinit
-
-# Git Worktree管理コマンド moved to .zshrc to ensure proper load order
-# source "$HOME/.zsh/git-worktree.zsh"
+# Note: Autoloading is managed by Zinit
+# Note: Git Worktree is loaded from .zshrc to ensure proper load order

@@ -114,18 +114,8 @@ setup_git_aliases() {
         alias gsp='git stash pop'
         alias gsl='git stash list'
         
-        # Git Worktree aliases moved to git-worktree.zsh to avoid conflicts
-        # alias gw='gwt'
-        # alias gwc='gwt create'
-        # alias gwl='gwt list'
-        # alias gws='gwt switch'
-        # alias gwr='gwt remove'
     fi
 }
-
-# Development utilities
-alias mketags="jexctags --langmap=html:+.rhtml,ruby:+.yml,php:+.thtml -e -R --append=no --exclude=.svn"
-alias irb='irb -r irb/completion'
 
 # ================================
 # Network Tools
