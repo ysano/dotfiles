@@ -2,7 +2,7 @@
 
 Systematically debug and fix errors
 
-## Instructions
+## 実行手順
 
 Follow this comprehensive debugging methodology to resolve: **$ARGUMENTS**
 

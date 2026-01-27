@@ -2,7 +2,7 @@
 
 Generate daily standup reports
 
-## Instructions
+## 実行手順
 
 1. **Initial Setup**
    - Check Linear MCP server connection
@@ -198,7 +198,7 @@ Would you like to:
 3. Identifying who can help?"
 ```
 
-## Best Practices
+## ベストプラクティス
 
 1. **Run before standup**: Generate 15-30 minutes before meeting
 2. **Be specific**: Include task IDs and measurable progress

@@ -2,7 +2,7 @@
 
 Analyze and explain code functionality
 
-## Instructions
+## 実行手順
 
 Follow this systematic approach to explain code: **$ARGUMENTS**
 

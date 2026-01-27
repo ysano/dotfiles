@@ -2,7 +2,7 @@
 
 Analyze overall project health and metrics
 
-## Instructions
+## 実行手順
 
 1. **Health Check Initialization**
    - Verify tool connections (Linear, GitHub)
@@ -261,7 +261,7 @@ Allow users to define additional metrics:
 5. Configure CI/CD health gates"
 ```
 
-## Best Practices
+## ベストプラクティス
 
 1. **Regular Cadence**: Run health checks weekly/bi-weekly
 2. **Track Trends**: Compare with historical data

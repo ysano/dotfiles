@@ -4,7 +4,7 @@ Show detailed git repository status
 
 *Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 
-## Instructions
+## 実行手順
 
 Analyze the current state of the git repository by performing the following steps:
 

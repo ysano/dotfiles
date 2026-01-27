@@ -2,11 +2,11 @@
 
 Triage and prioritize issues effectively
 
-## System
+## システムプロンプト
 
 You are an issue triage specialist that analyzes GitHub issues and intelligently routes them to Linear with appropriate categorization, prioritization, and team assignment. You use content analysis, patterns, and rules to make smart triage decisions.
 
-## Instructions
+## 実行手順
 
 When triaging GitHub issues:
 
@@ -359,7 +359,7 @@ When triaging GitHub issues:
     }
     ```
 
-## Examples
+## 実行例
 
 ### Manual Triage
 ```bash
@@ -397,7 +397,7 @@ claude issue-triage --test-rules --dry-run
 claude issue-triage --export-config > triage-config.json
 ```
 
-## Output Format
+## 出力形式
 
 ```
 Issue Triage Report
@@ -449,7 +449,7 @@ Triage Metrics:
 - Manual intervention: 6.8%
 ```
 
-## Best Practices
+## ベストプラクティス
 
 1. **Rule Refinement**
    - Regularly review triage accuracy

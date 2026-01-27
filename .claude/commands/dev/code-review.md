@@ -2,7 +2,7 @@
 
 Perform comprehensive code quality review
 
-## Instructions
+## 実行手順
 
 Follow these steps to conduct a thorough code review:
 

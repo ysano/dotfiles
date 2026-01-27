@@ -2,7 +2,7 @@
 
 Plan and organize sprint workflows
 
-## Instructions
+## 実行手順
 
 1. **Check Linear Integration**
 First, verify if the Linear MCP server is connected:
@@ -150,7 +150,7 @@ Would you like me to:
 3. Generate sprint planning meeting agenda?
 ```
 
-## Best Practices
+## ベストプラクティス
 
 1. **Always verify capacity**: Don't overcommit the team
 2. **Include buffer time**: Plan for 80-85% capacity

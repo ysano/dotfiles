@@ -2,7 +2,7 @@
 
 Intelligently refactor and improve code quality
 
-## Instructions
+## 実行手順
 
 Follow this systematic approach to refactor code: **$ARGUMENTS**
 
