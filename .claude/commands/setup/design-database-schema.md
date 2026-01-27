@@ -1,18 +1,18 @@
-# データベーススキーマ設計
+# Design Database Schema
 
-スケーラブルなデータベース設計のため、最適なデータベーススキーマとリレーションシップ、インデックス、およびパフォーマンス考慮事項を設計します。
+Design optimized database schemas
 
-## 実行手順
+## Instructions
 
-1. **要件分析とデータモデリング**
-   - ビジネス要件とデータ関係の分析
-   - エンティティ、属性、リレーションシップの特定
-   - データ型、制約、バリデーションルールの定義
-   - スケーラビリティと将来要件の計画
-   - データアクセスパターンとクエリ要件の検討
+1. **Requirements Analysis and Data Modeling**
+   - Analyze business requirements and data relationships
+   - Identify entities, attributes, and relationships
+   - Define data types, constraints, and validation rules
+   - Plan for scalability and future requirements
+   - Consider data access patterns and query requirements
 
-2. **エンティティリレーションシップ設計**
-   - 包括的なエンティティリレーションシップ図の作成：
+2. **Entity Relationship Design**
+   - Create comprehensive entity relationship diagrams:
 
    **User Management Schema:**
    ```sql
@@ -205,8 +205,8 @@
    );
    ```
 
-3. **高度なスキーマパターン**
-   - 複雑なデータパターンの実装：
+3. **Advanced Schema Patterns**
+   - Implement complex data patterns:
 
    **Audit Trail Pattern:**
    ```sql
@@ -301,8 +301,8 @@
    $$ LANGUAGE plpgsql;
    ```
 
-4. **パフォーマンス最適化スキーマ設計**
-   - 最適なクエリパフォーマンスのための設計：
+4. **Performance Optimization Schema Design**
+   - Design for optimal query performance:
 
    **Strategic Indexing:**
    ```sql
@@ -384,8 +384,8 @@
    SELECT create_monthly_partitions('orders_partitioned', '2024-01-01'::DATE, '2025-01-01'::DATE);
    ```
 
-5. **データ整合性と制約**
-   - 包括的なデータバリデーションの実装：
+5. **Data Integrity and Constraints**
+   - Implement comprehensive data validation:
 
    **Advanced Constraints:**
    ```sql
@@ -448,8 +448,8 @@
    );
    ```
 
-6. **時系列データとバージョニング**
-   - 時間ベースのデータ要件の処理：
+6. **Temporal Data and Versioning**
+   - Handle time-based data requirements:
 
    **Temporal Tables:**
    ```sql
@@ -515,8 +515,8 @@
    EXECUTE FUNCTION update_price_history();
    ```
 
-7. **JSON/NoSQL統合**
-   - 柔軟なデータのためのJSONカラムの活用：
+7. **JSON/NoSQL Integration**
+   - Leverage JSON columns for flexible data:
 
    **JSONB Schema Design:**
    ```sql
@@ -583,8 +583,8 @@
    $$ LANGUAGE plpgsql;
    ```
 
-8. **データベースセキュリティスキーマ**
-   - スキーマレベルでのセキュリティ実装：
+8. **Database Security Schema**
+   - Implement security at the schema level:
 
    **Row Level Security:**
    ```sql
@@ -640,8 +640,8 @@
    $$ LANGUAGE plpgsql;
    ```
 
-9. **スキーマドキュメンテーションとメンテナンス**
-   - スキーマ設計の文書化と維持：
+9. **Schema Documentation and Maintenance**
+   - Document and maintain schema design:
 
    **Database Documentation:**
    ```sql
@@ -673,8 +673,8 @@
    ORDER BY t.table_name, col.ordinal_position;
    ```
 
-10. **スキーマテストとバリデーション**
-    - スキーマテスト手順の実装：
+10. **Schema Testing and Validation**
+    - Implement schema testing procedures:
 
     **Schema Validation Tests:**
     ```sql

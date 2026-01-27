@@ -1,33 +1,33 @@
-# CI/CDセットアップコマンド
+# CI/CD Setup Command
 
-あらゆるプロジェクト向けの包括的な継続的統合・継続的デプロイメントパイプラインを設定します。
+Setup continuous integration pipeline
 
-## 実行手順
+## Instructions
 
-以下の体系的なアプローチに従ってCI/CDを実装してください：**$ARGUMENTS**
+Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
 
-1. **プロジェクト分析**
-   - 技術スタックとデプロイメント要件を識別
-   - 既存のビルドおよびテストプロセスをレビュー
-   - デプロイメント環境（dev、staging、prod）を理解
-   - 現在のバージョン管理とブランチ戦略を評価
+1. **Project Analysis**
+   - Identify the technology stack and deployment requirements
+   - Review existing build and test processes
+   - Understand deployment environments (dev, staging, prod)
+   - Assess current version control and branching strategy
 
-2. **CI/CDプラットフォーム選択**
-   - 要件に基づいて適切なCI/CDプラットフォームを選択：
-     - **GitHub Actions**: ネイティブGitHub統合、豊富なマーケットプレイス
-     - **GitLab CI**: GitLab組み込み、包括的DevOpsプラットフォーム
-     - **Jenkins**: セルフホスト、高度にカスタマイズ可能、豊富なプラグイン
-     - **CircleCI**: クラウドベース、速度最適化
-     - **Azure DevOps**: Microsoftエコシステム統合
-     - **AWS CodePipeline**: AWSネイティブソリューション
+2. **CI/CD Platform Selection**
+   - Choose appropriate CI/CD platform based on requirements:
+     - **GitHub Actions**: Native GitHub integration, extensive marketplace
+     - **GitLab CI**: Built-in GitLab, comprehensive DevOps platform
+     - **Jenkins**: Self-hosted, highly customizable, extensive plugins
+     - **CircleCI**: Cloud-based, optimized for speed
+     - **Azure DevOps**: Microsoft ecosystem integration
+     - **AWS CodePipeline**: AWS-native solution
 
-3. **リポジトリセットアップ**
-   - 適切な`.gitignore`設定を確保
-   - ブランチ保護ルールを設定
-   - マージ要件とレビューを設定
-   - セマンティックバージョニング戦略を確立
+3. **Repository Setup**
+   - Ensure proper `.gitignore` configuration
+   - Set up branch protection rules
+   - Configure merge requirements and reviews
+   - Establish semantic versioning strategy
 
-4. **ビルドパイプライン設定**
+4. **Build Pipeline Configuration**
    
    **GitHub Actions Example:**
    ```yaml
@@ -71,17 +71,17 @@
          - node_modules/
    ```
 
-5. **環境設定**
-   - 環境変数とシークレットを設定
-   - 異なる環境（dev、staging、prod）を設定
-   - 環境固有の設定を実装
-   - セキュアなシークレット管理を設定
+5. **Environment Configuration**
+   - Set up environment variables and secrets
+   - Configure different environments (dev, staging, prod)
+   - Implement environment-specific configurations
+   - Set up secure secret management
 
-6. **自動テスト統合**
-   - ユニットテスト実行を設定
-   - 統合テスト実行を設定
-   - E2Eテスト実行を実装
-   - テストレポートとカバレッジを設定
+6. **Automated Testing Integration**
+   - Configure unit test execution
+   - Set up integration test running
+   - Implement E2E test execution
+   - Configure test reporting and coverage
 
    **Multi-stage Testing:**
    ```yaml
@@ -99,17 +99,17 @@
        - run: npm test
    ```
 
-7. **コード品質ゲート**
-   - リンティングとフォーマットチェックを統合
-   - 静的コード解析（SonarQube、CodeClimate）を設定
-   - セキュリティ脆弱性スキャンを設定
-   - コードカバレッジ閾値を実装
+7. **Code Quality Gates**
+   - Integrate linting and formatting checks
+   - Set up static code analysis (SonarQube, CodeClimate)
+   - Configure security vulnerability scanning
+   - Implement code coverage thresholds
 
-8. **ビルド最適化**
-   - ビルドキャッシュ戦略を設定
-   - 並列ジョブ実行を実装
-   - Dockerイメージビルドを最適化
-   - アーティファクト管理を設定
+8. **Build Optimization**
+   - Configure build caching strategies
+   - Implement parallel job execution
+   - Optimize Docker image builds
+   - Set up artifact management
 
    **Caching Example:**
    ```yaml
@@ -122,11 +122,11 @@
          ${{ runner.os }}-node-
    ```
 
-9. **Docker統合**
-   - 最適化されたDockerfileを作成
-   - マルチステージビルドを設定
-   - コンテナレジストリ統合を設定
-   - イメージのセキュリティスキャンを実装
+9. **Docker Integration**
+   - Create optimized Dockerfiles
+   - Set up multi-stage builds
+   - Configure container registry integration
+   - Implement security scanning for images
 
    **Multi-stage Dockerfile:**
    ```dockerfile
@@ -143,29 +143,29 @@
    CMD ["npm", "start"]
    ```
 
-10. **デプロイメント戦略**
-    - ブルーグリーンデプロイメントを実装
-    - カナリアリリースを設定
-    - ローリングアップデートを設定
-    - フィーチャーフラグ統合を実装
+10. **Deployment Strategies**
+    - Implement blue-green deployment
+    - Set up canary releases
+    - Configure rolling updates
+    - Implement feature flags integration
 
 11. **Infrastructure as Code**
-    - Terraform、CloudFormation、または類似ツールを使用
-    - インフラストラクチャ定義をバージョン管理
-    - インフラストラクチャテストを実装
-    - 自動インフラストラクチャプロビジョニングを設定
+    - Use Terraform, CloudFormation, or similar tools
+    - Version control infrastructure definitions
+    - Implement infrastructure testing
+    - Set up automated infrastructure provisioning
 
-12. **モニタリングと可観測性**
-    - アプリケーションパフォーマンスモニタリングを設定
-    - ログ集約と分析を設定
-    - ヘルスチェックとアラートを実装
-    - デプロイメント通知を設定
+12. **Monitoring and Observability**
+    - Set up application performance monitoring
+    - Configure log aggregation and analysis
+    - Implement health checks and alerting
+    - Set up deployment notifications
 
-13. **セキュリティ統合**
-    - 依存関係脆弱性スキャンを実装
-    - コンテナセキュリティスキャンを設定
-    - SAST（静的アプリケーションセキュリティテスト）を設定
-    - シークレットスキャンを実装
+13. **Security Integration**
+    - Implement dependency vulnerability scanning
+    - Set up container security scanning
+    - Configure SAST (Static Application Security Testing)
+    - Implement secrets scanning
 
    **Security Scanning Example:**
    ```yaml
@@ -179,23 +179,23 @@
            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
    ```
 
-14. **データベースマイグレーション処理**
-    - データベーススキーママイグレーションを自動化
-    - ロールバック戦略を実装
-    - テスト用データベースシーディングを設定
-    - バックアップとリカバリ手順を設定
+14. **Database Migration Handling**
+    - Automate database schema migrations
+    - Implement rollback strategies
+    - Set up database seeding for testing
+    - Configure backup and recovery procedures
 
-15. **パフォーマンステスト統合**
-    - パイプラインに負荷テストを設定
-    - パフォーマンスベンチマークを設定
-    - パフォーマンス回帰検出を実装
-    - パフォーマンスモニタリングを設定
+15. **Performance Testing Integration**
+    - Set up load testing in pipeline
+    - Configure performance benchmarks
+    - Implement performance regression detection
+    - Set up performance monitoring
 
-16. **マルチ環境デプロイメント**
-    - ステージング環境デプロイメントを設定
-    - 承認付きプロダクション環境デプロイメントを設定
-    - 環境昇格ワークフローを実装
-    - 環境固有の設定を構成
+16. **Multi-Environment Deployment**
+    - Configure staging environment deployment
+    - Set up production deployment with approvals
+    - Implement environment promotion workflow
+    - Configure environment-specific configurations
 
    **Environment Deployment:**
    ```yaml
@@ -219,40 +219,40 @@
            # Deploy to production environment
    ```
 
-17. **ロールバックとリカバリ**
-    - 自動ロールバック手順を実装
-    - デプロイメント検証テストを設定
-    - 障害検出とアラートを設定
-    - 手動リカバリ手順をドキュメント化
+17. **Rollback and Recovery**
+    - Implement automated rollback procedures
+    - Set up deployment verification tests
+    - Configure failure detection and alerts
+    - Document manual recovery procedures
 
-18. **通知とレポート**
-    - 通知用のSlack/Teams統合を設定
-    - 障害時のメールアラートを設定
-    - デプロイメントステータスレポートを実装
-    - メトリクスダッシュボードを設定
+18. **Notification and Reporting**
+    - Set up Slack/Teams integration for notifications
+    - Configure email alerts for failures
+    - Implement deployment status reporting
+    - Set up metrics dashboards
 
-19. **コンプライアンスと監査**
-    - デプロイメント監査証跡を実装
-    - コンプライアンスチェック（SOC 2、HIPAA等）を設定
-    - センシティブなデプロイメントの承認ワークフローを設定
-    - 変更管理プロセスをドキュメント化
+19. **Compliance and Auditing**
+    - Implement deployment audit trails
+    - Set up compliance checks (SOC 2, HIPAA, etc.)
+    - Configure approval workflows for sensitive deployments
+    - Document change management processes
 
-20. **パイプライン最適化**
-    - パイプラインパフォーマンスとコストを監視
-    - パイプライン並列化を実装
-    - リソース配分を最適化
-    - パイプライン分析とレポートを設定
+20. **Pipeline Optimization**
+    - Monitor pipeline performance and costs
+    - Implement pipeline parallelization
+    - Optimize resource allocation
+    - Set up pipeline analytics and reporting
 
-**ベストプラクティス：**
+**Best Practices:**
 
-1. **早期失敗**: 早期の障害検出を実装
-2. **並列実行**: 独立したジョブを並列実行
-3. **キャッシュ**: 依存関係とビルドアーティファクトをキャッシュ
-4. **セキュリティ**: ログにシークレットを公開しない
-5. **ドキュメント**: パイプラインプロセスと手順をドキュメント化
-6. **モニタリング**: パイプラインの健全性とパフォーマンスを監視
-7. **テスト**: フィーチャーブランチでパイプライン変更をテスト
-8. **ロールバック**: 常にロールバック戦略を用意
+1. **Fail Fast**: Implement early failure detection
+2. **Parallel Execution**: Run independent jobs in parallel
+3. **Caching**: Cache dependencies and build artifacts
+4. **Security**: Never expose secrets in logs
+5. **Documentation**: Document pipeline processes and procedures
+6. **Monitoring**: Monitor pipeline health and performance
+7. **Testing**: Test pipeline changes in feature branches
+8. **Rollback**: Always have a rollback strategy
 
 **Sample Complete Pipeline:**
 ```yaml
@@ -305,4 +305,4 @@ jobs:
         run: echo "Deploying to production"
 ```
 
-基本的なCIから始めて、チームとプロジェクトの成熟に合わせて段階的により高度な機能を追加してください。
+Start with basic CI and gradually add more sophisticated features as your team and project mature.

@@ -1,204 +1,206 @@
-# 移行アシスタント
+# Migration Assistant
 
-GitHub環境間でのプロジェクト移行、リポジトリ統合、チーム再編成を支援する包括的な移行ツール。Issues、Projects、Discussions、リポジトリ設定の安全で完全な移行を保証します。
+Assist with system migration planning
 
-## 手順
+## Instructions
 
-1. **前提条件の確認**
-   - GitHub CLI（`gh`）がインストールされ認証済みであることを確認
-   - GitHub API接続とトークン権限を確認
-   - ソースとターゲットリポジトリの管理権限を確認
-   - バックアップストレージが利用可能であることを確認
+1. **Check Prerequisites**
+   - Verify GitHub CLI (`gh`) is installed and authenticated
+   - Check if Linear MCP server is connected
+   - Ensure sufficient permissions in both systems
+   - Confirm backup storage is available
 
-2. **移行パラメータの解析**
-   - 以下からアクションとオプションを抽出: **$ARGUMENTS**
-   - 有効なアクション: plan, analyze, migrate, verify, rollback
-   - ソースとターゲットリポジトリを決定
-   - 移行範囲とフィルタを設定
+2. **Parse Migration Parameters**
+   - Extract action and options from: **$ARGUMENTS**
+   - Valid actions: plan, analyze, migrate, verify, rollback
+   - Determine source and target systems
+   - Set migration scope and filters
 
-3. **移行環境の初期化**
-   - 移行ワークスペースディレクトリを作成
-   - ログ記録と監査証跡を設定
-   - チェックポイントシステムを初期化
-   - ロールバック機構を準備
+3. **Initialize Migration Environment**
+   - Create migration workspace directory
+   - Set up logging and audit trails
+   - Initialize checkpoint system
+   - Prepare rollback mechanisms
 
-4. **移行アクションの実行**
-   選択されたアクションに基づいて:
+4. **Execute Migration Action**
+   Based on the selected action:
 
-   ### Plan アクション
-   - ソースシステム構造の分析
-   - システム間のフィールドマッピング
-   - 潜在的な競合の特定
-   - 移行戦略の生成
-   - 時間とリソースの見積もり
-   - 詳細な移行計画の作成
+   ### Plan Action
+   - Analyze source system structure
+   - Map fields between systems
+   - Identify potential conflicts
+   - Generate migration strategy
+   - Estimate time and resources
+   - Create detailed migration plan
 
-   ### Analyze アクション
-   - 移行するアイテムの数をカウント
-   - データ互換性の確認
-   - カスタムフィールドの特定
-   - 添付ファイルサイズの評価
-   - 移行影響の計算
-   - 移行前レポートの生成
+   ### Analyze Action
+   - Count items to migrate
+   - Check data compatibility
+   - Identify custom fields
+   - Assess attachment sizes
+   - Calculate migration impact
+   - Generate pre-migration report
 
-   ### Migrate アクション
-   - ソースデータの完全バックアップを作成
-   - バッチ単位での移行実行
-   - 形式間でのデータ変換
-   - 関係性の保持
-   - 添付ファイルとメディアの処理
-   - 進捗チェックポイントの作成
-   - 全操作のログ記録
+   ### Migrate Action
+   - Create full backup of source data
+   - Execute migration in batches
+   - Transform data between formats
+   - Preserve relationships
+   - Handle attachments and media
+   - Create progress checkpoints
+   - Log all operations
 
-   ### Verify アクション
-   - ソースとターゲットデータの比較
-   - 全アイテムが移行されたことを検証
-   - 関係性の整合性チェック
-   - カスタムフィールドマッピングの検証
-   - 相互参照のテスト
-   - 検証レポートの生成
+   ### Verify Action
+   - Compare source and target data
+   - Validate all items migrated
+   - Check relationship integrity
+   - Verify custom field mappings
+   - Test cross-references
+   - Generate verification report
 
-   ### Rollback アクション
-   - ロールバックチェックポイントの読み込み
-   - 元の状態の復元
-   - 部分的な移行のクリーンアップ
-   - ロールバック完了の検証
-   - ロールバックレポートの生成
+   ### Rollback Action
+   - Load rollback checkpoint
+   - Restore original state
+   - Clean up partial migrations
+   - Verify rollback completion
+   - Generate rollback report
 
-## 使用方法
+## Usage
 ```bash
 migration-assistant [action] [options]
 ```
 
-## アクション
-- `plan` - 移行プランの作成
-- `analyze` - 移行範囲の評価
-- `migrate` - 移行の実行
-- `verify` - 移行結果の検証
-- `rollback` - 移行のロールバック
+## Actions
+- `plan` - Create migration plan
+- `analyze` - Assess migration scope
+- `migrate` - Execute migration
+- `verify` - Validate migration results
+- `rollback` - Revert migration
 
-## オプション
-- `--source <repo>` - ソースリポジトリ（owner/repo）
-- `--target <repo>` - ターゲットリポジトリ（owner/repo）
-- `--scope <items>` - 移行するアイテム（all/issues/prs/projects/discussions/releases）
-- `--dry-run` - 移行のシミュレーション
-- `--parallel <n>` - 並列処理スレッド数
-- `--checkpoint` - チェックポイント回復を有効化
-- `--mapping-file <path>` - カスタムフィールドマッピング
-- `--preserve-ids` - 参照IDの維持
-- `--archive-source` - 移行後のアーカイブ
+## Options
+- `--source <system>` - Source system (github/linear)
+- `--target <system>` - Target system (github/linear)
+- `--scope <items>` - Items to migrate (all/issues/prs/projects)
+- `--dry-run` - Simulate migration
+- `--parallel <n>` - Parallel processing threads
+- `--checkpoint` - Enable checkpoint recovery
+- `--mapping-file <path>` - Custom field mappings
+- `--preserve-ids` - Maintain reference IDs
+- `--archive-source` - Archive after migration
 
-## 例
+## Examples
 ```bash
-# リポジトリ移行の計画
-migration-assistant plan --source owner/old-repo --target owner/new-repo
+# Plan GitHub to Linear migration
+migration-assistant plan --source github --target linear
 
-# 移行範囲の分析
-migration-assistant analyze --scope all --source owner/repo
+# Analyze migration scope
+migration-assistant analyze --scope all
 
-# ドライラン移行
+# Dry run migration
 migration-assistant migrate --dry-run --parallel 4
 
-# チェックポイント付きで移行実行
+# Execute migration with checkpoints
 migration-assistant migrate --checkpoint --backup
 
-# 移行完了の検証
+# Verify migration completeness
 migration-assistant verify --deep-check
 
-# 必要時のロールバック
+# Rollback if needed
 migration-assistant rollback --transaction-id 12345
 ```
 
-## 移行フェーズ
+## Migration Phases
 
-### 1. 計画フェーズ
-- ソースデータのインベントリ
-- データ構造のマッピング
-- 非互換性の特定
-- 移行時間の見積もり
-- 移行計画の生成
+### 1. Planning Phase
+- Inventory source data
+- Map data structures
+- Identify incompatibilities
+- Estimate migration time
+- Generate migration plan
 
-### 2. 準備フェーズ
-- 完全バックアップの作成
-- 権限の検証
-- ターゲット構造の設定
-- マッピングの設定
-- 接続性のテスト
+### 2. Preparation Phase
+- Create full backup
+- Validate permissions
+- Set up target structure
+- Configure mappings
+- Test connectivity
 
-### 3. 移行フェーズ
-- バッチ単位でのデータ転送
-- 関係性の維持
-- メタデータの保持
-- 添付ファイルの処理
-- 参照の更新
+### 3. Migration Phase
+- Transfer data in batches
+- Maintain relationships
+- Preserve metadata
+- Handle attachments
+- Update references
 
-### 4. 検証フェーズ
-- レコード数の比較
-- データ整合性の検証
-- 関係性のチェック
-- 添付ファイルの検証
-- 機能のテスト
+### 4. Verification Phase
+- Compare record counts
+- Validate data integrity
+- Check relationships
+- Verify attachments
+- Test functionality
 
-### 5. 最終化フェーズ
-- ドキュメントの更新
-- Webhookのリダイレクト
-- ソースデータのアーカイブ
-- レポートの生成
-- ユーザーの訓練
+### 5. Finalization Phase
+- Update documentation
+- Redirect webhooks
+- Archive source data
+- Generate reports
+- Train users
 
-## データマッピング設定
+## Data Mapping Configuration
 ```yaml
 mappings:
-  github_to_github:
+  github_to_linear:
     issue:
       title: title
-      body: body
-      state: state
+      body: description
+      state: status
       labels: labels
-      milestone: milestone
+      milestone: cycle
       assignees: assignees
     
-    project:
-      name: name
-      description: description
-      columns: columns
-      cards: items
-      
     custom_fields:
-      - source: "project.status"
-        target: "project_v2.status"
-        transform: "map_status"
+      - source: "custom.priority"
+        target: "priority"
+        transform: "map_priority"
       
     relationships:
-      - type: "issue-project"
-        source: "project_card"
-        target: "project_item"
+      - type: "parent-child"
+        source: "depends_on"
+        target: "parent"
+    
+  linear_to_github:
+    issue:
+      title: title
+      description: body
+      status: state
+      priority: labels
+      cycle: milestone
 ```
 
-## 移行安全機能
+## Migration Safety Features
 
-### 移行前チェック
-- ストレージ容量の検証
-- APIレート制限の評価
-- 権限の検証
-- 依存関係のチェック
-- 競合の検出
+### Pre-Migration Checks
+- Storage capacity verification
+- API rate limit assessment
+- Permission validation
+- Dependency checking
+- Conflict detection
 
-### 移行中
-- トランザクションログ記録
-- 進捗追跡
-- エラー回復
-- チェックポイント作成
-- パフォーマンス監視
+### During Migration
+- Transaction logging
+- Progress tracking
+- Error recovery
+- Checkpoint creation
+- Performance monitoring
 
-### 移行後
-- データ検証
-- 整合性チェック
-- パフォーマンステスト
-- ユーザー受け入れ
-- ロールバック準備
+### Post-Migration
+- Data verification
+- Integrity checking
+- Performance testing
+- User acceptance
+- Rollback readiness
 
-## チェックポイント回復
+## Checkpoint Recovery
 ```json
 {
   "checkpoint": {
@@ -218,77 +220,69 @@ mappings:
 }
 ```
 
-## ロールバック機能
-- ポイントインタイム回復
-- 選択的ロールバック
-- 関係性の保持
-- 監査証跡の維持
-- データ損失ゼロ保証
+## Rollback Capabilities
+- Point-in-time recovery
+- Selective rollback
+- Relationship preservation
+- Audit trail maintenance
+- Zero data loss guarantee
 
-## パフォーマンス最適化
-- バッチ処理
-- 並列転送
-- API呼び出し最適化
-- キャッシュ戦略
-- リソース監視
+## Performance Optimization
+- Batch processing
+- Parallel transfers
+- API call optimization
+- Caching strategies
+- Resource monitoring
 
-## 移行レポート
-- エグゼクティブサマリー
-- 詳細なアイテムマッピング
-- エラー分析
-- パフォーマンスメトリクス
-- 推奨事項リスト
+## Migration Reports
+- Executive summary
+- Detailed item mapping
+- Error analysis
+- Performance metrics
+- Recommendation list
 
-## 一般的な移行シナリオ
+## Common Migration Scenarios
 
-### リポジトリ統合
-1. 複数のリポジトリを1つに統合
-2. Issueを結合し参照を保持
-3. プロジェクトボードとワークフローを統合
-4. ドキュメントとWikiを統合
-5. チーム権限と設定を統一
+### GitHub Issues → Linear
+1. Map GitHub labels to Linear labels/projects
+2. Convert milestones to cycles
+3. Preserve issue numbers as references
+4. Migrate comments with user mapping
+5. Handle attachments and images
 
-### リポジトリ分割
-1. 特定のコンポーネントを新しいリポジトリに抽出
-2. ラベルやコンポーネントでIssueをフィルタ
-3. 機能領域でプロジェクトボードを分割
-4. 関連ファイルのコミット履歴を保持
-5. 相互参照とリンクを更新
+### Linear → GitHub Issues
+1. Map Linear statuses to GitHub states
+2. Convert cycles to milestones
+3. Preserve Linear IDs in issue body
+4. Map Linear projects to labels
+5. Handle custom fields
 
-### 組織移行
-1. 組織間でリポジトリを移動
-2. チームメンバーシップと権限を転送
-3. 組織レベルのプロジェクトを移行
-4. WebhookとIntegrationを更新
-5. コラボレーション履歴を保持
+## Required MCP Servers
+- mcp-server-github
+- mcp-server-linear
 
-## 必要な依存関係
-- 適切な認証を行ったGitHub CLI（gh）
-- リポジトリアクセス権限を持つGit
-- 適切なスコープを持つGitHub APIトークン
+## Error Handling
+- Automatic retry with backoff
+- Detailed error logging
+- Partial failure recovery
+- Manual intervention points
+- Comprehensive error reports
 
-## エラーハンドリング
-- バックオフ付き自動リトライ
-- 詳細なエラーログ記録
-- 部分的な失敗回復
-- 手動介入ポイント
-- 包括的なエラーレポート
+## Best Practices
+- Always run analysis first
+- Use dry-run for testing
+- Migrate in phases for large datasets
+- Maintain communication with team
+- Keep source data until verified
+- Document custom mappings
+- Test rollback procedures
 
-## ベストプラクティス
-- 常に最初に分析を実行
-- テストにはドライランを使用
-- 大規模データセットは段階的に移行
-- チームとのコミュニケーションを維持
-- 検証完了まではソースデータを保持
-- カスタムマッピングを文書化
-- ロールバック手順をテスト
+## Compliance & Audit
+- Full audit trail
+- Data retention compliance
+- Privacy preservation
+- Change authorization
+- Migration certification
 
-## コンプライアンスと監査
-- 完全な監査証跡
-- データ保持コンプライアンス
-- プライバシー保護
-- 変更認可
-- 移行認証
-
-## 注記
-このコマンドは、バックアップ、ログ、ドキュメントを含む完全なGitHub移行パッケージを作成します。中断が発生した場合、チェックポイントから移行を再開できます。すべての移行は、GitHubの組み込み機能を使用して保持期間内で元に戻すことができます。
+## Notes
+This command creates a complete migration package including backups, logs, and documentation. The migration can be resumed from checkpoints in case of interruption. All migrations are reversible within the retention period.

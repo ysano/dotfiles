@@ -1,424 +1,328 @@
-# レトロスペクティブアナライザー
+# Retrospective Analyzer
 
-GitHub Projects V2、Issues、PR、Actionsのメトリクスを分析し、改善のためのパターンを特定することで、データ駆動の洞察とアクションアイテムでスプリントレトロスペクティブを促進します。
+Analyze team retrospectives for insights
 
-## 実行手順
+## Instructions
 
-1. **レトロスペクティブの設定**
-   - 分析するスプリント/マイルストーンの特定（デフォルト：最新）
-   - GitHub Projects V2、APIアクセスの確認
-   - レトロスペクティブ形式の設定
-   - 分析時間範囲の設定
+1. **Retrospective Setup**
+   - Identify sprint to analyze (default: most recent)
+   - Check Linear MCP connection for sprint data
+   - Define retrospective format preference
+   - Set analysis time range
 
-2. **スプリントデータ収集**
+2. **Sprint Data Collection**
 
-#### 定量的メトリクス
+#### Quantitative Metrics
 ```
-GitHub Projects V2/Issuesから：
-- 計画対完了Issues数
-- スプリントベロシティとキャパシティ
-- Issueサイクルタイムとリードタイム
-- バグラベルのIssues数
-- 計画外Issueの割合
+From Linear/Project Management:
+- Planned vs completed story points
+- Sprint velocity and capacity
+- Cycle time and lead time
+- Escaped defects count
+- Unplanned work percentage
 
-Git/GitHubから：
-- コミット頻度と分布
-- PRマージ時間統計
-- コードレビューのターンアラウンド
-- GitHub Actions成功率
-- デプロイ頻度と成功率
-
-GitHub Actions/Workflowsから：
-- CI/CDパイプライン実行時間
-- テストカバレッジトレンド
-- ワークフロー失敗率
-- デプロイメント頻度
+From Git/GitHub:
+- Commit frequency and distribution
+- PR merge time statistics  
+- Code review turnaround
+- Build success rate
+- Deployment frequency
 ```
 
-#### 定性データソース
+#### Qualitative Data Sources
 ```
-1. PRレビューコメントの感情
-2. コミットメッセージパターン
-3. GitHub Discussions/Issuesコメント
-4. 前回のレトロスペクティブアクションアイテム
-5. GitHub Issuesのバグレポートトレンド
-6. GitHub Actionsログエラーパターン
-7. Slack会話（利用可能な場合）
+1. PR review comments sentiment
+2. Commit message patterns
+3. Slack conversations (if available)
+4. Previous retrospective action items
+5. Support ticket trends
 ```
 
-3. **自動分析**
+3. **Automated Analysis**
 
-#### スプリントパフォーマンス分析
+#### Sprint Performance Analysis
 ```markdown
-# スプリント[名前] レトロスペクティブ分析
+# Sprint [Name] Retrospective Analysis
 
-## スプリント概要
-- 期間: [開始] から [終了]
-- チームサイズ: [人数] 名
-- スプリント目標: [説明]
-- 目標達成度: [達成/部分達成/未達成]
+## Sprint Overview
+- Duration: [Start] to [End]
+- Team Size: [Number] members
+- Sprint Goal: [Description]
+- Goal Achievement: [Yes/Partial/No]
 
-## 主要メトリクス要約
+## Key Metrics Summary
 
-### デリバリーメトリクス
-| メトリクス | 目標 | 実績 | 差異 |
-|----------|------|------|------|
-| ベロシティ | [X] pts | [Y] pts | [+/-Z]% |
-| 完了率 | 90% | [X]% | [+/-Y]% |
-| 欠陥率 | <5% | [X]% | [+/-Y]% |
-| 計画外作業 | <20% | [X]% | [+/-Y]% |
+### Delivery Metrics
+| Metric | Target | Actual | Variance |
+|--------|--------|--------|----------|
+| Velocity | [X] pts | [Y] pts | [+/-Z]% |
+| Completion Rate | 90% | [X]% | [+/-Y]% |
+| Defect Rate | <5% | [X]% | [+/-Y]% |
+| Unplanned Work | <20% | [X]% | [+/-Y]% |
 
-### プロセスメトリクス
-| メトリクス | 今回スプリント | 前回 | トレンド |
-|----------|--------------|------|--------|
-| 平均PRレビュー時間 | [X] 時間 | [Y] 時間 | [↑/↓] |
-| 平均サイクルタイム | [X] 日 | [Y] 日 | [↑/↓] |
-| CI/CD成功率 | [X]% | [Y]% | [↑/↓] |
-| チーム幸福度 | [X]/5 | [Y]/5 | [↑/↓] |
+### Process Metrics
+| Metric | This Sprint | Previous | Trend |
+|--------|-------------|----------|-------|
+| Avg PR Review Time | [X] hrs | [Y] hrs | [↑/↓] |
+| Avg Cycle Time | [X] days | [Y] days | [↑/↓] |
+| CI/CD Success Rate | [X]% | [Y]% | [↑/↓] |
+| Team Happiness | [X]/5 | [Y]/5 | [↑/↓] |
 ```
 
-#### パターン認識
+#### Pattern Recognition
 ```markdown
-## 特定されたパターン
+## Identified Patterns
 
-### ポジティブなパターン 🟢
-1. **コードレビュー速度の改善**
-   - 平均レビュー時間が30%短縮
-   - 新しいレビューガイドラインとの相関
-   - 推奨事項: プロセスを文書化し維持
+### Positive Patterns 🟢
+1. **Improved Code Review Speed**
+   - Average review time decreased by 30%
+   - Correlation with new review guidelines
+   - Recommendation: Document and maintain process
 
-2. **一貫した日々の進捗**
-   - スプリント期間を通して均等なコミット分布
-   - 最後の駆け込みなし
-   - 良好なスプリント計画を示している
+2. **Consistent Daily Progress**
+   - Even commit distribution throughout sprint
+   - No last-minute rush
+   - Indicates good sprint planning
 
-### 懸念すべきパターン 🔴
-1. **月曜日のデプロイ失敗**
-   - 失敗したデプロイの60%が月曜日
-   - 可能性のある原因: 週末の変更がテストされていない
-   - アクション: 月曜日朝のチェックを実装
+### Concerning Patterns 🔴
+1. **Monday Deploy Failures**
+   - 60% of failed deployments on Mondays
+   - Possible cause: Weekend changes not tested
+   - Action: Implement Monday morning checks
 
-2. **スコープクリープの増加**
-   - 計画外作業が35%（20%から増加）
-   - 原因: 緊急顧客要求
-   - アクション: スプリントコミットプロセスを見直し
+2. **Increasing Scope Creep**
+   - 35% unplanned work (up from 20%)
+   - Source: Urgent customer requests
+   - Action: Review sprint commitment process
 ```
 
-4. **インタラクティブレトロスペクティブ促進**
+4. **Interactive Retrospective Facilitation**
 
-#### レトロスペクティブ前レポート
+#### Pre-Retrospective Report
 ```markdown
-# レトロスペクティブ前の洞察
+# Pre-Retrospective Insights
 
-## データ駆動ディスカッショントピック
+## Data-Driven Discussion Topics
 
-### 1. うまくいったこと 
-データに基づくと、これらの領域で改善が見られました:
-- ✅ コードレビュー効率 (+30%)
-- ✅ テストカバレッジ増加 (+5%)
-- ✅ 本番環境での重要なバグゼロ
-- ✅ 全チームメンバーが均等に貢献
+### 1. What Went Well 
+Based on the data, these areas showed improvement:
+- ✅ Code review efficiency (+30%)
+- ✅ Test coverage increase (+5%)
+- ✅ Zero critical bugs in production
+- ✅ All team members contributed evenly
 
-**推奨ディスカッション質問:**
-- レビューを速くした具体的な変更は何ですか?
-- 重要なバグゼロを維持するにはどうすればよいですか?
-- 作業分散を成功させた要因は何ですか?
+**Suggested Discussion Questions:**
+- What specific changes led to faster reviews?
+- How can we maintain zero critical bugs?
+- What made work distribution successful?
 
-### 2. うまくいかなかったこと
-データはこれらの領域で課題を示しています:
-- ❌ スプリントベロシティの未達成 (-15%)
-- ❌ 高い計画外作業 (35%)
-- ❌ 3回のロールバックが必要
-- ❌ チーム残業時間の増加
+### 2. What Didn't Go Well
+Data indicates challenges in these areas:
+- ❌ Sprint velocity miss (-15%)
+- ❌ High unplanned work (35%)
+- ❌ 3 rollbacks required
+- ❌ Team overtime increased
 
-**推奨ディスカッション質問:**
-- ベロシティ未達成の原因は何でしたか?
-- 計画外作業をより良く処理するにはどうすればよいですか?
-- ロールバックの原因は何でしたか?
+**Suggested Discussion Questions:**
+- What caused the velocity miss?
+- How can we better handle unplanned work?
+- What led to the rollbacks?
 
-### 3. データからのアクションアイテム
-パターンに基づく推奨改善:
-1. より安全なデプロイのためのフィーチャーフラグを実装
-2. スプリント計画で計画外作業予算を作成
-3. [問題領域]の統合テストを追加
-4. スプリント中間チェックインをスケジュール
+### 3. Action Items from Data
+Recommended improvements based on patterns:
+1. Implement feature flags for safer deployments
+2. Create unplanned work budget in sprint planning
+3. Add integration tests for [problem area]
+4. Schedule mid-sprint check-ins
 ```
 
-#### ライブレトロスペクティブサポート
+#### Live Retrospective Support
 ```
-レトロスペクティブ中に、以下でサポートできます:
+During the retrospective, I can help with:
 
-1. **事実確認**: 
-   「実際のベロシティは50ポイントではなく45ポイントでした」
+1. **Fact Checking**: 
+   "Actually, our velocity was 45 points, not 50"
 
-2. **パターンコンテキスト**:
-   「月曜日のデプロイ問題があるのは3回目のスプリントです」
+2. **Pattern Context**:
+   "This is the 3rd sprint with Monday deploy issues"
 
-3. **履歴比較**:
-   「前回似たような問題があった時はXを試しました」
+3. **Historical Comparison**:
+   "Last time we had similar issues, we tried X"
 
-4. **アクションアイテム追跡**:
-   「前回のレトロから6個中4個のアクションアイテムを完了しました」
+4. **Action Item Tracking**:
+   "From last retro, we completed 4/6 action items"
 ```
 
-5. **レトロスペクティブ出力フォーマット**
+5. **Retrospective Output Formats**
 
-#### 標準レトロスペクティブ要約
+#### Standard Retrospective Summary
 ```markdown
-# スプリント[X] レトロスペクティブ要約
+# Sprint [X] Retrospective Summary
 
-## 参加者
-[参加者リスト]
+## Participants
+[List of attendees]
 
-## うまくいったこと
-- [投票数付きカテゴリ化リスト]
-- サポートデータ: [メトリクス]
+## What Went Well
+- [Categorized list with vote counts]
+- Supporting data: [Metrics]
 
-## うまくいかなかったこと  
-- [投票数付きカテゴリ化リスト]
-- 根本原因分析: [詳細]
+## What Didn't Go Well  
+- [Categorized list with vote counts]
+- Root cause analysis: [Details]
 
-## アクションアイテム
-| アクション | 担当者 | 期限 | 成功基準 |
-|----------|-------|------|----------|
-| [アクション1] | [名前] | [日付] | [測定可能な成果] |
-| [アクション2] | [名前] | [日付] | [測定可能な成果] |
+## Action Items
+| Action | Owner | Due Date | Success Criteria |
+|--------|-------|----------|------------------|
+| [Action 1] | [Name] | [Date] | [Measurable outcome] |
+| [Action 2] | [Name] | [Date] | [Measurable outcome] |
 
-## 次スプリントの実験
-1. [実験説明]
-   - 仮説: [期待すること]
-   - 測定: [どう知るか]
-   - レビュー日: [いつ評価するか]
+## Experiments for Next Sprint
+1. [Experiment description]
+   - Hypothesis: [What we expect]
+   - Measurement: [How we'll know]
+   - Review date: [When to assess]
 
-## チームヘルスパルス
-- エネルギーレベル: [評価]/5
-- 明確さ: [評価]/5
-- 自信: [評価]/5
-- キーコート: "[注目すべきチーム感情]"
+## Team Health Pulse
+- Energy Level: [Rating]/5
+- Clarity: [Rating]/5
+- Confidence: [Rating]/5
+- Key Quote: "[Notable team sentiment]"
 ```
 
-#### トレンド分析レポート
+#### Trend Analysis Report
 ```markdown
-# レトロスペクティブトレンド分析
+# Retrospective Trends Analysis
 
-## 繰り返しテーマ（過去5スプリント）
+## Recurring Themes (Last 5 Sprints)
 
-### 継続的な課題
-1. **デプロイメント問題** (5スプリント中4回)
-   - 根本原因が未解決
-   - エスカレーション推奨
+### Persistent Challenges
+1. **Deployment Issues** (4/5 sprints)
+   - Root cause still unresolved
+   - Recommended escalation
 
-2. **見積もり精度** (5スプリント中5回)
-   - 一貫して20%の超過
-   - 体系的なアプローチが必要
+2. **Estimation Accuracy** (5/5 sprints)
+   - Consistent 20% overrun
+   - Needs systematic approach
 
-### 改善中の領域
-1. **コミュニケーション** (3スプリント連続改善)
-2. **コード品質** (安定した改善)
+### Improving Areas
+1. **Communication** (Improving for 3 sprints)
+2. **Code Quality** (Steady improvement)
 
-### 成功パターン
-1. **ペアプログラミング** (5回中5回でポジティブに言及)
-2. **デイリースタンドアップ** (効果的なフォーマットを発見)
+### Success Patterns
+1. **Pair Programming** (Mentioned positively 5/5)
+2. **Daily Standups** (Effective format found)
 ```
 
-6. **アクションアイテム生成**
+6. **Action Item Generation**
 
-#### スマートアクションアイテム
+#### Smart Action Items
 ```
-レトロスペクティブディスカッションに基づく、SMARTアクションアイテム:
+Based on retrospective discussion, here are SMART action items:
 
-1. **デプロイ失敗の削減**
-   - 具体的: 月曜日デプロイ用のスモークテストを実装
-   - 測定可能: 失敗率<5%
-   - 割り当て可能: DevOpsチーム
-   - 関連性: 失敗の60%に対処
-   - 期限: 次スプリントまで
+1. **Reduce Deploy Failures**
+   - Specific: Implement smoke tests for Monday deploys
+   - Measurable: <5% failure rate
+   - Assignable: DevOps team
+   - Relevant: Addresses 60% of failures
+   - Time-bound: By next sprint
 
-2. **見積もり改善**
-   - 具体的: 全ストーリーでプランニングポーカーを使用
-   - 測定可能: 見積もりからの差異<20%
-   - 割り当て可能: スクラムマスターが促進
-   - 関連性: ベロシティ未達に対処
-   - 期限: 次スプリント計画から開始
-```
-
-## エラーハンドリング
-
-### GitHub Projectsデータなし
-```
-"GitHub Projects V2アクセスが制限されています。GitデータとIssuesのみを使用します。
-
-不足している洞察：
-- Projects V2のカスタムフィールド分析
-- プロジェクトレベルのメトリクス
-- チームキャパシティデータ
-
-以下のいずれかを希望しますか：
-1. GitとIssuesデータのみで続行
-2. スプリントメトリクスを手動入力
-3. GitHub Projects V2権限を設定して再試行"
+2. **Improve Estimation**
+   - Specific: Use planning poker for all stories
+   - Measurable: <20% variance from estimates
+   - Assignable: Scrum Master facilitates
+   - Relevant: Addresses velocity misses
+   - Time-bound: Start next sprint planning
 ```
 
-### 未完了スプリント
+## Error Handling
+
+### No Linear Data
 ```
-"スプリントが進行中のようです。
+"Linear MCP not connected. Using git data only.
 
-現在の分析基準：
-- 全[Y]日中[X]日
-- 作業完了率[Z]%
+Missing insights:
+- Story point analysis
+- Task-level metrics
+- Team capacity data
 
-推奨事項: スプリント終了後に完全分析を実行
-部分分析で続行しますか？ [Y/N]"
+Would you like to:
+1. Proceed with git data only
+2. Manually input sprint metrics
+3. Connect Linear and retry"
 ```
 
-## 高度な機能
+### Incomplete Sprint
+```
+"Sprint appears to be in progress. 
 
-### 感情分析
+Current analysis based on:
+- [X] days of [Y] total
+- [Z]% work completed
+
+Recommendation: Run full analysis after sprint ends
+Proceed with partial analysis? [Y/N]"
+```
+
+## Advanced Features
+
+### Sentiment Analysis
 ```python
-# PRコメントとコミットメッセージを分析
+# Analyze PR comments and commit messages
 sentiment_indicators = {
     'positive': ['fixed', 'improved', 'resolved', 'great'],
     'negative': ['bug', 'issue', 'broken', 'failed', 'frustrated'],
     'neutral': ['updated', 'changed', 'modified']
 }
 
-# 感情レポートを生成
-"チーム感情分析:
-- ポジティブ指標: 65%
-- ネガティブ指標: 25%  
-- 中立: 10%
+# Generate sentiment report
+"Team Sentiment Analysis:
+- Positive indicators: 65%
+- Negative indicators: 25%  
+- Neutral: 10%
 
-トレンド: 前スプリントから改善（55%ポジティブでした）"
+Trend: Improving from last sprint (was 55% positive)"
 ```
 
-### 予測洞察
+### Predictive Insights
 ```
-"現在のパターンに基づいて:
+"Based on current patterns:
 
-⚠️ リスク予測:
-- 計画外作業が続く場合のベロシティ未達確率70%
-- 介入なしではデプロイ失敗が増加する可能性
+⚠️ Risk Predictions:
+- 70% chance of velocity miss if unplanned work continues
+- Deploy failures likely to increase without intervention
 
-💡 機会予測:
-- 提案されたプロセス変更で15%のベロシティ向上が可能
-- 作業負荷のバランス調整でチーム幸福度向上の可能性"
+💡 Opportunity Predictions:
+- 15% velocity gain possible with proposed process changes
+- Team happiness likely to improve with workload balancing"
 ```
 
-### 実験追跡
+### Experiment Tracking
 ```
-"過去の実験結果:
+"Previous Experiments Results:
 
-1. 'ミーティングなし金曜日' (スプリント12-14)
-   - 結果: 生産性20%向上
-   - 推奨事項: 恒久化
+1. 'No Meeting Fridays' (Sprint 12-14)
+   - Result: 20% productivity increase
+   - Recommendation: Make permanent
 
-2. '複雑タスクでのペアプログラミング' (スプリント15)
-   - 結果: 欠陥50%減少
-   - 推奨事項: ガイドライン付きで継続"
+2. 'Pair Programming for Complex Tasks' (Sprint 15)
+   - Result: 50% fewer defects
+   - Recommendation: Continue with guidelines"
 ```
 
 ## Integration Options
 
-1. **GitHub Issues**: アクションアイテムをIssuesとして作成
-2. **GitHub Projects V2**: レトロスペクティブアイテムをプロジェクトに追加
-3. **GitHub Discussions**: チームディスカッション投稿
-4. **GitHub Actions**: レトロスペクティブレポート自動生成
-5. **Slack**: チームチャンネルに概要投稿
-6. **GitHub Pages**: フォーマットされたレトロスペクティブページをエクスポート
-7. **Calendar**: アクションアイテムチェックインをスケジュール
+1. **Linear**: Create action items as tasks
+2. **Slack**: Post summary to team channel
+3. **Confluence**: Export formatted retrospective page
+4. **GitHub**: Create issues for technical debt items
+5. **Calendar**: Schedule action item check-ins
 
-## GitHub Actions統合
+## Best Practices
 
-### 自動レトロスペクティブワークフロー
-```yaml
-# .github/workflows/retrospective.yml
-name: Automated Retrospective Analysis
-on:
-  schedule:
-    - cron: '0 16 * * 5'  # 毎週金曜日16時
-  workflow_dispatch:
-    inputs:
-      sprint_number:
-        description: 'Sprint/Milestone Number'
-        required: false
-
-jobs:
-  retrospective-analysis:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Collect Sprint Data
-        run: |
-          # Get closed issues from last sprint
-          gh issue list --state closed --milestone "${{ github.event.inputs.sprint_number || 'current' }}" --json number,title,closedAt,labels,assignees
-          
-          # Get merged PRs
-          gh pr list --state merged --json number,title,mergedAt,additions,deletions,reviewDecision
-          
-          # Get workflow runs
-          gh api /repos/${{ github.repository }}/actions/runs --jq '.workflow_runs[] | select(.created_at > "'$(date -d '2 weeks ago' --iso-8601)'")'
-
-      - name: Generate Retrospective Report
-        run: |
-          # Analyze data and generate insights
-          echo "## Sprint Retrospective Analysis" > retrospective.md
-          echo "Date: $(date)" >> retrospective.md
-          # Add analysis logic here
-
-      - name: Create Issues for Action Items
-        run: |
-          # Create GitHub Issues for identified action items
-          gh issue create --title "Retrospective Action: Improve CI/CD Pipeline" --body "Based on retrospective analysis..." --label "retrospective,improvement"
-
-      - name: Update Project Board
-        run: |
-          # Add retrospective items to project
-          gh project item-create --owner ${{ github.repository_owner }} --number 1 --title "Sprint Retrospective Completed"
-```
-
-### メトリクス収集スクリプト
-```bash
-#!/bin/bash
-# collect-metrics.sh - GitHub レトロスペクティブメトリクス収集
-
-REPO_OWNER="${1:-$(gh repo view --json owner --jq .owner.login)}"
-REPO_NAME="${2:-$(gh repo view --json name --jq .name)}"
-DAYS_BACK="${3:-14}"
-
-echo "Collecting retrospective metrics for $REPO_OWNER/$REPO_NAME (last $DAYS_BACK days)"
-
-# Issue metrics
-echo "## Issue Metrics"
-gh issue list --state closed --search "closed:>$(date -d "$DAYS_BACK days ago" --iso-8601)" --json number,title,closedAt,labels --jq '
-  group_by(.labels[].name) | 
-  map({label: .[0].labels[0].name, count: length}) |
-  sort_by(.count) | reverse'
-
-# PR metrics  
-echo "## Pull Request Metrics"
-gh pr list --state merged --search "merged:>$(date -d "$DAYS_BACK days ago" --iso-8601)" --json number,title,mergedAt,additions,deletions,comments --jq '
-  {
-    total_prs: length,
-    total_additions: map(.additions) | add,
-    total_deletions: map(.deletions) | add,
-    avg_comments: (map(.comments | length) | add / length)
-  }'
-
-# Actions metrics
-echo "## GitHub Actions Metrics"
-gh api "/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=100" --jq '
-  .workflow_runs[] | 
-  select(.created_at > "'$(date -d "$DAYS_BACK days ago" --iso-8601)'") |
-  {name: .name, status: .status, conclusion: .conclusion, run_started_at: .run_started_at}'
-```
-
-## ベストプラクティス
-
-1. **議論前のデータ**: まずメトリクスを確認
-2. **パターンに焦点**: 繰り返しテーマを探す
-3. **アクション指向**: すべての洞察にアクションが必要
-4. **時間制限**: レトロスペクティブの焦点を維持
-5. **フォローアップ**: アクションアイテム完了を追跡
-6. **成功を祝う**: 改善を認める
-7. **安全な場**: 正直なフィードバックを促す
-8. **収集の自動化**: 一貫したデータ収集にGitHub Actionsを使用
-9. **バージョン管理洞察**: 追跡のためレトロスペクティブ出力をリポジトリに保存
+1. **Data Before Discussion**: Review metrics first
+2. **Focus on Patterns**: Look for recurring themes
+3. **Action-Oriented**: Every insight needs action
+4. **Time-boxed**: Keep retrospective focused
+5. **Follow-up**: Track action item completion
+6. **Celebrate Wins**: Acknowledge improvements
+7. **Safe Space**: Encourage honest feedback

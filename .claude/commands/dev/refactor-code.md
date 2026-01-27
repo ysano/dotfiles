@@ -1,116 +1,116 @@
-# コードリファクタリングコマンド
+# Intelligently Refactor and Improve Code Quality
 
-機能を保持しながら保守性、パフォーマンス、可読性を向上させるために安全にコードをリファクタリングします。
+Intelligently refactor and improve code quality
 
-## 実行手順
+## Instructions
 
-コードをリファクタリングするための体系的なアプローチに従う: **$ARGUMENTS**
+Follow this systematic approach to refactor code: **$ARGUMENTS**
 
-1. **リファクタリング前分析**
-   - リファクタリングが必要なコードとその理由を特定
-   - 現在の機能と動作を完全に理解
-   - 既存のテストとドキュメントの確認
-   - すべての依存関係と使用ポイントの特定
+1. **Pre-Refactoring Analysis**
+   - Identify the code that needs refactoring and the reasons why
+   - Understand the current functionality and behavior completely
+   - Review existing tests and documentation
+   - Identify all dependencies and usage points
 
-2. **テストカバレッジ検証**
-   - リファクタリング対象コードに包括的なテストカバレッジが存在することを確認
-   - テストが不足している場合は、リファクタリング開始前に作成
-   - すべてのテストを実行してベースラインを確立
-   - 必要に応じて追加テストで現在の動作を文書化
+2. **Test Coverage Verification**
+   - Ensure comprehensive test coverage exists for the code being refactored
+   - If tests are missing, write them BEFORE starting refactoring
+   - Run all tests to establish a baseline
+   - Document current behavior with additional tests if needed
 
-3. **リファクタリング戦略**
-   - リファクタリングの明確な目標を定義（パフォーマンス、可読性、保守性）
-   - 適切なリファクタリング技法を選択:
-     - メソッド/関数の抽出
-     - クラス/コンポーネントの抽出
-     - 変数/メソッドの名前変更
-     - メソッド/フィールドの移動
-     - ポリモーフィズムによる条件分岐の置換
-     - デッドコードの除去
-   - 小さな増分ステップでリファクタリングを計画
+3. **Refactoring Strategy**
+   - Define clear goals for the refactoring (performance, readability, maintainability)
+   - Choose appropriate refactoring techniques:
+     - Extract Method/Function
+     - Extract Class/Component
+     - Rename Variable/Method
+     - Move Method/Field
+     - Replace Conditional with Polymorphism
+     - Eliminate Dead Code
+   - Plan the refactoring in small, incremental steps
 
-4. **環境セットアップ**
-   - 新しいブランチを作成: `git checkout -b refactor/$ARGUMENTS`
-   - 開始前にすべてのテストが成功することを確認
-   - 必要な追加ツール（プロファイラー、アナライザー）をセットアップ
+4. **Environment Setup**
+   - Create a new branch: `git checkout -b refactor/$ARGUMENTS`
+   - Ensure all tests pass before starting
+   - Set up any additional tooling needed (profilers, analyzers)
 
-5. **段階的リファクタリング**
-   - 一度に小さく焦点を絞った変更を実施
-   - 各変更後にテストを実行して何も壊れていないことを確認
-   - 動作する変更を説明的なメッセージで頻繁にコミット
-   - 安全性のため利用可能な場合はIDEリファクタリングツールを使用
+5. **Incremental Refactoring**
+   - Make small, focused changes one at a time
+   - Run tests after each change to ensure nothing breaks
+   - Commit working changes frequently with descriptive messages
+   - Use IDE refactoring tools when available for safety
 
-6. **コード品質改善**
-   - 明確性のための命名規則を改善
-   - コードの重複を排除（DRY原則）
-   - 複雑な条件ロジックを簡素化
-   - メソッド/関数の長さと複雑さを削減
-   - 関心の分離を改善
+6. **Code Quality Improvements**
+   - Improve naming conventions for clarity
+   - Eliminate code duplication (DRY principle)
+   - Simplify complex conditional logic
+   - Reduce method/function length and complexity
+   - Improve separation of concerns
 
-7. **パフォーマンス最適化**
-   - パフォーマンスのボトルネックを特定し排除
-   - アルゴリズムとデータ構造を最適化
-   - 不要な計算を削減
-   - メモリ使用パターンを改善
+7. **Performance Optimizations**
+   - Identify and eliminate performance bottlenecks
+   - Optimize algorithms and data structures
+   - Reduce unnecessary computations
+   - Improve memory usage patterns
 
-8. **デザインパターンの適用**
-   - 有益な場合に適切なデザインパターンを適用
-   - 抽象化とカプセル化を改善
-   - モジュール性と再利用性を向上
-   - コンポーネント間の結合を削減
+8. **Design Pattern Application**
+   - Apply appropriate design patterns where beneficial
+   - Improve abstraction and encapsulation
+   - Enhance modularity and reusability
+   - Reduce coupling between components
 
-9. **エラーハンドリング改善**
-   - エラーハンドリングアプローチを標準化
-   - エラーメッセージとログを改善
-   - 適切な例外処理を追加
-   - 回復力と耐障害性を向上
+9. **Error Handling Improvement**
+   - Standardize error handling approaches
+   - Improve error messages and logging
+   - Add proper exception handling
+   - Enhance resilience and fault tolerance
 
-10. **ドキュメント更新**
-    - 変更を反映するためコードコメントを更新
-    - インターフェースが変更された場合はAPIドキュメントを改訂
-    - インラインドキュメントと例を更新
-    - コメントが正確で有用であることを確認
+10. **Documentation Updates**
+    - Update code comments to reflect changes
+    - Revise API documentation if interfaces changed
+    - Update inline documentation and examples
+    - Ensure comments are accurate and helpful
 
-11. **テスト強化**
-    - 作成された新しいコードパスのテストを追加
-    - 既存テストの品質とカバレッジを改善
-    - 古いテストを削除または更新
-    - テストが依然として意味があり効果的であることを確認
+11. **Testing Enhancements**
+    - Add tests for any new code paths created
+    - Improve existing test quality and coverage
+    - Remove or update obsolete tests
+    - Ensure tests are still meaningful and effective
 
-12. **静的解析**
-    - スタイルと潜在的な問題を捉えるためのリンティングツールを実行
-    - 問題を特定するため静的解析ツールを使用
-    - セキュリティ脆弱性をチェック
-    - コード複雑度メトリクスを検証
+12. **Static Analysis**
+    - Run linting tools to catch style and potential issues
+    - Use static analysis tools to identify problems
+    - Check for security vulnerabilities
+    - Verify code complexity metrics
 
-13. **パフォーマンス検証**
-    - 該当する場合はパフォーマンスベンチマークを実行
-    - 変更前後のメトリクスを比較
-    - リファクタリングがパフォーマンスを劣化させていないことを確認
-    - パフォーマンス改善を文書化
+13. **Performance Verification**
+    - Run performance benchmarks if applicable
+    - Compare before/after metrics
+    - Ensure refactoring didn't degrade performance
+    - Document any performance improvements
 
-14. **統合テスト**
-    - 回帰がないことを確認するため完全なテストスイートを実行
-    - 依存システムとの統合をテスト
-    - すべての機能が期待通りに動作することを検証
-    - エッジケースとエラーシナリオをテスト
+14. **Integration Testing**
+    - Run full test suite to ensure no regressions
+    - Test integration with dependent systems
+    - Verify all functionality works as expected
+    - Test edge cases and error scenarios
 
-15. **コードレビュー準備**
-    - 品質と一貫性について全変更をレビュー
-    - リファクタリング目標が達成されたことを確認
-    - 実施した変更の明確な説明を準備
-    - 利益と理論的根拠を文書化
+15. **Code Review Preparation**
+    - Review all changes for quality and consistency
+    - Ensure refactoring goals were achieved
+    - Prepare clear explanation of changes made
+    - Document benefits and rationale
 
-16. **変更の文書化**
-    - リファクタリング変更の要約を作成
-    - 破壊的変更や新しいパターンを文書化
-    - 必要に応じてプロジェクトドキュメントを更新
-    - 将来の参考のため利益と理由を説明
+16. **Documentation of Changes**
+    - Create a summary of refactoring changes
+    - Document any breaking changes or new patterns
+    - Update project documentation if needed
+    - Explain benefits and reasoning for future reference
 
-17. **デプロイメント考慮事項**
-    - リファクタリングされたコードのデプロイメント戦略を計画
-    - 段階的ロールアウトのためのフィーチャーフラグを検討
-    - ロールバック手順を準備
-    - リファクタリングされたコンポーネントの監視を設定
+17. **Deployment Considerations**
+    - Plan deployment strategy for refactored code
+    - Consider feature flags for gradual rollout
+    - Prepare rollback procedures
+    - Set up monitoring for the refactored components
 
-重要: リファクタリングは内部構造を改善しながら外部動作を保持する必要がある。常に速度よりも安全性を優先し、プロセス全体を通じて包括的なテストカバレッジを維持する。
+Remember: Refactoring should preserve external behavior while improving internal structure. Always prioritize safety over speed, and maintain comprehensive test coverage throughout the process.

@@ -1,372 +1,381 @@
-# 制約モデラー
+# Constraint Modeler
 
-仮定検証、依存関係マッピング、シナリオ境界定義を伴う世界制約をモデル化します。
+Model world constraints with assumption validation, dependency mapping, and scenario boundary definition.
 
-## 指示
+## Instructions
 
-正確なシミュレーションとシナリオを作成するため、決定環境を統制する制約を体系的にモデル化する任務を負っています。以下のアプローチに従ってください: **$ARGUMENTS**
+You are tasked with systematically modeling the constraints that govern your decision environment to create accurate simulations and scenarios. Follow this approach: **$ARGUMENTS**
 
-### 1. 前提条件評価
+### 1. Prerequisites Assessment
 
-**重要制約コンテキスト検証:**
+**Critical Constraint Context Validation:**
 
-- **ドメイン定義**: 制約をモデル化するシステム/環境は何か？
-- **制約タイプ**: 物理的、経済的、規制的、技術的、または社会的制約か？
-- **影響範囲**: これらの制約は決定と結果にどう影響するか？
-- **変化ダイナミクス**: 制約は静的か、時間とともに進化するか？
-- **検証ソース**: 制約精度を検証できるデータ/専門知識は何か？
+- **Domain Definition**: What system/environment are you modeling constraints for?
+- **Constraint Types**: Physical, economic, regulatory, technical, or social constraints?
+- **Impact Scope**: How do these constraints affect decisions and outcomes?
+- **Change Dynamics**: Are constraints static or do they evolve over time?
+- **Validation Sources**: What data/expertise can verify constraint accuracy?
 
-**コンテキストが不明確な場合、体系的にガイド:**
-
-```
-ドメインコンテキスト不足:
-「制約をモデル化する対象を理解する必要があります:
-- ビジネスドメイン: 市場制約、競争ダイナミクス、規制環境
-- 技術ドメイン: システム制限、性能境界、技術制約
-- 運用ドメイン: リソース制約、プロセス制限、容量境界
-- 財務ドメイン: 予算制約、投資制限、経済要因
-
-例:
-- '規制された医療市場で運営するSaaSビジネス'
-- 'サプライチェーンと品質制約を持つ製造システム'
-- '性能とスケーラビリティ要件を持つソフトウェアアーキテクチャ'」
-
-制約タイプ不足:
-「あなたの決定に最も関連する制約タイプは何ですか？
-- ハード制約: 違反できない絶対限界
-- ソフト制約: 管理可能な好みとトレードオフ
-- 規制制約: 法的およびコンプライアンス要件
-- リソース制約: 予算、時間、容量制限
-- 市場制約: 顧客行動と競争ダイナミクス」
-```
-
-### 2. 制約分類フレームワーク
-
-**制約を体系的に分類し構造化:**
-
-#### ハード制約（違反不可能）
-```
-物理/自然制約:
-- 物理法則と自然制限
-- 地理的・空間的境界
-- 時間と時間的制限
-- リソース希少性と有限容量
-
-規制/法的制約:
-- コンプライアンス要件と法的義務
-- 業界標準と認証要件
-- 契約義務と合意
-- 知的財産とライセンス制限
-
-技術制約:
-- システム容量と性能制限
-- 技術互換性と統合要件
-- セキュリティとプライバシー制約
-- インフラ制限と依存関係
-```
-
-#### ソフト制約（管理/トレードオフ可能）
-```
-経済制約:
-- 予算制限と財務リソース
-- コスト最適化と効率目標
-- 投資リターン要件と回収期間
-- 市場価格設定と競争圧力
-
-組織制約:
-- チーム容量とスキル制限
-- 文化と変更管理要因
-- 意思決定プロセスと承認サイクル
-- リスク許容度と戦略優先順位
-
-市場制約:
-- 顧客好みと行動パターン
-- 競争ダイナミクスと反応パターン
-- 市場タイミングと季節要因
-- 販売チャネル制限と要件
-```
-
-#### 動的制約（時間とともに変化）
-```
-進化制約:
-- 技術進歩と陳腐化サイクル
-- 市場成熟と顧客進化
-- 規制変化と政策シフト
-- 競争環境進化
-
-周期制約:
-- 季節ビジネスパターンと市場サイクル
-- 経済サイクルと市場条件
-- 予算サイクルとリソース配分パターン
-- 技術リフレッシュとアップグレードサイクル
-```
-
-### 3. 制約マッピングと可視化
-
-**包括的制約関係モデルを作成:**
-
-#### 制約相互作用マトリックス
-```
-制約関係分析:
-
-主要制約 → 二次効果:
-- 予算制限 → チームサイズ → 開発容量 → 機能範囲
-- 規制要件 → コンプライアンスプロセス → タイムライン延長 → 市場タイミング
-- 技術制約 → アーキテクチャ選択 → スケーラビリティ → 成長可能性
-
-制約競合とトレードオフ:
-- 速度 vs. 品質: 時間制約 vs. 品質制約
-- コスト vs. 能力: 予算制約 vs. 機能制約  
-- セキュリティ vs. ユーザビリティ: セキュリティ制約 vs. ユーザー体験制約
-- 規模 vs. シンプルさ: 成長制約 vs. 複雑性制約
-
-制約依存関係:
-- 順次: 制約Bに対処する前に制約Aを満たさなければならない
-- 条件付き: 条件Xが真の場合のみ制約Aが適用
-- 相互: 制約Aと制約Bが互いに強化または競合
-- 階層: 制約Aが制約Bを含むまたは包含
-```
-
-#### 制約階層モデリング
-- 戦略レベル制約（使命、ビジョン、価値観）
-- 戦術レベル制約（リソース、能力、市場ポジション）
-- 運用レベル制約（プロセス、システム、日常業務）
-- 個人レベル制約（スキル、容量、可用性）
-
-### 4. 仮定検証フレームワーク
-
-**制約仮定を体系的にテストし検証:**
-
-#### 仮定文書化
-```
-制約仮定テンプレート:
-
-制約: [名前と説明]
-仮定: [この制約について真実だと信じること]
-ソース: [この仮定の出所]
-信頼レベル: [正当化付き1-10スケール]
-間違いの場合の影響: [仮定が間違っている場合に起こること]
-検証方法: [この仮定をテストする方法]
-更新頻度: [再検証頻度]
-
-例:
-制約: 「エンジニアリングチーム容量」
-仮定: 「チームはスプリントあたり10ストーリーポイントを納期可能」
-ソース: 「過去6スプリントの歴史的ベロシティデータ」
-信頼レベル: 「8 - 一貫した最近のデータだがチーム構成変化中」
-間違いの場合の影響: 「プロジェクトタイムライン遅延、スコープ削減必要」
-検証方法: 「実際のベロシティ追跡、チーム変更監視」
-更新頻度: 「スプリント回顧と月次レビュー」
-```
-
-#### 歴史検証
-- 過去の制約行動と違反パターン分析
-- 仮定 vs. 実際の制約限界比較
-- 制約進化と変化のパターン認識
-- 類似環境と決定からのケーススタディ分析
-
-#### リアルタイム検証
-- 制約状態と変化の継続監視
-- 制約違反リスクの早期警告システム
-- 制約テストと境界押しからのフィードバックループ
-- 専門家相談とステークホルダー検証
-
-### 5. シナリオ境界定義
-
-**制約を使用して現実的シナリオ限界を定義:**
-
-#### 実行可能シナリオ空間
-```
-シナリオ制約境界:
-
-楽観的境界:
-- 最良ケース制約緩和（10-20%改善）
-- 有利な外部条件とサポート
-- 最大リソース可用性と効率
-- 最小制約競合とトレードオフ
-
-現実的境界:
-- 期待される制約行動と通常条件
-- 典型的リソース可用性と標準効率
-- 標準トレードオフを必要とする通常制約競合
-- 歴史パターンベースの制約進化
-
-悲観的境界:
-- 最悪ケース制約強化（10-20%劣化）
-- 不利な外部条件と追加制限
-- 削減されたリソース可用性と効率課題
-- 困難なトレードオフを必要とする最大制約競合
-```
-
-#### シナリオ実行可能性検証
-- 制約違反チェックと境界テスト
-- シナリオ整合性と論理検証
-- 制約満足度とトレードオフ分析
-- 実装可能性と実用性評価
-
-### 6. 制約進化モデリング
-
-**時間とともに制約がどう変化するかをモデル化:**
-
-#### 制約ライフサイクル分析
-```
-制約進化パターン:
-
-新制約出現:
-- 新技術導入による新制約
-- 規制変更による新コンプライアンス要件
-- 市場変化による新競争制約
-- 組織成長による新スケール制約
-
-制約進化:
-- 技術成熟による制約緩和
-- プロセス改善による効率向上
-- 市場変化による制約シフト
-- 学習による制約より良い理解
-
-制約陳腐化:
-- 技術ブレークスルーによる制約除去
-- 規制変更による制約撤廃
-- 市場破壊による制約無関係化
-- 代替アプローチによる制約回避
-```
-
-#### 制約予測モデリング
-- 制約進化の歴史トレンドと予測
-- 外部要因による制約変化のシナリオ
-- 制約緩和と強化のトリガー事象
-- 制約変化の不確実性と信頼区間
-
-### 7. 制約最適化戦略
-
-**制約内での価値最大化アプローチを開発:**
-
-#### 制約管理戦略
-```
-制約対処アプローチ:
-
-制約除去:
-- 制約の根本原因を除去
-- 代替アプローチで制約を回避
-- 技術またはプロセス革新で制約を克服
-- 外部パートナーシップで制約を転移
-
-制約緩和:
-- 制約限界を拡張または改善
-- より効率的プロセスで制約影響を削減
-- リソース追加で制約容量を増加
-- 時間軸調整で制約圧力を削減
-
-制約内最適化:
-- 制約内で最大価値を達成
-- 制約トレードオフを戦略的に管理
-- 制約優先順位付けと焦点化
-- 制約認識設計と解決策
-```
-
-#### 制約ベース意思決定
-- 制約分析に基づく戦略オプション評価
-- 制約影響による投資優先順位付け
-- 制約リスクとトレードオフ評価
-- 制約進化に対する適応計画
-
-### 8. 出力生成と推奨
-
-**制約分析を構造化された実行可能フォーマットで提示:**
+**If context is unclear, guide systematically:**
 
 ```
-## 制約モデル分析: [ドメイン/プロジェクト名]
+Missing Domain Context:
+"I need to understand what you're modeling constraints for:
+- Business Domain: Market constraints, competitive dynamics, regulatory environment
+- Technical Domain: System limitations, performance bounds, technology constraints
+- Operational Domain: Resource constraints, process limitations, capacity bounds
+- Financial Domain: Budget constraints, investment limitations, economic factors
 
-### 制約環境概要
-- ドメイン: [分析されたシステム/環境]
-- 時間軸: [制約分析期間]
-- 主要制約カテゴリ: [識別された制約タイプ]
-- 制約相互作用: [主要依存関係と競合]
+Examples:
+- 'SaaS business operating in regulated healthcare market'
+- 'Manufacturing system with supply chain and quality constraints'
+- 'Software architecture with performance and scalability requirements'"
 
-### 重要制約識別
-
-#### ハード制約（非交渉可能）
-- [制約名]: [説明と限界]
-- 影響: [決定と結果への効果]
-- 検証: [仮定と信頼レベル]
-- 進化: [時間とともに予想される変化]
-
-#### ソフト制約（管理可能）
-- [制約名]: [説明と現在限界]
-- 柔軟性: [緩和または調整可能性]
-- トレードオフ: [他制約との相互作用]
-- 最適化: [価値最大化アプローチ]
-
-### 制約相互作用マップ
-- 主要依存関係: [制約チェーンと結果]
-- 競合トレードオフ: [競合制約と管理戦略]
-- 強化効果: [相互強化制約と機会]
-- カスケード効果: [制約変化の波及影響]
-
-### シナリオ境界定義
-- 楽観的境界: [最良ケース制約条件]
-- 現実的境界: [期待される制約条件]
-- 悲観的境界: [最悪ケース制約条件]
-- 破断点: [制約失敗とシステム限界]
-
-### 制約管理戦略
-- 即座の優先順位: [即座に対処すべき制約]
-- 緩和戦略: [制約影響を削減するアプローチ]
-- 最適化機会: [制約内での価値最大化]
-- 進化計画: [制約変化への適応戦略]
-
-### 監視とアラート
-- 主要指標: [制約状態を追跡する指標]
-- 早期警告: [制約問題の先行指標]
-- 検証スケジュール: [仮定再テスト頻度]
-- エスカレーション: [制約危機対応手順]
+Missing Constraint Types:
+"What types of constraints are most relevant to your decisions?
+- Hard Constraints: Absolute limits that cannot be violated
+- Soft Constraints: Preferences and trade-offs that can be managed
+- Regulatory Constraints: Legal and compliance requirements
+- Resource Constraints: Budget, time, and capacity limitations
+- Market Constraints: Customer behavior and competitive dynamics"
 ```
 
-### 9. 継続制約管理
+### 2. Constraint Taxonomy Framework
 
-**継続的制約監視と管理を確立:**
+**Systematically categorize and structure constraints:**
 
-#### 制約監視システム
-- 制約メトリックの自動追跡とアラート
-- 制約違反リスクの早期検出
-- 制約変化とパターン分析
-- ステークホルダー制約フィードバック統合
+#### Hard Constraints (Cannot be violated)
+```
+Physical/Natural Constraints:
+- Laws of physics and natural limitations
+- Geographic and spatial boundaries
+- Time and temporal restrictions
+- Resource scarcity and finite capacity
 
-#### 適応制約管理
-- 新情報に基づく制約モデル更新
-- 制約戦略の定期レビューと改良
-- 制約学習の組織知識への統合
-- 制約管理のベストプラクティス開発
+Regulatory/Legal Constraints:
+- Compliance requirements and legal mandates
+- Industry standards and certification requirements
+- Contractual obligations and agreements
+- Intellectual property and licensing restrictions
 
-## 使用例
+Technical Constraints:
+- System capacity and performance limits
+- Technology compatibility and integration requirements
+- Security and privacy constraints
+- Infrastructure limitations and dependencies
+```
+
+#### Soft Constraints (Can be managed/traded off)
+```
+Economic Constraints:
+- Budget limitations and financial resources
+- Cost optimization and efficiency targets
+- Investment return requirements and payback periods
+- Market pricing and competitive pressure
+
+Organizational Constraints:
+- Team capacity and skill limitations
+- Cultural and change management factors
+- Decision-making processes and approval cycles
+- Risk tolerance and strategic priorities
+
+Market Constraints:
+- Customer preferences and behavior patterns
+- Competitive dynamics and response patterns
+- Market timing and seasonal factors
+- Distribution channel limitations and requirements
+```
+
+#### Dynamic Constraints (Change over time)
+```
+Evolutionary Constraints:
+- Technology advancement and obsolescence cycles
+- Market maturation and customer evolution
+- Regulatory changes and policy shifts
+- Competitive landscape evolution
+
+Cyclical Constraints:
+- Seasonal business patterns and market cycles
+- Economic cycles and market conditions
+- Budget cycles and resource allocation patterns
+- Technology refresh and upgrade cycles
+```
+
+### 3. Constraint Mapping and Visualization
+
+**Create comprehensive constraint relationship models:**
+
+#### Constraint Interaction Matrix
+```
+Constraint Relationship Analysis:
+
+Primary Constraints → Secondary Effects:
+- Budget Limitation → Team size → Development capacity → Feature scope
+- Regulatory Requirement → Compliance process → Timeline extension → Market timing
+- Technical Constraint → Architecture choice → Scalability → Growth potential
+
+Constraint Conflicts and Trade-offs:
+- Speed vs. Quality: Time constraint vs. quality constraint
+- Cost vs. Capability: Budget constraint vs. feature constraint  
+- Security vs. Usability: Security constraint vs. user experience constraint
+- Scale vs. Simplicity: Growth constraint vs. complexity constraint
+
+Constraint Dependencies:
+- Sequential: Constraint A must be satisfied before addressing Constraint B
+- Conditional: Constraint A applies only if Condition X is true
+- Mutual: Constraints A and B reinforce or conflict with each other
+- Hierarchical: Constraint A contains or encompasses Constraint B
+```
+
+#### Constraint Hierarchy Modeling
+- Strategic level constraints (mission, vision, values)
+- Tactical level constraints (resources, capabilities, market position)
+- Operational level constraints (processes, systems, daily operations)
+- Individual level constraints (skills, capacity, availability)
+
+### 4. Assumption Validation Framework
+
+**Systematically test and validate constraint assumptions:**
+
+#### Assumption Documentation
+```
+Constraint Assumption Template:
+
+Constraint: [Name and description]
+Assumption: [What we believe to be true about this constraint]
+Source: [Where this assumption comes from]
+Confidence Level: [1-10 scale with justification]
+Impact if Wrong: [What happens if assumption is incorrect]
+Validation Method: [How to test this assumption]
+Update Frequency: [How often to re-validate]
+
+Example:
+Constraint: "Engineering team capacity"
+Assumption: "Team can deliver 10 story points per sprint"
+Source: "Historical velocity data from last 6 sprints"
+Confidence Level: "8 - consistent recent data but team composition changing"
+Impact if Wrong: "Project timeline delays, scope reduction needed"
+Validation Method: "Track actual velocity, monitor team changes"
+Update Frequency: "Monthly review with sprint retrospectives"
+```
+
+#### Historical Validation
+- Analysis of past constraint behavior and violation patterns
+- Comparison of assumed vs. actual constraint limits
+- Pattern recognition for constraint evolution and change
+- Case study analysis from similar environments and decisions
+
+#### Real-time Validation
+- Continuous monitoring of constraint status and changes
+- Early warning systems for constraint violation risks
+- Feedback loops from constraint testing and boundary pushing
+- Expert consultation and stakeholder validation
+
+### 5. Scenario Boundary Definition
+
+**Use constraints to define realistic scenario limits:**
+
+#### Feasible Scenario Space
+```
+Scenario Constraint Boundaries:
+
+Optimistic Boundary:
+- Best-case constraint relaxation (10-20% improvement)
+- Favorable external conditions and support
+- Maximum resource availability and efficiency
+- Minimal constraint conflicts and trade-offs
+
+Realistic Boundary:
+- Expected constraint behavior and normal conditions
+- Typical resource availability and standard efficiency
+- Normal constraint conflicts requiring standard trade-offs
+- Historical pattern-based constraint evolution
+
+Pessimistic Boundary:
+- Worst-case constraint tightening (10-20% degradation)
+- Adverse external conditions and additional restrictions
+- Reduced resource availability and efficiency challenges
+- Maximum constraint conflicts requiring difficult trade-offs
+```
+
+#### Constraint Stress Testing
+- Maximum constraint load scenarios and breaking points
+- Cascade failure analysis when key constraints are violated
+- Recovery scenarios and constraint restoration approaches
+- Adaptive scenario adjustment for changing constraints
+
+### 6. Dynamic Constraint Modeling
+
+**Model how constraints change over time:**
+
+#### Constraint Evolution Patterns
+```
+Temporal Constraint Dynamics:
+
+Linear Evolution:
+- Gradual constraint relaxation or tightening over time
+- Predictable improvement or degradation patterns
+- Resource accumulation or depletion trends
+- Market maturation and capacity development
+
+Cyclical Evolution:
+- Seasonal constraint variations and patterns
+- Economic cycle impacts on constraint severity
+- Technology refresh cycles and capability updates
+- Regulatory review cycles and compliance windows
+
+Step Function Evolution:
+- Sudden constraint changes from external events
+- Technology breakthrough impacts on capability constraints
+- Regulatory changes creating new constraint requirements
+- Market disruptions changing competitive constraints
+
+Threshold Evolution:
+- Constraint regime changes at specific trigger points
+- Scale-dependent constraint behavior modifications
+- Maturity-based constraint relaxation or introduction
+- Performance-based constraint adjustment mechanisms
+```
+
+#### Adaptive Constraint Management
+- Constraint monitoring and early warning systems
+- Proactive constraint modification and optimization
+- Scenario adaptation for changing constraint conditions
+- Strategic planning for anticipated constraint evolution
+
+### 7. Constraint Optimization Strategies
+
+**Generate approaches to work within and optimize constraints:**
+
+#### Constraint Relaxation Approaches
+```
+Systematic Constraint Optimization:
+
+Direct Relaxation:
+- Negotiate constraint modifications with stakeholders
+- Invest in capability building to reduce constraint impact
+- Seek regulatory relief or compliance alternatives
+- Restructure processes to minimize constraint conflicts
+
+Constraint Substitution:
+- Replace restrictive constraints with more flexible alternatives
+- Trade hard constraints for soft constraints where possible
+- Substitute resource constraints with efficiency improvements
+- Replace time constraints with scope or quality adjustments
+
+Constraint Circumvention:
+- Design solutions that avoid constraint-heavy areas
+- Use alternative approaches that minimize constraint impact
+- Leverage partnerships to access capabilities beyond constraints
+- Phase implementations to work within temporal constraints
+```
+
+#### Creative Constraint Solutions
+- Constraint reframing and alternative perspective development
+- Innovative approaches that turn constraints into advantages
+- Synergistic solutions that address multiple constraints simultaneously
+- Constraint-inspired innovation and creative problem solving
+
+### 8. Output Generation and Documentation
+
+**Present constraint analysis in actionable format:**
+
+```
+## Constraint Model Analysis: [Domain/Project Name]
+
+### Constraint Environment Overview
+- Domain Scope: [what is being constrained]
+- Primary Constraints: [most limiting factors]
+- Constraint Severity: [impact on decisions and outcomes]
+- Change Dynamics: [how constraints evolve over time]
+
+### Constraint Inventory
+
+#### Hard Constraints (Cannot be violated):
+| Constraint | Description | Impact | Validation Status |
+|------------|-------------|---------|------------------|
+| [Name] | [Details] | [Effect] | [Confidence level] |
+
+#### Soft Constraints (Can be managed):
+| Constraint | Description | Trade-off Options | Optimization Potential |
+|------------|-------------|-------------------|----------------------|
+| [Name] | [Details] | [Alternatives] | [Improvement possibilities] |
+
+#### Dynamic Constraints (Change over time):
+| Constraint | Current State | Evolution Pattern | Future Projection |
+|------------|---------------|------------------|------------------|
+| [Name] | [Status] | [Change pattern] | [Expected future state] |
+
+### Constraint Interaction Analysis
+- Primary Constraint Conflicts: [major trade-offs required]
+- Constraint Dependencies: [how constraints affect each other]
+- Cascade Effects: [secondary impacts of constraint changes]
+- Optimization Opportunities: [where constraint improvements are possible]
+
+### Scenario Boundary Definition
+- Feasible Scenario Space: [what scenarios are possible within constraints]
+- Constraint-Breaking Scenarios: [what would require constraint violation]
+- Optimization Scenarios: [how constraint improvements could expand possibilities]
+- Stress Test Boundaries: [maximum constraint loads the system can handle]
+
+### Constraint Management Strategies
+- Immediate Optimization: [quick constraint improvements available]
+- Strategic Relaxation: [longer-term constraint modification approaches]
+- Alternative Approaches: [ways to minimize constraint impact]
+- Risk Mitigation: [approaches to handle constraint violations]
+
+### Validation and Monitoring Plan
+- Constraint Monitoring: [how to track constraint status and changes]
+- Assumption Testing: [how to validate constraint assumptions]
+- Update Schedule: [when to refresh constraint model]
+- Warning Systems: [early alerts for constraint violations]
+```
+
+### 9. Continuous Constraint Learning
+
+**Establish ongoing constraint model improvement:**
+
+#### Feedback Integration
+- Actual constraint behavior vs. model predictions
+- Constraint violation lessons and recovery insights
+- Stakeholder feedback on constraint accuracy and completeness
+- Market and environment changes affecting constraint validity
+
+#### Model Enhancement
+- Constraint model accuracy improvement over time
+- New constraint identification and integration
+- Constraint relationship refinement and optimization
+- Predictive capability enhancement for constraint evolution
+
+## Usage Examples
 
 ```bash
-# ビジネス制約モデリング
-/simulation:constraint-modeler SaaS製品の市場、技術、規制制約をモデル化
+# Business strategy constraints
+/simulation:constraint-modeler Model market entry constraints for European expansion including regulatory, competitive, and resource limitations
 
-# プロジェクト制約分析
-/simulation:constraint-modeler 6ヶ月ソフトウェア開発プロジェクトのリソース、時間、品質制約をマップ
+# Technical architecture constraints  
+/simulation:constraint-modeler Define system constraints for microservices migration including performance, security, and team capability limits
 
-# 戦略制約評価
-/simulation:constraint-modeler ヨーロッパ市場拡大の規制、財務、運用制約を分析
+# Product development constraints
+/simulation:constraint-modeler Map product development constraints including budget, timeline, technical, and market requirements
 
-# システム制約モデリング
-/simulation:constraint-modeler クラウドアーキテクチャの性能、コスト、セキュリティ制約を評価
+# Operational optimization constraints
+/simulation:constraint-modeler Model operational constraints for scaling customer support including team, process, and technology limitations
 ```
 
-## 品質指標
+## Quality Indicators
 
-- **緑**: 包括的制約分類、検証された仮定、マップされた相互作用、進化モデリング
-- **黄**: 良好な制約識別、部分仮定検証、基本相互作用マッピング
-- **赤**: 限定制約認識、未検証仮定、相互作用分析不足
+- **Green**: Comprehensive constraint coverage, validated assumptions, dynamic modeling
+- **Yellow**: Good constraint identification, some validation, basic change modeling
+- **Red**: Limited constraint coverage, unvalidated assumptions, static modeling
 
-## 避けるべき一般的な落とし穴
+## Common Pitfalls to Avoid
 
-- 制約盲目: 明らかまたは隠れた制約を識別しない
-- 静的思考: 制約が時間とともに変化することを考慮しない
-- 仮定未検証: 制約仮定をテストまたは検証しない
-- 相互作用無視: 制約間の相互作用と依存関係を無視
-- 過制約: 実際よりも制限的な制約を仮定
-- 最適化機会見落とし: 制約内での価値最大化機会を認識しない
+- Constraint blindness: Not identifying hidden or implicit constraints
+- Static thinking: Treating dynamic constraints as fixed limitations
+- Over-constraint: Adding unnecessary restrictions that limit options
+- Under-validation: Not testing constraint assumptions against reality
+- Isolation thinking: Not modeling constraint interactions and dependencies
+- Solution bias: Defining constraints to justify preferred solutions
 
-制約認識により不可能なものから実行可能なものを分離し、制約内での最大価値実現を可能にする。
+Transform limitations into strategic clarity through systematic constraint modeling and optimization.

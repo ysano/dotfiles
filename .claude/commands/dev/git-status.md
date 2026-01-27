@@ -1,39 +1,39 @@
-# Git状態詳細表示
+# Git Status Command
 
-詳細なgitリポジトリの状態を表示します
+Show detailed git repository status
 
-*コマンド原作者: IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
+*Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 
-## 実行手順
+## Instructions
 
-以下の手順でgitリポジトリの現在の状態を分析：
+Analyze the current state of the git repository by performing the following steps:
 
-1. **Git状態コマンドの実行**
-   - `git status`で現在の作業ツリー状態を確認
-   - `git diff HEAD origin/main`でリモートとの差分をチェック
-   - `git branch --show-current`で現在のブランチを表示
-   - 未コミットの変更と追跡されていないファイルをチェック
+1. **Run Git Status Commands**
+   - Execute `git status` to see current working tree state
+   - Run `git diff HEAD origin/main` to check differences with remote
+   - Execute `git branch --show-current` to display current branch
+   - Check for uncommitted changes and untracked files
 
-2. **リポジトリ状態の分析**
-   - ステージされた変更 vs 未ステージの変更を識別
-   - 追跡されていないファイルをリスト
-   - ブランチがリモートより進んでいる/遅れているかチェック
-   - マージコンフリクトが存在する場合はレビュー
+2. **Analyze Repository State**
+   - Identify staged vs unstaged changes
+   - List any untracked files
+   - Check if branch is ahead/behind remote
+   - Review any merge conflicts if present
 
-3. **重要ファイルの読み込み**
-   - プロジェクトコンテキストのためREADME.mdをレビュー
-   - 重要ファイルの最近の変更をチェック
-   - 必要に応じてプロジェクト構造を理解
+3. **Read Key Files**
+   - Review README.md for project context
+   - Check for any recent changes in important files
+   - Understand project structure if needed
 
-4. **要約の提供**
-   - 現在のブランチとmain/masterとの関係
-   - 進んでいる/遅れているコミット数
-   - 変更タイプ付きの修正ファイルリスト
-   - アクションアイテム（必要なコミット、プル要求等）
+4. **Provide Summary**
+   - Current branch and its relationship to main/master
+   - Number of commits ahead/behind
+   - List of modified files with change types
+   - Any action items (commits needed, pulls required, etc.)
 
-このコマンドは開発者が以下を迅速に理解するのに役立ちます：
-- 保留中の変更内容
-- リポジトリの同期状態
-- 作業を続ける前に必要なアクション
+This command helps developers quickly understand:
+- What changes are pending
+- The repository's sync status
+- Whether any actions are needed before continuing work
 
-引数: $ARGUMENTS
+Arguments: $ARGUMENTS

@@ -1,18 +1,18 @@
-# データベースマイグレーション作成
+# Create Database Migrations
 
-適切なロールバック機能と自動スキーマ進化を備えた安全なデータベースマイグレーションスクリプトを生成します。
+Create and manage database migrations
 
-## 実行手順
+## Instructions
 
-1. **マイグレーション戦略と計画**
-   - 現在のデータベーススキーマと目標変更を分析
-   - ゼロダウンタイムデプロイメントのマイグレーション戦略を計画
-   - ロールバック手順とデータ安全対策を定義
-   - マイグレーションの複雑さと潜在的リスクを評価
-   - データ変換と検証を計画
+1. **Migration Strategy and Planning**
+   - Analyze current database schema and target changes
+   - Plan migration strategy for zero-downtime deployments
+   - Define rollback procedures and data safety measures
+   - Assess migration complexity and potential risks
+   - Plan for data transformation and validation
 
-2. **マイグレーションフレームワークセットアップ**
-   - 包括的なマイグレーションフレームワークを設定：
+2. **Migration Framework Setup**
+   - Set up comprehensive migration framework:
 
    **Node.js Migration Framework:**
    ```javascript
@@ -297,8 +297,8 @@
    module.exports = MigrationManager;
    ```
 
-3. **マイグレーションファイルテンプレート**
-   - 標準化されたマイグレーションテンプレートを作成：
+3. **Migration File Templates**
+   - Create standardized migration templates:
 
    **SQL Migration Template:**
    ```sql
@@ -384,8 +384,8 @@
    module.exports = migration;
    ```
 
-4. **高度なマイグレーションパターン**
-   - 複雑なマイグレーションシナリオを実装：
+4. **Advanced Migration Patterns**
+   - Implement complex migration scenarios:
 
    **Data Migration with Validation:**
    ```javascript
@@ -519,8 +519,8 @@
    module.exports = migration;
    ```
 
-5. **スキーマ変更マイグレーション**
-   - スキーマ変更を安全に処理：
+5. **Schema Alteration Migrations**
+   - Handle schema changes safely:
 
    **Safe Column Addition:**
    ```sql
@@ -659,8 +659,8 @@
    DROP TYPE IF EXISTS address_type;
    ```
 
-6. **マイグレーションテストフレームワーク**
-   - マイグレーションを徹底的にテスト：
+6. **Migration Testing Framework**
+   - Test migrations thoroughly:
 
    **Migration Test Suite:**
    ```javascript
@@ -898,8 +898,8 @@
    }
    ```
 
-7. **本番環境マイグレーション安全性**
-   - 本番環境安全なマイグレーションプラクティスを実装：
+7. **Production Migration Safety**
+   - Implement production-safe migration practices:
 
    **Safe Production Migration:**
    ```javascript
@@ -1066,8 +1066,8 @@
    module.exports = ProductionMigrationSafety;
    ```
 
-8. **マイグレーション監視とアラート**
-   - マイグレーション実行を監視：
+8. **Migration Monitoring and Alerting**
+   - Monitor migration execution:
 
    **Migration Monitoring:**
    ```javascript
@@ -1191,8 +1191,8 @@
    module.exports = MigrationMonitor;
    ```
 
-9. **マイグレーションCLIツール**
-   - 包括的なCLIインターフェースを作成：
+9. **Migration CLI Tools**
+   - Create comprehensive CLI interface:
 
    **Migration CLI:**
    ```javascript
@@ -1326,8 +1326,8 @@
      .argv;
    ```
 
-10. **本番環境デプロイメント統合**
-    - デプロイメントパイプラインと統合：
+10. **Production Deployment Integration**
+    - Integrate with deployment pipelines:
 
     **CI/CD Integration:**
     ```yaml

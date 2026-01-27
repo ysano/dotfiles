@@ -1,6 +1,6 @@
 ---
 description: Tmux関連の設定ファイルに対する効率的な指示ガイド
-globs: .tmux.conf, .tmux-*.conf
+globs: .tmux.conf
 alwaysApply: false
 ---
 # Tmux設定ガイド
@@ -18,13 +18,4 @@ alwaysApply: false
 プラグイン: Tmuxプラグインを追加または設定する
 コピーモード: コピーモードの動作を設定する
 マウス設定: マウスの動作を設定する
-```
-
-## .tmux-[OS].conf
-
-```cursor
-# OS固有のTmux設定
-クリップボード: クリップボード連携の設定を変更する
-パス設定: OS固有のパスを設定する
-プラグイン: OS固有のプラグイン設定を変更する
 ```

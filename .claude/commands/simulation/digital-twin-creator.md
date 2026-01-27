@@ -1,388 +1,388 @@
-# デジタルツイン創造者
+# Digital Twin Creator
 
-データ品質検証と実世界校正ループを伴う体系的デジタルツインを作成します。
+Create systematic digital twins with data quality validation and real-world calibration loops.
 
-## 指示
+## Instructions
 
-実世界のシステム、プロセス、エンティティをシミュレートする包括的なデジタルツインを作成する任務を負っています。正確で校正されたモデルを構築するため、以下の体系的アプローチに従ってください: **$ARGUMENTS**
+You are tasked with creating a comprehensive digital twin to simulate real-world systems, processes, or entities. Follow this systematic approach to build an accurate, calibrated model: **$ARGUMENTS**
 
-### 1. 前提条件評価
+### 1. Prerequisites Assessment
 
-**重要情報検証:**
+**Critical Information Validation:**
 
-- **ツイン対象**: モデル化する特定のシステム/プロセス/エンティティは何か？
-- **目的と決定**: このツインがどのような決定に情報を提供するか？
-- **忠実度レベル**: シミュレーションはどの程度正確である必要があるか？
-- **データ可用性**: モデルを校正できる実世界データは何か？
-- **更新頻度**: ツインは現実とどの程度の頻度で同期するか？
+- **Twin Subject**: What specific system/process/entity are you modeling?
+- **Purpose & Decisions**: What decisions will this twin inform?
+- **Fidelity Level**: How accurate does the simulation need to be?
+- **Data Availability**: What real-world data can calibrate the model?
+- **Update Frequency**: How often will the twin sync with reality?
 
-**前提条件が不足している場合、ユーザーをガイド:**
-
-```
-ツイン対象不足:
-「何をモデル化するかの明確化が必要です。以下のデジタルツインを作成していますか:
-- 物理システム: 製造ライン、車両性能、建物運用
-- ビジネスプロセス: 販売パイプライン、顧客ジャーニー、サプライチェーン
-- 市場ダイナミクス: 顧客セグメント、競争環境、需要パターン
-- 技術システム: ソフトウェア性能、ネットワーク動作、ユーザーインタラクション」
-
-目的不明確:
-「このデジタルツインがどのような具体的決定を支援しますか？
-- 最適化: より良い構成や戦略を見つける
-- 予測: 将来の結果や動作を予測  
-- リスク評価: 故障モードと脆弱性を理解
-- 実験: 実世界実装前の変更テスト
-- 監視: 異常や性能劣化の検出」
-
-忠実度要件不足:
-「デジタルツインはどの程度正確である必要がありますか？
-- 高忠実度（90%以上の精度）: 重要な安全/財務決定
-- 中忠実度（70-90%精度）: 戦略計画と最適化
-- 低忠実度（50-70%精度）: 概念理解と探索」
-```
-
-### 2. システムアーキテクチャ定義
-
-**ターゲットシステムの構造と境界をマップ:**
-
-#### システムコンポーネント
-- コア要素とその関係
-- 入出力インターフェースとデータフロー
-- 制御メカニズムとフィードバックループ
-- パフォーマンス指標と成功指標
-- 故障モードとエッジケース
-
-#### 境界定義
-- モデルに含まれるものと除外されるもの
-- 外部依存関係と影響
-- 環境制約と変数
-- 時間軸と運用コンテキスト
-- 抽象化レベルと詳細粒度
-
-#### 関係マッピング
-- コンポーネント間の因果関係
-- 相関パターンと依存関係
-- フィードバックループとシステムダイナミクス
-- 創発的行動と非線形効果
-- ラグタイムと時間的関係
-
-**品質ゲート**: システム定義が以下であることを検証:
-- 意図された目的に対して十分完全
-- 不必要な複雑さを避けるために境界が設定されている
-- 主要決定に影響する要因に焦点
-- 観察可能な現実に根ざしている
-
-### 3. データ基盤評価
-
-**データ品質を体系的に評価し改善:**
-
-#### データインベントリ
-- 歴史的パフォーマンスデータとパターン
-- リアルタイムセンサー/監視データストリーム
-- 構成設定とパラメータ
-- 外部データソースと市場条件
-- 専門知識とドメイン洞察
-
-#### データ品質分析
-```
-各データソースについて評価:
-- 完全性: 必要なデータの何パーセントが利用可能か？
-- 正確性: データはどの程度信頼でき、エラーがないか？
-- 適時性: データはどの程度最新で、頻繁に更新されるか？
-- 一貫性: データソース間で矛盾があるか？
-- 関連性: このデータは主要決定にどの程度直接影響するか？
-
-品質スコアリング（各次元で1-10）:
-データソース: [名前]
-- 完全性: [スコア] - [説明]
-- 正確性: [スコア] - [説明]  
-- 適時性: [スコア] - [説明]
-- 一貫性: [スコア] - [説明]
-- 関連性: [スコア] - [説明]
-全体品質スコア: [平均]
-```
-
-#### データギャップ分析
-- モデル精度に重要な不足情報
-- 利用可能な代替データソースまたは代理
-- 主要ギャップのデータ収集戦略
-- 決定に対する許容可能な不確実性レベル
-
-### 4. モデル構築フレームワーク
-
-**体系的モデリングアプローチを使用してデジタルツインを構築:**
-
-#### コンポーネントモデリング
-- 個々の要素の動作パターン
-- パフォーマンス特性と範囲
-- 異なる入力に対する応答関数
-- 劣化パターンとライフサイクル要因
-- 最適化パラメータと制約
-
-#### システム相互作用モデリング
-- コンポーネント間のインターフェース動作
-- ネットワーク効果とカスケード影響
-- リソース共有と競争ダイナミクス
-- 通信プロトコルと遅延
-- 同期と調整メカニズム
-
-#### 環境モデリング
-- システムパフォーマンスに影響する外部要因
-- 市場条件と競争ダイナミクス
-- 規制制約とコンプライアンス要件
-- 経済要因とコスト構造
-- 季節パターンと周期的動作
-
-#### 動的動作モデリング
-- 状態遷移と進化パターン
-- 学習と適応メカニズム
-- スケーリング動作と容量制約
-- 安定性と回復力特性
-- ストレス条件下でのパフォーマンス
-
-### 5. 校正と検証
-
-**体系的テストによりモデル精度を確保:**
-
-#### 歴史検証
-- 既知の結果に対するモデル予測のバックテスト
-- 体系的バイアスと補正要因の識別
-- 異なる条件下でのモデル精度検証
-- エッジケースと極端なシナリオのテスト
-- 予測誤差分布の測定
-
-#### リアルタイム校正
-- モデル出力をライブシステムデータと比較
-- 自動校正調整の実装
-- 時間経過によるモデル精度の監視
-- モデルドリフトと劣化の検出
-- 新しい観察に基づくパラメータ更新
-
-#### 感度分析
-- パラメータ変動に対するモデル応答のテスト
-- 重要な仮定と依存関係の識別
-- モデル全体の不確実性伝播の理解
-- データ品質問題に対する堅牢性の検証
-- 予測の信頼区間マッピング
-
-**校正指標**:
-```
-モデルパフォーマンスダッシュボード:
-- 全体精度: [パーセンテージ] ± [信頼区間]
-- 予測バイアス: [体系的誤差分析]
-- タイミング精度: [ラグ予測精度]
-- 極端事象予測: [エッジケース性能]
-- モデル信頼度: [不確実性定量化]
-
-最近の校正結果:
-- 最終更新: [タイムスタンプ]
-- 使用データポイント: [カウント]
-- 精度改善: [前回からの変化]
-- 主要パラメータ調整: [リスト]
-- 検証テスト結果: [詳細付き合否]
-```
-
-### 6. シナリオシミュレーションエンジン
-
-**包括的シナリオテストを可能に:**
-
-#### シナリオ設計フレームワーク
-- ベースライン/現状シナリオ
-- 改善をテストする最適化シナリオ
-- 不利な条件でのストレステストシナリオ
-- 代替案を探索するWhat-ifシナリオ
-- 新機能を持つイノベーションシナリオ
-
-#### シミュレーション実行
-- 自動シナリオバッチ処理
-- インタラクティブシナリオ探索インターフェース
-- リアルタイムシミュレーション監視と制御
-- 結果集約と統計分析
-- シナリオパラメータ全体での感度テスト
-
-#### 出力生成
-- パフォーマンス指標とKPI追跡
-- 視覚的シミュレーション結果とアニメーション
-- 統計分析と信頼区間
-- シナリオ間の比較分析
-- 根拠付き推奨生成
-
-### 7. 決定統合
-
-**シミュレーション洞察を実行可能な決定に接続:**
-
-#### 決定フレームワークマッピング
-- シミュレーション出力を特定決定にリンク
-- 決定基準と閾値を定義
-- 不確実性レベルを決定信頼度にマップ
-- 異なる選択のリスク許容度を確立
-- 複雑なシナリオの決定木を作成
-
-#### 最適化アルゴリズム
-- 目標のための自動パラメータ最適化
-- トレードオフを伴う多目的最適化
-- 実行可能解のための制約満足
-- 不確実性下での堅牢な最適化
-- 変化する条件での動的最適化
-
-#### 推奨エンジン
-```
-決定推奨フォーマット:
-## シナリオ: [名前と説明]
-
-### 推奨行動: [具体的決定]
-
-### 根拠:
-- シミュレーション証拠: [主要所見]
-- パフォーマンス影響: [定量化された利益]
-- リスク評価: [潜在的欠点]
-- 信頼レベル: [説明付きパーセンテージ]
-
-### 実装ガイダンス:
-- 即座の行動: [具体的ステップ]
-- 成功指標: [測定可能指標]
-- 監視計画: [継続検証アプローチ]
-- 緊急計画: [必要時の代替行動]
-
-### 仮定と制限:
-- 主要仮定: [重要モデル仮定]
-- データ制限: [既知のギャップや不確実性]
-- モデル境界: [含まれないもの]
-- 更新要件: [モデルリフレッシュタイミング]
-```
-
-### 8. 継続改善ループ
-
-**継続的モデル強化を確立:**
-
-#### パフォーマンス監視
-- 自動精度追跡とアラート
-- モデルドリフト検出と修正
-- 予測誤差分析と分類
-- データ品質監視と改善
-- ユーザーフィードバック収集と統合
-
-#### モデル進化
-- 学習に基づく段階的モデル改善
-- 新データ統合とモデル拡張
-- アルゴリズム更新と強化
-- シナリオライブラリ拡張と改良
-- ユーザーインターフェースと体験改善
-
-#### 学習統合
-- モデル成功と失敗からの洞察を文書化
-- シミュレーション結果から制度的知識を構築
-- 類似デジタルツイン間でベストプラクティスを共有
-- ドメイン専門家フィードバックと検証を組み込み
-- モデル信頼度と信頼性指標を開発
-
-### 9. 出力生成
-
-**デジタルツイン機能と洞察を提示:**
+**If any prerequisites are missing, guide the user:**
 
 ```
-## デジタルツインシステム: [対象名]
+Missing Twin Subject:
+"I need clarity on what you're modeling. Are you creating a digital twin for:
+- Physical systems: Manufacturing line, vehicle performance, building operations
+- Business processes: Sales pipeline, customer journey, supply chain
+- Market dynamics: Customer segments, competitive landscape, demand patterns
+- Technical systems: Software performance, network behavior, user interactions"
 
-### システム概要
-- 目的: [主要決定支援目標]
-- 範囲: [システム境界とコンポーネント]
-- 忠実度レベル: [精度期待]
-- 更新頻度: [リフレッシュスケジュール]
+Missing Purpose Clarity:
+"What specific decisions will this digital twin help you make?
+- Optimization: Finding better configurations or strategies
+- Prediction: Forecasting future outcomes or behaviors  
+- Risk Assessment: Understanding failure modes and vulnerabilities
+- Experimentation: Testing changes before real-world implementation
+- Monitoring: Detecting anomalies or performance degradation"
 
-### モデルアーキテクチャ
-- コアコンポーネント: [主要システム要素]
-- 関係マップ: [相互作用パターン]
-- 環境要因: [外部影響]
-- パフォーマンス指標: [成功指標]
-
-### データ基盤
-- 主要データソース: [品質スコア付きリスト]
-- データ品質評価: [全体品質評価]
-- 更新メカニズム: [データが最新に保たれる方法]
-- 検証方法: [精度確認アプローチ]
-
-### シミュレーション機能
-- シナリオタイプ: [モデル化可能なもの]
-- 時間軸: [シミュレーション時間範囲]
-- 精度レベル: [精度期待]
-- 出力フォーマット: [報告と可視化オプション]
-
-### 校正状況
-- 歴史検証: [バックテスト結果]
-- リアルタイム精度: [現在のパフォーマンス指標]
-- 最終校正: [日付と改善]
-- 信頼区間: [不確実性境界]
-
-### 決定統合
-- サポートされる決定: [具体的使用ケース]
-- 最適化機能: [自動改善機能]
-- リスク評価: [不確実性と感度分析]
-- 推奨エンジン: [決定支援機能]
-
-### 使用ガイドライン
-- 高信頼シナリオ: [完全に信頼すべき時]
-- 中信頼シナリオ: [注意して使用すべき時]
-- 低信頼シナリオ: [より多くのデータを収集すべき時]
-- リフレッシュトリガー: [モデル更新時期]
+Missing Fidelity Requirements:
+"How precise does your digital twin need to be?
+- High Fidelity (90%+ accuracy): Critical safety/financial decisions
+- Medium Fidelity (70-90% accuracy): Strategic planning and optimization
+- Low Fidelity (50-70% accuracy): Conceptual understanding and exploration"
 ```
 
-### 10. 品質保証フレームワーク
+### 2. System Architecture Definition
 
-**デジタルツインの信頼性と信頼性を確保:**
+**Map the structure and boundaries of your target system:**
 
-#### 検証チェックリスト
-- [ ] モデルは歴史的動作を正確に再現
-- [ ] 予測は信頼区間で校正されている
-- [ ] エッジケースと極端シナリオが適切に処理されている
-- [ ] データ品質は意図された決定の要件を満たしている
-- [ ] モデル境界が明確に定義され伝達されている
-- [ ] 仮定が文書化され定期的に検証されている
-- [ ] 更新とメンテナンス手順が確立されている
-- [ ] ユーザートレーニングとガイドラインが包括的である
+#### System Components
+- Core elements and their relationships
+- Input/output interfaces and data flows
+- Control mechanisms and feedback loops
+- Performance metrics and success indicators
+- Failure modes and edge cases
 
-#### リスク評価
-- モデル精度制限と決定への影響
-- データ依存リスクと軽減戦略
-- 計算要件とスケーラビリティ制約
-- ユーザー誤解釈リスクとトレーニングニーズ
-- システム統合課題と互換性問題
+#### Boundary Definition
+- What's included vs. excluded from the model
+- External dependencies and influences
+- Environmental constraints and variables
+- Time horizons and operational contexts
+- Abstraction levels and detail granularity
 
-#### 成功指標
-- 時間経過による予測精度改善
-- モデル洞察からの決定品質向上
-- 達成されたコスト削減またはパフォーマンス改善
-- デジタルツインのユーザー採用と満足
-- モデルメンテナンス効率とコスト効果
+#### Relationship Mapping
+- Causal relationships between components
+- Correlation patterns and dependencies
+- Feedback loops and system dynamics
+- Emergent behaviors and non-linear effects
+- Lag times and temporal relationships
 
-## 使用例
+**Quality Gate**: Validate that your system definition is:
+- Complete enough for the intended purpose
+- Bounded to avoid unnecessary complexity
+- Focused on factors that impact key decisions
+- Grounded in observable reality
+
+### 3. Data Foundation Assessment
+
+**Evaluate and improve data quality systematically:**
+
+#### Data Inventory
+- Historical performance data and patterns
+- Real-time sensor/monitoring data streams
+- Configuration settings and parameters
+- External data sources and market conditions
+- Expert knowledge and domain insights
+
+#### Data Quality Analysis
+```
+For each data source, assess:
+- Completeness: What percentage of required data is available?
+- Accuracy: How reliable and error-free is the data?
+- Timeliness: How current and frequently updated is the data?
+- Consistency: Are there conflicts between data sources?
+- Relevance: How directly does this data impact key decisions?
+
+Quality Scoring (1-10 for each dimension):
+Data Source: [name]
+- Completeness: [score] - [explanation]
+- Accuracy: [score] - [explanation]  
+- Timeliness: [score] - [explanation]
+- Consistency: [score] - [explanation]
+- Relevance: [score] - [explanation]
+Overall Quality Score: [average]
+```
+
+#### Data Gap Analysis
+- Critical missing information for model accuracy
+- Alternative data sources or proxies available
+- Data collection strategies for key gaps
+- Acceptable uncertainty levels for decisions
+
+### 4. Model Construction Framework
+
+**Build the digital twin using systematic modeling approaches:**
+
+#### Component Modeling
+- Individual element behavior patterns
+- Performance characteristics and ranges
+- Response functions to different inputs
+- Degradation patterns and lifecycle factors
+- Optimization parameters and constraints
+
+#### System Interaction Modeling
+- Interface behaviors between components
+- Network effects and cascade influences
+- Resource sharing and competition dynamics
+- Communication protocols and latencies
+- Synchronization and coordination mechanisms
+
+#### Environmental Modeling
+- External factors affecting system performance
+- Market conditions and competitive dynamics
+- Regulatory constraints and compliance requirements
+- Economic factors and cost structures
+- Seasonal patterns and cyclical behaviors
+
+#### Dynamic Behavior Modeling
+- State transitions and evolutionary patterns
+- Learning and adaptation mechanisms
+- Scaling behaviors and capacity constraints
+- Stability and resilience characteristics
+- Performance under stress conditions
+
+### 5. Calibration and Validation
+
+**Ensure model accuracy through systematic testing:**
+
+#### Historical Validation
+- Back-test model predictions against known outcomes
+- Identify systematic biases and correction factors
+- Validate model accuracy across different conditions
+- Test edge cases and extreme scenarios
+- Measure prediction error distributions
+
+#### Real-Time Calibration
+- Compare model outputs to live system data
+- Implement automated calibration adjustments
+- Monitor prediction accuracy over time
+- Detect model drift and degradation
+- Update parameters based on new observations
+
+#### Sensitivity Analysis
+- Test model response to parameter variations
+- Identify critical assumptions and dependencies
+- Understand uncertainty propagation through model
+- Validate robustness to data quality issues
+- Map confidence intervals for predictions
+
+**Calibration Metrics**:
+```
+Model Performance Dashboard:
+- Overall Accuracy: [percentage] ± [confidence interval]
+- Prediction Bias: [systematic error analysis]
+- Timing Accuracy: [lag prediction accuracy]
+- Extreme Event Prediction: [edge case performance]
+- Model Confidence: [uncertainty quantification]
+
+Recent Calibration Results:
+- Last Update: [timestamp]
+- Data Points Used: [count]
+- Accuracy Improvement: [change from previous]
+- Key Parameter Adjustments: [list]
+- Validation Test Results: [pass/fail with details]
+```
+
+### 6. Scenario Simulation Engine
+
+**Enable comprehensive scenario testing:**
+
+#### Scenario Design Framework
+- Baseline/current state scenarios
+- Optimization scenarios testing improvements
+- Stress test scenarios with adverse conditions
+- What-if scenarios exploring alternatives
+- Innovation scenarios with new capabilities
+
+#### Simulation Execution
+- Automated scenario batch processing
+- Interactive scenario exploration interfaces
+- Real-time simulation monitoring and controls
+- Result aggregation and statistical analysis
+- Sensitivity testing across scenario parameters
+
+#### Output Generation
+- Performance metrics and KPI tracking
+- Visual simulation results and animations
+- Statistical analysis and confidence intervals
+- Comparative analysis across scenarios
+- Recommendation generation with rationale
+
+### 7. Decision Integration
+
+**Connect simulation insights to actionable decisions:**
+
+#### Decision Framework Mapping
+- Link simulation outputs to specific decisions
+- Define decision criteria and thresholds
+- Map uncertainty levels to decision confidence
+- Establish risk tolerance for different choices
+- Create decision trees for complex scenarios
+
+#### Optimization Algorithms
+- Automated parameter optimization for goals
+- Multi-objective optimization with trade-offs
+- Constraint satisfaction for feasible solutions
+- Robust optimization under uncertainty
+- Dynamic optimization for changing conditions
+
+#### Recommendation Engine
+```
+Decision Recommendation Format:
+## Scenario: [name and description]
+
+### Recommended Action: [specific decision]
+
+### Rationale:
+- Simulation Evidence: [key findings]
+- Performance Impact: [quantified benefits]
+- Risk Assessment: [potential downsides]
+- Confidence Level: [percentage with explanation]
+
+### Implementation Guidance:
+- Immediate Actions: [specific steps]
+- Success Metrics: [measurable indicators]
+- Monitoring Plan: [ongoing validation approach]
+- Contingency Plans: [alternative actions if needed]
+
+### Assumptions and Limitations:
+- Key Assumptions: [critical model assumptions]
+- Data Limitations: [known gaps or uncertainties]
+- Model Boundaries: [what's not included]
+- Update Requirements: [when to refresh model]
+```
+
+### 8. Continuous Improvement Loop
+
+**Establish ongoing model enhancement:**
+
+#### Performance Monitoring
+- Automated accuracy tracking and alerting
+- Model drift detection and correction
+- Prediction error analysis and categorization
+- Data quality monitoring and improvement
+- User feedback collection and integration
+
+#### Model Evolution
+- Incremental model improvements based on learnings
+- New data integration and model expansion
+- Algorithm updates and enhancement
+- Scenario library expansion and refinement
+- User interface and experience improvements
+
+#### Learning Integration
+- Document insights from model successes and failures
+- Build institutional knowledge from simulation results
+- Share best practices across similar digital twins
+- Incorporate domain expert feedback and validation
+- Develop model confidence and reliability metrics
+
+### 9. Output Generation
+
+**Present digital twin capabilities and insights:**
+
+```
+## Digital Twin System: [Subject Name]
+
+### System Overview
+- Purpose: [primary decision support goals]
+- Scope: [system boundaries and components]
+- Fidelity Level: [accuracy expectations]
+- Update Frequency: [refresh schedule]
+
+### Model Architecture
+- Core Components: [key system elements]
+- Relationship Map: [interaction patterns]
+- Environmental Factors: [external influences]
+- Performance Metrics: [success indicators]
+
+### Data Foundation
+- Primary Data Sources: [list with quality scores]
+- Data Quality Assessment: [overall quality rating]
+- Update Mechanisms: [how data stays current]
+- Validation Methods: [accuracy verification approaches]
+
+### Simulation Capabilities
+- Scenario Types: [what can be modeled]
+- Time Horizons: [simulation time ranges]
+- Precision Levels: [accuracy expectations]
+- Output Formats: [reporting and visualization options]
+
+### Calibration Status
+- Historical Validation: [back-testing results]
+- Real-Time Accuracy: [current performance metrics]
+- Last Calibration: [date and improvements]
+- Confidence Intervals: [uncertainty bounds]
+
+### Decision Integration
+- Supported Decisions: [specific use cases]
+- Optimization Capabilities: [automatic improvement features]
+- Risk Assessment: [uncertainty and sensitivity analysis]
+- Recommendation Engine: [decision support features]
+
+### Usage Guidelines
+- High Confidence Scenarios: [when to trust fully]
+- Medium Confidence Scenarios: [when to use with caution]
+- Low Confidence Scenarios: [when to gather more data]
+- Refresh Triggers: [when to update the model]
+```
+
+### 10. Quality Assurance Framework
+
+**Ensure digital twin reliability and trustworthiness:**
+
+#### Validation Checklist
+- [ ] Model reproduces historical behavior accurately
+- [ ] Predictions are calibrated with confidence intervals
+- [ ] Edge cases and extreme scenarios are handled appropriately
+- [ ] Data quality meets requirements for intended decisions
+- [ ] Model boundaries are clearly defined and communicated
+- [ ] Assumptions are documented and regularly validated
+- [ ] Updates and maintenance procedures are established
+- [ ] User training and guidelines are comprehensive
+
+#### Risk Assessment
+- Model accuracy limitations and impact on decisions
+- Data dependency risks and mitigation strategies
+- Computational requirements and scalability constraints
+- User misinterpretation risks and training needs
+- System integration challenges and compatibility issues
+
+#### Success Metrics
+- Prediction accuracy improvement over time
+- Decision quality enhancement from model insights
+- Cost savings or performance improvements achieved
+- User adoption and satisfaction with digital twin
+- Model maintenance efficiency and cost effectiveness
+
+## Usage Examples
 
 ```bash
-# 製造最適化
-/simulation:digital-twin-creator 生産ラインのデジタルツインを作成してスループット最適化と予防保守予測
+# Manufacturing optimization
+/simulation:digital-twin-creator Create digital twin of production line to optimize throughput and predict maintenance needs
 
-# 顧客ジャーニーモデリング
-/simulation:digital-twin-creator 顧客獲得ファネルのデジタルツインを構築してマーケティング戦略をテスト
+# Customer journey modeling
+/simulation:digital-twin-creator Build digital twin of customer acquisition funnel to test marketing strategies
 
-# サプライチェーン回復力
-/simulation:digital-twin-creator サプライチェーンネットワークをモデル化して破壊シナリオと最適化戦略をテスト
+# Supply chain resilience
+/simulation:digital-twin-creator Model supply chain network to test disruption scenarios and optimization strategies
 
-# ソフトウェアシステムパフォーマンス
-/simulation:digital-twin-creator マイクロサービスアーキテクチャのデジタルツインを作成してスケーリングとパフォーマンスを予測
+# Software system performance
+/simulation:digital-twin-creator Create digital twin of microservices architecture to predict scaling and performance
 ```
 
-## 品質指標
+## Quality Indicators
 
-- **緑**: 85%以上の歴史精度、包括的データ基盤、自動校正
-- **黄**: 70-85%精度、良好なデータカバレッジ、手動校正プロセス
-- **赤**: 70%未満精度、重要なデータギャップ、限定的検証
+- **Green**: 85%+ historical accuracy, comprehensive data foundation, automated calibration
+- **Yellow**: 70-85% accuracy, good data coverage, manual calibration processes
+- **Red**: <70% accuracy, significant data gaps, limited validation
 
-## 避けるべき一般的な落とし穴
+## Common Pitfalls to Avoid
 
-- 過剰複雑性: 決定に影響しない不要な詳細のモデル化
-- 検証不足: 実世界結果に対する不十分なテスト  
-- 静的思考: 現実の変化に応じてモデルを更新しない
-- データ盲目: データ品質問題とバイアスの無視
-- 偽精度: データが支持するよりも高い精度を主張
-- 境界設定不良: モデル範囲に含めすぎ、または含めなさすぎ
+- Over-complexity: Modeling unnecessary details that don't impact decisions
+- Under-validation: Insufficient testing against real-world outcomes  
+- Static thinking: Not updating model as reality changes
+- Data blindness: Ignoring data quality issues and biases
+- False precision: Claiming higher accuracy than data supports
+- Poor boundaries: Including too much or too little in model scope
 
-実世界の課題を指数的学習と最適化の実験室に変換する。
+Transform your real-world challenges into a laboratory for exponential learning and optimization.

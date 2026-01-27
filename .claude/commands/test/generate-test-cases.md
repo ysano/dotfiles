@@ -1,76 +1,76 @@
-# テストケース生成
+# Generate Test Cases
 
-単体テスト、エッジケース、統合シナリオを含む既存コード向けの包括的なテストケースを自動生成します。
+Generate comprehensive test cases automatically
 
-## 実行手順
+## Instructions
 
-1. **ターゲット分析とスコープ定義**
-   - 引数からターゲットファイルまたは関数を解析: `$ARGUMENTS`
-   - ターゲットが指定されていない場合、現在のディレクトリを分析し、特定のターゲットを促す
-   - ターゲットコードの構造、依存関係、複雑度の検査
-   - 関数シグネチャ、パラメーター、戻り値の型、副作用の特定
-   - テストスコープの決定（単体、統合、または両方）
+1. **Target Analysis and Scope Definition**
+   - Parse target file or function from arguments: `$ARGUMENTS`
+   - If no target specified, analyze current directory and prompt for specific target
+   - Examine the target code structure, dependencies, and complexity
+   - Identify function signatures, parameters, return types, and side effects
+   - Determine testing scope (unit, integration, or both)
 
-2. **コード構造分析**
-   - 関数ロジック、分岐、制御フローの分析
-   - 入力検証、エラーハンドリング、エッジケースの特定
-   - 外部依存関係、API呼び出し、データベースインタラクションの検査
-   - データ変換とビジネスロジックのレビュー
-   - 非同期操作とエラーシナリオの特定
+2. **Code Structure Analysis**
+   - Analyze function logic, branching, and control flow
+   - Identify input validation, error handling, and edge cases
+   - Examine external dependencies, API calls, and database interactions
+   - Review data transformations and business logic
+   - Identify async operations and error scenarios
 
-3. **テストケース生成戦略**
-   - 正常操作フローのポジティブテストケースを生成
-   - エラー状態と無効な入力のネガティブテストケースを作成
-   - 境界条件と制限のエッジケースを生成
-   - 外部依存関係の統合テストケースを作成
-   - 複雑な操作のパフォーマンステストケースを生成
+3. **Test Case Generation Strategy**
+   - Generate positive test cases for normal operation flows
+   - Create negative test cases for error conditions and invalid inputs
+   - Generate edge cases for boundary conditions and limits
+   - Create integration test cases for external dependencies
+   - Generate performance test cases for complex operations
 
-4. **単体テスト実装**
-   - プロジェクトの命名規則に従ってテストファイルを作成
-   - テストフレームワークのインポートと設定をセットアップ
-   - 機能別に整理されたテストスイートを生成
-   - 説明的な名前を持つ包括的なテストケースを作成
-   - 各テストに対して適切なセットアップとティアダウンを実装
+4. **Unit Test Implementation**
+   - Create test file following project naming conventions
+   - Set up test framework imports and configuration
+   - Generate test suites organized by functionality
+   - Create comprehensive test cases with descriptive names
+   - Implement proper setup and teardown for each test
 
-5. **モックとスタブの生成**
-   - モックが必要な外部依存関係の特定
-   - APIやサービスのモック実装を生成
-   - データベースやファイルシステム操作のスタブデータを作成
-   - 関数呼び出しを監視するスパイ関数をセットアップ
-   - モックの戻り値とエラーシナリオを設定
+5. **Mock and Stub Generation**
+   - Identify external dependencies requiring mocking
+   - Generate mock implementations for APIs and services
+   - Create stub data for database and file system operations
+   - Set up spy functions for monitoring function calls
+   - Configure mock return values and error scenarios
 
-6. **データ駆動テスト生成**
-   - 様々な入力シナリオのテストデータセットを作成
-   - 複数の入力組み合わせのパラメータ化テストを生成
-   - 複雑なデータ構造のフィクスチャを作成
-   - 一負したデータ生成のためのテストデータファクトリをセットアップ
-   - 包括的なカバレッジのためのプロパティベーステストケースを生成
+6. **Data-Driven Test Generation**
+   - Create test data sets for various input scenarios
+   - Generate parameterized tests for multiple input combinations
+   - Create fixtures for complex data structures
+   - Set up test data factories for consistent data generation
+   - Generate property-based test cases for comprehensive coverage
 
-7. **統合テストシナリオ**
-   - コンポーネント間の相互作用テストを生成
-   - エンドツーエンドワークフローテストケースを作成
-   - API統合テストシナリオを生成
-   - 実データを使用したデータベース統合テストを作成
-   - モジュール間統合テストケースを生成
+7. **Integration Test Scenarios**
+   - Generate tests for component interactions
+   - Create end-to-end workflow test cases
+   - Generate API integration test scenarios
+   - Create database integration tests with real data
+   - Generate cross-module integration test cases
 
-8. **エラーハンドリングと例外テスト**
-   - すべてのエラー状態と例外のテストを生成
-   - タイムアウトとネットワーク障害シナリオのテストを作成
-   - 無効な入力検証のテストを生成
-   - リソース枯渇と制限のテストを作成
-   - 同時アクセスと競合状態のテストを生成
+8. **Error Handling and Exception Testing**
+   - Generate tests for all error conditions and exceptions
+   - Create tests for timeout and network failure scenarios
+   - Generate tests for invalid input validation
+   - Create tests for resource exhaustion and limits
+   - Generate tests for concurrent access and race conditions
 
-9. **テスト品質とカバレッジ**
-   - ターゲット関数の包括的なコードカバレッジを確保
-   - すべてのコードブランチとパスのテストを生成
-   - 成功と失敗両方のシナリオのテストを作成
-   - テストアサーションが意味のある具体的なものであることを検証
-   - テストが分離されており独立していることを確保
+9. **Test Quality and Coverage**
+   - Ensure comprehensive code coverage for target functions
+   - Generate tests for all code branches and paths
+   - Create tests for both success and failure scenarios
+   - Validate test assertions are meaningful and specific
+   - Ensure tests are isolated and independent
 
-10. **テストドキュメンテーションとメンテナンス**
-    - 明確なテスト説明とドキュメンテーションを生成
-    - 複雑なテストシナリオを説明するコメントを作成
-    - テストデータ要件とセットアップ手順を文書化
-    - テストメンテナンスガイドラインとベストプラクティスを生成
-    - テスト実行とデバッグの手順を作成
-    - 生成されたテストが正常に実行され、意味のあるフィードバックを提供することを検証
+10. **Test Documentation and Maintenance**
+    - Generate clear test descriptions and documentation
+    - Create comments explaining complex test scenarios
+    - Document test data requirements and setup procedures
+    - Generate test maintenance guidelines and best practices
+    - Create test execution and debugging instructions
+    - Validate generated tests execute successfully and provide meaningful feedback

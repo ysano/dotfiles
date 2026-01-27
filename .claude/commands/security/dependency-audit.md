@@ -1,90 +1,90 @@
-# 依存関係監査コマンド
+# Dependency Audit Command
 
-セキュリティ、パフォーマンス、メンテナンスの観点から、あらゆるコードベースのすべての依存関係を分析・監査します。
+Audit dependencies for security vulnerabilities
 
-## 実行手順
+## Instructions
 
-以下の手順に従って包括的な依存関係監査を実行してください：
+Perform a comprehensive dependency audit following these steps:
 
-1. **依存関係の発見**
-   - すべての依存関係管理ファイルの特定（package.json、requirements.txt、Cargo.toml、pom.xml等）
-   - 直接依存関係対推移的依存関係のマッピング
-   - ロックファイルとバージョン整合性のチェック
-   - 開発用対本番用依存関係のレビュー
+1. **Dependency Discovery**
+   - Identify all dependency management files (package.json, requirements.txt, Cargo.toml, pom.xml, etc.)
+   - Map direct vs transitive dependencies
+   - Check for lock files and version consistency
+   - Review development vs production dependencies
 
-2. **バージョン分析**
-   - 古いパッケージと利用可能な更新のチェック
-   - メジャーバージョン更新が利用可能なパッケージの特定
-   - セマンティックバージョニングコンプライアンスのレビュー
-   - バージョン固定戦略の分析
+2. **Version Analysis**
+   - Check for outdated packages and available updates
+   - Identify packages with major version updates available
+   - Review semantic versioning compliance
+   - Analyze version pinning strategies
 
-3. **セキュリティ脆弱性スキャン**
-   - 適切なツールを使用したセキュリティ監査の実行：
-     - Node.jsプロジェクト用`npm audit`
-     - Pythonプロジェクト用`pip-audit`
-     - Rustプロジェクト用`cargo audit`
-     - すべてのプラットフォーム用GitHubセキュリティアドバイザリ
-   - 重大、高、中、低重要度の脆弱性の特定
-   - 既知の攻撃手法とCVE参照のチェック
+3. **Security Vulnerability Scan**
+   - Run security audits using appropriate tools:
+     - `npm audit` for Node.js projects
+     - `pip-audit` for Python projects
+     - `cargo audit` for Rust projects
+     - GitHub security advisories for all platforms
+   - Identify critical, high, medium, and low severity vulnerabilities
+   - Check for known exploits and CVE references
 
-4. **ライセンスコンプライアンス**
-   - 互換性のためのすべての依存関係ライセンスのレビュー
-   - 制限的なライセンス（GPL、AGPL等）の特定
-   - プロジェクトライセンスとのライセンス競合のチェック
-   - ライセンス義務と要件の文書化
+4. **License Compliance**
+   - Review all dependency licenses for compatibility
+   - Identify restrictive licenses (GPL, AGPL, etc.)
+   - Check for license conflicts with project license
+   - Document license obligations and requirements
 
-5. **依存関係の健全性評価**
-   - パッケージのメンテナンス状態と活動のチェック
-   - コントリビューター数とコミュニティサポートのレビュー
-   - リリース頻度と安定性の分析
-   - 放棄されたまたは非推奨のパッケージの特定
+5. **Dependency Health Assessment**
+   - Check package maintenance status and activity
+   - Review contributor count and community support
+   - Analyze release frequency and stability
+   - Identify abandoned or deprecated packages
 
-6. **サイズとパフォーマンス影響**
-   - 各依存関係のバンドルサイズ影響の分析
-   - 最適化可能な大きな依存関係の特定
-   - 依存関係間の重複機能のチェック
-   - tree-shakingとデッドコード除去の効果のレビュー
+6. **Size and Performance Impact**
+   - Analyze bundle size impact of each dependency
+   - Identify large dependencies that could be optimized
+   - Check for duplicate functionality across dependencies
+   - Review tree-shaking and dead code elimination effectiveness
 
-7. **代替案分析**
-   - より良い代替案を持つ依存関係の特定
-   - より軽量または効率的な置き換えのチェック
-   - 機能重複と統合機会の分析
-   - ネイティブ代替案のレビュー（組み込み関数対ライブラリ）
+7. **Alternative Analysis**
+   - Identify dependencies with better alternatives
+   - Check for lighter or more efficient replacements
+   - Analyze feature overlap and consolidation opportunities
+   - Review native alternatives (built-in functions vs libraries)
 
-8. **依存関係の競合**
-   - 依存関係間のバージョン競合のチェック
-   - ピア依存関係問題の特定
-   - 依存関係解決戦略のレビュー
-   - 更新時の潜在的な破壊的変更の分析
+8. **Dependency Conflicts**
+   - Check for version conflicts between dependencies
+   - Identify peer dependency issues
+   - Review dependency resolution strategies
+   - Analyze potential breaking changes in updates
 
-9. **ビルドと開発影響**
-   - ビルド時間に影響する依存関係のレビュー
-   - 本番環境における開発専用依存関係のチェック
-   - ツール依存関係と代替案の分析
-   - オプション依存関係とその必要性のレビュー
+9. **Build and Development Impact**
+   - Review dependencies that affect build times
+   - Check for development-only dependencies in production
+   - Analyze tooling dependencies and alternatives
+   - Review optional dependencies and their necessity
 
-10. **サプライチェーンセキュリティ**
-    - タイポスクワッティングと悪意のあるパッケージのチェック
-    - パッケージの真正性と署名のレビュー
-    - 依存関係のソースとレジストリの分析
-    - 疑わしいまたは異常な依存関係のチェック
+10. **Supply Chain Security**
+    - Check for typosquatting and malicious packages
+    - Review package authenticity and signatures
+    - Analyze dependency sources and registries
+    - Check for suspicious or unusual dependencies
 
-11. **更新戦略計画**
-    - セキュリティと安定性に基づいた優先順位付き更新計画の作成
-    - 破壊的変更と必要なコード修正の特定
-    - 更新時のテスト戦略の計画
-    - 問題のある更新のロールバック手順の文書化
+11. **Update Strategy Planning**
+    - Create a prioritized update plan based on security and stability
+    - Identify breaking changes and required code modifications
+    - Plan for testing strategy during updates
+    - Document rollback procedures for problematic updates
 
-12. **監視と自動化**
-    - 自動依存関係スキャンの設定
-    - セキュリティアラートと通知の構成
-    - 依存関係更新自動化ツールのレビュー
-    - 定期監査スケジュールの確立
+12. **Monitoring and Automation**
+    - Set up automated dependency scanning
+    - Configure security alerts and notifications
+    - Review dependency update automation tools
+    - Establish regular audit schedules
 
-13. **文書化とレポート**
-    - 包括的な依存関係インベントリの作成
-    - 修正手順を含むすべてのセキュリティ発見事項の文書化
-    - 優先度レベル付き更新推奨事項の提供
-    - ステークホルダー向けエグゼクティブサマリーの生成
+13. **Documentation and Reporting**
+    - Create a comprehensive dependency inventory
+    - Document all security findings with remediation steps
+    - Provide update recommendations with priority levels
+    - Generate executive summary for stakeholders
 
-最も正確な結果を得るためにプラットフォーム固有のツールとデータベースを使用してください。明確なリスク評価と実行可能な推奨事項に焦点を当ててください。
+Use platform-specific tools and databases for the most accurate results. Focus on actionable recommendations with clear risk assessments.

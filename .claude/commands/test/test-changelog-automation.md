@@ -1,9 +1,9 @@
-# テストコマンド
+# Test Command
 
-自動化されたチェンジログ生成を実演するためのテストコマンドです。
+Automate changelog testing workflow
 
-## 実行手順
+## Instructions
 
-1. このコマンドは実演として機能します
-2. チェンジログ自動化の動作方法を示します
-3. このファイルが追加されると、チェンジログが自動的に更新されるはずです
+1. This command serves as a demonstration
+2. It shows how the changelog automation works
+3. When this file is added, the changelog should update automatically

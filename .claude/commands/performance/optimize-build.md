@@ -1,139 +1,139 @@
-# ビルド最適化コマンド
+# Optimize Build Command
 
-プロジェクトのビルド時間、出力サイズ、効率性を改善するためにビルドプロセスを分析・最適化します。
+Optimize build processes and speed
 
-## 実行手順
+## Instructions
 
-以下の体系的なアプローチでビルドパフォーマンスを最適化: **$ARGUMENTS**
+Follow this systematic approach to optimize build performance: **$ARGUMENTS**
 
-1. **ビルドシステム分析**
-   - 使用中のビルドシステムを特定（Webpack、Vite、Rollup、Gradle、Maven、Cargoなど）
-   - ビルド設定ファイルと設定の確認
-   - 現在のビルド時間と出力サイズの分析
-   - 完全なビルドパイプラインと依存関係のマッピング
+1. **Build System Analysis**
+   - Identify the build system in use (Webpack, Vite, Rollup, Gradle, Maven, Cargo, etc.)
+   - Review build configuration files and settings
+   - Analyze current build times and output sizes
+   - Map the complete build pipeline and dependencies
 
-2. **パフォーマンスベースライン**
-   - 異なるシナリオでの現在のビルド時間を測定:
-     - クリーンビルド（最初から）
-     - インクリメンタルビルド（キャッシュ付き）
-     - 開発環境対本番環境ビルド
-   - バンドルサイズとアセットサイズの文書化
-   - ビルドプロセスの最も遅い部分の特定
+2. **Performance Baseline**
+   - Measure current build times for different scenarios:
+     - Clean build (from scratch)
+     - Incremental build (with cache)
+     - Development vs production builds
+   - Document bundle sizes and asset sizes
+   - Identify the slowest parts of the build process
 
-3. **依存関係最適化**
-   - ビルド依存関係とその影響の分析
-   - ビルドプロセスから未使用の依存関係を除去
-   - ビルドツールを最新安定版に更新
-   - より高速な代替ビルドツールの検討
+3. **Dependency Optimization**
+   - Analyze build dependencies and their impact
+   - Remove unused dependencies from build process
+   - Update build tools to latest stable versions
+   - Consider alternative, faster build tools
 
-4. **キャッシュ戦略**
-   - ビルドキャッシュの有効化と最適化
-   - CI/CD用の永続キャッシュの設定
-   - チーム開発用の共有キャッシュの設定
-   - 可能な場合のインクリメンタルコンパイルの実装
+4. **Caching Strategy**
+   - Enable and optimize build caching
+   - Configure persistent cache for CI/CD
+   - Set up shared cache for team development
+   - Implement incremental compilation where possible
 
-5. **バンドル分析**
-   - バンドル構成とサイズの分析
-   - 大きな依存関係と重複の特定
-   - ビルドツール固有のバンドルアナライザの使用
-   - バンドル分割の機会を探索
+5. **Bundle Analysis**
+   - Analyze bundle composition and sizes
+   - Identify large dependencies and duplicates
+   - Use bundle analyzers specific to your build tool
+   - Look for opportunities to split bundles
 
-6. **コード分割と遅延読み込み**
-   - 動的インポートとコード分割の実装
-   - SPA用のルートベース分割の設定
-   - ベンダーチャンク分離の設定
-   - チャンクサイズと読み込み戦略の最適化
+6. **Code Splitting and Lazy Loading**
+   - Implement dynamic imports and code splitting
+   - Set up route-based splitting for SPAs
+   - Configure vendor chunk separation
+   - Optimize chunk sizes and loading strategies
 
-7. **アセット最適化**
-   - 画像の最適化（圧縮、フォーマット変換、遅延読み込み）
-   - CSSとJavaScriptの最小化
-   - デッドコード除去のためのツリーシェイキング設定
-   - アセット圧縮の実装（gzip、brotli）
+7. **Asset Optimization**
+   - Optimize images (compression, format conversion, lazy loading)
+   - Minify CSS and JavaScript
+   - Configure tree shaking to remove dead code
+   - Implement asset compression (gzip, brotli)
 
-8. **開発ビルド最適化**
-   - 高速リフレッシュ/ホットリロードの有効化
-   - 開発固有の最適化を使用
-   - デバッグ改善のためのソースマップ設定
-   - 開発サーバー設定の最適化
+8. **Development Build Optimization**
+   - Enable fast refresh/hot reloading
+   - Use development-specific optimizations
+   - Configure source maps for better debugging
+   - Optimize development server settings
 
-9. **本番ビルド最適化**
-   - すべての本番最適化を有効化
-   - デッドコード除去の設定
-   - 適切な最小化と圧縮の設定
-   - より小さなバンドルサイズの最適化
+9. **Production Build Optimization**
+   - Enable all production optimizations
+   - Configure dead code elimination
+   - Set up proper minification and compression
+   - Optimize for smaller bundle sizes
 
-10. **並列処理**
-    - サポートされている場合の並列処理を有効化
-    - ビルドタスク用のワーカースレッド設定
-    - マルチコアシステムの最適化
-    - TypeScript/Babelの並列コンパイル使用
+10. **Parallel Processing**
+    - Enable parallel processing where supported
+    - Configure worker threads for build tasks
+    - Optimize for multi-core systems
+    - Use parallel compilation for TypeScript/Babel
 
-11. **ファイルシステム最適化**
-    - ファイル監視とポーリングの最適化
-    - 適切な含有/除外パターンの設定
-    - 効率的なファイルローダーとプロセッサーの使用
-    - ファイルI/O操作の最小化
+11. **File System Optimization**
+    - Optimize file watching and polling
+    - Configure proper include/exclude patterns
+    - Use efficient file loaders and processors
+    - Minimize file I/O operations
 
-12. **CI/CDビルド最適化**
-    - CIビルド環境とリソースの最適化
-    - CI用の適切なキャッシュ戦略の実装
-    - ビルドマトリックスの効率的使用
-    - 有益な場合の並列CIジョブ設定
+12. **CI/CD Build Optimization**
+    - Optimize CI build environments and resources
+    - Implement proper caching strategies for CI
+    - Use build matrices efficiently
+    - Configure parallel CI jobs where beneficial
 
-13. **メモリ使用量最適化**
-    - ビルド中のメモリ使用量の監視と最適化
-    - ビルドツール用のヒープサイズ設定
-    - ビルドプロセスのメモリリーク特定と修正
-    - メモリ効率的なコンパイルオプション使用
+13. **Memory Usage Optimization**
+    - Monitor and optimize memory usage during builds
+    - Configure heap sizes for build tools
+    - Identify and fix memory leaks in build process
+    - Use memory-efficient compilation options
 
-14. **出力最適化**
-    - 圧縮とエンコーディングの設定
-    - ファイル命名とハッシュ戦略の最適化
-    - 適切なアセットマニフェストの設定
-    - 効率的なアセット配信の実装
+14. **Output Optimization**
+    - Configure compression and encoding
+    - Optimize file naming and hashing strategies
+    - Set up proper asset manifests
+    - Implement efficient asset serving
 
-15. **監視とプロファイリング**
-    - ビルド時間監視の設定
-    - ボトルネック特定のためのビルドプロファイリングツール使用
-    - 時間経過によるバンドルサイズ変更の追跡
-    - ビルドパフォーマンス回帰の監視
+15. **Monitoring and Profiling**
+    - Set up build time monitoring
+    - Use build profiling tools to identify bottlenecks
+    - Track bundle size changes over time
+    - Monitor build performance regressions
 
-16. **ツール固有の最適化**
+16. **Tool-Specific Optimizations**
     
-    **Webpack用:**
-    - optimization.splitChunksの設定
-    - 並列処理のためのthread-loaderの使用
-    - ツリーシェイキング用のoptimization.usedExportsの有効化
-    - resolve.modulesとresolve.extensionsの設定
+    **For Webpack:**
+    - Configure optimization.splitChunks
+    - Use thread-loader for parallel processing
+    - Enable optimization.usedExports for tree shaking
+    - Configure resolve.modules and resolve.extensions
 
-    **Vite用:**
-    - build.rollupOptionsの設定
-    - 高速トランスパイル用のesbuildの使用
-    - 依存関係事前バンドルの最適化
-    - build.chunkSizeWarningLimitの設定
+    **For Vite:**
+    - Configure build.rollupOptions
+    - Use esbuild for faster transpilation
+    - Optimize dependency pre-bundling
+    - Configure build.chunkSizeWarningLimit
 
-    **TypeScript用:**
-    - インクリメンタルコンパイルの使用
-    - プロジェクト参照の設定
-    - tsconfig.json設定の最適化
-    - 適切な場合のskipLibCheckの使用
+    **For TypeScript:**
+    - Use incremental compilation
+    - Configure project references
+    - Optimize tsconfig.json settings
+    - Use skipLibCheck when appropriate
 
-17. **環境固有の設定**
-    - 開発環境と本番環境の設定分離
-    - ビルド最適化のための環境変数使用
-    - 条件付きビルド用のフィーチャーフラグ設定
-    - ターゲット環境への最適化
+17. **Environment-Specific Configuration**
+    - Separate development and production configurations
+    - Use environment variables for build optimization
+    - Configure feature flags for conditional builds
+    - Optimize for target environments
 
-18. **ビルド最適化のテスト**
-    - ビルド出力の正確性テスト
-    - すべての最適化がターゲット環境で動作することを検証
-    - 最適化による破壊的変更の確認
-    - パフォーマンス改善の測定と文書化
+18. **Testing Build Optimizations**
+    - Test build outputs for correctness
+    - Verify all optimizations work in target environments
+    - Check for any breaking changes from optimizations
+    - Measure and document performance improvements
 
-19. **文書化とメンテナンス**
-    - すべての最適化変更とその影響の文書化
-    - ビルドパフォーマンス監視ダッシュボードの作成
-    - ビルドパフォーマンス回帰のアラート設定
-    - ビルド設定の定期レビューと更新
+19. **Documentation and Maintenance**
+    - Document all optimization changes and their impact
+    - Create build performance monitoring dashboard
+    - Set up alerts for build performance regressions
+    - Regular review and updates of build configuration
 
-特定のプロジェクトとチームワークフローに最大の影響をもたらす最適化に焦点を当てる。改善を定量化するため、常に前後を測定する。
+Focus on the optimizations that provide the biggest impact for your specific project and team workflow. Always measure before and after to quantify improvements.

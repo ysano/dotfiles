@@ -1,18 +1,18 @@
-# プロジェクトヘルスチェック
+# Project Health Check
 
-ベロシティ、品質、チームパフォーマンスのメトリクスでプロジェクトの健全性を評価し、リスクと改善機会を特定します。
+Analyze overall project health and metrics
 
-## 実行手順
+## Instructions
 
-1. **ヘルスチェックの初期化**
-   - ツール接続の検証（GitHub）
-   - 評価期間の定義（デフォルト：過去30日）
-   - ヘルスチェック基準と闾値の設定
-   - 評価すべき主要メトリクスの特定
+1. **Health Check Initialization**
+   - Verify tool connections (Linear, GitHub)
+   - Define evaluation period (default: last 30 days)
+   - Set health check criteria and thresholds
+   - Identify key metrics to evaluate
 
-2. **多元的分析**
+2. **Multi-Dimensional Analysis**
 
-#### コードヘルスメトリクス
+#### Code Health Metrics
 ```bash
 # Code churn analysis
 git log --format=format: --name-only --since="30 days ago" | sort | uniq -c | sort -rg
@@ -30,180 +30,180 @@ cloc . --json --exclude-dir=node_modules,dist,build
 npm test -- --coverage --json
 ```
 
-#### 依存関係ヘルス
+#### Dependency Health
 ```bash
-# 古い依存関係のチェック
+# Check for outdated dependencies
 npm outdated --json
 
-# セキュリティ脆弱性
+# Security vulnerabilities
 npm audit --json
 
-# ライセンスコンプライアンス
+# License compliance
 npx license-checker --json
 ```
 
-#### GitHub Projects/タスク管理ヘルス
+#### Linear/Task Management Health
 ```
-1. スプリントベロシティトレンド
-2. サイクルタイム分析
-3. ブロックされたタスクの期間
-4. バックログの成長率
-5. バグ対機能の比率
-6. タスク完了の予測可能性
-```
-
-#### チームヘルス指標
-```
-1. PRレビューのターンアラウンドタイム
-2. コミット頻度の分布
-3. 作業分担のバランス
-4. オンコールインシデント頻度
-5. ドキュメント更新
+1. Sprint velocity trends
+2. Cycle time analysis
+3. Blocked task duration
+4. Backlog growth rate
+5. Bug vs feature ratio
+6. Task completion predictability
 ```
 
-3. **ヘルスレポート生成**
+#### Team Health Indicators
+```
+1. PR review turnaround time
+2. Commit frequency distribution
+3. Work distribution balance
+4. On-call incident frequency
+5. Documentation updates
+```
+
+3. **Health Report Generation**
 
 ```markdown
-# プロジェクトヘルスレポート - [プロジェクト名]
-生成日: [日付]
+# Project Health Report - [Project Name]
+Generated: [Date]
 
-## エグゼクティブサマリー
-総合ヘルススコア: [スコア]/100 [🟢 健全 | 🟡 要注意 | 🔴 危険]
+## Executive Summary
+Overall Health Score: [Score]/100 [🟢 Healthy | 🟡 Needs Attention | 🔴 Critical]
 
-### 主要な発見事項
-- ✅ 強み: [上位3つのポジティブ指標]
-- ⚠️ 懸念事項: [注意が必要な上位3つの領域]
-- 🚨 重要な問題: [即座に対処すべき項目]
+### Key Findings
+- ✅ Strengths: [Top 3 positive indicators]
+- ⚠️ Concerns: [Top 3 areas needing attention]
+- 🚨 Critical Issues: [Immediate action items]
 
-## 詳細ヘルスメトリクス
+## Detailed Health Metrics
 
-1. **デリバリーヘルス** (スコア: [X]/100)
-| メトリクス | 現在値 | 目標値 | ステータス |
+1. **Delivery Health** (Score: [X]/100)
+| Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| スプリントベロシティ | [X] pts | [Y] pts | 🟢 |
-| 期限内デリバリー | [X]% | 90% | 🟡 |
-| サイクルタイム | [X] 日 | [Y] 日 | 🟢 |
-| 欠陥率 | [X]% | <5% | 🔴 |
+| Sprint Velocity | [X] pts | [Y] pts | 🟢 |
+| On-time Delivery | [X]% | 90% | 🟡 |
+| Cycle Time | [X] days | [Y] days | 🟢 |
+| Defect Rate | [X]% | <5% | 🔴 |
 
-2. **コード品質** (スコア: [X]/100)
-| メトリクス | 現在値 | 目標値 | ステータス |
+2. **Code Quality** (Score: [X]/100)
+| Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| テストカバレッジ | [X]% | 80% | 🟡 |
-| コード重複 | [X]% | <3% | 🟢 |
-| 複雑度スコア | [X] | <10 | 🟡 |
-| セキュリティ問題 | [X] | 0 | 🔴 |
+| Test Coverage | [X]% | 80% | 🟡 |
+| Code Duplication | [X]% | <3% | 🟢 |
+| Complexity Score | [X] | <10 | 🟡 |
+| Security Issues | [X] | 0 | 🔴 |
 
-3. **技術的負債** (スコア: [X]/100)
-- 📊 総負債項目: [カウント]
-- 📈 負債成長率: [+/-X% per スプリント]
-- ⏱️ 推定負債作業: [X日]
-- 💰 負債影響: [説明]
+3. **Technical Debt** (Score: [X]/100)
+- 📊 Total Debt Items: [Count]
+- 📈 Debt Growth Rate: [+/-X% per sprint]
+- ⏱️ Estimated Debt Work: [X days]
+- 💰 Debt Impact: [Description]
 
-4. **チームヘルス** (スコア: [X]/100)
-| メトリクス | 現在値 | 目標値 | ステータス |
+4. **Team Health** (Score: [X]/100)
+| Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| PRレビュー時間 | [X] 時間 | <4 時間 | 🟢 |
-| 知識のサイロ化 | [X] | 0 | 🟡 |
-| 作業バランス | [スコア] | >0.8 | 🟢 |
-| バーンアウトリスク | [レベル] | 低 | 🟡 |
+| PR Review Time | [X] hrs | <4 hrs | 🟢 |
+| Knowledge Silos | [X] | 0 | 🟡 |
+| Work Balance | [Score] | >0.8 | 🟢 |
+| Burnout Risk | [Level] | Low | 🟡 |
 
-5. **依存関係ヘルス** (スコア: [X]/100)
-- 🔄 古い依存関係: [X]/[総計]
-- 🛡️ セキュリティ脆弱性: [重要: X, 高: Y]
-- 📜 ライセンス問題: [カウント]
-- 🔗 外部サービスヘルス: [ステータス]
+5. **Dependency Health** (Score: [X]/100)
+- 🔄 Outdated Dependencies: [X]/[Total]
+- 🛡️ Security Vulnerabilities: [Critical: X, High: Y]
+- 📜 License Issues: [Count]
+- 🔗 External Service Health: [Status]
 
-## トレンド分析
+## Trend Analysis
 
-### ベロシティトレンド（過去6スプリント）
+### Velocity Trend (Last 6 Sprints)
 ```
-スプリント1: ████████████ 40 pts
-スプリント2: ██████████████ 45 pts
-スプリント3: ████████████████ 50 pts
-スプリント4: ██████████████ 45 pts
-スプリント5: ████████████ 38 pts
-スプリント6: ██████████ 35 pts ⚠️ 減少
-```
-
-### バグ発見率
-```
-週1: ██ 2 バグ
-週2: ████ 4 バグ
-週3: ██████ 6 バグ ⚠️ 増加
-週4: ████████ 8 バグ 🚨 対策必要
+Sprint 1: ████████████ 40 pts
+Sprint 2: ██████████████ 45 pts
+Sprint 3: ████████████████ 50 pts
+Sprint 4: ██████████████ 45 pts
+Sprint 5: ████████████ 38 pts
+Sprint 6: ██████████ 35 pts ⚠️ Declining
 ```
 
-## リスク評価
+### Bug Discovery Rate
+```
+Week 1: ██ 2 bugs
+Week 2: ████ 4 bugs
+Week 3: ██████ 6 bugs ⚠️ Increasing
+Week 4: ████████ 8 bugs 🚨 Action needed
+```
 
-### 高優先度リスク
-1. **ベロシティの低下** 
-   - 影響: 高
-   - 可能性: 確認済み
-   - 軽減策: スプリント計画プロセスの見直し
+## Risk Assessment
 
-2. **セキュリティ脆弱性**
-   - 影響: 重要
-   - カウント: [X] 高, [Y] 中
-   - 対策: 即座のパッチ適用が必要
+### High Priority Risks
+1. **Declining Velocity** 
+   - Impact: High
+   - Likelihood: Confirmed
+   - Mitigation: Review sprint planning process
 
-3. **知識の集中**
-   - 影響: 中
-   - バスファクター: 2
-   - 対策: ペアリング/ドキュメント化の実装
+2. **Security Vulnerabilities**
+   - Impact: Critical
+   - Count: [X] high, [Y] medium
+   - Action: Immediate patching required
 
-## 実行可能な推奨事項
+3. **Knowledge Concentration**
+   - Impact: Medium
+   - Bus Factor: 2
+   - Action: Implement pairing/documentation
 
-### 即座の対策（今週）
-1. 🛡️ **セキュリティ**: 重要な脆弱性を修正するため[パッケージ]を更新
-2. 🐛 **品質**: バグが多発する上位3モジュールに対処
-3. 👥 **チーム**: [重要コンポーネント]の知識移転をスケジュール
+## Actionable Recommendations
 
-### 短期改善（今スプリント）
-1. 📈 **ベロシティ**: 持続可能なレベルまでスコープを縮小
-2. 🧪 **テスト**: [モジュール]のカバレッジを80%まで向上
-3. 📚 **ドキュメント**: [機能]の古いドキュメントを更新
+### Immediate Actions (This Week)
+1. 🛡️ **Security**: Update [package] to fix critical vulnerability
+2. 🐛 **Quality**: Address top 3 bug-prone modules
+3. 👥 **Team**: Schedule knowledge transfer for [critical component]
 
-### 長期イニシアチブ（今四半期）
-1. 🏗️ **アーキテクチャ**: 複雑度を下げるため[コンポーネント]をリファクタ
-2. 🔄 **プロセス**: 自動依存関係更新を実装
-3. 📊 **メトリクス**: 継続的ヘルス監視を設定
+### Short-term Improvements (This Sprint)
+1. 📈 **Velocity**: Reduce scope to sustainable level
+2. 🧪 **Testing**: Increase coverage in [module] to 80%
+3. 📚 **Documentation**: Update outdated docs for [feature]
 
-## 前回ヘルスチェックとの比較
+### Long-term Initiatives (This Quarter)
+1. 🏗️ **Architecture**: Refactor [component] to reduce complexity
+2. 🔄 **Process**: Implement automated dependency updates
+3. 📊 **Metrics**: Set up continuous health monitoring
 
-| カテゴリ | 前回チェック | 現在 | トレンド |
+## Comparison with Previous Health Check
+
+| Category | Last Check | Current | Trend |
 |----------|------------|---------|-------|
-| 総合スコア | 72/100 | 68/100 | ↓ -4 |
-| デリバリー | 80/100 | 75/100 | ↓ -5 |
-| コード品質 | 70/100 | 72/100 | ↑ +2 |
-| 技術的負債 | 65/100 | 60/100 | ↓ -5 |
-| チームヘルス | 75/100 | 70/100 | ↓ -5 |
+| Overall Score | 72/100 | 68/100 | ↓ -4 |
+| Delivery | 80/100 | 75/100 | ↓ -5 |
+| Code Quality | 70/100 | 72/100 | ↑ +2 |
+| Technical Debt | 65/100 | 60/100 | ↓ -5 |
+| Team Health | 75/100 | 70/100 | ↓ -5 |
 ```
 
-4. **インタラクティブ詳細分析**
+4. **Interactive Deep Dives**
 
-焦点を絞った分析オプションを提供:
+Offer focused analysis options:
 
 ```
-"ヘルスチェックに基づいて、以下のどれを実行しますか:
-1. ベロシティ低下トレンドの詳細分析
-2. セキュリティ脆弱性修正計画の生成
-3. 技術的負債ホットスポットの分析
-4. チーム作業負荷リバランス計画の作成
-5. 自動ヘルス監視の設定"
+"Based on the health check, would you like to:
+1. Deep dive into declining velocity trends
+2. Generate security vulnerability fix plan
+3. Analyze technical debt hotspots
+4. Create team workload rebalancing plan
+5. Set up automated health monitoring"
 ```
 
 ## Error Handling
 
-### Missing GitHub Projects Access
+### Missing Linear Connection
 ```
-"GitHub Projects access not available. Health check will be limited to:
-- Git repository metrics only
-- Basic GitHub Issues data
-- Manual input required for project data
+"Linear MCP not connected. Health check will be limited to:
+- Git/GitHub metrics only
+- No sprint velocity or task metrics
+- Manual input required for team data
 
 To enable full health analysis:
-1. Ensure GitHub Projects V2 access
-2. Configure proper API permissions
+1. Install Linear MCP server
+2. Configure with API credentials
 3. Re-run health check"
 ```
 
@@ -247,7 +247,7 @@ Allow users to define additional metrics:
 1. **Executive Summary** (PDF/Markdown)
 2. **Detailed Report** (HTML with charts)
 3. **Raw Metrics** (JSON/CSV)
-4. **Action Items** (GitHub issues)
+4. **Action Items** (Linear tasks/GitHub issues)
 5. **Monitoring Dashboard** (Grafana/Datadog format)
 
 ## Automation Suggestions
@@ -256,7 +256,7 @@ Allow users to define additional metrics:
 "Would you like me to:
 1. Schedule weekly health checks
 2. Set up alerts for critical metrics
-3. Create GitHub issues for action items
+3. Create Linear tasks for action items
 4. Generate PR templates with health criteria
 5. Configure CI/CD health gates"
 ```

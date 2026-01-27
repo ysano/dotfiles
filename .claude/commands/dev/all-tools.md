@@ -1,31 +1,31 @@
-# 利用可能な開発ツール一覧表示
+# Display All Available Development Tools
 
-利用可能な開発ツール一覧を表示します
+Display all available development tools
 
-*コマンド原作者: IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
+*Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 
-## 実行手順
+## Instructions
 
-システムプロンプトから利用可能なすべてのツールを以下の形式で表示してください：
+Display all available tools from your system prompt in the following format:
 
-1. **各ツールをリスト表示** - TypeScript関数シグネチャと共に
-2. **目的を含める** - 各ツールの目的をサフィックスとして
-3. **二重改行を使用** - 読みやすさのため
-4. **箇条書き形式** - 明確な整理のため
+1. **List each tool** with its TypeScript function signature
+2. **Include the purpose** of each tool as a suffix
+3. **Use double line breaks** between tools for readability
+4. **Format as bullet points** for clear organization
 
-出力は開発者が以下を理解できるようにします：
-- 現在のClaude Codeセッションで利用可能なツール
-- 参照用の正確な関数シグネチャ
-- 各ツールの主要な目的
+The output should help developers understand:
+- What tools are available in the current Claude Code session
+- The exact function signatures for reference
+- The primary purpose of each tool
 
-出力形式例：
+Example format:
 ```typescript
-• functionName(parameters: Type): ReturnType - ツールの目的
+• functionName(parameters: Type): ReturnType - Purpose of the tool
 
-• anotherFunction(params: ParamType): ResultType - このツールが行うこと
+• anotherFunction(params: ParamType): ResultType - What this tool does
 ```
 
-このコマンドは以下の用途で有用です：
-- 利用可能な機能のクイックリファレンス
-- ツールシグネチャの理解
-- 特定のタスクに使用するツールの計画
+This command is useful for:
+- Quick reference of available capabilities
+- Understanding tool signatures
+- Planning which tools to use for specific tasks

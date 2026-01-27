@@ -1,153 +1,153 @@
-# Ultra Think
+# Deep Analysis and Problem Solving Mode
 
-複雑な問題解決、アーキテクチャ決定、および最大限の推論能力を必要とする徹底的な分析のために、Claudeを超深層思考モードに参加させます。
+Deep analysis and problem solving mode
 
-## 実行手順
+## Instructions
 
-1. **Ultra Thinkモードの初期化**
-   - 拡張分析思考の要求を認識
-   - 深層的で体系的な推論のコンテキストを設定
-   - 問題空間を包括的に探索する準備
+1. **Initialize Ultra Think Mode**
+   - Acknowledge the request for enhanced analytical thinking
+   - Set context for deep, systematic reasoning
+   - Prepare to explore the problem space comprehensively
 
-2. **問題や質問の解析**
-   - 以下から核心となる課題を抽出：**$ARGUMENTS**
-   - すべての関係者と制約を特定
-   - 暗黙の要件と隠れた複雑さを認識
-   - 仮定に疑問を投げかけ、未知の要素を表面化
+2. **Parse the Problem or Question**
+   - Extract the core challenge from: **$ARGUMENTS**
+   - Identify all stakeholders and constraints
+   - Recognize implicit requirements and hidden complexities
+   - Question assumptions and surface unknowns
 
-3. **多次元分析**
-   複数の角度から問題にアプローチします：
+3. **Multi-Dimensional Analysis**
+   Approach the problem from multiple angles:
    
-   ### 技術的視点
-   - 技術的実現可能性と制約を分析
-   - スケーラビリティ、パフォーマンス、保守性を検討
-   - セキュリティへの影響を評価
-   - 技術的負債と将来性を評価
+   ### Technical Perspective
+   - Analyze technical feasibility and constraints
+   - Consider scalability, performance, and maintainability
+   - Evaluate security implications
+   - Assess technical debt and future-proofing
    
-   ### ビジネス視点
-   - ビジネス価値とROIを理解
-   - 市場投入時間のプレッシャーを考慮
-   - 競争優位性を評価
-   - リスク対リワードのトレードオフを評価
+   ### Business Perspective
+   - Understand business value and ROI
+   - Consider time-to-market pressures
+   - Evaluate competitive advantages
+   - Assess risk vs. reward trade-offs
    
-   ### ユーザー視点
-   - ユーザーのニーズと課題を分析
-   - 使いやすさとアクセシビリティを考慮
-   - ユーザーエクスペリエンスへの影響を評価
-   - エッジケースとユーザージャーニーについて思考
+   ### User Perspective
+   - Analyze user needs and pain points
+   - Consider usability and accessibility
+   - Evaluate user experience implications
+   - Think about edge cases and user journeys
    
-   ### システム視点
-   - システム全体への影響を考慮
-   - 統合ポイントを分析
-   - 依存関係と結合度を評価
-   - 創発的行動について思考
+   ### System Perspective
+   - Consider system-wide impacts
+   - Analyze integration points
+   - Evaluate dependencies and coupling
+   - Think about emergent behaviors
 
-4. **複数ソリューションの生成**
-   - 少なくとも3-5の異なるアプローチをブレインストーミング
-   - 各アプローチについて以下を検討：
-     - 長所と短所
-     - 実装の複雑性
-     - リソース要件
-     - 潜在的リスク
-     - 長期的影響
-   - 従来型と創造的ソリューションの両方を含む
-   - ハイブリッドアプローチを検討
+4. **Generate Multiple Solutions**
+   - Brainstorm at least 3-5 different approaches
+   - For each approach, consider:
+     - Pros and cons
+     - Implementation complexity
+     - Resource requirements
+     - Potential risks
+     - Long-term implications
+   - Include both conventional and creative solutions
+   - Consider hybrid approaches
 
-5. **深層分析**
-   最も有望なソリューションについて：
-   - 詳細な実装計画を作成
-   - 潜在的な落とし穴と緩和戦略を特定
-   - 段階的アプローチとMVPを検討
-   - 二次・三次効果を分析
-   - 失敗モードと回復について検討
+5. **Deep Dive Analysis**
+   For the most promising solutions:
+   - Create detailed implementation plans
+   - Identify potential pitfalls and mitigation strategies
+   - Consider phased approaches and MVPs
+   - Analyze second and third-order effects
+   - Think through failure modes and recovery
 
-6. **領域横断的思考**
-   - 他の業界や領域から類推を導出
-   - 異なるコンテキストからデザインパターンを適用
-   - 生物学的または自然システムの類推を検討
-   - 既存ソリューションの革新的な組み合わせを探索
+6. **Cross-Domain Thinking**
+   - Draw parallels from other industries or domains
+   - Apply design patterns from different contexts
+   - Consider biological or natural system analogies
+   - Look for innovative combinations of existing solutions
 
-7. **挑戦と洗練**
-   - 各ソリューションに対して悪魔の代弁者を演じる
-   - 弱点と盲点を特定
-   - "もしも"シナリオを検討
-   - 仮定をストレステスト
-   - 意図しない結果を探索
+7. **Challenge and Refine**
+   - Play devil's advocate with each solution
+   - Identify weaknesses and blind spots
+   - Consider "what if" scenarios
+   - Stress-test assumptions
+   - Look for unintended consequences
 
-8. **洞察の統合**
-   - すべての視点からの洞察を結合
-   - 主要な決定要因を特定
-   - 重要なトレードオフを強調
-   - 革新的な発見を要約
-   - 問題空間の微妙な見解を提示
+8. **Synthesize Insights**
+   - Combine insights from all perspectives
+   - Identify key decision factors
+   - Highlight critical trade-offs
+   - Summarize innovative discoveries
+   - Present a nuanced view of the problem space
 
-9. **構造化された推奨事項の提供**
-   調査結果を明確な構造で提示：
+9. **Provide Structured Recommendations**
+   Present findings in a clear structure:
    ```
-   ## 問題分析
-   - 核心となる課題
-   - 主要な制約
-   - 成功の重要要因
+   ## Problem Analysis
+   - Core challenge
+   - Key constraints
+   - Critical success factors
    
-   ## ソリューション選択肢
-   ### 選択肢1：[名前]
-   - 説明
-   - 長所・短所
-   - 実装アプローチ
-   - リスク評価
+   ## Solution Options
+   ### Option 1: [Name]
+   - Description
+   - Pros/Cons
+   - Implementation approach
+   - Risk assessment
    
-   ### 選択肢2：[名前]
-   [同様の構造]
+   ### Option 2: [Name]
+   [Similar structure]
    
-   ## 推奨事項
-   - 推奨アプローチ
-   - 根拠
-   - 実装ロードマップ
-   - 成功指標
-   - リスク緩和計画
+   ## Recommendation
+   - Recommended approach
+   - Rationale
+   - Implementation roadmap
+   - Success metrics
+   - Risk mitigation plan
    
-   ## 代替的視点
-   - 反対意見
-   - 将来の検討事項
-   - さらなる研究が必要な領域
+   ## Alternative Perspectives
+   - Contrarian view
+   - Future considerations
+   - Areas for further research
    ```
 
-10. **メタ分析**
-    - 思考プロセス自体を振り返る
-    - 不確実性の領域を特定
-    - バイアスや制限を認識
-    - 必要な追加専門知識を提案
-    - 推奨事項の信頼度レベルを提供
+10. **Meta-Analysis**
+    - Reflect on the thinking process itself
+    - Identify areas of uncertainty
+    - Acknowledge biases or limitations
+    - Suggest additional expertise needed
+    - Provide confidence levels for recommendations
 
-## 使用例
+## Usage Examples
 
 ```bash
-# アーキテクチャ決定
-/project:ultra-think マイクロサービスに移行すべきか、モノリスを改善すべきか？
+# Architectural decision
+/project:ultra-think Should we migrate to microservices or improve our monolith?
 
-# 複雑な問題解決
-/project:ultra-think コストを削減しながら10倍のトラフィックを処理するためにシステムをスケールするには？
+# Complex problem solving
+/project:ultra-think How do we scale our system to handle 10x traffic while reducing costs?
 
-# 戦略的計画
-/project:ultra-think 次世代プラットフォームに選択すべき技術スタックは？
+# Strategic planning
+/project:ultra-think What technology stack should we choose for our next-gen platform?
 
-# デザインチャレンジ
-/project:ultra-think 後方互換性を保ちながら、より開発者フレンドリーなAPIに改善するには？
+# Design challenge
+/project:ultra-think How can we improve our API to be more developer-friendly while maintaining backward compatibility?
 ```
 
-## 主要原則
+## Key Principles
 
-- **第一原理思考**：基本的真理まで分解する
-- **システム思考**：相互接続とフィードバックループを考慮
-- **確率的思考**：不確実性と範囲を扱う
-- **逆転思考**：何をすべきかだけでなく、何を避けるべきかを考慮
-- **二次思考**：結果の結果を考慮
+- **First Principles Thinking**: Break down to fundamental truths
+- **Systems Thinking**: Consider interconnections and feedback loops
+- **Probabilistic Thinking**: Work with uncertainties and ranges
+- **Inversion**: Consider what to avoid, not just what to do
+- **Second-Order Thinking**: Consider consequences of consequences
 
-## 出力の期待値
+## Output Expectations
 
-- 包括的な分析（通常2-4ページの洞察）
-- トレードオフを伴う複数の実行可能なソリューション
-- 明確な推論チェーン
-- 不確実性の認識
-- 実行可能な推奨事項
-- 新規の洞察や視点
+- Comprehensive analysis (typically 2-4 pages of insights)
+- Multiple viable solutions with trade-offs
+- Clear reasoning chains
+- Acknowledgment of uncertainties
+- Actionable recommendations
+- Novel insights or perspectives

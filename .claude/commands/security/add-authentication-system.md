@@ -1,78 +1,78 @@
-# 認証システムの追加
+# Add Authentication System
 
-セキュリティのベストプラクティスと現代的な標準に基づいた堅牢な認証・認可システムを実装します。
+Implement secure user authentication system
 
-## 実行手順
+## Instructions
 
-1. **認証戦略の分析**
-   - アプリケーション要件とユーザータイプの分析
-   - 認証方法の定義（パスワード、OAuth、SSO、MFA）
-   - セキュリティ要件とコンプライアンス要件の評価
-   - ユーザー管理とロールベースアクセス制御の計画
-   - 既存の認証インフラと統合ポイントの評価
+1. **Authentication Strategy Analysis**
+   - Analyze application requirements and user types
+   - Define authentication methods (password, OAuth, SSO, MFA)
+   - Assess security requirements and compliance needs
+   - Plan user management and role-based access control
+   - Evaluate existing authentication infrastructure and integration points
 
-2. **認証方法の選択**
-   - 適切な認証戦略の選択：
-     - **ユーザー名/パスワード**: 従来の認証情報ベース認証
-     - **OAuth 2.0/OpenID Connect**: サードパーティ認証（Google、GitHub等）
-     - **SAML**: エンタープライズシングルサインオン統合
-     - **JWT**: ステートレストークンベース認証
-     - **多要素認証**: SMS、TOTP、ハードウェアトークン
-     - **パスワードレス**: Magic link、WebAuthn、生体認証
+2. **Authentication Method Selection**
+   - Choose appropriate authentication strategies:
+     - **Username/Password**: Traditional credential-based authentication
+     - **OAuth 2.0/OpenID Connect**: Third-party authentication (Google, GitHub, etc.)
+     - **SAML**: Enterprise single sign-on integration
+     - **JWT**: Stateless token-based authentication
+     - **Multi-Factor Authentication**: SMS, TOTP, hardware tokens
+     - **Passwordless**: Magic links, WebAuthn, biometric authentication
 
-3. **ユーザー管理システム**
-   - ユーザー登録とアカウント作成ワークフローの設定
-   - ユーザープロファイル管理とデータストレージの設定
-   - パスワードポリシーとセキュリティ要件の実装
-   - アカウント検証とメール確認の設定
-   - ユーザー無効化とアカウント削除手順の設定
+3. **User Management System**
+   - Set up user registration and account creation workflows
+   - Configure user profile management and data storage
+   - Implement password policies and security requirements
+   - Set up account verification and email confirmation
+   - Configure user deactivation and account deletion procedures
 
-4. **認証の実装**
-   - 安全なパスワードハッシュ化の実装（bcrypt、Argon2、scrypt）
-   - セッション管理とトークン生成の設定
-   - 安全なcookie処理とCSRF保護の設定
-   - 認証ミドルウェアとルート保護の実装
-   - 認証状態管理の設定（クライアントサイド）
+4. **Authentication Implementation**
+   - Implement secure password hashing (bcrypt, Argon2, scrypt)
+   - Set up session management and token generation
+   - Configure secure cookie handling and CSRF protection
+   - Implement authentication middleware and route protection
+   - Set up authentication state management (client-side)
 
-5. **認可とアクセス制御**
-   - ロールベースアクセス制御（RBAC）システムの実装
-   - 権限ベース認可の設定
-   - リソースレベルアクセス制御の設定
-   - 動的認可とポリシーエンジンの実装
-   - APIエンドポイント保護と認可の設定
+5. **Authorization and Access Control**
+   - Implement role-based access control (RBAC) system
+   - Set up permission-based authorization
+   - Configure resource-level access controls
+   - Implement dynamic authorization and policy engines
+   - Set up API endpoint protection and authorization
 
-6. **多要素認証（MFA）**
-   - TOTPベース認証アプリサポートの設定
-   - SMSベース認証コードの設定
-   - バックアップコードと回復メカニズムの実装
-   - ハードウェアトークンサポートの設定（FIDO2/WebAuthn）
-   - MFA強制ポリシーとユーザーエクスペリエンスの設定
+6. **Multi-Factor Authentication (MFA)**
+   - Configure TOTP-based authenticator app support
+   - Set up SMS-based authentication codes
+   - Implement backup codes and recovery mechanisms
+   - Configure hardware token support (FIDO2/WebAuthn)
+   - Set up MFA enforcement policies and user experience
 
-7. **OAuthとサードパーティ統合**
-   - OAuthプロバイダーの設定（Google、GitHub、Facebook等）
-   - アイデンティティ連合のためのOpenID Connectの設定
-   - ソーシャルログインとアカウントリンクの実装
-   - エンタープライズSSO統合の設定（SAML、LDAP）
-   - 外部統合のためのAPIキー管理の設定
+7. **OAuth and Third-Party Integration**
+   - Configure OAuth providers (Google, GitHub, Facebook, etc.)
+   - Set up OpenID Connect for identity federation
+   - Implement social login and account linking
+   - Configure enterprise SSO integration (SAML, LDAP)
+   - Set up API key management for external integrations
 
-8. **セキュリティの実装**
-   - レート制限とブルートフォース攻撃保護の設定
-   - アカウントロックアウトとセキュリティ監視の設定
-   - セキュリティヘッダーとセッションセキュリティの実装
-   - 監査ログとセキュリティイベント追跡の設定
-   - 脆弱性スキャンとセキュリティテストの設定
+8. **Security Implementation**
+   - Configure rate limiting and brute force protection
+   - Set up account lockout and security monitoring
+   - Implement security headers and session security
+   - Configure audit logging and security event tracking
+   - Set up vulnerability scanning and security testing
 
-9. **ユーザーエクスペリエンスとフロントエンド統合**
-   - レスポンシブ認証UIコンポーネントの作成
-   - クライアントサイド認証状態管理の実装
-   - 保護されたルート処理とリダイレクトの設定
-   - 認証エラーハンドリングとユーザーフィードバックの設定
-   - ログイン状態保持と永続ログイン機能の実装
+9. **User Experience and Frontend Integration**
+   - Create responsive authentication UI components
+   - Implement client-side authentication state management
+   - Set up protected route handling and redirects
+   - Configure authentication error handling and user feedback
+   - Implement remember me and persistent login features
 
-10. **テストとメンテナンス**
-    - 包括的な認証テストの設定
-    - セキュリティテストとペネトレーションテストの設定
-    - 認証監視とアラートの作成
-    - コンプライアンスレポートと監査証跡の設定
-    - チームへの認証セキュリティベストプラクティス研修
-    - セキュリティイベントのインシデント対応手順の作成
+10. **Testing and Maintenance**
+    - Set up comprehensive authentication testing
+    - Configure security testing and penetration testing
+    - Create authentication monitoring and alerting
+    - Set up compliance reporting and audit trails
+    - Train team on authentication security best practices
+    - Create incident response procedures for security events

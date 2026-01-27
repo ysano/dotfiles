@@ -5,13 +5,35 @@
 .claude/commands/**/*.md source=Original author=Local
 
 # Claude-Command-Suite由来ファイル（上書き）
-.claude/commands/dev/all-tools.md source=Claude-Command-Suite author=IndyDevDan/DislerH
-.claude/commands/dev/git-status.md source=Claude-Command-Suite author=IndyDevDan/DislerH
-.claude/commands/dev/prime.md source=Claude-Command-Suite author=IndyDevDan/DislerH
-.claude/commands/dev/directory-deep-dive.md source=Claude-Command-Suite author=ThomasLandgraf
-.claude/commands/team/decision-quality-analyzer.md source=Claude-Command-Suite author=Local
-.claude/commands/performance/system-behavior-simulator.md source=Claude-Command-Suite author=Local
 
 # 特殊ファイル（管理ドキュメント）
 .claude/CLAUDE_COMMANDS_INTEGRATION_LOG.md source=Documentation author=Claude
 .claude/FOLDER_STRUCTURE_MIGRATION_PLAN.md source=Documentation author=Claude
+.claude/commands/deploy/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/dev/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/docs/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/performance/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/project/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/security/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/setup/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/simulation/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/team/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/test/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/boundary/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/context/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/memory/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/orchestration/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/reasoning/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/rust/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/semantic/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/skills/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/spec-workflow/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/svelte/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/sync/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/wfgy/*.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/handoff.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/handoff-continue.md source=Claude-Command-Suite author=qdhenry
+.claude/commands/spec-elicitation.md source=Claude-Command-Suite author=qdhenry
+.claude/agents/**/*.md source=Claude-Command-Suite author=qdhenry
+.claude/hooks/**/* source=Claude-Command-Suite author=qdhenry
+.claude/skills/**/* source=Claude-Command-Suite author=qdhenry
