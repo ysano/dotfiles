@@ -6,6 +6,11 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
+# 共通ログ機能を読み込み（最優先）
+if [[ -f "${SCRIPT_DIR}/core/logging_utils.sh" ]]; then
+    source "${SCRIPT_DIR}/core/logging_utils.sh"
+fi
+
 # 依存ファイルの読み込み
 if [[ -f "${SCRIPT_DIR}/functions.sh" ]]; then
     source "${SCRIPT_DIR}/functions.sh"
@@ -13,13 +18,6 @@ fi
 
 if [[ -f "${SCRIPT_DIR}/sound_utils.sh" ]]; then
     source "${SCRIPT_DIR}/sound_utils.sh"
-fi
-
-# フォールバックログ機能
-if ! command -v log_info >/dev/null 2>&1; then
-    log_info() { echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2; }
-    log_error() { echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2; }
-    log_debug() { [[ "$TMUX_CLAUDE_VOICE_DEBUG" == "1" ]] && echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $1" >&2 || true; }
 fi
 
 # フォールバックOS種別取得
