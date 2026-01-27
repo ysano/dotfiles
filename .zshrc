@@ -56,6 +56,5 @@ fi
 # Local environment file (if needed)
 # [[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"
 
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="/Users/yoshiaki_sano/.rd/bin:$PATH"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
+### Rancher Desktop (portable path)
+[[ -d "$HOME/.rd/bin" ]] && export PATH="$HOME/.rd/bin:$PATH"
