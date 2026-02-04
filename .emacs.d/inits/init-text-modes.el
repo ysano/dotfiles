@@ -20,7 +20,6 @@
 ;; EWW web browser
 ;; --------------------------------
 (use-package eww
-  :ensure t
   :defer t
   :custom
   (eww-search-prefix "http://www.google.com/?k1=-1&q=")

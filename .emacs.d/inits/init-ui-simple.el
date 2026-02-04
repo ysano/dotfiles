@@ -16,7 +16,6 @@
   (inhibit-startup-screen t)
   (initial-scratch-message nil)
   (ring-bell-function 'ignore)
-  (initial-buffer-choice (lambda () (dashboard-refresh-buffer) (get-buffer "*dashboard*")))
   ;; Font settings
   (use-default-font-for-symbols nil)
   ;; Line spacing for better readability (in pixels)
@@ -69,9 +68,10 @@
   (run-with-timer 1.0 nil #'my-apply-unified-font-scaling))
 
 ;; --------------------------------
-;; Icons
+;; Icons (doom-modeline用)
 ;; --------------------------------
-(use-package all-the-icons
+;; doom-modeline は nerd-icons を使用
+(use-package nerd-icons
   :ensure t
   :if (display-graphic-p))
 
@@ -86,13 +86,16 @@
   :config
   (load-theme 'doom-one t)
   (doom-themes-visual-bell-config)
-  (doom-themes-org-config))
+  ;; org-config は org-mode 使用時に遅延読み込み
+  (with-eval-after-load 'org
+    (doom-themes-org-config)))
 
 ;; --------------------------------
 ;; Modern modeline
 ;; --------------------------------
 (use-package doom-modeline
   :ensure t
+  :defer 0.1  ;; わずかに遅延（テーマ読み込み後）
   :custom
   ;; 統一スケーリング対応
   (doom-modeline-height (my-scaled-modeline-height))
@@ -118,18 +121,8 @@
   :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
-;; --------------------------------
-;; Dashboard
-;; --------------------------------
-(use-package dashboard
-  :ensure t
-  :custom
-  (dashboard-center-content t)
-  (dashboard-startup-banner 'logo)
-  (dashboard-items '((recents . 5)
-                     (projects . 5)))
-  :config
-  (dashboard-setup-startup-hook))
+;; Dashboard は無効化（起動高速化のため）
+;; 必要な場合は M-x dashboard-open で手動起動可能
 
 (provide 'init-ui-simple)
 ;;; init-ui-simple.el ends here

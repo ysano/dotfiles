@@ -1,0 +1,84 @@
+;; -*- mode: lisp-data -*-
+;; Tempel templates - ~/.emacs.d/templates
+;; See https://github.com/minad/tempel for syntax
+
+fundamental-mode
+
+(today (format-time-string "%Y-%m-%d"))
+(time (format-time-string "%H:%M:%S"))
+(datetime (format-time-string "%Y-%m-%d %H:%M:%S"))
+(iso8601 (format-time-string "%Y-%m-%dT%H:%M:%S%z"))
+
+prog-mode
+
+(fixme (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "FIXME: " p)
+(todo (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "TODO: " p)
+(note (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "NOTE: " p)
+(hack (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "HACK: " p)
+
+emacs-lisp-mode
+
+(lambda "(lambda (" p ")" n> r> ")")
+(defun "(defun " p " (" p ")" n> "\"" p "\"" n> r> ")")
+(defvar "(defvar " p n> "\"" p "\")")
+(defcustom "(defcustom " p n> "\"" p "\"" n> ":type '" p ")")
+(let "(let ((" p " " p "))" n> r> ")")
+(let* "(let* ((" p " " p "))" n> r> ")")
+(if "(if " p n> r> ")")
+(when "(when " p n> r> ")")
+(unless "(unless " p n> r> ")")
+(cond "(cond" n> "(" p " " p ")" n> "(t " p "))")
+(use-package "(use-package " p n> ":ensure t" n> ":custom" n> "(" p " " p "))")
+
+org-mode
+
+(title "#+TITLE: " p n "#+AUTHOR: " user-full-name n "#+DATE: " (format-time-string "%Y-%m-%d") n n)
+(src "#+BEGIN_SRC " p n> r> n "#+END_SRC")
+(elisp "#+BEGIN_SRC emacs-lisp" n> r> n "#+END_SRC")
+(quote "#+BEGIN_QUOTE" n> r> n "#+END_QUOTE")
+
+python-mode python-ts-mode
+
+(def "def " p "(" p "):" n> "\"\"\"" p "\"\"\"" n> r>)
+(class "class " p ":" n> "\"\"\"" p "\"\"\"" n> n> "def __init__(self" p "):" n> r>)
+(if "if " p ":" n> r>)
+(for "for " p " in " p ":" n> r>)
+(main "if __name__ == \"__main__\":" n> r>)
+
+go-mode go-ts-mode
+
+(func "func " p "(" p ") " p " {" n> r> n "}")
+(meth "func (" p " *" p ") " p "(" p ") " p " {" n> r> n "}")
+(if "if " p " {" n> r> n "}")
+(for "for " p " {" n> r> n "}")
+(err "if err != nil {" n> "return " p n "}")
+(main "func main() {" n> r> n "}")
+
+rust-mode rust-ts-mode
+
+(fn "fn " p "(" p ") -> " p " {" n> r> n "}")
+(impl "impl " p " {" n> r> n "}")
+(struct "struct " p " {" n> p ": " p "," n "}")
+(enum "enum " p " {" n> p "," n "}")
+(match "match " p " {" n> p " => " p "," n "}")
+(if "if " p " {" n> r> n "}")
+(test "#[test]" n "fn " p "() {" n> r> n "}")
+
+js-mode js-ts-mode typescript-mode typescript-ts-mode
+
+(func "function " p "(" p ") {" n> r> n "}")
+(arrow "const " p " = (" p ") => {" n> r> n "};")
+(class "class " p " {" n> "constructor(" p ") {" n> r> n "}" n "}")
+(if "if (" p ") {" n> r> n "}")
+(for "for (let " p " = 0; " p " < " p "; " p "++) {" n> r> n "}")
+(log "console.log(" p ");")
+(async "async function " p "(" p ") {" n> r> n "}")
+(await "const " p " = await " p ";")
+
+sh-mode bash-ts-mode
+
+(if "if [[ " p " ]]; then" n> r> n "fi")
+(for "for " p " in " p "; do" n> r> n "done")
+(while "while [[ " p " ]]; do" n> r> n "done")
+(func p "() {" n> r> n "}")
+(case "case " p " in" n> p ")" n> r> n> ";;" n "esac")

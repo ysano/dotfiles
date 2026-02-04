@@ -66,6 +66,30 @@
          :embedding-model "aya:8b-23-q4_K_S")))
 
 ;; --------------------------------
+;; gptel - 軽量LLMチャットクライアント
+;; --------------------------------
+;; ellamaとの使い分け:
+;; - gptel: バッファ内チャット、Org分岐会話、対話重視
+;; - ellama: タスク別コマンド（翻訳、要約、コードレビュー等）
+(use-package gptel
+  :ensure t
+  :defer t
+  :commands (gptel gptel-send gptel-menu)
+  :custom
+  ;; Ollama backend (環境変数OLLAMA_HOSTを使用)
+  (gptel-default-mode 'org-mode)  ;; デフォルトでOrg-modeバッファ
+  :config
+  ;; Ollamaバックエンド設定
+  (setq gptel-backend
+        (gptel-make-ollama "Ollama"
+          :host (or (getenv "OLLAMA_HOST") "172.29.80.1:11434")
+          :stream t
+          :models '("llama3.1:8b-instruct-q4_K_S"
+                    "deepseek-coder-v2:16b-lite-instruct-q2_K"
+                    "mistral:7b-instruct-v0.2-q6_K")))
+  (setq gptel-model "llama3.1:8b-instruct-q4_K_S"))
+
+;; --------------------------------
 ;; AI Tools Integration and Keybindings
 ;; --------------------------------
 ;; Unified AI tool access under C-c a prefix
@@ -75,14 +99,19 @@
 (defvar ai-tools-map (make-sparse-keymap)
   "Keymap for AI tools.")
 
-;; Ellama bindings (existing LLM interface)
+;; gptel bindings (chat-focused interface)
+(define-key ai-tools-map (kbd "g") 'gptel)                         ;; Open gptel chat
+(define-key ai-tools-map (kbd "RET") 'gptel-send)                  ;; Send message
+(define-key ai-tools-map (kbd "m") 'gptel-menu)                    ;; gptel menu
+
+;; Ellama bindings (task-focused interface)
 (define-key ai-tools-map (kbd "e") ellama-keymap-prefix)
 (define-key ai-tools-map (kbd "l") 'ellama-chat)                   ;; Chat with LLM
 (define-key ai-tools-map (kbd "t") 'ellama-translate)              ;; Translate text
 (define-key ai-tools-map (kbd "s") 'ellama-summarize)              ;; Summarize text
 (define-key ai-tools-map (kbd "w") 'ellama-write)                  ;; Write with AI
 
-;; Copilot bindings (existing code completion)
+;; Copilot bindings (code completion)
 (define-key ai-tools-map (kbd "C") 'copilot-mode)                  ;; Toggle Copilot
 (define-key ai-tools-map (kbd "a") 'copilot-accept-completion)     ;; Accept completion
 

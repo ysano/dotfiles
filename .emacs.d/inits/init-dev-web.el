@@ -95,22 +95,29 @@
   (yaml-indent-offset 2))
 
 ;; --------------------------------
-;; TOML
+;; TOML (conf-toml-mode は Emacs 組み込み)
 ;; --------------------------------
-(use-package toml-mode
-  :ensure t
-  :defer t
-  :mode "\\.toml\\'")
+(add-to-list 'auto-mode-alist '("\\.toml\\'" . conf-toml-mode))
 
 
 ;; --------------------------------
-;; REST Client
+;; HTTP Client (verb - restclient代替、Org-mode統合)
 ;; --------------------------------
-(use-package restclient
+;; Org-modeヘッダーでAPIリクエストを定義・実行
+(use-package verb
   :ensure t
   :defer t
-  :mode ("\\.http\\'" "\\.rest\\'")
-  :commands restclient-mode)
+  :after org
+  :config
+  (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
+  ;; verb用のOrg babel設定
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((verb . t))))
+
+;; 互換性: .http/.rest ファイルはOrg-modeで開く
+(add-to-list 'auto-mode-alist '("\\.http\\'" . org-mode))
+(add-to-list 'auto-mode-alist '("\\.rest\\'" . org-mode))
 
 
 ;; --------------------------------
@@ -141,12 +148,12 @@
 ;; --------------------------------
 ;; API Documentation
 ;; --------------------------------
-;; OpenAPI/Swagger - flycheck hook added to yaml-mode above
+;; OpenAPI/Swagger - flymake hook added to yaml-mode above
 (add-hook 'yaml-mode-hook
           (lambda ()
             (when (and buffer-file-name
                        (string-match-p "swagger\\|openapi" buffer-file-name))
-              (flycheck-mode 1))))
+              (flymake-mode 1))))
 
 ;; --------------------------------
 ;; Version Control for Web Assets
@@ -173,7 +180,7 @@
 (defun my-web-bundle-analyzer ()
   "Run webpack bundle analyzer for the current project."
   (interactive)
-  (let ((default-directory (projectile-project-root)))
+  (let ((default-directory (my-project-root)))
     (if (file-exists-p "package.json")
         (async-shell-command "npm run analyze")
       (message "No package.json found in project root"))))
@@ -184,7 +191,7 @@
 (defun my-web-dev-server ()
   "Start development server for current web project."
   (interactive)
-  (let ((default-directory (projectile-project-root)))
+  (let ((default-directory (my-project-root)))
     (cond
      ((file-exists-p "package.json")
       (async-shell-command "npm run dev"))
@@ -195,14 +202,11 @@
      (t (message "No recognized web project configuration found")))))
 
 ;; --------------------------------
-;; Code Formatting
+;; Code Formatting (eglot を使用)
 ;; --------------------------------
-;; Prettier for JavaScript/CSS/HTML
-(use-package prettier
-  :ensure t
-  :defer t
-  :commands (prettier-prettify prettier-prettify-region)
-  :hook ((js-mode typescript-mode web-mode css-mode scss-mode json-mode) . prettier-mode))
+;; フォーマットは eglot (C-c l f) で実行
+;; 保存時自動フォーマットが必要な場合:
+;; (add-hook 'before-save-hook 'eglot-format-buffer nil t)
 
 ;; --------------------------------
 ;; Testing Support
@@ -211,7 +215,7 @@
 (defun my-run-jest-tests ()
   "Run Jest tests for current project."
   (interactive)
-  (let ((default-directory (projectile-project-root)))
+  (let ((default-directory (my-project-root)))
     (if (file-exists-p "package.json")
         (compile "npm test")
       (message "No package.json found"))))
@@ -220,7 +224,7 @@
 (defun my-run-cypress-tests ()
   "Run Cypress tests for current project."
   (interactive)
-  (let ((default-directory (projectile-project-root)))
+  (let ((default-directory (my-project-root)))
     (if (file-exists-p "cypress.json")
         (async-shell-command "npx cypress run")
       (message "No cypress.json found"))))

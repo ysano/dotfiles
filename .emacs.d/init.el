@@ -54,8 +54,9 @@
 
 (eval-when-compile
   (require 'use-package))
-(setq use-package-compute-statistics t)
-(setq use-package-verbose t)
+;; デバッグ時のみ有効化: M-x use-package-report で統計確認可能
+(setq use-package-compute-statistics nil)
+(setq use-package-verbose nil)
 (setq load-prefer-newer t)
 
 ;; Package manager helpers
@@ -67,7 +68,7 @@
   (quelpa-upgrade-interval 7))                   ;; Check for upgrades weekly
 
 
-(use-package use-package-chords 
+(use-package use-package-chords
   :ensure t
   :config (key-chord-mode 1))
 
@@ -75,8 +76,6 @@
 (setq package-pinned-packages
       '((org . "gnu")                           ;; Use GNU version of org
         (magit . "melpa-stable")                ;; Use stable magit
-        (company . "melpa-stable")              ;; Use stable company
-        (ivy . "melpa-stable")                  ;; Use stable ivy
         (projectile . "melpa-stable")))         ;; Use stable projectile
 
 ;; Auto-update packages (defer to prevent startup delay)
@@ -130,12 +129,13 @@
   :config
   (gcmh-mode 1))
 
-;; PATH setup for GUI Emacs
+;; PATH setup for GUI Emacs (macOS only, WSLでは不要)
 (use-package exec-path-from-shell
   :ensure t
-  :if (memq window-system '(mac ns x))
+  :if (and (memq window-system '(mac ns))  ;; macOSのみ有効（WSL/Xは除外）
+           (not (string-match-p "WSL\\|microsoft" (or (getenv "WSL_DISTRO_NAME") (shell-command-to-string "uname -r")))))
   :custom
-  (exec-path-from-shell-variables 
+  (exec-path-from-shell-variables
    '("PATH" "GOPATH" "SSH_AUTH_SOCK" "SSH_AGENT_PID" "GPG_AGENT_INFO"))
   :config
   (exec-path-from-shell-initialize))
@@ -215,7 +215,7 @@
 (require 'init-dev-web)
 (require 'init-text-modes)
 (require 'init-org-simple)
-(require 'init-ai)
+;(require 'init-ai)
 (require 'init-japanese)
 (require 'init-platform)
 

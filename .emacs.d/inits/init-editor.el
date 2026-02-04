@@ -17,7 +17,7 @@
 ;; Highlight color strings with their color
 (use-package rainbow-mode
   :ensure t
-  :diminish
+  :delight
   :hook (prog-mode text-mode))
 
 ;; Expand region
@@ -26,20 +26,17 @@
   :bind (("C-=" . er/expand-region)
          ("C--" . er/contract-region)))
 
-;; Undo system
-(use-package undo-tree
+;; Undo system (vundo - undo-treeの安全な代替)
+;; 標準undoを使用し、ビジュアライザーのみ提供
+(use-package vundo
   :ensure t
-  :diminish
+  :defer t
+  :bind (("C-x u" . vundo)           ;; ビジュアルundo
+         ("C-/" . undo-only)          ;; 通常undo
+         ("C-?" . undo-redo))         ;; redo (Emacs 28+)
   :custom
-  (undo-tree-limit 160000)
-  (undo-tree-strong-limit 240000)
-  (undo-tree-outer-limit 24000000)
-  (undo-tree-visualizer-timestamps t)
-  (undo-tree-visualizer-diff t)
-  :config
-  (global-undo-tree-mode)
-  :bind
-  ("C-c u" . (lambda () (interactive) (setq buffer-undo-tree nil))))
+  (vundo-compact-display t)
+  (vundo-window-side 'bottom))
 
 ;; Multiple cursors
 (use-package multiple-cursors
@@ -52,28 +49,33 @@
 ;; Highlight indentation
 (use-package highlight-indent-guides
   :ensure t
-  :diminish "hig"
+  :delight "hig"
   :hook (prog-mode yaml-mode)
   :custom
   (highlight-indent-guides-auto-enabled t)
   (highlight-indent-guides-responsive t)
   (highlight-indent-guides-method 'fill))
 
-;; Beacon - flash cursor when switching windows
-(use-package beacon
+;; Pulsar - flash cursor line (beacon代替、より軽量)
+(use-package pulsar
   :ensure t
   :defer 2
   :custom
-  (beacon-color "yellow")
+  (pulsar-pulse t)
+  (pulsar-delay 0.05)
+  (pulsar-iterations 10)
+  (pulsar-face 'pulsar-yellow)  ;; beacon-color "yellow" 相当
   :config
-  (beacon-mode t))
+  (pulsar-global-mode 1)
+  ;; 特定コマンド実行時にパルス
+  (add-to-list 'pulsar-pulse-functions 'other-window)
+  (add-to-list 'pulsar-pulse-functions 'windmove-do-window-select))
 
 ;; camelCase aware editing
 (use-package subword
-  :ensure t
-  :diminish subword-mode
-  :config
-  (global-subword-mode))
+  :defer t
+  :delight
+  :hook (prog-mode . subword-mode))
 
 ;; Sudo edit files
 (use-package sudo-edit
@@ -82,7 +84,7 @@
 
 ;; Auto-revert mode for all files
 (use-package autorevert
-  :diminish auto-revert-mode
+  :delight
   :custom
   (auto-revert-verbose nil)                     ;; Silence revert messages
   (auto-revert-check-vc-info t)                 ;; Auto-revert VC info
@@ -108,7 +110,7 @@
 
 ;; Better whitespace handling (modern alternative to whitespace-mode)
 (use-package whitespace
-  :diminish whitespace-mode
+  :delight
   :custom
   (whitespace-style '(face tabs empty trailing))
   (whitespace-action '(auto-cleanup warn-if-read-only))
@@ -116,7 +118,7 @@
 
 ;; Enhanced abbrev mode
 (use-package abbrev
-  :diminish abbrev-mode
+  :delight
   :custom
   (abbrev-file-name (expand-file-name "abbrev_defs" user-emacs-directory))
   (save-abbrevs 'silently)

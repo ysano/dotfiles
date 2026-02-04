@@ -4,19 +4,19 @@
 ;;; Code:
 
 ;; --------------------------------
-;; Syntax Checking
+;; Syntax Checking (flymake - 組み込み)
 ;; --------------------------------
-(use-package flycheck
-  :ensure t
-  :defer t
-  :commands flycheck-mode
-  :bind ([f7] . flycheck-mode)
+(use-package flymake
+  :bind ([f7] . flymake-mode)
+  :hook (prog-mode . flymake-mode)
   :custom
-  (flycheck-display-errors-delay 0.1)
-  (flycheck-idle-delay 0.5)                 ;; Check after 0.5s idle
-  (flycheck-check-syntax-automatically '(save idle-change mode-enabled))
+  (flymake-no-changes-timeout 0.5)          ;; Check after 0.5s idle
+  (flymake-start-on-save-buffer t)          ;; Check on save
   :config
-  (setq eldoc-idle-delay 1.5))
+  (setq eldoc-idle-delay 1.5)
+  ;; エラー表示のカスタマイズ
+  (setq flymake-mode-line-format
+        '(" " flymake-mode-line-exception flymake-mode-line-counters)))
 
 ;; --------------------------------
 ;; Version Control - Git
@@ -41,51 +41,45 @@
   :config
   (setq auth-sources '("~/.netrc" "~/.authinfo.gpg" "~/.authinfo")))
 
-;; Git gutter for showing changes in the buffer
-(use-package git-gutter
+;; diff-hl - Git差分をフリンジに表示 (git-gutter代替、より軽量)
+(use-package diff-hl
   :ensure t
   :defer t
-  :commands (global-git-gutter-mode git-gutter:toggle)
-  :diminish (git-gutter-mode . "gg")
+  :delight
+  :hook ((prog-mode text-mode) . diff-hl-mode)
+  :hook (dired-mode . diff-hl-dired-mode)
+  :hook (magit-pre-refresh . diff-hl-magit-pre-refresh)
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
   :custom
-  (git-gutter:modified-sign "  ")
-  (git-gutter:added-sign "++")
-  (git-gutter:deleted-sign "--")
-  :custom-face
-  (git-gutter:modified ((t (:background "purple"))))
-  (git-gutter:added ((t (:foreground "green"))))
-  (git-gutter:deleted ((t (:foreground "red"))))
-  :bind (("C-x v =" . git-gutter:popup-hunk)
-         ("C-x p" . git-gutter:previous-hunk)
-         ("C-x n" . git-gutter:next-hunk)
-         ("C-x v s" . git-gutter:stage-hunk)
-         ("C-x v r" . git-gutter:revert-hunk)
-         ("C-x v SPC" . git-gutter:mark-hunk))
-  :chords (("sg" . hydra-git-gutter/body))
+  (diff-hl-draw-borders nil)
+  (diff-hl-margin-symbols-alist
+   '((insert . "+") (delete . "-") (change . "~")
+     (unknown . "?") (ignored . "i")))
+  :bind (("C-x v =" . diff-hl-show-hunk)
+         ("C-x p" . diff-hl-previous-hunk)
+         ("C-x n" . diff-hl-next-hunk)
+         ("C-x v r" . diff-hl-revert-hunk))
+  :chords (("sg" . transient-diff-hl))
   :config
-  (global-git-gutter-mode)
-  
-  ;; Git gutter hydra for quick access
-  (defhydra hydra-git-gutter (:color red :hint nil)
-    "
-_m_agit  _b_lame  _d_ispatch  _f_orge  |  hunk: _p_revious  _n_ext  _s_tage  _r_evert  pop_u_p  _SPC_:toggle
-"
-    ("m" magit-status :exit t)
-    ("b" magit-blame :exit t)
-    ("d" magit-dispatch :exit t)
-    ("f" forge-dispatch :exit t)
-    ("p" git-gutter:previous-hunk)
-    ("n" git-gutter:next-hunk)
-    ("s" git-gutter:stage-hunk)
-    ("r" git-gutter:revert-hunk)
-    ("u" git-gutter:popup-hunk)
-    ("SPC" git-gutter:toggle-popup-hunk)
-    ("h" (progn (goto-char (point-min))
-                (git-gutter:next-hunk 1)))
-    ("l" (progn (goto-char (point-min))
-                (git-gutter:previous-hunk 1)))
-    ("R" git-gutter:set-start-revision)
-    ("q" nil :color blue)))
+  ;; ターミナルではマージンモードを使用
+  (unless (display-graphic-p)
+    (diff-hl-margin-mode 1))
+  ;; diff-hl transient menu for quick access
+  (transient-define-prefix transient-diff-hl ()
+    "diff-hl and magit commands."
+    ["Magit"
+     ("m" "status" magit-status)
+     ("b" "blame" magit-blame)
+     ("d" "dispatch" magit-dispatch)
+     ("f" "forge" forge-dispatch)]
+    ["Hunk Navigation"
+     ("p" "previous" diff-hl-previous-hunk :transient t)
+     ("n" "next" diff-hl-next-hunk :transient t)
+     ("h" "first" (lambda () (interactive) (goto-char (point-min)) (diff-hl-next-hunk)) :transient t)
+     ("l" "last" (lambda () (interactive) (goto-char (point-max)) (diff-hl-previous-hunk)) :transient t)]
+    ["Hunk Actions"
+     ("r" "revert" diff-hl-revert-hunk :transient t)
+     ("u" "show" diff-hl-show-hunk :transient t)]))
 
 ;; --------------------------------
 ;; Password / Secret Management
@@ -115,7 +109,7 @@ _m_agit  _b_lame  _d_ispatch  _f_orge  |  hunk: _p_revious  _n_ext  _s_tage  _r_
   :ensure t
   :defer t
   :commands editorconfig-mode
-  :diminish "EC"
+  :delight "EC"
   :hook ((prog-mode text-mode) . editorconfig-mode))
 
 ;; --------------------------------
@@ -163,20 +157,27 @@ _m_agit  _b_lame  _d_ispatch  _f_orge  |  hunk: _p_revious  _n_ext  _s_tage  _r_
   (which-func-unknown "n/a"))
 
 ;; --------------------------------
-;; File Templates
+;; File Templates (tempel - yasnippet代替)
 ;; --------------------------------
-(use-package yasnippet
+;; tempel: Lisp構文テンプレート、capf統合、軽量
+(use-package tempel
   :ensure t
-  :defer t
-  :commands (yas-minor-mode yas-expand)
-  :diminish yas-minor-mode
-  :hook (prog-mode . yas-minor-mode)
-  :config
-  (yas-reload-all))
+  :bind (("M-+" . tempel-complete)    ;; テンプレート補完
+         ("M-*" . tempel-insert))     ;; テンプレート挿入
+  :init
+  ;; completion-at-point-functions に追加
+  (defun tempel-setup-capf ()
+    (setq-local completion-at-point-functions
+                (cons #'tempel-complete
+                      completion-at-point-functions)))
+  :hook ((prog-mode text-mode) . tempel-setup-capf)
+  :custom
+  (tempel-path (expand-file-name "templates" user-emacs-directory)))
 
-(use-package yasnippet-snippets
+;; tempel-collection: 多言語テンプレート集 (yasnippet-snippets代替)
+(use-package tempel-collection
   :ensure t
-  :after yasnippet)
+  :after tempel)
 
 ;; --------------------------------
 ;; Directory and File Management

@@ -1,13 +1,13 @@
 ;;; init-dev-languages.el --- Language-specific development configurations
 ;;; Commentary:
 ;; Programming language support and configurations
+;; LSP (eglot) と組み合わせて使用
 ;;; Code:
 
 ;; --------------------------------
-;; Ruby
+;; Ruby (組み込みモード)
 ;; --------------------------------
 (use-package ruby-mode
-  :ensure t
   :defer t
   :mode ("\\.rb\\'" "Rakefile" "Gemfile" "\\.rake\\'" "\\.gemspec\\'")
   :interpreter "ruby"
@@ -15,9 +15,8 @@
   (ruby-indent-level 2)
   (ruby-indent-tabs-mode nil))
 
-
 ;; --------------------------------
-;; Python
+;; Python (組み込みモード)
 ;; --------------------------------
 (use-package python
   :defer t
@@ -26,7 +25,6 @@
   :custom
   (python-indent-offset 4)
   (python-shell-interpreter "python3"))
-
 
 ;; --------------------------------
 ;; Go
@@ -37,16 +35,9 @@
   :mode "\\.go\\'"
   :hook (before-save . gofmt-before-save)
   :custom
-  (gofmt-command "goimports")              ;; Use goimports instead of gofmt
+  (gofmt-command "goimports")
   :config
   (setq-local compile-command "go build -v && go test -v && go vet"))
-
-(use-package go-eldoc
-  :ensure t
-  :after go-mode
-  :defer t
-  :hook (go-mode . go-eldoc-setup))
-
 
 ;; --------------------------------
 ;; PHP
@@ -60,33 +51,16 @@
   (php-mode-coding-style 'psr2)
   (php-mode-template-compatibility nil)
   :bind (:map php-mode-map
-              ([f5] . phpunit-current-test)
-              ("S-<f5>" . phpunit-current-project)
               ("C-c -" . php-current-class)
               ("C-c =" . php-current-namespace))
   :config
   (add-hook 'php-mode-hook
             (lambda ()
               (setq show-trailing-whitespace t
-                    c-tab-always-indent t
-                    c-auto-newline nil
-                    c-hungry-delete-key t
                     c-basic-offset 4
                     tab-width 4
                     indent-tabs-mode nil)
               (subword-mode 1))))
-
-(use-package phpunit
-  :ensure t
-  :after php-mode
-  :defer t
-  :commands (phpunit-current-test phpunit-current-project))
-
-(use-package php-eldoc
-  :ensure t
-  :after php-mode
-  :defer t
-  :hook (php-mode . php-eldoc-enable))
 
 ;; --------------------------------
 ;; JavaScript / TypeScript
@@ -100,8 +74,7 @@
 (use-package typescript-mode
   :ensure t
   :defer t
-  :mode (("\\.ts\\'" . typescript-mode)
-         ("\\.tsx\\'" . typescript-mode))
+  :mode ("\\.ts\\'" "\\.tsx\\'")
   :custom
   (typescript-indent-level 2))
 
@@ -119,9 +92,7 @@
   :defer t
   :mode "\\.rs\\'"
   :custom
-  (rust-format-on-save t)
-  :config
-  (setq-local compile-command "cargo check"))
+  (rust-format-on-save t))
 
 (use-package cargo
   :ensure t
@@ -130,36 +101,15 @@
   :hook (rust-mode . cargo-minor-mode))
 
 ;; --------------------------------
-;; C/C++
+;; C/C++ (組み込みモード)
 ;; --------------------------------
 (use-package cc-mode
   :defer t
-  :mode (("\\.c\\'" . c-mode)
-         ("\\.cpp\\'" . c++-mode)
-         ("\\.cxx\\'" . c++-mode)
-         ("\\.cc\\'" . c++-mode)
-         ("\\.h\\'" . c-mode)
-         ("\\.hpp\\'" . c++-mode))
   :custom
-  (c-default-style "linux")
-  (c-basic-offset 4)
-  :config
-  (c-set-offset 'substatement-open 0))
-
-;; --------------------------------
-;; Java
-;; --------------------------------
-(use-package java-mode
-  :defer t
-  :mode "\\.java\\'"
-  :custom
-  (c-basic-offset 4)
-  :config
-  (add-hook 'java-mode-hook
-            (lambda ()
-              (setq c-basic-offset 4
-                    tab-width 4
-                    indent-tabs-mode nil))))
+  (c-default-style '((java-mode . "java")
+                     (awk-mode . "awk")
+                     (other . "linux")))
+  (c-basic-offset 4))
 
 ;; --------------------------------
 ;; Lua
@@ -172,34 +122,11 @@
   (lua-indent-level 2))
 
 ;; --------------------------------
-;; Lisp Family
+;; Lisp (組み込みモード)
 ;; --------------------------------
-(use-package lisp-mode
+(use-package emacs-lisp-mode
   :defer t
-  :mode (("\\.el\\'" . emacs-lisp-mode)
-         ("\\.lisp\\'" . lisp-mode)
-         ("\\.cl\\'" . lisp-mode))
-  :hook ((emacs-lisp-mode lisp-mode) . eldoc-mode))
-
-
-;; --------------------------------
-;; Scheme
-;; --------------------------------
-(use-package scheme
-  :defer t
-  :mode "\\.scm\\'"
-  :interpreter "scheme")
-
-
-;; --------------------------------
-;; PowerShell (Windows)
-;; --------------------------------
-(use-package powershell
-  :if (memq system-type '(cygwin windows-nt))
-  :ensure t
-  :defer t
-  :mode ("\\.ps[dm]?1\\'" . powershell-mode)
-  :interpreter "powershell")
+  :hook (emacs-lisp-mode . eldoc-mode))
 
 ;; --------------------------------
 ;; Terraform
@@ -209,12 +136,7 @@
   :defer t
   :mode "\\.tf\\'"
   :custom
-  (terraform-indent-level 2)
-  :hook (terraform-mode . my-terraform-mode-init)
-  :config
-  (defun my-terraform-mode-init ()
-    "Initialize terraform mode with specific settings."
-    (setq-local tab-width 2)))
+  (terraform-indent-level 2))
 
 ;; --------------------------------
 ;; Docker

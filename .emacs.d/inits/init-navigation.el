@@ -4,95 +4,138 @@
 ;;; Code:
 
 ;; --------------------------------
-;; Ivy, Counsel & Swiper
+;; Vertico - 縦型補完UI (ivy代替)
 ;; --------------------------------
-(use-package ivy
+(use-package vertico
   :ensure t
-  :diminish
   :custom
-  (ivy-format-function 'ivy-format-function-arrow)
-  (ivy-use-virtual-buffers t)
-  (enable-recursive-minibuffers t)
-  (ivy-height 20)
-  ;; Better ivy behavior
-  (ivy-count-format "(%d/%d) ")
-  (ivy-use-selectable-prompt t)
-  (ivy-re-builders-alist '((t . ivy--regex-plus)))
+  (vertico-count 20)                  ;; 表示候補数
+  (vertico-cycle t)                   ;; 循環移動
+  (vertico-resize nil)                ;; ウィンドウサイズ固定
   :config
-  (ivy-mode 1)
-  :bind (("C-c C-r" . ivy-resume)
-         ([f6] . ivy-resume)
-         ;; Better completion navigation
-         :map ivy-minibuffer-map
-         ("C-j" . ivy-immediate-done)
-         ("RET" . ivy-alt-done)))
+  (vertico-mode 1))
 
-(use-package swiper
+;; 補完スタイル - スペース区切りで柔軟にマッチ
+(use-package orderless
   :ensure t
-  :after ivy
   :custom
-  (search-default-mode #'char-fold-to-regexp)
-  :bind ("C-s" . swiper))
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
 
-(use-package counsel
+;; 補完候補に注釈を追加
+(use-package marginalia
   :ensure t
-  :diminish
-  :after ivy
   :config
-  (counsel-mode 1)
-  ;; Enhanced counsel-find-file directory navigation
-  (with-eval-after-load 'counsel
-    (define-key counsel-find-file-map (kbd "C-<backspace>") 'counsel-up-directory)
-    (define-key counsel-find-file-map (kbd "C-l") 'counsel-up-directory)
-    (define-key counsel-find-file-map (kbd "C-M-y") 'ivy-insert-current-full))
-  :custom
-  (counsel-find-file-ignore-regexp "\\.\\(~undo-tree~\\|#\\)\\'")
-  ;; Better counsel-find-file behavior
-  (counsel-find-file-at-point t)
-  (counsel-preselect-current-file t)
-  :bind (("C-c u" . counsel-unicode-char)  ;; Changed from <f2> u (conflicts with copilot)
-         ("C-c g" . counsel-git)
-         ("C-c j" . counsel-git-grep)
-         ("C-c k" . counsel-ag)
-         ("C-x l" . counsel-locate)
-         ("C-x C-r" . counsel-buffer-or-recentf)
+  (marginalia-mode 1))
+
+;; --------------------------------
+;; Consult - 検索・ナビゲーション (counsel/swiper代替)
+;; --------------------------------
+(use-package consult
+  :ensure t
+  :bind (("C-s" . consult-line)              ;; swiper代替
+         ("C-c C-r" . consult-history)        ;; ivy-resume代替
+         ([f6] . consult-history)
+         ("C-c g" . consult-git-grep)         ;; counsel-git代替
+         ("C-c j" . consult-git-grep)         ;; counsel-git-grep代替
+         ("C-c k" . consult-ripgrep)          ;; counsel-ag代替
+         ("C-x l" . consult-locate)           ;; counsel-locate代替
+         ("C-x C-r" . consult-recent-file)    ;; counsel-buffer-or-recentf代替
+         ("C-x b" . consult-buffer)           ;; switch-to-buffer強化
+         ("M-g g" . consult-goto-line)        ;; goto-line強化
+         ("M-g M-g" . consult-goto-line)
+         ("M-g i" . consult-imenu)            ;; imenu強化
          :map minibuffer-local-map
-         ("C-r" . counsel-minibuffer-history)))
-
-
-;; --------------------------------
-;; Jump Navigation
-;; --------------------------------
-(use-package ace-jump-mode
-  :ensure t
-  :bind (("C-c SPC" . ace-jump-mode)
-         ("C-x SPC" . ace-jump-mode-pop-mark))
-  :config
-  (ace-jump-mode-enable-mark-sync))
-
-;; Window navigation
-(use-package ace-window
-  :ensure t
-  :bind ("M-o" . ace-window)
+         ("C-r" . consult-history))
   :custom
-  (aw-keys '(?j ?k ?l ?i ?o ?h ?y ?u ?p))
-  (aw-background nil)
-  :custom-face
-  (aw-leading-char-face ((t (:height 4.0 :foreground "#f1fa8c")))))
+  (consult-narrow-key "<")
+  :config
+  ;; プレビュー設定
+  (consult-customize
+   consult-ripgrep consult-git-grep consult-grep
+   :preview-key '(:debounce 0.4 any)))
+
+;; Embark - ミニバッファアクション
+(use-package embark
+  :ensure t
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim))
+  :custom
+  (prefix-help-command #'embark-prefix-help-command))
+
+;; Consult と Embark の統合
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
 
 ;; --------------------------------
-;; Project Management
+;; Jump Navigation (avy - ace-jump-modeの後継)
 ;; --------------------------------
-(use-package projectile
+(use-package avy
   :ensure t
-  :delight '(:eval (concat " " (projectile-project-name)))
-  :bind-keymap ("C-c p" . projectile-command-map)
+  :bind (("C-c SPC" . avy-goto-char-timer)  ;; 2文字入力で絞り込み
+         ("C-:" . avy-goto-char)
+         ("M-g g" . avy-goto-line)
+         ("M-g w" . avy-goto-word-1))
   :custom
-  (projectile-completion-system 'ivy)
-  (projectile-cache-file (concat user-emacs-directory "projectile.cache"))
-  (projectile-known-projects-file (concat user-emacs-directory "projectile-bookmarks.eld"))
+  (avy-timeout-seconds 0.3)  ;; char-timerのタイムアウト
+  (avy-background t)         ;; 背景をグレーアウト
+  (avy-style 'at-full))
+
+;; Window navigation (winum - ace-window代替)
+;; モードラインにウィンドウ番号を表示、M-0〜M-9でジャンプ
+(use-package winum
+  :ensure t
+  :custom
+  (winum-auto-setup-mode-line nil)  ;; doom-modelineが表示するため
+  :bind (("M-0" . winum-select-window-0-or-10)
+         ("M-o" . winum-select-window-by-number)  ;; ace-window互換
+         ("C-x w 1" . winum-select-window-1)
+         ("C-x w 2" . winum-select-window-2)
+         ("C-x w 3" . winum-select-window-3)
+         ("C-x w 4" . winum-select-window-4))
   :config
-  (projectile-mode 1))
+  (winum-mode 1))
+
+;; --------------------------------
+;; Project Management (project.el - 組み込み)
+;; --------------------------------
+(use-package project
+  :custom
+  (project-switch-commands
+   '((project-find-file "Find file" ?f)
+     (project-find-regexp "Find regexp" ?g)
+     (project-find-dir "Find dir" ?d)
+     (project-dired "Dired" ?D)
+     (magit-project-status "Magit" ?m)
+     (project-eshell "Eshell" ?e)))
+  :config
+  ;; projectile互換キーバインド (C-c p)
+  (define-key global-map (kbd "C-c p f") #'project-find-file)
+  (define-key global-map (kbd "C-c p g") #'project-find-regexp)
+  (define-key global-map (kbd "C-c p d") #'project-find-dir)
+  (define-key global-map (kbd "C-c p b") #'project-switch-to-buffer)
+  (define-key global-map (kbd "C-c p k") #'project-kill-buffers)
+  (define-key global-map (kbd "C-c p p") #'project-switch-project)
+  (define-key global-map (kbd "C-c p c") #'project-compile)
+  (define-key global-map (kbd "C-c p !") #'project-shell-command)
+  (define-key global-map (kbd "C-c p &") #'project-async-shell-command)
+  (define-key global-map (kbd "C-c p e") #'project-eshell)
+  (define-key global-map (kbd "C-c p s") #'project-shell)
+
+  ;; projectile互換: プロジェクト名をモードラインに表示
+  (defun my-project-name ()
+    "Get current project name."
+    (when-let ((proj (project-current)))
+      (file-name-nondirectory (directory-file-name (project-root proj)))))
+
+  ;; projectile-project-root の互換関数
+  (defun my-project-root ()
+    "Get project root directory (projectile-project-root compatible)."
+    (when-let ((proj (project-current)))
+      (project-root proj))))
 
 
 ;; --------------------------------
@@ -137,7 +180,8 @@
 ;; --------------------------------
 (use-package which-key
   :ensure t
-  :diminish
+  :defer 2  ;; 2秒後に遅延読み込み
+  :delight
   :custom
   (which-key-idle-delay 1.0)
   (which-key-max-description-length 32)
@@ -145,20 +189,21 @@
   (which-key-mode 1))
 
 ;; --------------------------------
-;; Hydra for key sequences
+;; Transient menus (hydra代替、magit依存)
 ;; --------------------------------
-(use-package hydra
-  :ensure t
-  :bind ("C-c C-v" . hydra-toggle/body)
+(use-package transient
+  :after magit  ;; magit経由で既にインストール済み
   :config
-  (defhydra hydra-toggle (:color blue)
-    "toggle"
-    ("a" abbrev-mode "abbrev")
-    ("d" toggle-debug-on-error "debug")
-    ("f" auto-fill-mode "fill")
-    ("t" toggle-truncate-lines "truncate")
-    ("w" whitespace-mode "whitespace")
-    ("q" nil "cancel")))
+  ;; Toggle menu for various modes
+  (transient-define-prefix transient-toggle ()
+    "Toggle various modes."
+    ["Toggle Modes"
+     ("a" "abbrev-mode" abbrev-mode)
+     ("d" "debug-on-error" toggle-debug-on-error)
+     ("f" "auto-fill-mode" auto-fill-mode)
+     ("t" "truncate-lines" toggle-truncate-lines)
+     ("w" "whitespace-mode" whitespace-mode)])
+  :bind ("C-c C-v" . transient-toggle))
 
 ;; --------------------------------
 ;; TRAMP remote editing
