@@ -215,7 +215,7 @@
 (require 'init-dev-web)
 (require 'init-text-modes)
 (require 'init-org-simple)
-;(require 'init-ai)
+(require 'init-ai)
 (require 'init-japanese)
 (require 'init-platform)
 
@@ -226,7 +226,7 @@
 ;; --------------------------------
 ;; Libraries
 ;; --------------------------------
-(use-package dash 
+(use-package dash
   :ensure t
   :defer t
   :config
