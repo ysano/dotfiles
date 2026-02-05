@@ -30,13 +30,10 @@
 ;; --------------------------------
 (require 'package)
 
-;; Add package repositories
-(unless (assoc-default "melpa" package-archives)
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t))
-(unless (assoc-default "melpa-stable" package-archives)
-  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t))
-(unless (assoc-default "nongnu" package-archives)
-  (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t))
+;; Add package repositories (early-init.elで設定済み、追加設定のみ)
+;; early-init.elで gnu, nongnu, melpa が設定されている
+;; ここでは必要に応じて追加のリポジトリのみ設定
+;; melpa-stableは使用しない（MELPAのみで統一）
 
 ;; TLS and Security settings
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -74,9 +71,8 @@
 
 ;; Pin critical packages to specific versions for stability
 (setq package-pinned-packages
-      '((org . "gnu")                           ;; Use GNU version of org
-        (magit . "melpa-stable")                ;; Use stable magit
-        (projectile . "melpa-stable")))         ;; Use stable projectile
+      '((org . "gnu")))                         ;; Use GNU version of org
+        ;; melpa-stableを削除したため、magitとprojectileのピン留めも削除
 
 ;; Auto-update packages (defer to prevent startup delay)
 (use-package auto-package-update
