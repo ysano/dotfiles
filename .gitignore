@@ -192,3 +192,16 @@ CLAUDE_WORKFLOWS_TEST_RESULTS.md
 # Don't index SpecStory auto-save files, but allow explicit context inclusion via @ references
 .specstory/**
 
+# Emacs ブックマーク・キャッシュ（自動生成）
+.emacs.d/projectile-bookmarks.eld
+
+# tmux プラグイン（外部依存、TPMで管理）
+.tmux/plugins/
+
+# Emacs undo-tree 追加バックアップ
+.claude/commands/**/*.~undo-tree~
+.claude/commands/**/*.~[0-9]*~
+
+# 一般的なバックアップパターン
+*.~[0-9]*~
+
