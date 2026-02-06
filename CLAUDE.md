@@ -75,9 +75,32 @@ gwt help
 # 短縮エイリアス
 gw       # gwt（最短）
 gwc      # gwt create
-gwl      # gwt list  
+gwl      # gwt list
 gws      # gwt switch
 gwr      # gwt remove
+```
+
+### tmux resurrect/continuum操作
+
+```bash
+# TPMプラグインのインストール（初回のみ）
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+tmux source ~/.tmux.conf
+Prefix + I  # プラグインインストール（tmux内で実行）
+
+# 手動保存・復元
+Prefix + Ctrl-s  # セッション保存
+Prefix + Ctrl-r  # セッション復元
+
+# 自動保存の確認
+# status-rightに💾アイコンが表示される（15分間隔）
+# 保存中は⏳アイコンが表示される
+
+# 保存データの場所
+ls -la ~/.local/share/tmux-resurrect/
+
+# 最新の保存データ確認
+cat ~/.local/share/tmux-resurrect/last
 ```
 
 ### Claude Voice統合機能（tmux）
@@ -108,10 +131,53 @@ Prefix + v + p       # パンニング機能 ON/OFF
 
 #### Claude Voiceステータス音声バリエーション
 - **⚡ 忙しい状態**: 警告パターン (800Hz×2→600Hz)
-- **⌛ 待機状態**: 上昇メロディー (659Hz→880Hz→1175Hz)  
+- **⌛ 待機状態**: 上昇メロディー (659Hz→880Hz→1175Hz)
 - **✅ 完了状態**: 成功パターン (523Hz→659Hz→783Hz→1046Hz)
 - **Equal Power Pan Law**: 3dBセンター法によるステレオ配置
 - **音声合成**: Microsoft Haruka Desktopによる日本語読み上げ
+
+### tmux resurrect/continuum設定
+
+**基本機能**:
+- セッション保存: ウィンドウ、ペイン配置、実行中プログラムを保存
+- 自動保存: 15分間隔で自動保存（変更時のみ）
+- 自動復元: tmux起動時に前回のセッション状態を自動復元
+- status-right統合: Claude Voice監視 + 保存状態アイコン + CPU/メモリ + 時刻
+
+**キーバインド**:
+- `Prefix + Ctrl-s`: 手動保存
+- `Prefix + Ctrl-r`: 手動復元
+
+**保存されるもの**:
+- ウィンドウとペインの配置
+- 実行中のプログラム（vi, vim, nvim, emacs, man, less, more, tail, top, htop, python, node, npm, ssh, psql, mysql, sqlite3, redis-cli, mongosh）
+- カレントディレクトリ
+- ペインのサイズと位置
+
+**保存されないもの**:
+- ペイン内のスクロールバック履歴（オプションで有効化可能）
+- プログラムの内部状態（例: vimの未保存バッファ）
+- 環境変数の変更
+
+**トラブルシューティング**:
+```bash
+# プラグインが読み込まれない場合
+rm -rf ~/.tmux/plugins/tpm
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+tmux source ~/.tmux.conf
+Prefix + I
+
+# 保存データの削除（クリーンスタート）
+rm -rf ~/.local/share/tmux-resurrect/*
+
+# 自動復元を一時的に無効化
+tmux set -g @continuum-restore 'off'
+tmux source ~/.tmux.conf
+```
+
+**パフォーマンスチューニング**:
+- 自動保存間隔の変更: `~/.tmux/plugin-config/resurrect.conf`の`@continuum-save-interval`を編集
+- ペイン内容の復元（重い処理）: `@resurrect-capture-pane-contents 'on'`をアンコメント
 
 ## アーキテクチャ概要
 
