@@ -54,6 +54,27 @@ polling_monitor_main() {
 process_claude_pane_polling() {
     local pane_target="$1"
 
+    # hooks タイムスタンプが 30 秒以内なら hooks を信頼し capture-pane をスキップ
+    local pane_key="${pane_target//[:\.]/_}"
+    local hooks_ts
+    hooks_ts=$(tmux show-option -gqv "@claude_voice_hooks_ts_${pane_key}" 2>/dev/null)
+    if [[ -n "$hooks_ts" ]]; then
+        local now
+        now=$(date +%s)
+        local age=$(( now - hooks_ts ))
+        if [[ $age -lt 30 ]]; then
+            # hooks ベースの状態でアイコン更新のみ
+            local hooks_status
+            hooks_status=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
+            if [[ -n "$hooks_status" ]]; then
+                update_claude_status_icon "$pane_target" "$hooks_status"
+                log_debug "hooks 活性中（${age}秒前）、capture-pane スキップ: $pane_target ($hooks_status)"
+                return 0
+            fi
+        fi
+    fi
+    # 30秒超過 or hooks未設定 → 従来の capture-pane にフォールバック
+
     # 現在のステータスを分析
     local current_status
     current_status=$(analyze_pane_content "$pane_target")

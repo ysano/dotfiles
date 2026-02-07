@@ -33,6 +33,8 @@ test_file_existence() {
         "panning_engine.sh"
         "ollama_utils.sh"
         "toggle_notify_mode.sh"
+        "hooks/status-update.sh"
+        "hooks/setup-hooks.sh"
     )
     
     local all_exist=true
@@ -250,6 +252,117 @@ test_component_integration() {
     fi
 }
 
+# hooks ステータス更新テスト
+test_hooks_status_update() {
+    echo "=== hooks ステータス更新テスト ==="
+
+    local status_update_script="${SCRIPT_DIR}/hooks/status-update.sh"
+
+    # スクリプト存在チェック
+    if [[ ! -x "$status_update_script" ]]; then
+        echo "✗ hooks/status-update.sh: 見つからないか実行不可"
+        record_test_result "Hooks: status-update.sh exists" "✗"
+        return 1
+    fi
+    echo "✓ hooks/status-update.sh: 存在・実行可能"
+    record_test_result "Hooks: status-update.sh exists" "✓"
+
+    # tmux が利用可能かチェック
+    if ! tmux list-sessions &>/dev/null; then
+        echo "⚠ tmux セッションが見つかりません。hooks シミュレートテストをスキップ"
+        record_test_result "Hooks: simulate events" "✓ (skipped - no tmux)"
+        return 0
+    fi
+
+    # テスト用ペインキーを生成（現在の $TMUX_PANE を使用）
+    local test_pane_key=""
+    if [[ -n "${TMUX_PANE:-}" ]]; then
+        local pane_info
+        pane_info=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_id}" 2>/dev/null \
+            | grep " ${TMUX_PANE}$" \
+            | head -1 \
+            | awk '{print $1}')
+        test_pane_key="${pane_info//[:\.]/_}"
+    fi
+
+    if [[ -z "$test_pane_key" ]]; then
+        echo "⚠ TMUX_PANE が解決できません。hooks シミュレートテストをスキップ"
+        record_test_result "Hooks: simulate events" "✓ (skipped - no TMUX_PANE)"
+        return 0
+    fi
+
+    # UserPromptSubmit → Busy テスト
+    echo "hooks シミュレート: UserPromptSubmit → Busy..."
+    echo '{"hook_event_name":"UserPromptSubmit"}' | "$status_update_script" 2>/dev/null
+    local busy_status
+    busy_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    if [[ "$busy_status" == "Busy" ]]; then
+        echo "✓ UserPromptSubmit → Busy: 成功"
+        record_test_result "Hooks: UserPromptSubmit→Busy" "✓"
+    else
+        echo "✗ UserPromptSubmit → Busy: 失敗 (実際: ${busy_status:-empty})"
+        record_test_result "Hooks: UserPromptSubmit→Busy" "✗"
+    fi
+
+    # Stop → Idle テスト
+    echo "hooks シミュレート: Stop → Idle..."
+    echo '{"hook_event_name":"Stop"}' | "$status_update_script" 2>/dev/null
+    local idle_status
+    idle_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    if [[ "$idle_status" == "Idle" ]]; then
+        echo "✓ Stop → Idle: 成功"
+        record_test_result "Hooks: Stop→Idle" "✓"
+    else
+        echo "✗ Stop → Idle: 失敗 (実際: ${idle_status:-empty})"
+        record_test_result "Hooks: Stop→Idle" "✗"
+    fi
+
+    # Notification(idle_prompt) → Waiting テスト
+    echo "hooks シミュレート: Notification(idle_prompt) → Waiting..."
+    echo '{"hook_event_name":"Notification","notification_type":"idle_prompt"}' | "$status_update_script" 2>/dev/null
+    local waiting_status
+    waiting_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    if [[ "$waiting_status" == "Waiting" ]]; then
+        echo "✓ Notification(idle_prompt) → Waiting: 成功"
+        record_test_result "Hooks: Notification→Waiting" "✓"
+    else
+        echo "✗ Notification(idle_prompt) → Waiting: 失敗 (実際: ${waiting_status:-empty})"
+        record_test_result "Hooks: Notification→Waiting" "✗"
+    fi
+
+    # タイムスタンプ更新チェック
+    local hooks_ts
+    hooks_ts=$(tmux show-option -gqv "@claude_voice_hooks_ts_${test_pane_key}" 2>/dev/null)
+    if [[ -n "$hooks_ts" ]]; then
+        local now
+        now=$(date +%s)
+        local age=$(( now - hooks_ts ))
+        if [[ $age -lt 5 ]]; then
+            echo "✓ hooks タイムスタンプ: 正常 (${age}秒前)"
+            record_test_result "Hooks: timestamp" "✓"
+        else
+            echo "✗ hooks タイムスタンプ: 古すぎます (${age}秒前)"
+            record_test_result "Hooks: timestamp" "✗"
+        fi
+    else
+        echo "✗ hooks タイムスタンプ: 未設定"
+        record_test_result "Hooks: timestamp" "✗"
+    fi
+
+    # SessionEnd → クリアテスト
+    echo "hooks シミュレート: SessionEnd → クリア..."
+    echo '{"hook_event_name":"SessionEnd"}' | "$status_update_script" 2>/dev/null
+    local cleared_status
+    cleared_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    if [[ -z "$cleared_status" ]]; then
+        echo "✓ SessionEnd → クリア: 成功"
+        record_test_result "Hooks: SessionEnd→Clear" "✓"
+    else
+        echo "✗ SessionEnd → クリア: 失敗 (残存: ${cleared_status})"
+        record_test_result "Hooks: SessionEnd→Clear" "✗"
+    fi
+}
+
 # パフォーマンステスト
 test_performance() {
     echo "=== パフォーマンステスト ==="
@@ -367,10 +480,11 @@ main() {
     
     # 各テストを順次実行
     test_file_existence
-    test_individual_components  
+    test_individual_components
     test_dependencies
     test_configuration
     test_component_integration
+    test_hooks_status_update
     test_performance
     
     # 結果レポート生成

@@ -324,16 +324,26 @@ play_notification_sound() {
 
     log_debug "通知音を再生中: type=$sound_type (OS: $os_type)"
 
-    # 設定から音声名を取得
+    # 設定から音声名を取得（OS別デフォルト）
     local sound_name=$(get_tmux_sound_option "claude_voice_sound_${sound_type}" "")
     if [[ -z "$sound_name" ]]; then
-        case "$sound_type" in
-            "start") sound_name="Ping" ;;
-            "complete") sound_name="Glass" ;;
-            "waiting") sound_name="Funk" ;;
-            "error") sound_name="Sosumi" ;;
-            *) sound_name="Submarine" ;;
-        esac
+        if [[ "$os_type" == "Darwin" ]]; then
+            case "$sound_type" in
+                "start")    sound_name="Ping" ;;
+                "complete") sound_name="Glass" ;;
+                "waiting")  sound_name="Funk" ;;
+                "error")    sound_name="Sosumi" ;;
+                *)          sound_name="Submarine" ;;
+            esac
+        else
+            case "$sound_type" in
+                "start")    sound_name="chimes" ;;
+                "complete") sound_name="notify" ;;
+                "waiting")  sound_name="chord" ;;
+                "error")    sound_name="ringout" ;;
+                *)          sound_name="Windows Notify Messaging" ;;
+            esac
+        fi
     fi
 
     local sound_file
