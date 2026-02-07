@@ -2,9 +2,14 @@
 # ファイル名: panning_engine.sh
 # 説明: tmux-claude-voice デシベルパンニングエンジン
 
-# 依存ファイルの存在確認
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_DIR
+# 多重読み込み防止
+[[ -n "$_CLAUDE_PANNING_ENGINE_LOADED" ]] && return 0 2>/dev/null
+_CLAUDE_PANNING_ENGINE_LOADED=1
+
+# 依存ファイルの存在確認（他スクリプトからsource時はSCRIPT_DIRを継承）
+if [[ -z "$SCRIPT_DIR" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 # 共通ログ機能を読み込み（最優先）
 if [[ -f "${SCRIPT_DIR}/core/logging_utils.sh" ]]; then
@@ -27,78 +32,48 @@ fi
 
 # 設定値取得は sound_utils.sh の get_tmux_sound_option() を使用
 
-# Claude Codeウィンドウを検出する関数（既存のdetect_claude_windowsと重複回避）
-detect_claude_windows_for_panning() {
-    local pattern=$(get_tmux_sound_option "claude_voice_window_pattern" "Claude|claude|CLAUDE")
-    
-    log_debug "Claudeウィンドウを検索中（パンニング用）: パターン='$pattern'"
-    
-    # tmuxウィンドウリストを取得し、パターンにマッチするウィンドウを検索
-    local windows
-    if windows=$(tmux list-windows -F "#{session_name}:#{window_index}:#{window_name}" 2>/dev/null); then
-        local claude_windows
-        claude_windows=$(echo "$windows" | grep -E ":($pattern)(\s|$)" | cut -d':' -f1,2,3)
-        
-        if [[ -n "$claude_windows" ]]; then
-            log_debug "検出されたClaudeウィンドウ（パンニング用）: $claude_windows"
-            echo "$claude_windows"
-        else
-            log_debug "Claudeウィンドウが見つかりません（パンニング用）"
-            echo ""
-        fi
-    else
-        log_error "tmuxウィンドウリストの取得に失敗しました（パンニング用）"
-        return 1
-    fi
-}
-
-# Claude Codeウィンドウ数をカウント
-count_claude_windows() {
-    detect_claude_windows_for_panning | wc -l
-}
-
-# ウィンドウの均等配置位置を計算する関数
+# ペインの均等配置位置を計算する関数
+# detect_claude_panes() (functions.sh) を使用してペイン単位で位置を計算
 calculate_equal_spacing() {
-    local target_window="$1"  # session:window形式
-    
-    if [[ -z "$target_window" ]]; then
-        log_error "ターゲットウィンドウが指定されていません"
+    local target_pane="$1"  # session:window.pane 形式（session:window も許容）
+
+    if [[ -z "$target_pane" ]]; then
+        log_error "ターゲットペインが指定されていません"
         echo "0.0"
         return 1
     fi
-    
-    local total_claude_windows
-    total_claude_windows=$(count_claude_windows)
-    
-    log_debug "均等配置計算: target=$target_window, total=$total_claude_windows"
 
-    if [[ $total_claude_windows -eq 0 ]]; then
-        echo "0.0"  # デフォルト位置
+    local claude_panes_list
+    claude_panes_list=$(detect_claude_panes | sort)
+    local total_panes
+    total_panes=$(echo "$claude_panes_list" | grep -c .)
+
+    log_debug "均等配置計算: target=$target_pane, total=$total_panes"
+
+    if [[ $total_panes -eq 0 ]]; then
+        echo "0.0"
         return
     fi
 
-    if [[ $total_claude_windows -eq 1 ]]; then
-        echo "0.0"  # 中央配置
+    if [[ $total_panes -eq 1 ]]; then
+        echo "0.0"
         return
     fi
 
-    # Claude Codeウィンドウのリストを取得し、対象ウィンドウのインデックスを特定
-    local claude_windows_list
-    claude_windows_list=$(detect_claude_windows_for_panning | cut -d':' -f1,2 | sort)
-    
+    # 対象ペインのインデックスを特定
     local target_index=-1
     local index=0
-    
-    while IFS= read -r window_entry; do
-        if [[ "$window_entry" == "$target_window" ]]; then
+
+    while IFS= read -r pane_entry; do
+        if [[ "$pane_entry" == "$target_pane" ]]; then
             target_index=$index
             break
         fi
         ((index++))
-    done <<< "$claude_windows_list"
+    done <<< "$claude_panes_list"
 
     if [[ $target_index -eq -1 ]]; then
-        log_error "ターゲットウィンドウがリストに見つかりません: $target_window"
+        log_error "ターゲットペインがリストに見つかりません: $target_pane"
         echo "0.0"
         return 1
     fi
@@ -107,22 +82,22 @@ calculate_equal_spacing() {
     local margin=$(get_tmux_sound_option "claude_voice_pan_margin" "0.1")
     local usable_range
     usable_range=$(echo "scale=3; 2 * (1 - $margin)" | bc 2>/dev/null || echo "1.8")
-    
+
     local spacing
-    if [[ $total_claude_windows -gt 1 ]]; then
-        spacing=$(echo "scale=3; $usable_range / ($total_claude_windows - 1)" | bc 2>/dev/null || echo "0.9")
+    if [[ $total_panes -gt 1 ]]; then
+        spacing=$(echo "scale=3; $usable_range / ($total_panes - 1)" | bc 2>/dev/null || echo "0.9")
     else
         spacing=0
     fi
-    
+
     local start_position
     start_position=$(echo "scale=3; -1 + $margin" | bc 2>/dev/null || echo "-0.9")
-    
+
     local position
     position=$(echo "scale=3; $start_position + $target_index * $spacing" | bc 2>/dev/null || echo "0.0")
-    
+
     log_debug "均等配置計算結果: margin=$margin, usable_range=$usable_range, spacing=$spacing, start=$start_position, index=$target_index, position=$position"
-    
+
     echo "$position"
 }
 
@@ -343,7 +318,7 @@ apply_panning() {
                         Add-Type -AssemblyName System.Windows.Forms
                         \$player = New-Object System.Media.SoundPlayer
                         \$player.SoundLocation = '$windows_path'
-                        \$player.Play()
+                        \$player.PlaySync()
                     } catch {
                         Write-Error 'Failed to play sound: \$_'
                     }
@@ -621,20 +596,20 @@ test_panning_engine() {
     
     echo "=== デシベルパンニングエンジンテスト開始 ($test_type) ==="
     
-    # ウィンドウ検出テスト
-    if [[ "$test_type" == "all" || "$test_type" == "windows" ]]; then
-        echo "ウィンドウ検出テスト..."
-        local claude_windows
-        claude_windows=$(detect_claude_windows_for_panning)
+    # ペイン検出テスト
+    if [[ "$test_type" == "all" || "$test_type" == "panes" ]]; then
+        echo "ペイン検出テスト..."
+        local claude_panes
+        claude_panes=$(detect_claude_panes)
         local count
-        count=$(count_claude_windows)
-        
-        echo "検出されたClaudeウィンドウ数: $count"
-        if [[ -n "$claude_windows" ]]; then
-            echo "$claude_windows"
-            echo "✓ ウィンドウ検出: 成功"
+        count=$(echo "$claude_panes" | grep -c . 2>/dev/null || echo "0")
+
+        echo "検出されたClaude Codeペイン数: $count"
+        if [[ -n "$claude_panes" ]]; then
+            echo "$claude_panes"
+            echo "✓ ペイン検出: 成功"
         else
-            echo "✓ ウィンドウ検出: Claudeウィンドウなし"
+            echo "✓ ペイン検出: Claude Codeペインなし"
         fi
     fi
     
@@ -741,8 +716,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         "test")
             TMUX_CLAUDE_VOICE_DEBUG=1 test_panning_engine "all"
             ;;
-        "test-windows")
-            test_panning_engine "windows"
+        "test-panes")
+            test_panning_engine "panes"
             ;;
         "test-positioning")
             test_panning_engine "positioning"
@@ -776,9 +751,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             fi
             ;;
         *)
-            echo "使用方法: $0 [test|test-windows|test-positioning|test-gains|test-deps|deps|pan|identify|speak]"
+            echo "使用方法: $0 [test|test-panes|test-positioning|test-gains|test-deps|deps|pan|identify|speak]"
             echo "  test             - 全テスト実行"
-            echo "  test-windows     - ウィンドウ検出テスト"
+            echo "  test-panes       - ペイン検出テスト"
             echo "  test-positioning - 配置計算テスト"
             echo "  test-gains       - パンゲイン計算テスト"
             echo "  test-deps        - 依存関係テスト"

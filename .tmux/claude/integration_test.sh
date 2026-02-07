@@ -170,7 +170,6 @@ test_configuration() {
     local test_options=(
         "claude_voice_enabled:true"
         "claude_voice_interval:5"
-        "claude_voice_window_pattern:Claude|claude|CLAUDE"
         "claude_voice_notify_mode:sound_summary"
     )
     
@@ -226,7 +225,7 @@ test_component_integration() {
         source '${SCRIPT_DIR}/functions.sh' && 
         source '${SCRIPT_DIR}/panning_engine.sh' && 
         command -v log_info >/dev/null && 
-        command -v detect_claude_windows_for_panning >/dev/null
+        command -v calculate_pan_position >/dev/null
     " 2>/dev/null; then
         echo "✓ functions.sh → panning_engine.sh 連携: 成功"
         record_test_result "Integration: functions→panning" "✓"

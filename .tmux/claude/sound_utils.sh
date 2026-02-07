@@ -2,9 +2,14 @@
 # ファイル名: sound_utils.sh
 # 説明: tmux-claude-voice 音声エンジン
 
-# 依存ファイルの存在確認
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_DIR
+# 多重読み込み防止
+[[ -n "$_CLAUDE_SOUND_UTILS_LOADED" ]] && return 0 2>/dev/null
+_CLAUDE_SOUND_UTILS_LOADED=1
+
+# 依存ファイルの存在確認（他スクリプトからsource時はSCRIPT_DIRを継承）
+if [[ -z "$SCRIPT_DIR" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 # 共通ログ機能を読み込み
 if [[ -f "${SCRIPT_DIR}/core/logging_utils.sh" ]]; then
@@ -273,6 +278,7 @@ speak_text() {
         local voice_name=$(get_tmux_sound_option "claude_voice_wsl_voice" "Haruka")
 
         # PowerShellが利用可能な場合はWindowsネイティブTTSを使用（優先）
+        local powershell_path
         if powershell_path=$(get_powershell_path); then
             # WindowsネイティブのTTS
             # Windows音声名の完全指定
@@ -297,36 +303,10 @@ speak_text() {
             " 2>/dev/null &
             local ps_pid=$!
             log_debug "音声再生開始 (PowerShell PID: $ps_pid)"
-        elif command -v ffplay >/dev/null 2>&1; then
-            # フォールバック: シンプルな音声合成として通知音を再生
-            log_debug "WSL音声合成 (ffplay): 通知音で代替"
-            play_notification_sound "complete"
-            # フォールバック: PowerShell + System.Speech
-            # Windows音声名の完全指定
-            case "$voice_name" in
-                "Haruka") voice_name="Microsoft Haruka Desktop" ;;
-                "Ayumi") voice_name="Microsoft Ayumi Desktop" ;;
-                "Ichiro") voice_name="Microsoft Ichiro Desktop" ;;
-            esac
-
-            log_debug "Windows音声設定: voice=$voice_name, volume=$volume"
-
-            "$powershell_path" -Command "
-                try {
-                    Add-Type -AssemblyName System.Speech
-                    \$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
-                    \$synth.SelectVoice('$voice_name')
-                    \$synth.Volume = $volume
-                    \$synth.Speak('$text')
-                } catch {
-                    Write-Error 'Failed to synthesize speech: \$_'
-                }
-            " 2>/dev/null &
-            local ps_pid=$!
-            log_debug "音声再生開始 (PowerShell PID: $ps_pid)"
         else
-            log_error "音声合成に必要なコマンドが見つかりません (ffplay, powershell.exe)"
-            return 1
+            # フォールバック: 通知音で代替
+            log_debug "WSL音声合成: PowerShellが見つからないため通知音で代替"
+            play_notification_sound "complete"
         fi
     fi
 }
@@ -398,6 +378,7 @@ play_notification_sound() {
             local volume=$(get_tmux_sound_option "claude_voice_volume_wsl" "80")
             
             # PowerShellが利用可能な場合はWindowsネイティブ機能を使用（優先）
+            local powershell_path
             if powershell_path=$(get_powershell_path); then
                 # Windowsネイティブの通知音再生
                 local windows_path=$(echo "$sound_file" | sed 's|/mnt/c/|C:/|g' | sed 's|/|\\|g')
@@ -405,10 +386,9 @@ play_notification_sound() {
 
                 "$powershell_path" -Command "
                     try {
-                        Add-Type -AssemblyName System.Windows.Forms
                         \$player = New-Object System.Media.SoundPlayer
                         \$player.SoundLocation = '$windows_path'
-                        \$player.Play()
+                        \$player.PlaySync()
                     } catch {
                         Write-Error 'Failed to play sound: \$_'
                     }
@@ -416,30 +396,13 @@ play_notification_sound() {
                 local ps_pid=$!
                 log_debug "通知音再生開始 (PowerShell PID: $ps_pid)"
             elif command -v ffplay >/dev/null 2>&1; then
-                # フォールバック: ffplayを使用した直接再生
-                # 音量を0.0-1.0の範囲に変換
+                # フォールバック: ffplayを使用した直接再生（PulseAudio環境向け）
                 local ffplay_volume=$(echo "scale=2; $volume / 100" | bc 2>/dev/null || echo "0.8")
                 log_debug "WSL通知音再生 (ffplay): volume=$ffplay_volume, file=$sound_file"
 
                 ffplay -nodisp -autoexit -volume "$ffplay_volume" "$sound_file" 2>/dev/null &
                 local ffplay_pid=$!
                 log_debug "通知音再生開始 (ffplay PID: $ffplay_pid)"
-                # フォールバック: WindowsのSoundPlayerを使用
-                local windows_path=$(echo "$sound_file" | sed 's|/mnt/c/|C:/|g' | sed 's|/|\\|g')
-                log_debug "WSL通知音再生 (PowerShell): volume=$volume, path=$windows_path"
-                
-                "$powershell_path" -Command "
-                    try {
-                        Add-Type -AssemblyName System.Windows.Forms
-                        \$player = New-Object System.Media.SoundPlayer
-                        \$player.SoundLocation = '$windows_path'
-                        \$player.Play()
-                    } catch {
-                        Write-Error 'Failed to play sound: \$_'
-                    }
-                " 2>/dev/null &
-                local ps_pid=$!
-                log_debug "通知音再生開始 (PowerShell PID: $ps_pid)"
             else
                 log_error "音声再生に必要なコマンドが見つかりません (ffplay, powershell.exe)"
                 return 1

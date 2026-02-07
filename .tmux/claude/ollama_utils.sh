@@ -2,9 +2,14 @@
 # ファイル名: ollama_utils.sh
 # 説明: tmux-claude-voice Ollama連携と要約機能
 
-# 依存ファイルの存在確認
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_DIR
+# 多重読み込み防止
+[[ -n "$_CLAUDE_OLLAMA_UTILS_LOADED" ]] && return 0 2>/dev/null
+_CLAUDE_OLLAMA_UTILS_LOADED=1
+
+# 依存ファイルの存在確認（他スクリプトからsource時はSCRIPT_DIRを継承）
+if [[ -z "$SCRIPT_DIR" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 # 共通ログ機能を読み込み（最優先）
 if [[ -f "${SCRIPT_DIR}/core/logging_utils.sh" ]]; then
