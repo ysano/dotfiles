@@ -50,6 +50,13 @@
 - 依存関係
 - 設定ファイル例
 
+### 7. [Hooks ステートマシン](./07-hooks-state-machine.md)
+- Claude Code hooks によるリアルタイム状態検出
+- ペイン単位の状態遷移図
+- 全遷移テーブル（音声・TTS詳細）
+- 重複排除ロジック
+- ポーリング監視とのフォールバック連携
+
 ## 実装の流れ
 
 1. **システム概要**を読んで全体像を把握
@@ -67,17 +74,23 @@
 - **Phase 3**: デシベルパンニング（`panning_engine.sh`）
 - **Phase 4**: Ollama連携（`ollama_utils.sh`）
 - **Phase 5**: 統合テスト（`integration_test.sh`）
+- **Phase 6**: Hooks 統合（`hooks/status-update.sh`, `hooks/setup-hooks.sh`）
 
 ### 📁 実装ファイル
 
 ```
 .tmux/claude/
-├── polling_monitor.sh      # ポーリング監視スクリプト
-├── functions.sh           # 基本機能関数群
-├── sound_utils.sh         # 音声エンジン
+├── polling_monitor.sh      # ポーリング監視（hooks フォールバック付き）
+├── functions.sh           # 基本機能関数群（ペインレベル検出対応）
+├── sound_utils.sh         # 音声エンジン（OS別デフォルト音対応）
 ├── panning_engine.sh      # デシベルパンニングエンジン
 ├── ollama_utils.sh        # Ollama連携機能
-└── integration_test.sh    # 統合テスト
+├── integration_test.sh    # 統合テスト（hooks テスト含む）
+├── toggle_notify_mode.sh  # 通知モード切り替え
+├── pan_test.sh            # パンニングテスト
+└── hooks/                 # Claude Code hooks 統合
+    ├── status-update.sh   # hooks イベント共通エントリポイント
+    └── setup-hooks.sh     # ~/.claude/settings.json セットアップ
 ```
 
 ### ⚙️ 設定ファイル
@@ -85,14 +98,30 @@
 - `.tmux/claude.conf` - システム設定
 - `.tmux/status.conf` - ステータス表示設定
 
-## ポーリング方式の特徴
+## ハイブリッド検出アーキテクチャ
 
-本システムは**ポーリング方式**を採用しています：
+本システムは **Hooks 駆動 + ポーリングフォールバック** のハイブリッド方式を採用しています：
 
-- **軽量性**: `tmux status-right`から5秒間隔で呼び出される1回実行型スクリプト
-- **パフォーマンス**: 無限ループによる重い監視を避け、tmux全体の動作に影響を与えません
-- **安定性**: 1回実行型のため、エラーが発生しても次回のポーリングで自動復旧します
-- **統合性**: `tmux status-right`に自然に統合され、既存のtmux設定と競合しません
+### Hooks 駆動（主系統）
+- Claude Code の hooks イベント（`UserPromptSubmit`, `Stop`, `Notification` 等）をリアルタイムに受信
+- **ペイン単位**の状態管理により、複数 Claude セッションを正確に識別
+- 状態遷移に応じた即時の音声・TTS フィードバック
+- 詳細は [07-hooks-state-machine.md](./07-hooks-state-machine.md) を参照
+
+### ポーリング監視（副系統・フォールバック）
+- `tmux status-right` から5秒間隔で呼び出される1回実行型スクリプト
+- hooks タイムスタンプが30秒以上古い場合に `capture-pane` ベースの従来検出にフォールバック
+- hooks が未設定の環境でも動作を保証
+
+### セットアップ
+
+hooks を有効化するには:
+
+```bash
+~/.tmux/claude/hooks/setup-hooks.sh
+```
+
+このスクリプトは `~/.claude/settings.json` に hooks 設定を安全にマージします。
 
 ## AI Agent向けの指示
 
@@ -130,17 +159,26 @@ curl -fsSL https://ollama.ai/install.sh | sh
 source-file ~/.tmux/claude.conf
 ```
 
-### 3. システムのテスト
+### 3. Hooks の有効化（推奨）
 
 ```bash
-# 統合テストの実行
+# Claude Code hooks を設定（~/.claude/settings.json に安全にマージ）
+~/.tmux/claude/hooks/setup-hooks.sh
+
+# Claude Code を再起動して hooks を有効化
+```
+
+### 4. システムのテスト
+
+```bash
+# 統合テストの実行（hooks テスト含む）
 ~/.tmux/claude/integration_test.sh
 
 # ポーリング監視の手動テスト
 ~/.tmux/claude/polling_monitor.sh
 ```
 
-### 4. キーバインド
+### 5. キーバインド
 
 - `Prefix + v + t` - 統合テスト実行
 - `Prefix + v + v` - 要約機能ON/OFF

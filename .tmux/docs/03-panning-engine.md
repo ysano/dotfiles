@@ -6,6 +6,8 @@
 
 デシベルパンニングは、左右のスピーカー間で音量差（デシベル）を利用して音像を移動させる手法です。本システムでは、Claude Codeの状態変化を空間的な音声フィードバックで表現します。
 
+> **Note**: 検出単位はペインレベルです。`detect_claude_panes()` でペインを検出し、ウィンドウレベルに集約してパンニング位置を計算します。
+
 ### 5.2. 動的ウィンドウ配置戦略
 
 | Claude Codeウィンドウ数 | 配置方式   | 音像位置範囲           | 識別効果             |
@@ -105,7 +107,16 @@ set -g @claude_voice_window_pattern "Claude|claude|CLAUDE"  # 検出するウィ
 ### 5.6. 実装関数
 
 ```bash
-# Claude Codeウィンドウを検出する関数
+# Claude Code ペインを検出する関数（プロセスベース + コンテンツベース）
+# 戻り値: "session:window.pane" 形式のペインターゲット一覧
+detect_claude_panes() {
+    # 1. プロセス名 "claude" で直接検出
+    # 2. プロセス名 "node" の場合、capture-pane で Claude 特有パターンを判定
+    # 詳細は functions.sh を参照
+}
+
+# Claude Codeウィンドウを検出する関数（後方互換ラッパー）
+# ペインレベル検出結果をウィンドウに集約して返す
 detect_claude_windows() {
     local pattern=$(tmux show-option -gv @claude_voice_window_pattern 2>/dev/null || echo "Claude|claude|CLAUDE")
     tmux list-windows -F "#{window_index}:#{window_name}" | grep -E ":$pattern" | cut -d: -f1,2

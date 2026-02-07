@@ -4,6 +4,15 @@
 
 ローカルLLMを最大限に活用し、的確な要約を生成します。
 
+### Hooks 連携
+
+hooks 駆動の場合、以下のタイミングで Ollama が呼び出されます:
+
+- **`Stop` イベント → Idle 遷移時**: 完了タスクの要約を生成し、TTS で読み上げ
+- **`Notification(permission_prompt)` → Waiting 遷移時**: hooks JSON の `.message` フィールドをそのまま TTS で読み上げ（Ollama 不要）
+
+ポーリング監視経由の場合は従来通り `capture-pane` テキストから要約を生成します。
+
 ### ホスト検出
 
 - **macOS**: `localhost` を使用します。

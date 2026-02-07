@@ -61,16 +61,26 @@ play_notification_sound() {
     local sound_type="$1"  # start, complete, waiting, error
     local os_type=$(get_os_type)
 
-    # 設定から音声名を取得
+    # 設定から音声名を取得（OS別デフォルト）
     local sound_name=$(tmux show-option -gv @claude_voice_sound_${sound_type} 2>/dev/null)
     if [[ -z "$sound_name" ]]; then
-        case "$sound_type" in
-            "start") sound_name="Submarine" ;;
-            "complete") sound_name="Funk" ;;
-            "waiting") sound_name="Basso" ;;
-            "error") sound_name="Basso" ;;
-            *) sound_name="Submarine" ;;
-        esac
+        if [[ "$os_type" == "Darwin" ]]; then
+            case "$sound_type" in
+                "start")    sound_name="Ping" ;;
+                "complete") sound_name="Glass" ;;
+                "waiting")  sound_name="Funk" ;;
+                "error")    sound_name="Sosumi" ;;
+                *)          sound_name="Submarine" ;;
+            esac
+        else
+            case "$sound_type" in
+                "start")    sound_name="chimes" ;;
+                "complete") sound_name="notify" ;;
+                "waiting")  sound_name="chord" ;;
+                "error")    sound_name="ringout" ;;
+                *)          sound_name="Windows Notify Messaging" ;;
+            esac
+        fi
     fi
 
     local sound_file=$(get_system_sound_path "$sound_name")
@@ -168,12 +178,12 @@ get_available_windows_voices() {
 ## 設定パラメータ
 
 ```bash
-# 通知音設定
+# 通知音設定（未設定時はOS別デフォルトが使用される）
 set -g @claude_voice_sound_enabled "true"     # 通知音の有効化
-set -g @claude_voice_sound_start "Submarine"  # 処理開始音（macOS: Submarine.aiff, Windows: Submarine.wav）
-set -g @claude_voice_sound_complete "Funk"    # 処理完了音（macOS: Funk.aiff, Windows: Funk.wav）
-set -g @claude_voice_sound_waiting "Basso"    # 待機音（macOS: Basso.aiff, Windows: Basso.wav）
-set -g @claude_voice_sound_error "Basso"      # エラー音（macOS: Basso.aiff, Windows: Basso.wav）
+# set -g @claude_voice_sound_start ""         # 処理開始音（macOS: Ping, WSL: chimes）
+# set -g @claude_voice_sound_complete ""      # 処理完了音（macOS: Glass, WSL: notify）
+# set -g @claude_voice_sound_waiting ""       # 待機音（macOS: Funk, WSL: chord）
+# set -g @claude_voice_sound_error ""         # エラー音（macOS: Sosumi, WSL: ringout）
 
 # 音声エンジン設定
 set -g @claude_voice_speech_rate "200"        # 音声速度（WPM、macOS用）

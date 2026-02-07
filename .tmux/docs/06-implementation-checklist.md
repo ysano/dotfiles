@@ -47,25 +47,37 @@
 - [x] エンドツーエンドテスト
 - [x] ポーリング監視テスト
 
+### **Phase 6: Hooks 統合**
+
+- [x] `hooks/status-update.sh`の作成（イベント共通エントリポイント）
+- [x] `hooks/setup-hooks.sh`の作成（settings.json セットアップ）
+- [x] ペインレベル状態管理の実装
+- [x] イベント → ステータス変換ロジック
+- [x] 重複排除ロジック（同一状態スキップ）
+- [x] hooks タイムスタンプ管理
+- [x] ウィンドウレベルアイコン集約
+- [x] `polling_monitor.sh` の hooks フォールバック対応
+- [x] `functions.sh` のペインレベル検出対応（`detect_claude_panes()`）
+- [x] `sound_utils.sh` のOS別デフォルト通知音対応
+- [x] `integration_test.sh` の hooks テスト追加
+
 ## 実装済みファイル一覧
 
 ### ✅ 完了済み
 
-- [x] `polling_monitor.sh` - ポーリング監視スクリプト
-- [x] `functions.sh` - 基本機能関数群
-- [x] `sound_utils.sh` - 音声エンジン
+- [x] `polling_monitor.sh` - ポーリング監視スクリプト（hooks フォールバック付き）
+- [x] `functions.sh` - 基本機能関数群（ペインレベル検出対応）
+- [x] `sound_utils.sh` - 音声エンジン（OS別デフォルト音対応）
 - [x] `panning_engine.sh` - デシベルパンニングエンジン
 - [x] `ollama_utils.sh` - Ollama連携機能
-- [x] `integration_test.sh` - 統合テスト
+- [x] `integration_test.sh` - 統合テスト（hooks テスト含む）
 - [x] `toggle_notify_mode.sh` - 通知モード切り替え機能
+- [x] `hooks/status-update.sh` - Hooks イベント共通エントリポイント
+- [x] `hooks/setup-hooks.sh` - settings.json セットアップ
 
-### ❌ 未実装
+## 統合テスト結果
 
-- [x] `toggle_notify_mode.sh` - 通知モード切り替え（実装完了）
-
-## 統合テスト結果（2025年8月11日 最終）
-
-### ✅ 成功したテスト（22/22）
+### Phase 1-5: ✅ 成功（22/22）
 
 - **ファイル存在**: polling_monitor.sh, functions.sh, sound_utils.sh, panning_engine.sh, ollama_utils.sh
 - **単体テスト**: polling_monitor.sh, functions.sh, sound_utils.sh, panning_engine.sh, ollama_utils.sh
@@ -73,6 +85,13 @@
 - **設定読み込み**: 全設定項目
 - **コンポーネント連携**: 全連携テスト
 - **パフォーマンス**: ファイル読み込み時間, メモリ使用量
+
+### Phase 6: Hooks テスト追加
+
+- **ファイル存在**: hooks/status-update.sh, hooks/setup-hooks.sh
+- **hooks シミュレート**: UserPromptSubmit→Busy, Stop→Idle, Notification→Waiting
+- **タイムスタンプ**: hooks タイムスタンプ更新の正常性
+- **セッション終了**: SessionEnd→状態クリア
 
 ### 🎉 実装完了状況
 
@@ -190,12 +209,17 @@ test_polling_monitor() {
 
 ```
 .tmux/claude/
-├── polling_monitor.sh      # ポーリング監視スクリプト
-├── functions.sh           # 基本機能関数群
-├── sound_utils.sh         # 音声エンジン
+├── polling_monitor.sh      # ポーリング監視（hooks フォールバック付き）
+├── functions.sh           # 基本機能関数群（ペインレベル検出対応）
+├── sound_utils.sh         # 音声エンジン（OS別デフォルト音対応）
 ├── panning_engine.sh      # デシベルパンニングエンジン
 ├── ollama_utils.sh        # Ollama連携機能
-└── integration_test.sh    # 統合テスト
+├── integration_test.sh    # 統合テスト（hooks テスト含む）
+├── toggle_notify_mode.sh  # 通知モード切り替え
+├── pan_test.sh            # パンニングテスト
+└── hooks/                 # Claude Code hooks 統合
+    ├── status-update.sh   # hooks イベント共通エントリポイント
+    └── setup-hooks.sh     # ~/.claude/settings.json セットアップ
 ```
 
 ## 依存関係
@@ -231,9 +255,10 @@ set -g @claude_voice_window_pattern "Claude|claude|CLAUDE"
 
 # === 音声エンジン設定 ===
 set -g @claude_voice_sound_enabled "true"
-set -g @claude_voice_sound_start "Submarine"
-set -g @claude_voice_sound_complete "Funk" 
-set -g @claude_voice_sound_waiting "Basso"
+# 通知音（未設定時はOS別デフォルト: macOS=Ping/Glass/Funk, WSL=chimes/notify/chord）
+# set -g @claude_voice_sound_start ""
+# set -g @claude_voice_sound_complete ""
+# set -g @claude_voice_sound_waiting ""
 
 # === 音声合成設定 ===
 set -g @claude_voice_speech_rate "200"
@@ -278,10 +303,10 @@ set -g status-right '#(~/.tmux/claude/polling_monitor.sh)#[default] %H:%M '
 
 **tmux-claude-voiceシステムの実装が完了しました！**
 
-- **Phase 1-5**: すべて完了
-- **統合テスト**: 22/22 成功
-- **ファイル**: 6個すべて実装済み
-- **機能**: ポーリング監視、音声エンジン、デシベルパンニング、Ollama連携
+- **Phase 1-6**: すべて完了
+- **統合テスト**: 22/22 成功（Phase 5）+ hooks テスト追加（Phase 6）
+- **ファイル**: 8個 + hooks ディレクトリ
+- **機能**: Hooks 駆動 + ポーリング監視、ペインレベル検出、音声エンジン、デシベルパンニング、Ollama連携
 
 システムは本番利用の準備が整っています。`.tmux.conf`に設定を追加してtmuxを再起動すれば、ポーリング監視が自動的に開始されます。
 

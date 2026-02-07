@@ -227,15 +227,18 @@ test_polling_monitor() {
 上記設計に基づき、以下の構造でスクリプトを実装してください。
 
 1.  **`polling_monitor.sh`**:
-    - 設定読み込み、ポーリング監視、監視対象ウィンドウの特定と処理。
+    - 設定読み込み、ポーリング監視、監視対象ペインの特定と処理。
     - `tmux status-right`から5秒間隔で呼び出される1回実行型スクリプト。
+    - hooks タイムスタンプが30秒以内なら hooks の状態を信頼し、`capture-pane` をスキップ。
 2.  **`functions.sh`**:
+    - `detect_claude_panes()`: プロセスベース + コンテンツベースのペインレベル検出。
+    - `detect_claude_windows()`: 後方互換ラッパー（ペイン → ウィンドウ集約）。
     - `analyze_pane_content()`: ペインコンテンツからステータスを判定するロジック。
     - `handle_status_change()`: 状態遷移に応じた処理の振り分け。
-    - `summarize_with_ollama()`: Ollama APIと連携し要約を生成する機能。
     - `update_claude_status_icon()`: ウィンドウアイコンを更新する機能。
 3.  **`sound_utils.sh`**:
     - `get_os_type()`, `speak()`, `play_notification_sound()`, `get_system_sound_path()`など、プラットフォーム依存の音声処理をすべてここにまとめる。
+    - OS別デフォルト通知音（macOS: Ping/Glass/Funk/Sosumi、WSL: chimes/notify/chord/ringout）。
 4.  **`panning_engine.sh`**:
     - `detect_claude_windows_for_panning()`: Claude Codeウィンドウの検出。
     - `count_claude_windows()`: Claude Codeウィンドウ数のカウント。
@@ -252,8 +255,16 @@ test_polling_monitor() {
 6.  **`integration_test.sh`**:
     - 全ファイルの統合テスト。
     - 単体テスト実行。
+    - hooks ステータス更新テスト。
     - エンドツーエンドテスト。
     - ポーリング監視テスト。
+7.  **`hooks/status-update.sh`**:
+    - Claude Code hooks の共通エントリポイント。
+    - stdin から JSON イベントを受信し、ペインターゲットを解決。
+    - イベント → ステータス変換、重複排除、音声フィードバック。
+8.  **`hooks/setup-hooks.sh`**:
+    - `~/.claude/settings.json` への hooks 設定の安全なマージ。
+    - 既存設定のバックアップ作成。
 
 ## 最優先事項
 
