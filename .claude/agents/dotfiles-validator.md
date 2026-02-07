@@ -22,51 +22,53 @@ model: sonnet
 
 ## Protocol
 
+### 0. Script-First — まずスクリプトで決定的に検証
+
+各 Skill の `scripts/` にある検証スクリプトを**最初に実行**し、結果を受け取る。
+スクリプトが PASS/WARN/FAIL を機械的に判定するため、Claude の役割は**結果の解釈と修正提案**に集中する。
+
+```bash
+# Emacs
+.claude/skills/emacs-config/scripts/validate.sh
+.claude/skills/emacs-config/scripts/check_keybindings.sh
+.claude/skills/emacs-config/scripts/cross_platform_check.sh
+
+# tmux
+.claude/skills/tmux-config/scripts/check_conflicts.sh
+.claude/skills/tmux-config/scripts/cross_platform_check.sh
+
+# Zsh
+.claude/skills/zsh-config/scripts/validate.sh
+.claude/skills/zsh-config/scripts/cross_platform_check.sh
+.claude/skills/zsh-config/scripts/benchmark.sh
+```
+
+スクリプトで検出できない問題（設計意図の妥当性、新規パターンの評価等）のみ手動で検証する。
+
 ### 1. Cross-Platform Check — OS分岐の漏れを検出
 
-- 変更がOS固有の機能（クリップボード、通知、パス形式等）を使っていないか確認
-- OS固有機能を使っている場合:
-  - 全対象OS（macOS / Linux / WSL / FreeBSD）での分岐が存在するか
-  - フォールバックが実装されているか
-- 検証コマンド例:
-  - Emacs: `system-type` 分岐を Grep
-  - tmux: `if-shell` + `uname` 分岐を Grep
-  - Zsh: `$ZSH_OS_TYPE` / `has_command` を Grep
+- **Emacs**: `cross_platform_check.sh` を実行（system-type 分岐・OS固有パッケージ・フォント一括検証）
+- **tmux**: `cross_platform_check.sh` を実行（OS分岐・クリップボード・source-file 一括検証）
+- **Zsh**: `cross_platform_check.sh` を実行（OS検出・エイリアス分岐・PATH・グレースフル劣化一括検証）
 
 ### 2. Convention Check — Skill の Conventions に準拠しているか
 
-- **Emacs**:
-  - `use-package` パターン（`:ensure t`, `:defer t`）
-  - `(provide 'init-xxx)` でモジュール終端
-  - キーバインドが正しいプレフィックス配下か
-- **tmux**:
-  - `if-shell` パターンでのOS分岐
-  - モジュール配置が読み込み順序に適合
-  - `status-right` が `resurrect.conf` と競合しないか
-- **Zsh**:
-  - `has_command` ガードの使用
-  - `safe_path_prepend/append` でのPATH追加
-  - P10k instant prompt より後に console 出力がないか
+- **Emacs**: `validate.sh` を実行（provide, 括弧, use-package パターン一括検証）
+- **tmux**: `check_conflicts.sh` を実行（status-right, キーバインド一括検証）
+- **Zsh**: `validate.sh` を実行（source チェーン, 構文, has_command, PATH 一括検証）
 
 ### 3. Performance Check — パフォーマンスへの影響評価
 
-- 起動時間への影響:
-  - Emacs: 遅延読み込み（`:defer t`）が適切か
-  - Zsh: `wait lucid` による Zinit 遅延読み込みが適切か
-- 不必要な外部コマンド呼び出し:
-  - `$(brew --prefix)` 等の重いコマンドがキャッシュされているか
-  - ログインシェル（`.zprofile`）での不要な処理がないか
-- 測定コマンド:
-  - Emacs: `M-x emacs-init-time`
-  - Zsh: `time zsh -i -c exit`, `zinit times`
+- **Zsh**: `benchmark.sh` を実行（起動時間測定 + 閾値判定 + Zinit times）
+- Emacs: 遅延読み込み（`:defer t`）が適切か（`validate.sh` で WARN 検出）
+- 不必要な外部コマンド呼び出しがキャッシュされているか
 
 ### 4. Integration Check — モジュール間の整合性
 
-- 読み込み順序の依存関係が正しいか
-- 競合チェック:
-  - キーバインドの重複（Grep で `bind-key`, `bindkey`, `bind` を検索）
-  - エイリアスの衝突（特に `gwt` 系）
-  - 環境変数の意図しない上書き
+- **Emacs**: `check_keybindings.sh` を実行（キーバインド重複検出）
+- **tmux**: `check_conflicts.sh` を実行（キーバインド重複検出）
+- エイリアスの衝突（特に `gwt` 系）は Grep で確認
+- 環境変数の意図しない上書き
 
 ## Output Format
 

@@ -86,6 +86,22 @@ init-local                   ← ローカル設定(locate-libraryで存在時�
 3. **遅延読み込み**: `:defer t` または `:hook` / `:commands` で遅延化
 4. **OS制約**: OS固有パッケージは `init-platform.el` に、または `when` ガードを追加
 
+## Scripts
+
+検証用スクリプトは `scripts/` に配置。Claude は**実行して結果を受け取る**（中身を読む必要なし）。
+
+```bash
+# 規約検証（provide, 括弧バランス, use-package パターン）
+.claude/skills/emacs-config/scripts/validate.sh              # 全モジュール
+.claude/skills/emacs-config/scripts/validate.sh init-ai      # 特定モジュール
+
+# キーバインド重複検出
+.claude/skills/emacs-config/scripts/check_keybindings.sh
+
+# クロスプラットフォーム検証（system-type 分岐、OS固有パッケージ、フォント）
+.claude/skills/emacs-config/scripts/cross_platform_check.sh
+```
+
 ## Debugging
 
 ```bash

@@ -47,12 +47,14 @@ model: sonnet
 - グレースフル劣化を必ず実装（フォールバック必須）
 - 変更はできるだけ小さく、影響範囲を限定する
 
-### 4. Verify — 検証案内
+### 4. Verify — スクリプトで検証
 
-SKILL.md の Debugging セクションのコマンドを提示:
-- Emacs: `emacs --batch -l` での構文チェック
-- tmux: `tmux source` でのリロードテスト
-- Zsh: `./test_zsh_config.zsh` または起動時間測定
+SKILL.md の Scripts セクションのスクリプトを**実行**して結果を確認:
+- Emacs: `validate.sh` (規約) + `check_keybindings.sh` (競合)
+- tmux: `check_conflicts.sh` (競合) + `cross_platform_check.sh` (OS分岐)
+- Zsh: `validate.sh` (規約) + `benchmark.sh` (パフォーマンス)
+
+FAIL が出たら修正し、全 PASS/WARN になるまで繰り返す。
 
 ## Constraints
 

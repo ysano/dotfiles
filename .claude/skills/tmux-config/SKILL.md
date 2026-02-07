@@ -93,6 +93,18 @@ WSL は Linux と同じ `uname=Linux` を返すため、**WSLを先に検出**�
 - 詳細設定ドキュメント: `.tmux/plugin-config/README.md` (206行)
 - セッション保存/復元とバックグラウンド自動保存を管理
 
+## Scripts
+
+検証用スクリプトは `scripts/` に配置。Claude は**実行して結果を受け取る**（中身を読む必要なし）。
+
+```bash
+# 競合検出（status-right 複数定義、キーバインド重複）
+.claude/skills/tmux-config/scripts/check_conflicts.sh
+
+# クロスプラットフォーム検証（OS分岐漏れ、クリップボード、source-file パス）
+.claude/skills/tmux-config/scripts/cross_platform_check.sh
+```
+
 ## Debugging
 
 ```bash

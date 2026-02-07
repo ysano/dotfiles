@@ -95,6 +95,23 @@ fi
 
 **注意**: 大規模ファイルのため、変更時は該当部分のみ Read すること。
 
+## Scripts
+
+検証用スクリプトは `scripts/` に配置。Claude は**実行して結果を受け取る**（中身を読む必要なし）。
+
+```bash
+# 設定検証（source チェーン、構文、has_command ガード、PATH管理）
+.claude/skills/zsh-config/scripts/validate.sh                # 全モジュール
+.claude/skills/zsh-config/scripts/validate.sh aliases.zsh    # 特定モジュール
+
+# クロスプラットフォーム検証（OS検出、エイリアス分岐、PATH、グレースフル劣化）
+.claude/skills/zsh-config/scripts/cross_platform_check.sh
+
+# 起動時間ベンチマーク（閾値判定付き）
+.claude/skills/zsh-config/scripts/benchmark.sh               # デフォルト: 5回、500ms
+.claude/skills/zsh-config/scripts/benchmark.sh --threshold 300 --runs 10
+```
+
 ## Debugging
 
 ```bash
