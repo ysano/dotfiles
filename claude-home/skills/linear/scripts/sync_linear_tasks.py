@@ -15,7 +15,7 @@ Requirements:
     - LINEAR_API_KEY in .env file
 
 Example:
-    python .claude/skills/linear-todo-sync/scripts/sync_linear_tasks.py
+    python .claude/skills/linear/scripts/sync_linear_tasks.py
 """
 
 import os
@@ -99,7 +99,7 @@ def load_api_key():
         print("Error: .env file not found in project root")
         print(f"Expected location: {env_path}")
         print("\nSetup instructions:")
-        print("1. Copy the template: cp .claude/skills/linear-todo-sync/assets/.env.example .env")
+        print("1. Copy the template: cp .claude/skills/linear/.env.example .env")
         print("2. Add your API key to .env: LINEAR_API_KEY=lin_api_...")
         print("3. Get your API key from: https://linear.app/settings/api")
         sys.exit(1)

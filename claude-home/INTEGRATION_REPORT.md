@@ -7,9 +7,11 @@
 - Commands: 208ファイル (新規119ファイル追加)
 - Agents: 128ファイル (新規)
 - Hooks: 24ファイル + スクリプト (新規)
-- Skills: 2スキル (新規)
+- Skills: 4スキル
   - cloudflare-manager: Cloudflare Workers/KV/R2/Pages管理
-  - linear-todo-sync: Linear-GitHub Todo同期
+  - linear: Linear GraphQL API/MCP 統合
+  - jira: Jira 統合スタブ
+  - github-projects-v2: GitHub Projects V2 知識ベース
 - 合計: 362ファイル
 
 ## カテゴリー別内訳
