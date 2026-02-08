@@ -1,5 +1,5 @@
 ---
-name: Emacs Config
+name: configuring-emacs
 description: >
   Provides architecture knowledge and modification guidelines for the dotfiles Emacs
   configuration (~4,800 lines, 12 init-*.el modules, 8 custom elisp libraries).
@@ -79,12 +79,76 @@ init-local                   ← ローカル設定(locate-libraryで存在時�
 (string-match-p "microsoft" (shell-command-to-string "uname -r"))
 ```
 
-## New Package Addition Guide
+## Templates & Examples
 
-1. **配置先の判定**: パッケージの機能カテゴリから対応する `init-*.el` を選択
-2. **依存チェック**: 既存パッケージとのキーバインド競合を Grep で確認
-3. **遅延読み込み**: `:defer t` または `:hook` / `:commands` で遅延化
-4. **OS制約**: OS固有パッケージは `init-platform.el` に、または `when` ガードを追加
+### パッケージ追加テンプレート
+
+```elisp
+;; init-<category>.el に追加
+(use-package PACKAGE-NAME
+  :ensure t
+  :defer t                           ; 必須: 遅延読み込み
+  :hook (TARGET-MODE . PACKAGE-mode) ; または :commands
+  :bind (("C-c <prefix> <key>" . COMMAND))
+  :config
+  (setq PACKAGE-option value))
+```
+
+### 実例: LLM バックエンドパッケージの追加
+
+**やりたいこと**: Ollama 連携のための gptel パッケージを追加したい
+
+**配置先**: `init-ai.el`（AI統合カテゴリ）
+
+```elisp
+(use-package gptel
+  :ensure t
+  :defer t
+  :commands (gptel gptel-send gptel-menu)
+  :custom
+  (gptel-default-mode 'org-mode)
+  :config
+  (gptel-make-ollama "Ollama"
+    :host "localhost:11434"
+    :stream t
+    :models '(qwen2.5-coder:latest)))
+```
+
+**ポイント**: `:defer t` + `:commands` で遅延化。外部サービス (Ollama) に依存するため、接続エラーでも起動をブロックしない。
+
+### 実例: OS固有パッケージの条件付き追加
+
+**やりたいこと**: macOS のみ pbcopy 連携を追加したい
+
+```elisp
+;; init-platform.el に追加
+(when (eq system-type 'darwin)
+  (use-package osx-clipboard
+    :ensure t
+    :config
+    (osx-clipboard-mode +1)))
+```
+
+**ポイント**: `when` ガードで macOS 以外では読み込まない。
+
+## Common Modifications Checklist
+
+### パッケージ追加
+- [ ] 機能カテゴリから配置先 `init-*.el` を選択
+- [ ] `check_keybindings.sh` でキーバインド競合を事前確認
+- [ ] `:defer t` / `:hook` / `:commands` で遅延読み込みを設定
+- [ ] OS固有なら `when` ガードまたは `init-platform.el` に配置
+- [ ] `validate.sh` で規約検証（provide, 括弧バランス）
+
+### キーバインド変更
+- [ ] プレフィックス体系（`C-c a`=AI, `C-c n`=org-roam 等）を確認
+- [ ] `check_keybindings.sh` で既存バインドとの重複検出
+- [ ] 変更後に `validate.sh` で検証
+
+### 起動パフォーマンス改善
+- [ ] `emacs --batch -l init.el` でエラーがないか確認
+- [ ] `M-x emacs-init-time` で起動時間を測定
+- [ ] `:defer t` 未指定のパッケージを特定（`validate.sh` が WARN で報告）
 
 ## Scripts
 

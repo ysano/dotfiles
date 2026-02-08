@@ -1,5 +1,5 @@
 ---
-name: Tmux Config
+name: configuring-tmux
 description: >
   Provides architecture knowledge and modification guidelines for the dotfiles tmux
   configuration (~3,800 lines, modular .conf files, Claude Voice integration, TPM plugins).
@@ -81,6 +81,89 @@ WSL は Linux と同じ `uname=Linux` を返すため、**WSLを先に検出**�
 - `06-implementation-checklist.md` — 実装チェックリスト
 
 **キーバインド**: `Prefix + v` で Claude Voice メニュー（`claude.conf` で定義）
+
+## Templates & Examples
+
+### status-right を変更したい場合
+
+**問題**: `status.conf` を編集したが反映されない
+**原因**: `resurrect.conf` が後から読み込まれ上書きしている
+**解決**: `resurrect.conf` 側の `status-right` を編集する
+
+```bash
+# .tmux/plugin-config/resurrect.conf で設定（ここが最終的に有効）
+set -g status-right '#{?client_prefix,#[reverse] C-z #[noreverse],} ...'
+```
+
+### 新しいキーバインドを追加したい場合
+
+```bash
+# .tmux/keybindings.conf に追加（prefix テーブル）
+bind <key> <command>
+
+# root テーブル（prefix 不要）の場合
+bind -n <key> <command>
+
+# OS固有の場合は対応する os/*.conf に追加
+# 例: macOS のみ → .tmux/os/darwin.conf
+```
+
+### OS固有の設定を追加したい場合
+
+```bash
+# .tmux.conf 内の if-shell 分岐パターンに従う（WSL先行検出）
+if-shell 'test -n "$WSL_DISTRO_NAME"' 'source-file ~/.tmux/os/wsl.conf'
+if-shell 'uname | grep -q Darwin' 'source-file ~/.tmux/os/darwin.conf'
+```
+
+### 実例: Emacs風キーテーブルにコマンドを追加
+
+**やりたいこと**: `Prefix x b` でバッファ一覧（choose-tree）を開きたい
+
+**配置先**: `.tmux/keybindings.conf`（emacsCX テーブルに追加）
+
+```bash
+# 既存: bind x switch-client -T emacsCX  (emacsCX テーブルへの切替)
+# 既存の emacsCX バインド (0=kill, 1=break, 2=split-v, 3=split-h, ...)
+bind -T emacsCX b choose-tree -Zs
+```
+
+**ポイント**: `bind -T emacsCX` で Prefix x の後に続くキーを定義。既存の 0/1/2/3/o/k/i と重複しないキーを選ぶ。
+
+### 実例: OS固有のクリップボード設定
+
+**やりたいこと**: WSL でシステムクリップボードとの連携を追加
+
+**配置先**: `.tmux/os/wsl.conf`
+
+```bash
+# コピーモードで選択したテキストを Windows クリップボードにコピー
+bind -T copy-mode M-w send-keys -X copy-pipe-and-cancel "clip.exe"
+```
+
+**ポイント**: OS固有設定は対応する `os/*.conf` に配置。`if-shell` 分岐で排他的に読み込まれるため、他 OS への影響なし。
+
+## Common Modifications Checklist
+
+### status-right 変更
+- [ ] `resurrect.conf` の `status-right` を確認（最終的に有効な定義）
+- [ ] 変更は `resurrect.conf` 側で行う（`status.conf` は上書きされる）
+- [ ] `check_conflicts.sh` で status-right 複数定義を検証
+
+### キーバインド追加
+- [ ] プレフィックステーブル or root テーブルかを判断
+- [ ] `keybindings.conf`（共通）or `os/*.conf`（OS固有）に配置
+- [ ] `check_conflicts.sh` でキーバインド重複を検証
+
+### OS固有設定追加
+- [ ] `.tmux.conf` の `if-shell` 分岐パターン（WSL先行）に従う
+- [ ] 対応する `os/*.conf` にのみ追記
+- [ ] `cross_platform_check.sh` で OS分岐漏れを検証
+
+### Claude Voice 変更
+- [ ] `.tmux/docs/` の該当ドキュメントを Read
+- [ ] `claude.conf` の条件付き読み込み (`CLAUDE_VOICE_ENABLED`) を維持
+- [ ] `TMUX_CLAUDE_VOICE_DEBUG=true` でデバッグテスト
 
 ## Plugin Architecture
 

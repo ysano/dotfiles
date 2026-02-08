@@ -1,5 +1,5 @@
 ---
-name: Zsh Config
+name: configuring-zsh
 description: >
   Provides architecture knowledge and modification guidelines for the dotfiles Zsh
   configuration (~4,600 lines, .zprofile/.zshrc dual-stage loading, Zinit plugin manager).
@@ -44,37 +44,125 @@ allowed-tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep
 **OS固有エイリアス**: `aliases_darwin.zsh`(7行), `aliases_linux.zsh`(13行),
 `aliases_freebsd.zsh`(4行), `aliases_msys.zsh`(3行) — `aliases.zsh` から source
 
-## Key Design Patterns
+## Core Utilities (`utils.zsh`)
 
-### OS検出キャッシュ (`utils.zsh`)
-```zsh
-detect_os()  # → $ZSH_OS_TYPE (darwin/linux/wsl/freebsd/msys)
-             # → $ZSH_IS_WSL (true/false)
-```
+| 関数 | 用途 | 戻り値 |
+|---|---|---|
+| `detect_os()` | OS検出+キャッシュ | `$ZSH_OS_TYPE`, `$ZSH_IS_WSL` |
+| `has_command CMD` | コマンド存在チェック+キャッシュ | exit code 0/1 |
+| `safe_path_prepend DIR` | PATH先頭に追加（重複排除） | — |
+| `safe_path_append DIR` | PATH末尾に追加（重複排除） | — |
+| `cleanup_path` | `typeset -U path` で重複排除 | — |
 
-### コマンド存在キャッシュ (`utils.zsh`)
-```zsh
-has_command CMD  # → $ZSH_CMD_CACHE 連想配列でキャッシュ
-                 # 存在しないコマンドの重複チェックを回避
-```
+## Templates & Examples
 
-### PATH管理 (`utils.zsh`)
-```zsh
-safe_path_prepend DIR  # 存在するディレクトリのみPATH先頭に追加
-safe_path_append DIR   # 存在するディレクトリのみPATH末尾に追加
-cleanup_path           # typeset -U path で重複排除
-```
+### エイリアス追加（Graceful Degradation 付き）
 
-### Graceful Degradation Pattern
 ```zsh
-# モダンツールがあれば使い、なければ標準コマンド
-if has_command eza; then
-    alias ls='eza --icons --git'
-elif has_command exa; then
-    alias ls='exa --icons --git'
+# aliases.zsh に追加
+if has_command modern-tool; then
+    alias cmd='modern-tool --options'
+elif has_command fallback-tool; then
+    alias cmd='fallback-tool --options'
 fi
-# (標準 ls はフォールバックとして残る)
+# (標準コマンドがフォールバックとして残る)
 ```
+
+### PATH にツールを追加
+
+```zsh
+# .zprofile に追加（safe_path_prepend で重複排除）
+safe_path_prepend "$HOME/.new-tool/bin"
+```
+
+### OS固有エイリアスの追加
+
+```zsh
+# aliases_darwin.zsh / aliases_linux.zsh 等に追加
+# aliases.zsh から自動的に source される
+alias osx-only='some-command'
+```
+
+### Zinit プラグインの追加
+
+```zsh
+# zinit_setup.zsh の該当 setup_* 関数内に追加
+zinit ice wait lucid
+zinit light author/plugin-name
+```
+
+### 実例: モダンツールのエイリアス追加
+
+**やりたいこと**: `cat` を bat に置き換え、bat がなければ素の cat を使う
+
+**配置先**: `.zsh/aliases.zsh`（Navigation セクション）
+
+```zsh
+if has_command bat; then
+    alias cat='bat --style=auto'
+fi
+```
+
+**ポイント**: `has_command` でガード、`elif`/`else` なしでフォールバックは標準コマンド。
+
+### 実例: 開発ツールの PATH 追加
+
+**やりたいこと**: Deno のパスを追加したい
+
+**配置先**: `.zprofile`（Development Tools セクション）
+
+```zsh
+# Deno
+safe_path_prepend "$HOME/.deno/bin"
+```
+
+**ポイント**: `export PATH=` は使わず `safe_path_prepend` で重複排除。`.zprofile` に配置（ログインシェルで1回だけ実行）。
+
+### 実例: エディタエイリアスのフォールバックチェーン
+
+**やりたいこと**: 環境に応じて最適なエディタを `e` に割り当てたい
+
+**配置先**: `.zsh/aliases.zsh`（`setup_editor_aliases` 関数内）
+
+```zsh
+setup_editor_aliases() {
+    if [[ "$TERM_PROGRAM" = "vscode" ]]; then
+        alias e='code'
+    elif has_command emacsclient; then
+        alias e='emacsclient -n'
+    elif has_command emacs; then
+        alias e='emacs'
+    elif has_command vim; then
+        alias e='vim'
+    fi
+}
+```
+
+**ポイント**: 優先順位付きフォールバック。`$TERM_PROGRAM` で実行コンテキストも考慮。
+
+## Common Modifications Checklist
+
+### エイリアス追加
+- [ ] `aliases.zsh` に `has_command` ガード付きで追加
+- [ ] フォールバック（モダンツール→標準コマンド）を実装
+- [ ] OS固有なら `aliases_<os>.zsh` に配置
+- [ ] `validate.sh` で has_command ガードを検証
+
+### PATH 追加
+- [ ] `.zprofile` に `safe_path_prepend`/`safe_path_append` で追加
+- [ ] `export PATH=` の直接設定を避ける
+- [ ] `validate.sh` で PATH 管理を検証
+
+### プラグイン追加
+- [ ] `zinit_setup.zsh` の適切な `setup_*` 関数内に配置
+- [ ] `wait lucid` で遅延読み込みを設定
+- [ ] `benchmark.sh` で起動時間への影響を測定
+- [ ] OMZ プラグインとのエイリアス競合を確認
+
+### キーバインド変更
+- [ ] `keybindings_custom.zsh` に追加
+- [ ] Emacs モード (`bindkey -e`) との整合性を確認
+- [ ] `validate.sh` で構文検証
 
 ## Zinit Plugin Architecture — `zinit_setup.zsh` (338行)
 
