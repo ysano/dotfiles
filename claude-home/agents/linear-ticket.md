@@ -6,6 +6,7 @@ tools: Bash, Read, Write, Grep, Glob
 model: sonnet
 skills:
   - linear
+  - ticket-management
 ---
 
 <role>

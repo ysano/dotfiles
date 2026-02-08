@@ -6,6 +6,7 @@ tools: Bash, Read, Write, Grep, Glob
 model: sonnet
 skills:
   - github-projects-v2
+  - ticket-management
 ---
 
 <role>

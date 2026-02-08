@@ -7,6 +7,7 @@ model: sonnet
 skills:
   - github-projects-v2
   - linear
+  - ticket-management
 ---
 
 <role>
