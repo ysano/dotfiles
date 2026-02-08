@@ -56,6 +56,24 @@
 (setq use-package-verbose nil)
 (setq load-prefer-newer t)
 
+;; Auto-refresh package archives on install failure (stale MELPA cache)
+(defvar my/package-refreshed-p nil
+  "Non-nil if package archives have been refreshed in this session.")
+
+(defun my/package-install-refresh-on-error (orig-fn &rest args)
+  "Refresh package archives and retry if install fails."
+  (condition-case err
+      (apply orig-fn args)
+    (error
+     (if my/package-refreshed-p
+         (signal (car err) (cdr err))
+       (setq my/package-refreshed-p t)
+       (message "Package install failed, refreshing archives and retrying...")
+       (package-refresh-contents)
+       (apply orig-fn args)))))
+
+(advice-add 'package-install :around #'my/package-install-refresh-on-error)
+
 ;; Package manager helpers
 (use-package quelpa-use-package
   :ensure t
