@@ -9,8 +9,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 model: sonnet
 ---
 
-# dotfiles-engineer
-
 **Role**: dotfiles設定ファイルの実装・修正・拡張を行うエンジニア。
 技術知識は Skill (emacs-config, tmux-config, zsh-config, keyboard-config) から取得し、
 既存パターンに忠実な実装を行う。Skill がないツールも Managed Tools 表を参照して対応する。
@@ -74,27 +72,18 @@ FAIL が出たら修正し、全 PASS/WARN になるまで繰り返す。
 
 ## Managed Tools
 
-| ツール | Config ファイル | Skill | デプロイ |
-|---|---|---|---|
-| Emacs | `.emacs.d/` (init.el, inits/, elisp/) | emacs-config | `link.sh` → `$HOME` |
-| tmux | `.tmux.conf`, `.tmux/` | tmux-config | `link.sh` → `$HOME` |
-| Zsh | `.zshrc`, `.zprofile`, `.zsh/` | zsh-config | `link.sh` → `$HOME` |
-| Karabiner | `karabiner/karabiner.json` | keyboard-config | 手動 → `~/.config/karabiner/` |
-| skhd | `.skhdrc` | keyboard-config | `link.sh` → `$HOME` |
-| yabai | `.yabairc` | keyboard-config | `link.sh` → `$HOME` |
-| Keyboard Maestro | `keyboard-maestro/*.kmmacros` | keyboard-config (参照のみ) | 手動インポート |
-| Git | `.config/git/config`, `.config/git/ignore` | — | `link.sh` → `$XDG_CONFIG_HOME` |
-| bat | `.config/bat/config` | — | `link.sh` → `$XDG_CONFIG_HOME` |
-| ripgrep | `.config/ripgrep/config` | — | `link.sh` → `$XDG_CONFIG_HOME` |
-| gwt | `.config/gwt/` | — | `link.sh` → `$XDG_CONFIG_HOME` |
-| Aspell | `.aspell.conf` | — | `link.sh` → `$HOME` |
-| Homebrew | `.Brewfile` | — | `link.sh` → `$HOME` |
-| X11 | `.xinitrc`, `.Xresources` | — | `link.sh` → `$HOME` |
-| RPM | `.rpmmacros` | — | `link.sh` → `$HOME` |
-| mayu (Win) | `mayu/104onFKB.mayu` | — | 手動 |
-| WSL | `wsl/` (fonts, mozc, vcxsrv) | — | 手動 |
-| Cursor | `.cursor/rules/*.mdc` | — | 手動 |
-| Claude Code | `claude-home/` → `~/.claude/` | — | `link.sh` → `$HOME/.claude/` |
+**Skill対応ツール**（頻繁に参照）:
+
+| ツール | Config ファイル | Skill |
+|---|---|---|
+| Emacs | `.emacs.d/` (init.el, inits/, elisp/) | emacs-config |
+| tmux | `.tmux.conf`, `.tmux/` | tmux-config |
+| Zsh | `.zshrc`, `.zprofile`, `.zsh/` | zsh-config |
+| Keyboard | `karabiner/*.json`, `.skhdrc`, `.yabairc` | keyboard-config |
+
+**その他のツール**: `docs/managed-tools.md` 参照（Git, bat, ripgrep, gwt, Homebrew, X11, WSL, Cursor等）
+
+**デプロイ**: 大部分は`link.sh`経由、詳細は`docs/managed-tools.md`参照
 
 ## Constraints
 

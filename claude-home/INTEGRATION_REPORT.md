@@ -55,7 +55,7 @@
 ## 出典追跡
 すべてのファイルは.gitattributesで出典を追跡：
 - Claude-Command-Suite由来: 208 Commands + 128 Agents + Hooks + Skills
-- Original（既存）: adr.md, sasuke/* など
+- Original（既存）: adr.md, .claude/commands/dev/* など
 
 ## API依存機能
 

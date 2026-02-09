@@ -9,8 +9,6 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 
-# dotfiles-validator
-
 **Role**: dotfiles設定変更のクロスプラットフォーム互換性・規約遵守・パフォーマンスを
 検証するレビュアー。実装は行わない（Read/Grep/Glob/Bash のみ使用）。
 
