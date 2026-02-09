@@ -2,99 +2,47 @@
 description: "Generate accurate project time estimates"
 ---
 
-## Purpose
-This command analyzes past commits, PR completion times, code complexity metrics, and team performance to provide accurate task estimates. It helps teams move beyond gut-feel estimates to data-backed predictions.
-
-## Usage
-```bash
-claude "Estimate task: Implement OAuth2 login flow with Google"
-
-# Analyze historical accuracy of estimates
-// ... (8 lines truncated)
-```
-
 ## Instructions
 
-### 1. Gather Historical Data
-Collect data from git history and Linear:
+Analyze past commits, PR completion times, code complexity, and team velocity to generate data-backed task estimates.
 
-```bash
-# Get commit history with timestamps and authors
-git log --pretty=format:"%h|%an|%ad|%s" --date=iso --since="6 months ago" > commit_history.txt
+Estimate: `$ARGUMENTS`
 
-// ... (9 lines truncated)
-```
+For estimation methodology and ticket decomposition, load the `ticket-management` skill.
 
-### 2. Calculate Code Complexity Metrics
-Analyze code characteristics:
+### Steps
 
-```javascript
-function analyzeComplexity(filePath) {
-  const metrics = {
-    lines: 0,
-// ... (24 lines truncated)
-```
+1. **Gather Historical Data**
+   - Run `git log --since="6 months ago"` to analyze commit frequency and patterns
+   - Check PR merge times via `gh pr list --state merged`
+   - If project management data is available (GitHub Projects, Linear), collect past estimate accuracy
 
-### 3. Build Estimation Models
+2. **Analyze Task Complexity**
+   - Identify affected files and modules from the task description
+   - Assess code complexity (coupling, test coverage, dependencies)
+   - Compare with similar past tasks
 
-#### Time-Based Estimation
-```javascript
-class HistoricalEstimator {
-  constructor(gitData, linearData) {
-    this.gitData = gitData;
-// ... (71 lines truncated)
-```
+3. **Generate Estimate**
 
-#### Pattern Recognition
-```javascript
-function extractFeatures(taskDescription) {
-  const features = {
-    keywords: [],
-// ... (41 lines truncated)
-```
-
-### 4. Velocity Tracking
-Track team and individual performance:
-
-```javascript
-class VelocityTracker {
-  async analyzeVelocity(timeframe = '3 months') {
-    // Get completed tasks with estimates and actual time
-// ... (44 lines truncated)
-```
-
-### 5. Machine Learning Estimation
-Use historical patterns for prediction:
-
-```javascript
-class MLEstimator {
-  trainModel(historicalTasks) {
-    // Feature extraction
-// ... (44 lines truncated)
-```
-
-### 6. Estimation Report Format
-
-```markdown
-## Task Estimation Report
-
-**Task:** Implement OAuth2 login flow with Google
-// ... (41 lines truncated)
-```
-
-### 7. Error Handling
-```javascript
-// Handle missing historical data
-if (historicalTasks.length < 10) {
-  console.warn("Limited historical data. Estimates may be less accurate.");
-// ... (16 lines truncated)
-```
-
-## Example Output
+Output format:
 
 ```
-Analyzing task: "Refactor user authentication to use JWT tokens"
+## Estimate: [Task Description]
 
-📊 Historical Analysis:
-// ... (35 lines truncated)
+### Complexity Assessment
+- Files affected: [count]
+- Dependencies: [list]
+- Risk factors: [list]
+
+### Estimate (with confidence intervals)
+| Scenario | Duration | Confidence |
+|----------|----------|-----------|
+| Optimistic | [time] | 20th percentile |
+| Most Likely | [time] | 50th percentile |
+| Pessimistic | [time] | 80th percentile |
+
+### Basis
+- Similar past tasks: [references]
+- Key assumptions: [list]
+- Risk adjustments: [list]
 ```
