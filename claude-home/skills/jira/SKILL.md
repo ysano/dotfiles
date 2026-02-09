@@ -9,7 +9,9 @@ description: >
 
 | ファイル | 内容 | 参照タイミング |
 |---|---|---|
-| `references/mcp-tools.md` | MCP ツール一覧、引数、cloudId 取得 | ツールの引数を確認するとき |
+| `references/mcp-tools.md` | MCP ツール一覧、Discovery-Firstパターン | ツール利用前、エラー回復時 |
+| `references/mcp-architecture.md` | MCPアーキテクチャ、APIレス環境の制約 | システム設計、統合実装時 |
+| `references/agent-prompt.md` | エージェント向けシステムプロンプト | AI自律操作実装時 |
 | `references/built-in-skills.md` | 組み込み Skill の詳細と使い分け | ワークフロー自動化時 |
 
 ## データモデル
@@ -30,9 +32,17 @@ description: >
 - Scrum ボード専用の固定期間イテレーション
 - Active Sprint は Team あたり1つ
 
-### Epic
-- 大きな作業単位。複数 Issue をグループ化
-- Epic Link で子 Issue を紐付け
+### 階層構造（2026年モデル）
+**重要**: 2025年後半から2026年にかけてデータモデルが統一されました。
+
+| 階層関係 | 従来 (Legacy) | 新 (Unified) |
+|---|---|---|
+| Story → Epic | Epic Link | **parent** |
+| Epic → Initiative | Parent Link | **parent** |
+| Subtask → Story | Parent | **parent** |
+
+- ✅ **推奨**: `parent = "EPIC-123"` (JQL) / `{"parent": {"key": "EPIC-123"}}` (API)
+- ❌ **非推奨**: `"Epic Link" = "EPIC-123"` (エラーになる可能性)
 
 ### Status
 - カテゴリ: To Do / In Progress / Done
