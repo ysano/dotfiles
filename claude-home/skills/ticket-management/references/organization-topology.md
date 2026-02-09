@@ -1,5 +1,33 @@
 Organization Topology: AI/人間ハイブリッドチームの規模別構成パターン。
 
+## プラットフォーム選択
+
+### 原則: コロケーション優先
+
+デフォルト: **GitHub Projects V2**
+- コードとプロジェクト管理が同一プラットフォーム（コロケーション原則）
+- `gh` CLI で Agent Loop の全操作が完結
+- 小〜中規模（~50 名）はこれで十分
+- 非エンジニア（UX デザイナー、ビジネスアナリスト）が Spec 執筆・レビューで参加する場合も対応可能
+
+レポート補完（GitHub Projects V2 にダッシュボード機能が不足する場合）:
+- GitHub Actions で週次データ抽出 → Notion / Google Sheets にダッシュボード作成
+- 非エンジニアのステークホルダーはダッシュボードを参照
+
+### Jira 移行基準
+
+以下のうち **2 つ以上** に該当した場合、Jira への移行を検討する:
+
+- [ ] チーム人数が 50 名を超えた
+- [ ] コンプライアンス・監査ログが必須になった
+- [ ] 承認ワークフローが 2 段階以上必要になった
+- [ ] 複数プロダクト間の依存管理が必要になった
+- [ ] 既に組織が Jira を使っている（移行コスト > 運用コスト）
+
+**移行トリガーにならないもの**:
+- 非エンジニアがボードを見る → GitHub Projects V2 の Board ビューで十分
+- 外部ステークホルダーへの報告 → ダッシュボード転送で対応
+
 ## 3 つのトポロジー
 
 従来の「人数ベース」の規模分類を、AI Agent を含むハイブリッドチーム構成に再定義。
@@ -17,7 +45,7 @@ Organization Topology: AI/人間ハイブリッドチームの規模別構成パ
 - ステータス数: 3-4（Todo / In Progress / Review / Done）
 - Agent Loop: 簡略化（Triage 省略、AI Planning + Implementation を一体化）
 - トリアージ: 不要。アーキテクトが直接判断
-- ツール推奨: **Linear**（シンプル、高速、AI-friendly API）
+- ツール: **GitHub Projects V2**
 
 **チケット管理のポイント**:
 - Backlog は 20 件以下に維持
@@ -37,13 +65,18 @@ Organization Topology: AI/人間ハイブリッドチームの規模別構成パ
 - ステータス数: 5-6（Agent Loop の 7 段階から Auto-Verification を CI に統合）
 - Agent Loop: フル適用。各ポッドが独立して Agent Loop を回す
 - トリアージ: 週 1 回のクロスポッド同期。ポッド内は日次
-- ツール推奨: **GitHub Projects**（コードとの密結合、PR 自動リンク）
+- ツール: **GitHub Projects V2**
 
 **チケット管理のポイント**:
 - Epic でポッド間の依存関係を管理
 - ラベル: type + priority + component（ポッド名）
 - スプリント: 1-2 週間サイクル
 - カスタムフィールド: AI-Confidence、Turns-Used を追加
+
+**非エンジニアの参加**:
+- UX デザイナー → ARE-UX: UI/UX の Expected Behavior + Constraints を書く、AI 生成 UI をレビュー
+- ビジネスアナリスト → ARE-Biz: ビジネスルールの Context + Verification を書く、ロジック検証
+- 非エンジニアは ARE の専門バリエーションとして Agent Loop に参加する
 
 ### 3. エンタープライズ・プラットフォーム（大規模 100 名超）
 
@@ -59,7 +92,7 @@ AI CCoE（Cloud Center of Excellence）がガバナンスを統括する。
 - ステータス数: 7（Agent Loop フル適用）
 - Agent Loop: フル適用 + クラスター間調整レイヤー
 - トリアージ: 週 2 回 + 自動化ルールで検出
-- ツール推奨: **Jira + Linear ハイブリッド**（Jira で全社ガバナンス、Linear でポッド内開発）
+- ツール: **Jira**（全社ガバナンス、承認ワークフロー、監査ログ）
 
 **チケット管理のポイント**:
 - 階層: Epic → Story/Task → Sub-task の 3 階層
@@ -89,8 +122,8 @@ AI Agent が意図しない方向に進む「Agent Drift」を防止する仕組
 | **AI Agent 成熟度** | 実験〜初期導入 | 本格運用 | 全社標準 |
 | **ガバナンス要件** | なし | チーム内ルール | 全社ポリシー必須 |
 | **推奨ステータス数** | 3-4 | 5-6 | 7 |
-| **推奨ツール** | Linear | GitHub Projects | Jira + Linear |
+| **ツール** | GitHub Projects V2 | GitHub Projects V2 | Jira |
 
-**移行のサイン**:
+**トポロジー移行のサイン**:
 - ポッド → スクワッド: ポッド間の依存関係が頻発（月 5 件超）
 - スクワッド → エンタープライズ: セキュリティ・コンプライアンス要件の増大

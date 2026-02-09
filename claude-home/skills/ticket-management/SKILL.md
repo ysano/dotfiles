@@ -5,11 +5,12 @@ description: >
   Use when creating Atomic Specs, designing Agent Loops, running AI Janitor checks,
   splitting tasks for AI agents, reviewing ticket quality, defining AI-Native DoD,
   choosing ticket types, or designing hybrid team workflows.
-  チケット操作エージェント (linear-ticket, github-project-ticket, ticket-sync) が参照。
+  チケット操作エージェント (github-project-ticket, ticket-sync) が参照。
 ---
 
-プラットフォーム（Linear, GitHub, Jira 等）に依存しない AI-DDL チケット管理理論。
-個別プラットフォームの操作方法は各プラットフォーム固有の Skill を参照。
+プラットフォームに依存しない AI-DDL チケット管理理論。
+デフォルトは GitHub Projects V2、大規模（100 名超）は Jira（選択基準は `references/organization-topology.md`）。
+個別プラットフォームの操作方法は各プラットフォーム固有の Skill（github-projects-v2, jira）を参照。
 
 ## AI-DDL とは
 

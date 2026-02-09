@@ -58,20 +58,9 @@ Agent Loop: AI Agent × 人間のハイブリッドチームにおける循環�
 ## プラットフォーム別マッピング
 
 Agent Loop の 7 段階を各プラットフォームのステータスにマッピングする。
+プラットフォーム選択の基準は `organization-topology.md` を参照。
 
-### Linear
-
-| Agent Loop | Linear Status | WorkflowState 種別 |
-|---|---|---|
-| Triage | Triage | `triage` |
-| Spec Definition | Backlog | `backlog` |
-| AI Planning | Todo | `unstarted` |
-| AI Implementation | In Progress | `started` |
-| Auto-Verification | In Progress | `started`（ラベルで区別） |
-| Human Review | In Review | `started` |
-| Done | Done | `completed` |
-
-### GitHub Projects
+### GitHub Projects V2（デフォルト）
 
 | Agent Loop | GitHub Status | 補足 |
 |---|---|---|
@@ -83,7 +72,16 @@ Agent Loop の 7 段階を各プラットフォームのステータスにマッ
 | Human Review | Review | カスタムステータス |
 | Done | Done | デフォルトカラム |
 
-### Jira
+`gh` CLI でのステータス操作:
+```bash
+# ステータス変更
+gh project item-edit --project-id <ID> --id <ITEM_ID> --field-id <STATUS_FIELD_ID> --single-select-option-id <OPTION_ID>
+
+# Issue 作成と同時にプロジェクトに追加
+gh issue create --title "..." --body "..." --project <PROJECT_NUMBER>
+```
+
+### Jira（大規模向け）
 
 | Agent Loop | Jira Status | カテゴリ |
 |---|---|---|
@@ -95,15 +93,15 @@ Agent Loop の 7 段階を各プラットフォームのステータスにマッ
 | Human Review | Code Review | In Progress |
 | Done | Done | Done |
 
-プラットフォーム固有の設定方法は各プラットフォーム Skill（linear, github-projects-v2, jira）を参照。
+プラットフォーム固有の設定方法は各プラットフォーム Skill（github-projects-v2, jira）を参照。
 
 ## 小規模チーム向け簡略化
 
-7 段階すべてが必要ない場合の簡略マッピング:
+7 段階すべてが必要ない場合の簡略マッピング（ケンタウロス・ポッド向け）:
 
-| 簡略ステータス | 対応する Agent Loop 段階 |
-|---|---|
-| Todo | Triage + Spec Definition |
-| In Progress | AI Planning + AI Implementation + Auto-Verification |
-| Review | Human Review |
-| Done | Done |
+| 簡略ステータス | 対応する Agent Loop 段階 | GitHub Projects V2 |
+|---|---|---|
+| Todo | Triage + Spec Definition | デフォルトカラム |
+| In Progress | AI Planning + AI Implementation + Auto-Verification | デフォルトカラム |
+| Review | Human Review | カスタムステータス |
+| Done | Done | デフォルトカラム |
