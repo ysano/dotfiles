@@ -4,9 +4,8 @@ tools:
   - write
   - bash
 arguments: $FILENAME
+description: "Export with custom name"
 ---
-
-# Semantic Tree Export
 
 Export the active semantic tree to a file for backup, sharing, or transfer to another system.
 
@@ -139,7 +138,6 @@ Transfer $FILENAME and use tree-import
 ## Export Options
 
 ```bash
-# Export with custom name
 /semantic:tree-export "my_project_backup.txt"
 
 # Export as JSON

@@ -1,6 +1,6 @@
-# Migration Assistant
-
-Assist with system migration planning
+---
+description: "Assist with system migration planning"
+---
 
 ## Instructions
 
@@ -90,7 +90,6 @@ migration-assistant [action] [options]
 
 ## Examples
 ```bash
-# Plan GitHub to Linear migration
 migration-assistant plan --source github --target linear
 
 # Analyze migration scope
@@ -267,15 +266,6 @@ mappings:
 - Partial failure recovery
 - Manual intervention points
 - Comprehensive error reports
-
-## Best Practices
-- Always run analysis first
-- Use dry-run for testing
-- Migrate in phases for large datasets
-- Maintain communication with team
-- Keep source data until verified
-- Document custom mappings
-- Test rollback procedures
 
 ## Compliance & Audit
 - Full audit trail

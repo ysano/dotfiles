@@ -1,5 +1,6 @@
-# Todo Implementation Program (No Worktrees)
-Structured workflow to transform vague todos into implemented features. Works on current branch with single commit at completion.
+---
+description: "Structured workflow to transform vague todos into implemented features. Works on current branch with single commit at completion."
+---
 
 ## Workflow
 

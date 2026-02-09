@@ -1,6 +1,6 @@
-# Task Report Command
-
-Generate comprehensive reports on task execution, progress, and metrics.
+---
+description: "Generate comprehensive reports on task execution, progress, and metrics."
+---
 
 ## Usage
 
@@ -263,13 +263,6 @@ Deep dive into what's blocking progress.
 /task-report api --generate-endpoint
 ```
 Creates API endpoint for external access.
-
-## Best Practices
-
-1. **Daily Reviews**: Run standup report each morning
-2. **Weekly Summaries**: Generate performance reports on Fridays
-3. **Sprint Planning**: Use velocity trends for estimation
-4. **Stakeholder Updates**: Schedule automated executive summaries
 
 ## Report Components
 

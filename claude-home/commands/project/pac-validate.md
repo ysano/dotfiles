@@ -1,6 +1,6 @@
-# Validate PAC Structure
-
-Validate Product as Code project structure and files for specification compliance
+---
+description: "Validate Product as Code project structure and files for specification compliance"
+---
 
 ## Instructions
 

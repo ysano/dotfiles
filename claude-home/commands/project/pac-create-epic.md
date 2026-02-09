@@ -1,6 +1,6 @@
-# Create PAC Epic
-
-Create a new epic following the Product as Code specification with guided workflow
+---
+description: "Create a new epic following the Product as Code specification with guided workflow"
+---
 
 ## Instructions
 

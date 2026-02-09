@@ -1,6 +1,6 @@
-# Build Claude Code Skill
-
-Create comprehensive Claude Code Skills through elicitation-driven development
+---
+description: "Create comprehensive Claude Code Skills through elicitation-driven development"
+---
 
 ## Instructions
 
@@ -200,18 +200,7 @@ This command orchestrates four specialized agents to build production-ready Clau
 User Request
     ↓
 skill-elicitation-agent (Requirements)
-    ↓
-User Approval
-    ↓
-skill-generator-agent (Creation)
-    ↓
-skill-validator-agent (Testing)
-    ↓
-Fixes if needed (loop back to generator)
-    ↓
-skill-documenter-agent (Enhancement)
-    ↓
-Final Delivery
+// ... (13 lines truncated)
 ```
 
 ### Agent Communication
@@ -228,35 +217,6 @@ Final Delivery
 - Confirm location preference (personal/project)
 - Review validation results
 - Approve final deliverable
-
-## Best Practices
-
-1. **Always Start with Elicitation**
-   - Don't skip the question phase
-   - Understand deeply before building
-   - Get user approval on specification
-
-2. **Use All Four Agents**
-   - Each has specialized expertise
-   - Complete flow ensures quality
-   - Don't shortcut the process
-
-3. **Iterate Based on Validation**
-   - Fix issues immediately
-   - Re-validate after changes
-   - Don't proceed with failures
-
-4. **Test Comprehensively**
-   - Manual trigger testing
-   - Script execution testing
-   - Integration testing
-   - Real-world scenario testing
-
-5. **Document Thoroughly**
-   - Clear instructions
-   - Comprehensive examples
-   - Troubleshooting guides
-   - Best practices
 
 ## Location Options
 
@@ -289,52 +249,8 @@ Provide the user with a comprehensive summary:
 🎉 Skill Created Successfully!
 
 📋 Skill: [Skill Name]
-📁 Location: [path]
-📝 Type: [simple/multi-file/tool-restricted/code-execution]
-
-📄 Files Created:
-✅ SKILL.md - Main skill instructions
-✅ reference.md - Technical reference (if created)
-✅ examples.md - Comprehensive examples (if created)
-✅ scripts/[name].py - Helper scripts (if created)
-✅ README.md - Installation guide (if created)
-
-🧪 Validation: ✅ PASSED (Score: X/10)
-
-📦 Dependencies:
-[List if any, or "None"]
-
-🎯 Usage:
-Trigger this skill by saying:
-- "[Example trigger 1]"
-- "[Example trigger 2]"
-
-Or explicitly: "Use [skill-name] to [task]"
-
-✨ Test with:
-[Specific test scenario]
-
-📚 Documentation:
-- See SKILL.md for instructions
-- See examples.md for comprehensive examples
-- See reference.md for technical details
-
-🚀 Next Steps:
-1. Test the skill with provided scenarios
-2. Refine based on usage
-3. Share with team (if project skill)
-4. Consider adding more examples over time
+// ... (36 lines truncated)
 ```
-
-## Troubleshooting
-
-**Agent Not Found**: Ensure `.claude/agents/skill-builder/` exists with all agent files
-
-**Permission Errors**: Check file permissions with `chmod +x scripts/*.py`
-
-**YAML Errors**: Validator will catch and report these
-
-**Agent Confusion**: Use explicit agent names: "Launch skill-elicitation-agent"
 
 ## Examples
 
@@ -368,12 +284,3 @@ Or explicitly: "Use [skill-name] to [task]"
 3. Validates tool restrictions
 4. Documents security patterns and analysis techniques
 
-## Remember
-
-- **Quality over speed** - Take time for thorough elicitation
-- **User involvement** - Get approval at key stages
-- **Comprehensive validation** - Test everything
-- **Excellent documentation** - Make skills easy to use
-- **Iterative improvement** - Skills can evolve over time
-
-This command ensures every skill is production-ready, well-documented, and follows Claude Code best practices!

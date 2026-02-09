@@ -1,5 +1,6 @@
-# Todo Implementation Program
-Structured workflow to transform vague todos into implemented features using git worktrees and VS Code handoff. Supports task isolation, resumption, and clean commit history.
+---
+description: "Structured workflow to transform vague todos into implemented features using git worktrees and VS Code handoff. Supports task isolation, resumption, and clean commit history."
+---
 
 ## Workflow
 

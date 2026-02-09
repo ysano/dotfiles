@@ -1,6 +1,6 @@
-# Generate Test Cases
-
-Generate comprehensive test cases automatically
+---
+description: "Generate comprehensive test cases automatically"
+---
 
 ## Instructions
 

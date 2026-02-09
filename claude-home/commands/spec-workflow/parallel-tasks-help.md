@@ -1,8 +1,7 @@
 ---
 allowed-tools: TodoWrite, mcp__spec-workflow__spec-list, mcp__spec-workflow__manage-tasks, mcp__spec-workflow__spec-status
+description: "Most common usage"
 ---
-
-# Parallel Tasks Help
 
 Display comprehensive help documentation for the `/parallel-tasks` command including usage examples, options, agent types, and best practices for deploying specialized agents to work on multiple tasks simultaneously.
 
@@ -64,7 +63,6 @@ maintaining coordination and task tracking.
 
 **Quick Start Examples**
 ```bash
-# Most common usage
 /parallel-tasks --system spec-workflow --spec-name my-feature --auto-assign
 
 # Preview mode

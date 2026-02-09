@@ -1,6 +1,6 @@
-# Dependency Audit Command
-
-Audit dependencies for security vulnerabilities
+---
+description: "Audit dependencies for security vulnerabilities"
+---
 
 ## Instructions
 

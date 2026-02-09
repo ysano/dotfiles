@@ -1,5 +1,6 @@
-# Task Orchestration System Guide
-
+---
+description: "Task Orchestration System Guide"
+---
 A simple, powerful system that helps you organize and track your development work. Think of it as your personal project assistant that breaks down big ideas into manageable tasks and keeps everything organized.
 
 ## What Does It Do?
@@ -207,23 +208,6 @@ Paste your requirements or describe what you want to build
 2. /orchestration/status              # See overall progress
 3. /orchestration/sync                # Make sure Git is in sync
 ```
-
-## Tips for Success
-
-### 🎯 Keep It Simple
-- Work on one task at a time
-- Move tasks as you progress
-- Commit when moving to testing
-
-### 📝 Stay Organized  
-- Tasks automatically organize by date
-- Everything is tracked for you
-- You can always resume later
-
-### 🔄 Regular Habits
-- Start with `/orchestration/resume`
-- Check status when confused
-- Commit completed work promptly
 
 ## How Files Are Organized
 

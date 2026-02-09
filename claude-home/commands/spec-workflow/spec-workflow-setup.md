@@ -1,8 +1,7 @@
 ---
 allowed-tools: Bash, Read, Write, Edit, TodoWrite, WebFetch
+description: "Install globally"
 ---
-
-# Spec-Workflow MCP Server Setup
 
 Complete installation and configuration guide for integrating the spec-workflow MCP (Model Context Protocol) server with Claude Code to enable advanced task management and parallel execution capabilities.
 
@@ -41,7 +40,6 @@ Before installation, ensure you have:
 ### Method 1: Direct Installation from NPM (Recommended)
 
 ```bash
-# Install globally
 npm install -g @pimzino/spec-workflow-mcp
 
 # Or install locally in your project
@@ -54,17 +52,7 @@ npm install --save-dev @pimzino/spec-workflow-mcp
 # Clone the repository
 git clone https://github.com/Pimzino/spec-workflow-mcp.git
 
-# Navigate to the directory
-cd spec-workflow-mcp
-
-# Install dependencies
-npm install
-
-# Build the server
-npm run build
-
-# Link globally for use
-npm link
+// ... (12 lines truncated)
 ```
 
 ### Method 3: Install from Claude Command Suite
@@ -91,12 +79,7 @@ Create a `.mcp.json` file in your project root. This is the simplest and most po
 {
   "mcpServers": {
     "spec-workflow": {
-      "command": "npx",
-      "args": ["-y", "@pimzino/spec-workflow-mcp@latest", ".", "--AutoStartDashboard"],
-      "env": {}
-    }
-  }
-}
+// ... (7 lines truncated)
 ```
 
 **Quick Setup:**
@@ -104,18 +87,7 @@ Create a `.mcp.json` file in your project root. This is the simplest and most po
 # Run this command in your project root
 ./scripts/add-spec-workflow-mcp.sh
 
-# Or manually create the file
-cat > .mcp.json << 'EOF'
-{
-  "mcpServers": {
-    "spec-workflow": {
-      "command": "npx",
-      "args": ["-y", "@pimzino/spec-workflow-mcp@latest", ".", "--AutoStartDashboard"],
-      "env": {}
-    }
-  }
-}
-EOF
+// ... (13 lines truncated)
 ```
 
 **Benefits of .mcp.json:**
@@ -134,18 +106,7 @@ Add the spec-workflow server to your global Claude configuration file:
 {
   "mcp": {
     "servers": {
-      "spec-workflow": {
-        "command": "npx",
-        "args": ["-y", "@pimzino/spec-workflow-mcp@latest"],
-        "env": {
-          "SPEC_WORKFLOW_PROJECT_PATH": "${PROJECT_PATH}",
-          "SPEC_WORKFLOW_AUTO_SYNC": "true",
-          "SPEC_WORKFLOW_LOG_LEVEL": "info"
-        }
-      }
-    }
-  }
-}
+// ... (13 lines truncated)
 ```
 
 ### Step 2: Project-Specific Configuration
@@ -156,42 +117,7 @@ Create a `.spec-workflow.json` file in your project root:
 {
   "version": "1.0.0",
   "project": {
-    "name": "My Project",
-    "description": "Project using spec-workflow for task management"
-  },
-  "specifications": {
-    "directory": "./specifications",
-    "pattern": "**/*.spec.md",
-    "autoDiscovery": true
-  },
-  "tasks": {
-    "directory": "./tasks",
-    "statuses": ["todo", "in_progress", "review", "qa", "completed", "blocked"],
-    "defaultStatus": "todo",
-    "trackDependencies": true
-  },
-  "agents": {
-    "maxParallel": 4,
-    "autoAssign": true,
-    "conflictResolution": "abort"
-  },
-  "sync": {
-    "github": {
-      "enabled": false,
-      "repository": "owner/repo",
-      "labelMapping": {
-        "todo": "task:todo",
-        "in_progress": "task:in-progress",
-        "completed": "task:done"
-      }
-    },
-    "linear": {
-      "enabled": false,
-      "teamId": "TEAM_ID",
-      "projectId": "PROJECT_ID"
-    }
-  }
-}
+// ... (37 lines truncated)
 ```
 
 ### Step 3: Environment Variables
@@ -252,14 +178,7 @@ Status: Ready
 # List all tasks in a specification
 /spec-workflow:list-tasks --spec-name user-authentication
 
-# Create a new task
-/spec-workflow:create-task --spec-name payment-integration --description "Implement Stripe webhook handling"
-
-# Update task status
-/spec-workflow:update-task --task-id TASK-001 --status in_progress
-
-# Assign task to agent
-/spec-workflow:assign-task --task-id TASK-001 --agent typescript-pro
+// ... (9 lines truncated)
 ```
 
 ### Parallel Task Execution
@@ -268,81 +187,7 @@ Status: Ready
 # Execute tasks in parallel with auto-assignment
 /spec-workflow:parallel-tasks --spec-name feature-xyz --auto-assign
 
-# Dry run to preview execution plan
-/spec-workflow:parallel-tasks --spec-name feature-xyz --dry-run
-
-# Limited parallelism with specific agents
-/spec-workflow:parallel-tasks --max-agents 2 --agents typescript-pro,test-automator
-```
-
-## Troubleshooting
-
-### Common Issues and Solutions
-
-### 1. MCP Server Not Connecting
-
-**Error:** "Cannot connect to spec-workflow MCP server"
-
-**Solutions:**
-- Verify server is installed: `npm list -g @pimzino/spec-workflow-mcp`
-- Check Claude settings.json syntax
-- Ensure environment variables are set
-- Restart Claude Code after configuration changes
-
-### 2. Specifications Not Found
-
-**Error:** "No specifications found in project"
-
-**Solutions:**
-- Check `.spec-workflow.json` configuration
-- Verify specification directory exists
-- Ensure file patterns match your spec files
-- Run `find . -name "*.spec.md"` to locate spec files
-
-### 3. Permission Denied
-
-**Error:** "Permission denied when accessing task files"
-
-**Solutions:**
-- Check file permissions: `ls -la tasks/`
-- Ensure Claude has read/write access
-- Run with appropriate user permissions
-
-### 4. Sync Issues
-
-**Error:** "Failed to sync with GitHub/Linear"
-
-**Solutions:**
-- Verify API tokens are configured
-- Check network connectivity
-- Validate repository/project IDs
-- Review sync configuration in `.spec-workflow.json`
-
-### Debug Mode
-
-Enable debug logging for troubleshooting:
-
-```bash
-# Set debug environment variable
-export SPEC_WORKFLOW_LOG_LEVEL="debug"
-
-# Or in Claude settings.json
-"env": {
-  "SPEC_WORKFLOW_LOG_LEVEL": "debug",
-  "SPEC_WORKFLOW_DEBUG": "true"
-}
-```
-
-### Log Files
-
-Check logs for detailed error information:
-
-```bash
-# Default log location
-tail -f ~/.claude-code/logs/spec-workflow.log
-
-# Custom log location (if configured)
-tail -f $SPEC_WORKFLOW_LOG_DIR/spec-workflow.log
+// ... (6 lines truncated)
 ```
 
 ## Advanced Configuration
@@ -355,17 +200,7 @@ Define project-specific task statuses:
 {
   "tasks": {
     "statuses": [
-      "backlog",
-      "ready",
-      "in_development",
-      "code_review",
-      "testing",
-      "staging",
-      "deployed",
-      "archived"
-    ]
-  }
-}
+// ... (12 lines truncated)
 ```
 
 ### Agent Configuration
@@ -376,21 +211,7 @@ Customize agent behavior:
 {
   "agents": {
     "profiles": {
-      "development": {
-        "agents": ["typescript-pro", "react-pro", "python-pro"],
-        "maxParallel": 3
-      },
-      "testing": {
-        "agents": ["test-automator", "qa-expert"],
-        "maxParallel": 2
-      },
-      "deployment": {
-        "agents": ["deployment-engineer"],
-        "maxParallel": 1
-      }
-    }
-  }
-}
+// ... (16 lines truncated)
 ```
 
 ### Webhook Integration
@@ -401,16 +222,7 @@ Configure webhooks for external notifications:
 {
   "webhooks": {
     "enabled": true,
-    "endpoints": {
-      "taskCreated": "https://api.example.com/webhooks/task-created",
-      "taskCompleted": "https://api.example.com/webhooks/task-completed",
-      "specificationUpdated": "https://api.example.com/webhooks/spec-updated"
-    },
-    "headers": {
-      "Authorization": "Bearer ${WEBHOOK_TOKEN}"
-    }
-  }
-}
+// ... (11 lines truncated)
 ```
 
 ## Integration with Claude Command Suite
@@ -443,16 +255,6 @@ The spec-workflow MCP server integrates seamlessly with Claude Command Suite com
 3. /spec-workflow:create-migration-plan
 4. /spec-workflow:parallel-tasks --system spec-workflow --focus migration
 ```
-
-## Best Practices
-
-1. **Specification Structure:** Keep specifications atomic and focused
-2. **Task Granularity:** Break down tasks to 2-4 hour units for optimal parallelization
-3. **Dependency Management:** Explicitly declare task dependencies
-4. **Status Updates:** Configure auto-sync for real-time status tracking
-5. **Conflict Prevention:** Use file-level locking for parallel execution
-6. **Regular Backups:** Enable automatic specification backups
-7. **Version Control:** Track .spec-workflow.json in git
 
 ## Support and Resources
 

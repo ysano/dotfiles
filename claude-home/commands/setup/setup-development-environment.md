@@ -1,6 +1,6 @@
-# Setup Development Environment
-
-Setup complete development environment
+---
+description: "Setup complete development environment"
+---
 
 ## Instructions
 

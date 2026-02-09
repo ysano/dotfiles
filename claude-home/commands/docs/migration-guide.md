@@ -1,6 +1,6 @@
-# Migration Guide Generator Command
-
-Create migration guides for updates
+---
+description: "Create migration guides for updates"
+---
 
 ## Instructions
 
@@ -227,9 +227,3 @@ Follow this systematic approach to create migration guides: **$ARGUMENTS**
 - Implement inter-service communication
 - Set up service discovery
 - Plan data consistency strategies
-
-Remember to:
-- Test thoroughly in non-production environments first
-- Communicate progress and issues regularly
-- Document lessons learned for future migrations
-- Keep the migration guide updated based on real experiences

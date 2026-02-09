@@ -1,6 +1,6 @@
-# Architecture Scenario Explorer
-
-Explore architectural decisions through systematic scenario analysis with trade-off evaluation and future-proofing assessment.
+---
+description: "Explore architectural decisions through systematic scenario analysis with trade-off evaluation and future-proofing assessment."
+---
 
 ## Instructions
 
@@ -22,20 +22,7 @@ You are tasked with systematically exploring architectural decisions through com
 Missing System Scope:
 "What specific system architecture needs exploration?
 - New System Design: Greenfield application or service architecture
-- System Migration: Moving from legacy to modern architecture
-- Scaling Architecture: Expanding existing system capabilities
-- Integration Architecture: Connecting multiple systems and services
-- Platform Architecture: Building foundational infrastructure
-
-Please specify the system boundaries, key components, and primary functions."
-
-Missing Scale Requirements:
-"What are the expected system scale and usage patterns?
-- User Scale: Number of concurrent and total users
-- Data Scale: Volume, velocity, and variety of data processed
-- Transaction Scale: Requests per second, peak load patterns
-- Geographic Scale: Single region, multi-region, or global distribution
-- Growth Projections: Expected scaling timeline and magnitude"
+// ... (15 lines truncated)
 ```
 
 ### 2. Architecture Option Generation
@@ -47,28 +34,7 @@ Missing Scale Requirements:
 Architectural Approach Framework:
 
 Monolithic Patterns:
-- Layered Architecture: Traditional n-tier with clear separation
-- Modular Monolith: Well-bounded modules within single deployment
-- Plugin Architecture: Core system with extensible plugin ecosystem
-- Service-Oriented Monolith: Internal service boundaries with single deployment
-
-Distributed Patterns:
-- Microservices: Independent services with business capability alignment
-- Service Mesh: Microservices with infrastructure-level communication
-- Event-Driven: Asynchronous communication with event sourcing
-- CQRS/Event Sourcing: Command-query separation with event storage
-
-Hybrid Patterns:
-- Modular Microservices: Services grouped by business domain
-- Micro-Frontend: Frontend decomposition matching backend services
-- Strangler Fig: Gradual migration from monolith to distributed
-- API Gateway: Centralized entry point with backend service routing
-
-Cloud-Native Patterns:
-- Serverless: Function-based with cloud provider infrastructure
-- Container-Native: Kubernetes-first with cloud-native services
-- Multi-Cloud: Cloud-agnostic with portable infrastructure
-- Edge-First: Distributed computing with edge location optimization
+// ... (23 lines truncated)
 ```
 
 #### Architecture Variation Specification
@@ -76,22 +42,7 @@ Cloud-Native Patterns:
 For each architectural option:
 
 Structural Characteristics:
-- Component Organization: [how system parts are structured and related]
-- Communication Patterns: [synchronous vs asynchronous, protocols, messaging]
-- Data Management: [database strategy, consistency model, storage patterns]
-- Deployment Model: [packaging, distribution, scaling, and operational approach]
-
-Quality Attributes:
-- Scalability Profile: [horizontal vs vertical scaling, bottleneck analysis]
-- Reliability Characteristics: [failure modes, recovery, fault tolerance]
-- Performance Expectations: [latency, throughput, resource efficiency]
-- Security Model: [authentication, authorization, data protection, attack surface]
-
-Implementation Considerations:
-- Technology Stack: [languages, frameworks, databases, infrastructure]
-- Team Structure Fit: [Conway's Law implications, team capabilities]
-- Development Process: [build, test, deploy, monitor workflows]
-- Evolution Strategy: [how architecture can grow and change over time]
+// ... (17 lines truncated)
 ```
 
 ### 3. Scenario Framework Development
@@ -103,28 +54,7 @@ Implementation Considerations:
 Multi-Dimensional Scenario Framework:
 
 Load Scenarios:
-- Normal Operation: Typical daily usage patterns and traffic
-- Peak Load: Maximum expected concurrent usage and transaction volume
-- Stress Testing: Beyond normal capacity to identify breaking points
-- Spike Testing: Sudden traffic increases and burst handling
-
-Growth Scenarios:
-- Linear Growth: Steady user and data volume increases over time
-- Exponential Growth: Rapid scaling requirements and viral adoption
-- Geographic Expansion: Multi-region deployment and global scaling
-- Feature Expansion: New capabilities and service additions
-
-Failure Scenarios:
-- Component Failures: Individual service or database outages
-- Infrastructure Failures: Network, storage, or compute disruptions
-- Cascade Failures: Failure propagation and system-wide impacts
-- Disaster Recovery: Major outage recovery and business continuity
-
-Evolution Scenarios:
-- Technology Migration: Framework, language, or platform changes
-- Business Model Changes: New revenue streams or service offerings
-- Regulatory Changes: Compliance requirements and data protection
-- Competitive Response: Market pressures and feature requirements
+// ... (23 lines truncated)
 ```
 
 #### Scenario Impact Modeling
@@ -142,28 +72,7 @@ Evolution Scenarios:
 Architecture Quality Assessment:
 
 Performance Trade-offs:
-- Latency vs Throughput: Response time vs maximum concurrent processing
-- Memory vs CPU: Resource utilization optimization strategies
-- Consistency vs Availability: CAP theorem implications and choices
-- Caching vs Freshness: Data staleness vs response speed
-
-Scalability Trade-offs:
-- Horizontal vs Vertical: Infrastructure scaling approach and economics
-- Stateless vs Stateful: Session management and performance implications
-- Synchronous vs Asynchronous: Communication complexity vs performance
-- Coupling vs Autonomy: Service independence vs operational overhead
-
-Development Trade-offs:
-- Development Speed vs Runtime Performance: Optimization time investment
-- Type Safety vs Flexibility: Compile-time vs runtime error handling
-- Code Reuse vs Service Independence: Shared libraries vs duplication
-- Testing Complexity vs System Reliability: Test investment vs quality
-
-Operational Trade-offs:
-- Complexity vs Control: Managed services vs self-managed infrastructure
-- Monitoring vs Privacy: Observability vs data protection
-- Automation vs Flexibility: Standardization vs customization
-- Cost vs Performance: Infrastructure spending vs response times
+// ... (23 lines truncated)
 ```
 
 #### Decision Matrix Construction
@@ -181,22 +90,7 @@ Operational Trade-offs:
 Future-Proofing Analysis Framework:
 
 Technology Trend Integration:
-- AI/ML Integration: Machine learning capability embedding and scaling
-- Edge Computing: Distributed processing and low-latency requirements
-- Quantum Computing: Post-quantum cryptography and computational impacts
-- Blockchain/DLT: Distributed ledger integration and trust mechanisms
-
-Market Evolution Preparation:
-- Business Model Flexibility: Subscription, marketplace, platform pivots
-- Global Expansion: Multi-tenant, multi-region, multi-regulatory compliance
-- Customer Expectation Evolution: Real-time, personalized, omnichannel experiences
-- Competitive Landscape Changes: Feature parity and differentiation requirements
-
-Regulatory Future-Proofing:
-- Privacy Regulation: GDPR, CCPA evolution and global privacy requirements
-- Security Standards: Zero-trust, compliance framework evolution
-- Data Sovereignty: Geographic data residency and cross-border restrictions
-- Accessibility Requirements: Inclusive design and assistive technology support
+// ... (17 lines truncated)
 ```
 
 #### Adaptability Scoring
@@ -214,28 +108,7 @@ Regulatory Future-Proofing:
 Multi-Layer Architecture Simulation:
 
 Component-Level Simulation:
-- Individual service performance characteristics and resource usage
-- Database query performance and optimization opportunities
-- Cache hit ratios and invalidation strategies
-- Message queue throughput and latency patterns
-
-Integration-Level Simulation:
-- Service-to-service communication overhead and optimization
-- API gateway performance and routing efficiency
-- Load balancer distribution and health checking
-- Circuit breaker and retry mechanism effectiveness
-
-System-Level Simulation:
-- End-to-end request flow and user experience
-- Peak load distribution and resource allocation
-- Failure propagation and recovery patterns
-- Monitoring and alerting system effectiveness
-
-Infrastructure-Level Simulation:
-- Cloud resource utilization and auto-scaling behavior
-- Network bandwidth and latency optimization
-- Storage performance and data consistency patterns
-- Security policy enforcement and performance impact
+// ... (23 lines truncated)
 ```
 
 #### Cost Modeling Integration
@@ -253,22 +126,7 @@ Infrastructure-Level Simulation:
 Architecture Risk Assessment:
 
 Implementation Risks:
-- Technology Maturity: New vs proven technology adoption risks
-- Complexity Management: System comprehension and debugging challenges
-- Integration Challenges: Third-party service dependencies and compatibility
-- Performance Uncertainty: Untested scaling and optimization requirements
-
-Operational Risks:
-- Deployment Complexity: Release management and rollback capabilities
-- Monitoring Gaps: Observability and troubleshooting limitations
-- Scaling Challenges: Auto-scaling reliability and cost control
-- Disaster Recovery: Backup, recovery, and business continuity planning
-
-Strategic Risks:
-- Technology Lock-in: Vendor dependency and migration flexibility
-- Skill Dependencies: Team expertise requirements and knowledge gaps
-- Evolution Constraints: Architecture modification and extension limitations
-- Competitive Disadvantage: Time-to-market and feature development speed
+// ... (17 lines truncated)
 ```
 
 #### Risk Mitigation Strategy Development
@@ -286,43 +144,7 @@ Strategic Risks:
 ## Architecture Decision: [System Name] - [Decision Topic]
 
 ### Context and Problem Statement
-- Business Requirements: [key functional and non-functional requirements]
-- Current Constraints: [technical, resource, and timeline limitations]
-- Decision Drivers: [factors influencing architectural choice]
-
-### Architecture Options Considered
-
-#### Option 1: [Architecture Name]
-- Description: [architectural approach and key characteristics]
-- Pros: [advantages and benefits]
-- Cons: [disadvantages and risks]
-- Trade-offs: [specific quality attribute impacts]
-
-[Repeat for each option]
-
-### Decision Outcome
-- Selected Architecture: [chosen approach with rationale]
-- Decision Rationale: [why this option was selected]
-- Expected Benefits: [anticipated advantages and success metrics]
-- Accepted Trade-offs: [compromises and mitigation strategies]
-
-### Implementation Strategy
-- Phase 1 (Immediate): [initial implementation steps and validation]
-- Phase 2 (Short-term): [core system development and integration]
-- Phase 3 (Medium-term): [optimization and scaling implementation]
-- Phase 4 (Long-term): [evolution and enhancement roadmap]
-
-### Validation and Success Criteria
-- Performance Metrics: [specific KPIs and acceptable ranges]
-- Quality Gates: [architectural compliance and validation checkpoints]
-- Review Schedule: [when to reassess architectural decisions]
-- Adaptation Triggers: [conditions requiring architectural modification]
-
-### Risks and Mitigation
-- High-Priority Risks: [most significant concerns and responses]
-- Monitoring Strategy: [early warning systems and health checks]
-- Contingency Plans: [alternative approaches if problems arise]
-- Learning and Adaptation: [how to incorporate feedback and improve]
+// ... (38 lines truncated)
 ```
 
 ### 9. Continuous Architecture Evolution
@@ -344,17 +166,10 @@ Strategic Risks:
 ## Usage Examples
 
 ```bash
-# Microservices migration planning
 /dev:architecture-scenario-explorer Evaluate monolith to microservices migration for e-commerce platform with 1M+ users
 
 # New system architecture design
-/dev:architecture-scenario-explorer Design architecture for real-time analytics platform handling 100k events/second
-
-# Scaling architecture assessment
-/dev:architecture-scenario-explorer Analyze architecture options for scaling social media platform from 10k to 1M daily active users
-
-# Technology modernization planning
-/dev:architecture-scenario-explorer Compare serverless vs container-native architectures for data processing pipeline modernization
+// ... (8 lines truncated)
 ```
 
 ## Quality Indicators

@@ -1,6 +1,6 @@
-# Deep Analysis and Problem Solving Mode
-
-Deep analysis and problem solving mode
+---
+description: "Deep analysis and problem solving mode"
+---
 
 ## Instructions
 
@@ -122,7 +122,6 @@ Deep analysis and problem solving mode
 ## Usage Examples
 
 ```bash
-# Architectural decision
 /project:ultra-think Should we migrate to microservices or improve our monolith?
 
 # Complex problem solving

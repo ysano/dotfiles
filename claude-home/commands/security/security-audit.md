@@ -1,6 +1,6 @@
-# Security Audit Command
-
-Perform comprehensive security assessment
+---
+description: "Perform comprehensive security assessment"
+---
 
 ## Instructions
 

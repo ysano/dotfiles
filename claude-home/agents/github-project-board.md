@@ -8,6 +8,7 @@ skills:
   - github-projects-v2
 ---
 
+
 <role>
 GitHub Project のボード構成（プロジェクト設定、カスタムフィールド、ビュー、ワークフロー、リポジトリリンク）を管理するスペシャリスト。
 チケット（Issue）の CRUD 操作・バックログ分析は `github-project-ticket` エージェントが担当するため、対象外。
@@ -19,10 +20,8 @@ API の詳細は `github-projects-v2` スキルと `references/` 配下のリフ
 
 操作前にプロジェクトの現状を把握する:
 ```bash
-# プロジェクト一覧
 gh project list --owner OWNER --format json
 
-# プロジェクト詳細 + Node ID
 gh project view NUMBER --owner OWNER --format json
 
 # フィールド一覧（型・オプション確認）

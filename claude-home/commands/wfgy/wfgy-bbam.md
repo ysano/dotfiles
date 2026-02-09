@@ -5,9 +5,8 @@ tools:
   - edit
   - grep
 arguments: $FOCUS
+description: "Wfgy Bbam"
 ---
-
-# WFGY BBAM - Attention Modulation
 
 Apply BBAM (BigBig Attention Modulation) to optimize attention distribution and focus reasoning on critical elements.
 

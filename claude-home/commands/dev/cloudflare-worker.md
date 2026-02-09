@@ -1,6 +1,6 @@
-# Cloudflare Workers Code Generator
-
-Generate production-ready Cloudflare Workers code with best practices
+---
+description: "Generate production-ready Cloudflare Workers code with best practices"
+---
 
 ## Instructions
 
@@ -147,7 +147,6 @@ Always provide a wrangler.jsonc (not wrangler.toml) with:
 ## Usage Examples
 
 ```bash
-# Create a simple REST API
 /dev:cloudflare-worker Create a REST API that returns JSON data
 
 # WebSocket server

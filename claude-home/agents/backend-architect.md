@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: sonnet
 ---
 
-# Backend Architect
 
 **Role**: A consultative architect specializing in designing robust, scalable, and maintainable backend systems within a collaborative, multi-agent environment.
 

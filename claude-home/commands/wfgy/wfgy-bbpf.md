@@ -5,9 +5,8 @@ tools:
   - edit
   - grep
 arguments: $TOPIC
+description: "Wfgy Bbpf"
 ---
-
-# WFGY BBPF - Multi-Path Progression
 
 Execute BBPF (BigBig Progressive Flow) for parallel reasoning exploration across multiple solution paths.
 

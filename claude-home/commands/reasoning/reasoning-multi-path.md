@@ -5,9 +5,8 @@ tools:
   - grep
   - bash
 arguments: $PROBLEM
+description: "Explore more paths"
 ---
-
-# Multi-Path Reasoning
 
 Execute parallel reasoning exploration across multiple solution paths to find optimal approaches.
 
@@ -180,7 +179,6 @@ Path Statistics:
 ## Advanced Usage
 
 ```bash
-# Explore more paths
 /reasoning:multi-path "problem" --paths 10
 
 # Focus on creative solutions

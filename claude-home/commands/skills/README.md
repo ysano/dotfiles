@@ -162,35 +162,6 @@ Creates skills through a structured 4-phase process:
 - Bundled capabilities
 - Wide distribution
 
-## Best Practices
-
-### 1. Start with Elicitation
-- Don't skip the questions phase
-- Understand requirements deeply
-- Get user approval on specification
-
-### 2. Follow the Complete Flow
-- Use all four agents sequentially
-- Don't shortcut the process
-- Each agent adds critical value
-
-### 3. Validate Thoroughly
-- Fix issues immediately
-- Re-validate after changes
-- Don't proceed with failures
-
-### 4. Document Comprehensively
-- Clear instructions
-- Multiple examples
-- Troubleshooting guides
-- Best practices
-
-### 5. Test Realistically
-- Use real-world scenarios
-- Test edge cases
-- Verify script execution
-- Check skill triggering
-
 ## Workflow Examples
 
 ### Example 1: Creating a Simple Skill

@@ -1,6 +1,6 @@
-# Setup Monorepo
-
-Configure monorepo project structure
+---
+description: "Configure monorepo project structure"
+---
 
 ## Instructions
 

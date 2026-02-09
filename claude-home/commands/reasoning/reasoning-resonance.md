@@ -4,9 +4,8 @@ tools:
   - write
   - grep
   - bash
+description: "Custom window size"
 ---
-
-# Semantic Resonance Measurement
 
 Measure semantic resonance (E_resonance) to assess reasoning stability and coherence over time.
 
@@ -196,7 +195,6 @@ E: 0.7 → 0.8 → 0.85 → 0.9 → BBCR
 ## Advanced Analysis
 
 ```bash
-# Custom window size
 /reasoning:resonance --window 15
 
 # Frequency analysis

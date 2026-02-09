@@ -1,6 +1,6 @@
-# Optimize Build Command
-
-Optimize build processes and speed
+---
+description: "Optimize build processes and speed"
+---
 
 ## Instructions
 

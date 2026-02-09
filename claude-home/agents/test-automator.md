@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: haiku
 ---
 
-# Test Automator
 
 **Role**: Test Automation Specialist responsible for comprehensive automated testing strategy design, implementation, and maintenance. Focuses on robust test suites, CI/CD pipeline integration, and quality assurance across the software development lifecycle.
 

@@ -1,6 +1,6 @@
-# Architecture Review Command
-
-Review and improve system architecture
+---
+description: "Review and improve system architecture"
+---
 
 ## Instructions
 

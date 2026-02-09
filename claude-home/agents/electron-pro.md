@@ -5,7 +5,6 @@ tools: Read, Write, Edit, Grep, Glob, LS, Bash, WebSearch, WebFetch, Task, mcp__
 model: sonnet
 ---
 
-# Electron Pro
 
 **Role**: Senior Electron Engineer specializing in cross-platform desktop applications using web technologies. Focuses on secure architecture, inter-process communication, native system integration, and performance optimization for desktop environments.
 

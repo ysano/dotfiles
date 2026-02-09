@@ -1,6 +1,6 @@
-# Analyze and Explain Code Functionality
-
-Analyze and explain code functionality
+---
+description: "Analyze and explain code functionality"
+---
 
 ## 実行手順
 
@@ -185,10 +185,3 @@ Performance Notes: Uses indexes on filtered columns, implements connection pooli
 - Describe lifetime annotations
 - Clarify pattern matching and Option/Result types
 - Explain trait implementations
-
-Remember to:
-- Use clear, non-technical language when possible
-- Provide examples and analogies for complex concepts
-- Structure explanations logically from high-level to detailed
-- Include visual diagrams or flowcharts when helpful
-- Tailor the explanation level to the intended audience

@@ -1,6 +1,6 @@
-# Standup Report
-
-Generate daily standup reports
+---
+description: "Generate daily standup reports"
+---
 
 ## 実行手順
 
@@ -14,7 +14,6 @@ Generate daily standup reports
 
 #### Git Activity Analysis
 ```bash
-# Collect commits from last 24 hours
 git log --since="24 hours ago" --all --format="%h|%an|%ad|%s" --date=short
 
 # Check branch activity

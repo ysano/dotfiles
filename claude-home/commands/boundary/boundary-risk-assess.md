@@ -4,9 +4,8 @@ tools:
   - write
   - grep
 arguments: $CONTEXT
+description: "Boundary Risk Assess"
 ---
-
-# Boundary Risk Assessment
 
 Evaluate the current risk level and provide detailed analysis of potential hallucination or reasoning failure.
 

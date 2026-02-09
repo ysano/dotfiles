@@ -5,8 +5,6 @@ description: Create a comprehensive handoff document when your context window is
 author: Quintin Henry (https://github.com/qdhenry/)
 ---
 
-# Context Window Handoff
-
 Create a comprehensive handoff document when your context window is getting low. This document captures everything needed to continue work seamlessly in a new session.
 
 ## Arguments
@@ -55,8 +53,6 @@ Create a structured document with all sections below.
 ## Output Format
 
 ````markdown
-# Handoff: [Brief Title of Work]
-
 **Created:** [timestamp]
 **Branch:** [current branch]
 **Session Duration:** [approximate time if determinable]
@@ -190,7 +186,7 @@ Create a structured document with all sections below.
 ### Commands to Run
 
 ```bash
-# Useful commands for continuing this work
+## Useful commands for continuing this work
 [command 1]
 [command 2]
 ```

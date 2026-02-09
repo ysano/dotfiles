@@ -1,6 +1,6 @@
-# Create Feature Command
-
-Scaffold new feature with boilerplate code
+---
+description: "Scaffold new feature with boilerplate code"
+---
 
 ## Instructions
 
@@ -112,5 +112,3 @@ Follow this systematic approach to create a new feature: **$ARGUMENTS**
     - Set up monitoring and alerting
     - Prepare rollback procedures
     - Schedule deployment and communication
-
-Remember to maintain code quality, follow project conventions, and prioritize user experience throughout the development process.

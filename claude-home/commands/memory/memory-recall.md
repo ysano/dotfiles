@@ -4,9 +4,8 @@ tools:
   - grep
   - bash
 arguments: $QUERY
+description: "Memory Recall"
 ---
-
-# Memory Recall
 
 Search and retrieve specific memories from the semantic tree based on topics, patterns, or timeframes.
 

@@ -1,6 +1,6 @@
-# GitHub ワークフロー自動化コマンド
-
-GitHub Actions、Webhooks、Project automationを統合したネイティブ自動化システムで、シンプルなワークフローを実現します。
+---
+description: "GitHub Actions、Webhooks、Project automationを統合したネイティブ自動化システムで、シンプルなワークフローを実現します。"
+---
 
 ## 実行手順
 

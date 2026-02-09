@@ -5,9 +5,8 @@ tools:
   - edit
   - grep
 arguments: $NODE_IDS
+description: "Force merge despite conflicts"
 ---
-
-# Memory Node Merging
 
 Manually merge specific semantic nodes to consolidate related concepts and reduce redundancy.
 
@@ -216,7 +215,6 @@ Same concept over time
 ## Advanced Options
 
 ```bash
-# Force merge despite conflicts
 /memory:merge "node1,node2" --force
 
 # Preview merge without executing

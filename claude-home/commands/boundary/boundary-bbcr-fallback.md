@@ -4,9 +4,8 @@ tools:
   - write
   - edit
   - bash
+description: "Boundary Bbcr Fallback"
 ---
-
-# Boundary BBCR Fallback
 
 Execute automatic BBCR (Collapse-Rebirth Correction) when knowledge boundaries are exceeded or reasoning fails.
 

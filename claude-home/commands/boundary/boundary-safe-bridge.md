@@ -5,9 +5,8 @@ tools:
   - grep
   - bash
 arguments: $TARGET
+description: "Find multiple bridge options"
 ---
-
-# Boundary Safe Bridge
 
 Find and construct semantic bridges to safely navigate from current position to target concept without crossing dangerous boundaries.
 
@@ -185,7 +184,6 @@ Current ──> Bridge ──> Current ──> Target
 ## Advanced Options
 
 ```bash
-# Find multiple bridge options
 /boundary:safe-bridge "target" --paths 5
 
 # Prefer shortest path

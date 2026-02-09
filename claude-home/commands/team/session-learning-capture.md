@@ -1,6 +1,6 @@
-# Session Learning Capture
-
-Capture and document session learnings
+---
+description: "Capture and document session learnings"
+---
 
 ## Instructions
 

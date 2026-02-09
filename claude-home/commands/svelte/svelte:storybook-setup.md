@@ -1,6 +1,6 @@
-# /svelte:storybook-setup
-
-Initialize and configure Storybook for SvelteKit projects with optimal settings and structure.
+---
+description: "Initialize and configure Storybook for SvelteKit projects with optimal settings and structure."
+---
 
 ## Instructions
 

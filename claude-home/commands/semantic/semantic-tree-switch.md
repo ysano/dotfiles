@@ -5,9 +5,8 @@ tools:
   - edit
   - glob
 arguments: $TREE_NAME
+description: "List all trees"
 ---
-
-# Semantic Tree Switch
 
 Switch between different semantic trees to manage multiple contexts, projects, or reasoning threads.
 
@@ -139,7 +138,6 @@ Delete: /semantic:tree-delete "Tree Name"
 Common switching patterns:
 
 ```bash
-# List all trees
 /semantic:tree-switch
 
 # Switch to specific tree

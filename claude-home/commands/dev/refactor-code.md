@@ -1,6 +1,6 @@
-# Intelligently Refactor and Improve Code Quality
-
-Intelligently refactor and improve code quality
+---
+description: "Intelligently refactor and improve code quality"
+---
 
 ## 実行手順
 
@@ -112,5 +112,3 @@ Follow this systematic approach to refactor code: **$ARGUMENTS**
     - Consider feature flags for gradual rollout
     - Prepare rollback procedures
     - Set up monitoring for the refactored components
-
-Remember: Refactoring should preserve external behavior while improving internal structure. Always prioritize safety over speed, and maintain comprehensive test coverage throughout the process.

@@ -1,6 +1,6 @@
-# Security Hardening
-
-Harden application security configuration
+---
+description: "Harden application security configuration"
+---
 
 ## Instructions
 

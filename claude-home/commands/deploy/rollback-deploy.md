@@ -1,6 +1,6 @@
-# Rollback Deploy Command
-
-Rollback deployment to previous version
+---
+description: "Rollback deployment to previous version"
+---
 
 ## Instructions
 

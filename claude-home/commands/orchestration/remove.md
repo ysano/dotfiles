@@ -1,6 +1,6 @@
-# Orchestration Remove Command
-
-Safely remove a task from the orchestration system, updating all references and dependencies.
+---
+description: "Safely remove a task from the orchestration system, updating all references and dependencies."
+---
 
 ## Usage
 
@@ -79,7 +79,6 @@ Updating dependent tasks:
 
 ### 2. Update Tracking Files
 ```yaml
-# TASK-STATUS-TRACKER.yaml updates:
 status_history:
   TASK-003: [REMOVED - archived to .removed/]
   
@@ -259,14 +258,6 @@ removals:
     commits_preserved: ["abc123", "def456"]
     archived_to: ".removed/2024-03-15/TASK-003/"
 ```
-
-## Best Practices
-
-1. **Always Check Dependencies**: Review impact before removing
-2. **Document Reason**: Provide clear removal reason
-3. **Archive Important Work**: Use --archive for completed work
-4. **Update Team**: Notify about critical removals
-5. **Review Commits**: Check if code needs reverting
 
 ## Integration
 

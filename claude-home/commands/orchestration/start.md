@@ -1,6 +1,6 @@
-# Orchestrate Tasks Command
-
-Initiates the task orchestration workflow using the three-agent system (task-orchestrator, task-decomposer, and dependency-analyzer) to create a comprehensive execution plan.
+---
+description: "Initiates the task orchestration workflow using the three-agent system (task-orchestrator, task-decomposer, and dependency-analyzer) to create a comprehensive execution plan."
+---
 
 ## Usage
 
@@ -152,13 +152,6 @@ Works seamlessly with:
 - `/task-move` - Update task status
 - `/task-report` - Generate reports
 - `/task-assign` - Allocate to agents
-
-## Best Practices
-
-1. **Provide Context**: Include relevant background information
-2. **Be Specific**: Clear task descriptions enable better planning
-3. **Mention Constraints**: Include deadlines, resources, or blockers
-4. **Review Output**: Confirm the extracted tasks match your intent
 
 ## Notes
 

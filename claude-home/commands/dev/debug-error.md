@@ -1,6 +1,6 @@
-# Systematically Debug and Fix Errors
-
-Systematically debug and fix errors
+---
+description: "Systematically debug and fix errors"
+---
 
 ## 実行手順
 
@@ -117,5 +117,3 @@ Follow this comprehensive debugging methodology to resolve: **$ARGUMENTS**
     - Review development and testing processes
     - Consider improvements to prevent similar issues
     - Update coding standards or guidelines if needed
-
-Remember to maintain detailed notes throughout the debugging process and consider the wider implications of both the error and the fix.

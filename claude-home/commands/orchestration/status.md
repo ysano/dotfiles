@@ -1,6 +1,6 @@
-# Task Status Command
-
-Check the current status of tasks in the orchestration system with various filtering and reporting options.
+---
+description: "Check the current status of tasks in the orchestration system with various filtering and reporting options."
+---
 
 ## Usage
 
@@ -203,13 +203,6 @@ Updates status in real-time (refreshes every 30 seconds).
 - Tasks per agent
 - Average completion time
 - Current workload
-
-## Best Practices
-
-1. **Daily Check**: Run `/task-status --today` each morning
-2. **Blocker Review**: Check `/task-status --status on_hold` regularly
-3. **Progress Tracking**: Use `/task-status --velocity` for trends
-4. **Resource Planning**: Monitor `/task-status --by-agent`
 
 ## Notes
 

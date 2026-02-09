@@ -1,6 +1,6 @@
-# End-to-End Testing Setup Command
-
-Configure end-to-end testing suite
+---
+description: "Configure end-to-end testing suite"
+---
 
 ## Instructions
 
@@ -222,5 +222,3 @@ test('user can complete purchase flow', async ({ page }) => {
   await expect(page.locator('#order-confirmation')).toBeVisible();
 });
 ```
-
-Remember to start with critical user journeys and gradually expand coverage. Focus on stable, maintainable tests that provide real value.

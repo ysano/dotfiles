@@ -1,6 +1,6 @@
-# Clean Branches Command
-
-Clean up merged and stale git branches
+---
+description: "Clean up merged and stale git branches"
+---
 
 ## Instructions
 
@@ -222,7 +222,6 @@ Follow this systematic approach to clean up git branches: **$ARGUMENTS**
 **Advanced Cleanup Options:**
 
 ```bash
-# Clean up all merged branches except protected ones
 git branch --merged main | grep -E "^  (feature|hotfix|bugfix)/" | xargs -n 1 git branch -d
 
 # Interactive cleanup with confirmation
@@ -234,10 +233,3 @@ git branch -r --merged main | grep origin | grep -v "main\|master\|develop\|HEAD
 # Clean up branches older than specific date
 git for-each-ref --format='%(refname:short) %(committerdate:short)' refs/heads | awk '$2 < "2023-01-01"' | cut -d' ' -f1 | xargs -n 1 git branch -D
 ```
-
-Remember to:
-- Always backup important branches before cleanup
-- Coordinate with team members before deleting shared branches
-- Test cleanup scripts in a safe environment first
-- Document all cleanup procedures and policies
-- Set up regular cleanup schedules to prevent accumulation

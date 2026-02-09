@@ -4,9 +4,8 @@ tools:
   - write
   - grep
 arguments: $CONCEPT1 $CONCEPT2
+description: "Compare multiple concepts"
 ---
-
-# Semantic Tension Calculator
 
 Calculate the semantic tension (ΔS) between concepts to measure conceptual distance and reasoning jumps.
 
@@ -151,7 +150,6 @@ Concept A (0.4) → B (0.4) → C (0.4) → D (0.4)
 ## Advanced Analysis
 
 ```bash
-# Compare multiple concepts
 /reasoning:tension-calc "A" "B; C; D"
 
 # Compare with context

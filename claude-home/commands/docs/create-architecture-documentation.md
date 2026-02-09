@@ -1,6 +1,6 @@
-# Create Architecture Documentation
-
-Generate comprehensive architecture documentation
+---
+description: "Generate comprehensive architecture documentation"
+---
 
 ## Instructions
 

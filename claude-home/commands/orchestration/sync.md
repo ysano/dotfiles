@@ -1,6 +1,6 @@
-# Orchestration Sync Command
-
-Synchronize task status with git commits, ensuring consistency between version control and task tracking.
+---
+description: "Synchronize task status with git commits, ensuring consistency between version control and task tracking."
+---
 
 ## Usage
 
@@ -262,14 +262,6 @@ git_hooks:
   post-commit: /orchestration/sync --last-commit
   post-merge: /orchestration/sync --branch HEAD
 ```
-
-## Best Practices
-
-1. **Regular Syncs**: Run daily or after major commits
-2. **Review Before Force**: Check dry-run output first
-3. **Maintain References**: Include task IDs in commits
-4. **Handle Conflicts**: Don't ignore sync warnings
-5. **Document Decisions**: Note why status differs from git
 
 ## Configuration
 

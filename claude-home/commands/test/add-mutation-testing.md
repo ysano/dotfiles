@@ -1,6 +1,6 @@
-# Add Mutation Testing
-
-Setup mutation testing for code quality
+---
+description: "Setup mutation testing for code quality"
+---
 
 ## Instructions
 

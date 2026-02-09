@@ -1,6 +1,6 @@
-# GitHub Issue自動化コマンド
-
-GitHub Issueの作成、トリアージ、自動化を統合したネイティブGitHubワークフローシステムです。
+---
+description: "GitHub Issueの作成、トリアージ、自動化を統合したネイティブGitHubワークフローシステムです。"
+---
 
 ## 実行手順
 

@@ -1,6 +1,6 @@
-# Orchestration Commit Command
-
-Create git commits aligned with task completion, maintaining clean version control synchronized with task progress.
+---
+description: "Create git commits aligned with task completion, maintaining clean version control synchronized with task progress."
+---
 
 ## Usage
 
@@ -276,14 +276,6 @@ fix(<scope>): <issue-description>
 Fixes: #<issue-number>
 Task: <task-id>
 ```
-
-## Best Practices
-
-1. **Commit at Natural Breakpoints**: When moving tasks to QA
-2. **Keep Commits Atomic**: One logical change per commit
-3. **Use Batch Wisely**: Only group truly related tasks
-4. **Validate First**: Always run validation before committing
-5. **Update Status**: Ensure task status is current
 
 ## Configuration
 

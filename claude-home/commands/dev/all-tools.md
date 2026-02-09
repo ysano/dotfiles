@@ -1,6 +1,6 @@
-# Display All Available Development Tools
-
-Display all available development tools
+---
+description: "Display all available development tools"
+---
 
 *Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 

@@ -13,6 +13,7 @@ models:
     model: gpt-5.2
 ---
 
+
 <role>
 Coding Agent プロンプト（commands, agents, skills, context files）をプロンプトエンジニアリングのベストプラクティスに照らしてレビューし、具体的なフィードバックを提供する。
 </role>
@@ -73,7 +74,6 @@ Coding Agent プロンプト（commands, agents, skills, context files）をプ�
 
 **❌ h1 見出しで開始**:
 ```markdown
-# My Agent
 This agent does...
 ```
 
@@ -155,7 +155,6 @@ allowed-tools: [Bash, Edit, Write]  # 配列ではなく文字列
 ```yaml
 ---
 name: reviewer
-# description, model, color がない
 ---
 ```
 → `name`, `description`, `model`, `color` は必須

@@ -1,6 +1,6 @@
-# Comprehensive Code Quality Review
-
-Perform comprehensive code quality review
+---
+description: "Perform comprehensive code quality review"
+---
 
 ## 実行手順
 
@@ -52,5 +52,3 @@ Follow these steps to conduct a thorough code review:
    - Provide specific, actionable recommendations
    - Suggest tools and practices for improvement
    - Create a summary report with next steps
-
-Remember to be constructive and provide specific examples with file paths and line numbers where applicable.

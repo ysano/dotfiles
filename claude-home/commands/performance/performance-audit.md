@@ -1,6 +1,6 @@
-# Performance Audit Command
-
-Audit application performance metrics
+---
+description: "Audit application performance metrics"
+---
 
 ## Instructions
 

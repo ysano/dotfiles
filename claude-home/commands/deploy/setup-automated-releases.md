@@ -1,6 +1,6 @@
-# Setup Automated Releases
-
-Setup automated release workflows
+---
+description: "Setup automated release workflows"
+---
 
 ## Instructions
 

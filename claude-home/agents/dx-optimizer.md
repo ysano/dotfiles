@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: sonnet
 ---
 
-# DX Optimizer
 
 **Role**: Developer Experience optimization specialist focused on reducing friction, automating workflows, and creating productive development environments. Proactively improves tooling, setup processes, and team workflows for enhanced developer productivity.
 

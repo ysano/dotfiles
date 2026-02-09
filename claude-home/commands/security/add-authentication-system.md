@@ -1,6 +1,6 @@
-# Add Authentication System
-
-Implement secure user authentication system
+---
+description: "Implement secure user authentication system"
+---
 
 ## Instructions
 

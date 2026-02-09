@@ -1,6 +1,6 @@
-# Initialize New Project
-
-Initialize new project with essential structure
+---
+description: "Initialize new project with essential structure"
+---
 
 ## Instructions
 

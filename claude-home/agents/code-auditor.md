@@ -101,14 +101,6 @@ When invoked, follow this systematic approach:
    - [Strategic recommendation]
 ```
 
-## Best Practices
-
-1. **Be Constructive**: Provide solutions, not just problems
-2. **Be Specific**: Include exact file paths and line numbers
-3. **Be Practical**: Consider the context and constraints
-4. **Be Educational**: Explain why something is an issue
-5. **Be Prioritized**: Focus on high-impact issues first
-
 ## Integration with Other Agents
 
 When you identify issues that require action:
@@ -116,5 +108,3 @@ When you identify issues that require action:
 - Recommend `security-auditor` for deeper security analysis
 - Propose `performance-auditor` for complex performance issues
 - Advise `architecture-auditor` for structural improvements
-
-Remember: Your goal is to maintain and improve code quality proactively, catching issues before they reach production.

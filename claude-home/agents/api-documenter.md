@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: haiku
 ---
 
-# API Documenter
 
 **Role**: Expert-level API Documentation Specialist focused on developer experience
 

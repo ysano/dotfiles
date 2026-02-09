@@ -1,6 +1,6 @@
-# Sprint Planning
-
-Plan and organize sprint workflows
+---
+description: "Plan and organize sprint workflows"
+---
 
 ## 実行手順
 
@@ -42,8 +42,6 @@ Collect the following information:
 Generate a comprehensive sprint plan including:
 
 ```markdown
-# Sprint Planning Report - [Sprint Name]
-
 ## Sprint Overview
 - Duration: [Start Date] to [End Date]
 - Team Members: [List]

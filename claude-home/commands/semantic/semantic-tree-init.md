@@ -5,9 +5,8 @@ tools:
   - bash
   - glob
 arguments: $TREE_NAME
+description: "Switch to different tree"
 ---
-
-# Semantic Tree Initialization
 
 Create a new semantic tree for persistent memory storage and reasoning tracking in the WFGY system.
 
@@ -105,7 +104,6 @@ Common tree patterns:
 
 After creation:
 ```bash
-# Switch to different tree
 /semantic:tree-switch "Another Tree"
 
 # View current tree

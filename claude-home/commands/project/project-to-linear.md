@@ -1,6 +1,6 @@
-# Project to Linear
-
-Sync project structure to Linear workspace
+---
+description: "Sync project structure to Linear workspace"
+---
 
 ## Instructions
 

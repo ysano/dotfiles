@@ -1,6 +1,6 @@
-# Task Move Command
-
-Move tasks between status folders following the task management protocol.
+---
+description: "Move tasks between status folders following the task management protocol."
+---
 
 ## Usage
 
@@ -159,7 +159,6 @@ Automatically moves to next status when conditions met
 
 ### Example 1: Developer Workflow
 ```
-# Start work
 /task-move TASK-001 in_progress
 
 # Complete and test
@@ -197,13 +196,6 @@ Each move updates:
 2. **Status Tracker**: TASK-STATUS-TRACKER.yaml entry
 3. **Task Metadata**: Status field in task file
 4. **Execution Tracker**: Overall progress metrics
-
-## Best Practices
-
-1. **Always Provide Reasons**: Especially for blocks and failures
-2. **Check Dependencies**: Before moving to in_progress
-3. **Update Estimates**: When starting work
-4. **Clear Block Reasons**: Help others understand delays
 
 ## Integration
 

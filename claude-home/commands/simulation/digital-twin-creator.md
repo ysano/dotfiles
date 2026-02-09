@@ -1,6 +1,6 @@
-# Digital Twin Creator
-
-Create systematic digital twins with data quality validation and real-world calibration loops.
+---
+description: "Create systematic digital twins with data quality validation and real-world calibration loops."
+---
 
 ## Instructions
 
@@ -22,23 +22,7 @@ You are tasked with creating a comprehensive digital twin to simulate real-world
 Missing Twin Subject:
 "I need clarity on what you're modeling. Are you creating a digital twin for:
 - Physical systems: Manufacturing line, vehicle performance, building operations
-- Business processes: Sales pipeline, customer journey, supply chain
-- Market dynamics: Customer segments, competitive landscape, demand patterns
-- Technical systems: Software performance, network behavior, user interactions"
-
-Missing Purpose Clarity:
-"What specific decisions will this digital twin help you make?
-- Optimization: Finding better configurations or strategies
-- Prediction: Forecasting future outcomes or behaviors  
-- Risk Assessment: Understanding failure modes and vulnerabilities
-- Experimentation: Testing changes before real-world implementation
-- Monitoring: Detecting anomalies or performance degradation"
-
-Missing Fidelity Requirements:
-"How precise does your digital twin need to be?
-- High Fidelity (90%+ accuracy): Critical safety/financial decisions
-- Medium Fidelity (70-90% accuracy): Strategic planning and optimization
-- Low Fidelity (50-70% accuracy): Conceptual understanding and exploration"
+// ... (18 lines truncated)
 ```
 
 ### 2. System Architecture Definition
@@ -88,18 +72,7 @@ Missing Fidelity Requirements:
 For each data source, assess:
 - Completeness: What percentage of required data is available?
 - Accuracy: How reliable and error-free is the data?
-- Timeliness: How current and frequently updated is the data?
-- Consistency: Are there conflicts between data sources?
-- Relevance: How directly does this data impact key decisions?
-
-Quality Scoring (1-10 for each dimension):
-Data Source: [name]
-- Completeness: [score] - [explanation]
-- Accuracy: [score] - [explanation]  
-- Timeliness: [score] - [explanation]
-- Consistency: [score] - [explanation]
-- Relevance: [score] - [explanation]
-Overall Quality Score: [average]
+// ... (13 lines truncated)
 ```
 
 #### Data Gap Analysis
@@ -170,16 +143,7 @@ Overall Quality Score: [average]
 Model Performance Dashboard:
 - Overall Accuracy: [percentage] ± [confidence interval]
 - Prediction Bias: [systematic error analysis]
-- Timing Accuracy: [lag prediction accuracy]
-- Extreme Event Prediction: [edge case performance]
-- Model Confidence: [uncertainty quantification]
-
-Recent Calibration Results:
-- Last Update: [timestamp]
-- Data Points Used: [count]
-- Accuracy Improvement: [change from previous]
-- Key Parameter Adjustments: [list]
-- Validation Test Results: [pass/fail with details]
+// ... (11 lines truncated)
 ```
 
 ### 6. Scenario Simulation Engine
@@ -230,25 +194,7 @@ Recent Calibration Results:
 Decision Recommendation Format:
 ## Scenario: [name and description]
 
-### Recommended Action: [specific decision]
-
-### Rationale:
-- Simulation Evidence: [key findings]
-- Performance Impact: [quantified benefits]
-- Risk Assessment: [potential downsides]
-- Confidence Level: [percentage with explanation]
-
-### Implementation Guidance:
-- Immediate Actions: [specific steps]
-- Success Metrics: [measurable indicators]
-- Monitoring Plan: [ongoing validation approach]
-- Contingency Plans: [alternative actions if needed]
-
-### Assumptions and Limitations:
-- Key Assumptions: [critical model assumptions]
-- Data Limitations: [known gaps or uncertainties]
-- Model Boundaries: [what's not included]
-- Update Requirements: [when to refresh model]
+// ... (20 lines truncated)
 ```
 
 ### 8. Continuous Improvement Loop
@@ -284,46 +230,7 @@ Decision Recommendation Format:
 ## Digital Twin System: [Subject Name]
 
 ### System Overview
-- Purpose: [primary decision support goals]
-- Scope: [system boundaries and components]
-- Fidelity Level: [accuracy expectations]
-- Update Frequency: [refresh schedule]
-
-### Model Architecture
-- Core Components: [key system elements]
-- Relationship Map: [interaction patterns]
-- Environmental Factors: [external influences]
-- Performance Metrics: [success indicators]
-
-### Data Foundation
-- Primary Data Sources: [list with quality scores]
-- Data Quality Assessment: [overall quality rating]
-- Update Mechanisms: [how data stays current]
-- Validation Methods: [accuracy verification approaches]
-
-### Simulation Capabilities
-- Scenario Types: [what can be modeled]
-- Time Horizons: [simulation time ranges]
-- Precision Levels: [accuracy expectations]
-- Output Formats: [reporting and visualization options]
-
-### Calibration Status
-- Historical Validation: [back-testing results]
-- Real-Time Accuracy: [current performance metrics]
-- Last Calibration: [date and improvements]
-- Confidence Intervals: [uncertainty bounds]
-
-### Decision Integration
-- Supported Decisions: [specific use cases]
-- Optimization Capabilities: [automatic improvement features]
-- Risk Assessment: [uncertainty and sensitivity analysis]
-- Recommendation Engine: [decision support features]
-
-### Usage Guidelines
-- High Confidence Scenarios: [when to trust fully]
-- Medium Confidence Scenarios: [when to use with caution]
-- Low Confidence Scenarios: [when to gather more data]
-- Refresh Triggers: [when to update the model]
+// ... (41 lines truncated)
 ```
 
 ### 10. Quality Assurance Framework
@@ -357,17 +264,10 @@ Decision Recommendation Format:
 ## Usage Examples
 
 ```bash
-# Manufacturing optimization
 /simulation:digital-twin-creator Create digital twin of production line to optimize throughput and predict maintenance needs
 
 # Customer journey modeling
-/simulation:digital-twin-creator Build digital twin of customer acquisition funnel to test marketing strategies
-
-# Supply chain resilience
-/simulation:digital-twin-creator Model supply chain network to test disruption scenarios and optimization strategies
-
-# Software system performance
-/simulation:digital-twin-creator Create digital twin of microservices architecture to predict scaling and performance
+// ... (8 lines truncated)
 ```
 
 ## Quality Indicators

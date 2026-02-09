@@ -5,9 +5,8 @@ tools:
   - edit
   - bash
 arguments: $FILENAME
+description: "Import and activate immediately"
 ---
-
-# Semantic Tree Import
 
 Import a previously exported semantic tree to restore memory, continue work, or share knowledge.
 
@@ -166,7 +165,6 @@ Supports imports from:
 ## Advanced Options
 
 ```bash
-# Import and activate immediately
 /semantic:tree-import "tree.txt" --activate
 
 # Import with validation only (dry run)

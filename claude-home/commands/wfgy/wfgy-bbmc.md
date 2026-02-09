@@ -5,9 +5,8 @@ tools:
   - edit
   - grep
 arguments: $QUERY
+description: "Wfgy Bbmc"
 ---
-
-# WFGY BBMC - Semantic Residue Minimization
 
 Apply the BBMC (BigBig Minimization Coupling) formula to minimize semantic residue and improve reasoning accuracy.
 

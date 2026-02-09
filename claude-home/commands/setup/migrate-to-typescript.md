@@ -1,6 +1,6 @@
-# Migrate to TypeScript
-
-Migrate JavaScript project to TypeScript
+---
+description: "Migrate JavaScript project to TypeScript"
+---
 
 ## Instructions
 

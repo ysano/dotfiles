@@ -1,6 +1,6 @@
-# Modernize Dependencies Command
-
-Update and modernize project dependencies
+---
+description: "Update and modernize project dependencies"
+---
 
 ## Instructions
 
@@ -52,5 +52,3 @@ Follow this approach to modernize dependencies: **$ARGUMENTS**
    - Revise installation instructions
    - Update API documentation
    - Note breaking changes
-
-Remember to update dependencies incrementally, test thoroughly, and maintain backward compatibility where possible.

@@ -1,6 +1,6 @@
-# Enhanced AI Mode for Complex Tasks
-
-Enhanced AI mode for complex tasks
+---
+description: "Enhanced AI mode for complex tasks"
+---
 
 *Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 

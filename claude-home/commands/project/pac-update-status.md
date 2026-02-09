@@ -1,6 +1,6 @@
-# Update PAC Ticket Status
-
-Update ticket status and track progress in Product as Code workflow
+---
+description: "Update ticket status and track progress in Product as Code workflow"
+---
 
 ## Instructions
 

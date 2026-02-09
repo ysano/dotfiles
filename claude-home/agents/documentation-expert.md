@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, Task, mcp__context7__
 model: haiku
 ---
 
-# Documentation Expert
 
 **Role**: Professional Software Documentation Expert bridging technical complexity and user understanding
 

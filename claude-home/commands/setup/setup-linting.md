@@ -1,6 +1,6 @@
-# Setup Linting Command
-
-Setup code linting and quality tools
+---
+description: "Setup code linting and quality tools"
+---
 
 ## Instructions
 
@@ -72,5 +72,3 @@ Follow this systematic approach to setup linting: **$ARGUMENTS**
      }
    }
    ```
-
-Remember to customize rules based on team preferences and gradually enforce stricter standards.

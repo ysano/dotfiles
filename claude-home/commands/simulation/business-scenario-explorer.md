@@ -1,6 +1,6 @@
-# Business Scenario Explorer
-
-Explore multiple business timeline scenarios with constraint validation and decision optimization.
+---
+description: "Explore multiple business timeline scenarios with constraint validation and decision optimization."
+---
 
 ## Instructions
 
@@ -22,23 +22,7 @@ You are tasked with creating a comprehensive business scenario simulation to hel
 Missing Business Context:
 "I need to understand your business model better. Please describe:
 - Your primary revenue streams
-- Key cost drivers 
-- Main competitive advantages
-- Target market segments"
-
-Missing Time Horizon:
-"What planning period should we simulate?
-- Short-term (3-6 months): Market response, product launches
-- Medium-term (1-2 years): Strategic initiatives, market expansion  
-- Long-term (3-5+ years): Industry transformation, market cycles"
-
-Missing Key Variables:
-"What factors could significantly impact your business?
-- Market conditions (growth, recession, disruption)
-- Competitive landscape changes
-- Regulatory shifts
-- Technology adoption
-- Customer behavior evolution"
+// ... (18 lines truncated)
 ```
 
 ### 2. Constraint Modeling
@@ -228,49 +212,7 @@ Missing Key Variables:
 ## Business Scenario Analysis: [Business Name]
 
 ### Executive Summary
-- Planning horizon: [timeline]
-- Scenarios modeled: [count and types]
-- Key decision points: [critical decisions]
-- Recommended strategy: [specific approach]
-
-### Scenario Outcomes Matrix
-
-| Scenario | Probability | Year 1 Revenue | Year 2 Revenue | Key Risks | Success Factors |
-|----------|-------------|----------------|----------------|-----------|-----------------|
-| Base Case | 40% | $X | $Y | [risks] | [factors] |
-| Optimistic A | 20% | $X | $Y | [risks] | [factors] |
-| Pessimistic A | 25% | $X | $Y | [risks] | [factors] |
-| Disruption A | 15% | $X | $Y | [risks] | [factors] |
-
-### Strategic Recommendations
-
-**Robust Strategies** (perform well across scenarios):
-1. [Strategy with confidence score]
-2. [Strategy with confidence score]
-3. [Strategy with confidence score]
-
-**Scenario-Specific Tactics**:
-- If Base Case: [specific actions]
-- If Optimistic: [specific actions]  
-- If Pessimistic: [specific actions]
-- If Disruption: [specific actions]
-
-**Critical Decision Points**:
-- Month 3: [decision] - Leading indicators: [metrics]
-- Month 9: [decision] - Leading indicators: [metrics]
-- Month 18: [decision] - Leading indicators: [metrics]
-
-### Risk Mitigation Framework
-- Early warning indicators for each scenario
-- Specific response triggers and actions
-- Resource reallocation procedures
-- Stakeholder communication protocols
-
-### Confidence Assessment
-- High confidence projections: [list]
-- Medium confidence projections: [list]  
-- Low confidence projections: [list]
-- Areas requiring additional research: [list]
+// ... (44 lines truncated)
 ```
 
 ### 10. Iteration and Refinement
@@ -298,17 +240,10 @@ Missing Key Variables:
 ## Usage Examples
 
 ```bash
-# Strategic business planning
 /simulation:business-scenario-explorer Evaluate SaaS expansion into European markets over next 2 years
 
 # Product launch planning
-/simulation:business-scenario-explorer Model outcomes for AI-powered feature launch across different market conditions
-
-# Investment decision
-/simulation:business-scenario-explorer Analyze ROI scenarios for $5M Series A funding across market conditions
-
-# Market entry strategy
-/simulation:business-scenario-explorer Explore timeline scenarios for entering fintech market as established player
+// ... (8 lines truncated)
 ```
 
 ## Quality Indicators

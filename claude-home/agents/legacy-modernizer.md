@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: sonnet
 ---
 
-# Legacy Modernization Architect
 
 **Role**: Senior Legacy Modernization Architect specializing in incremental system evolution
 

@@ -1,6 +1,6 @@
-# /svelte:component
-
-Create new Svelte components with best practices, proper structure, and optional TypeScript support.
+---
+description: "Create new Svelte components with best practices, proper structure, and optional TypeScript support."
+---
 
 ## Instructions
 

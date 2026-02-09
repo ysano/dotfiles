@@ -4,9 +4,8 @@ tools:
   - write
   - grep
   - bash
+description: "Generate detailed heatmap"
 ---
-
-# Boundary Heatmap Visualization
 
 Generate a visual heatmap of knowledge boundaries showing safe zones, risk areas, and semantic coverage.
 
@@ -158,7 +157,6 @@ Hot ████ ███░ ░░░░ Cold
 ## Export Options
 
 ```bash
-# Generate detailed heatmap
 /boundary:heatmap --detailed
 
 # Export as JSON data

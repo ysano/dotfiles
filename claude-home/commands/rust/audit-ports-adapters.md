@@ -5,8 +5,6 @@ allowed-tools: Read, Grep, Glob, Bash
 author: Quintin Henry (https://github.com/qdhenry/)
 ---
 
-# Audit Ports & Adapters Pattern
-
 Analyze the implementation of the Ports & Adapters (Hexagonal Architecture) pattern in a Rust codebase, checking for proper trait definitions, dependency inversion, and adapter implementations.
 
 ## Instructions
@@ -26,20 +24,7 @@ Audit ports and adapters implementation: **$ARGUMENTS**
                     ┌─────────────────────┐
                     │     Application     │
                     │                     │
-    ┌───────────────┤  ┌─────────────┐   ├───────────────┐
-    │               │  │  Use Cases  │   │               │
-    │   Driving     │  │             │   │    Driven     │
-    │   Adapters    │  │  ┌───────┐  │   │    Adapters   │
-    │               │  │  │ Ports │  │   │               │
-    │  (HTTP, CLI,  │──│──│(traits)│──│───│  (DB, APIs,  │
-    │   gRPC, etc.) │  │  └───────┘  │   │   Email, etc.)│
-    │               │  │             │   │               │
-    └───────────────┤  └─────────────┘   ├───────────────┘
-                    │                     │
-                    └─────────────────────┘
-
-Ports = Trait definitions in Application layer
-Adapters = Implementations of those traits
+// ... (15 lines truncated)
 ```
 
 **Key Principle:** Use cases depend on PORT TRAITS, not concrete adapters.
@@ -53,14 +38,10 @@ Adapters = Implementations of those traits
 Ports should be defined in the application layer:
 
 ```bash
-# Find async traits (common for ports)
 grep -rn "#\[async_trait\]" src/ --include="*.rs"
 
 # Find trait definitions in application layer
-grep -rn "^pub trait\|^trait" src/application/ 2>/dev/null
-
-# Common port naming patterns
-grep -rn "trait.*Repository\|trait.*Service\|trait.*Port\|trait.*Gateway" src/ --include="*.rs"
+// ... (5 lines truncated)
 ```
 
 ### 1.2 Port Location Audit
@@ -81,10 +62,7 @@ grep -rn "^pub trait" src/adapters/ 2>/dev/null
 ## Discovered Ports
 
 | Port Trait | Location | Purpose | Status |
-|------------|----------|---------|--------|
-| `UserRepository` | `src/application/ports/` | User persistence | ✓ Correct |
-| `PasswordHasher` | `src/application/ports/` | Cryptography | ✓ Correct |
-| `EmailService` | `src/adapters/email/` | Email sending | Wrong location |
+// ... (5 lines truncated)
 ```
 
 ---
@@ -119,18 +97,7 @@ grep -A20 "^pub trait.*Repository\|^pub trait.*Service\|^pub trait.*Port" src/ap
 // GOOD PORT: Uses domain types, async, focused
 #[async_trait]
 pub trait UserRepository: Send + Sync {
-    async fn save(&self, user: &User) -> Result<(), RepositoryError>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, RepositoryError>;
-}
-
-// BAD PORT: Framework types, too broad
-pub trait UserRepository {
-    fn save(&self, pool: &PgPool, user: Json<UserDto>) -> HttpResult<()>;  // Framework leakage!
-    fn find_by_id(&self, ...) -> ...;
-    fn delete(&self, ...) -> ...;
-    fn update(&self, ...) -> ...;
-    fn list_all(&self, ...) -> ...;  // Too many responsibilities?
-}
+// ... (13 lines truncated)
 ```
 
 ---
@@ -153,11 +120,7 @@ grep -rn "impl.*Repository.*for\|impl.*Service.*for\|impl.*Port.*for\|impl.*Gate
 ## Port-Adapter Mapping
 
 | Port | Adapter(s) | Location | Status |
-|------|-----------|----------|--------|
-| `UserRepository` | `PostgresUserRepository` | `src/adapters/persistence/` | ✓ |
-| `UserRepository` | `InMemoryUserRepository` | `src/adapters/persistence/` | ✓ (testing) |
-| `PasswordHasher` | `Argon2Hasher` | `src/adapters/crypto/` | ✓ |
-| `EmailService` | ??? | ??? | No adapter found |
+// ... (6 lines truncated)
 ```
 
 ### 3.3 Check Adapter Completeness
@@ -183,11 +146,7 @@ Use cases should depend on trait objects, not concrete types:
 # Find use case structs
 grep -A10 "^pub struct.*UseCase\|^pub struct.*Service\|^struct.*UseCase" src/application/ 2>/dev/null
 
-# Look for Arc<dyn Trait> patterns (good)
-grep -rn "Arc<dyn" src/application/ 2>/dev/null
-
-# Look for concrete adapter types (bad)
-grep -rn "Postgres\|Mysql\|Redis\|Argon2\|Bcrypt" src/application/ 2>/dev/null
+// ... (6 lines truncated)
 ```
 
 ### 4.2 Dependency Inversion Checklist
@@ -203,35 +162,7 @@ grep -rn "Postgres\|Mysql\|Redis\|Argon2\|Bcrypt" src/application/ 2>/dev/null
 // GOOD: Depends on trait, injected via constructor
 pub struct RegisterUser {
     user_repo: Arc<dyn UserRepository>,
-    hasher: Arc<dyn PasswordHasher>,
-}
-
-impl RegisterUser {
-    pub fn new(
-        user_repo: Arc<dyn UserRepository>,
-        hasher: Arc<dyn PasswordHasher>,
-    ) -> Self {
-        Self { user_repo, hasher }
-    }
-}
-
-// BAD: Depends on concrete type
-pub struct RegisterUser {
-    user_repo: PostgresUserRepository,  // Concrete!
-    hasher: Argon2Hasher,               // Concrete!
-}
-
-// BAD: Creates dependencies internally
-pub struct RegisterUser {
-    pool: PgPool,
-}
-
-impl RegisterUser {
-    pub async fn execute(&self, ...) {
-        let repo = PostgresUserRepository::new(self.pool.clone());  // Creates internally!
-        // ...
-    }
-}
+// ... (30 lines truncated)
 ```
 
 ---
@@ -296,19 +227,7 @@ grep -rn "use_case\|UseCase\|Service" src/adapters/http/ 2>/dev/null
 // GOOD: Handler calls use case, converts types
 pub async fn register_handler(
     State(state): State<AppState>,
-    Json(dto): Json<RegisterDto>,
-) -> impl IntoResponse {
-    // Convert DTO to domain types
-    let result = state.register_user
-        .execute(dto.username, dto.password)
-        .await;
-
-    // Convert result to HTTP response
-    match result {
-        Ok(user) => (StatusCode::CREATED, Json(UserResponse::from(user))),
-        Err(e) => e.into_response(),
-    }
-}
+// ... (14 lines truncated)
 ```
 
 ---
@@ -321,46 +240,7 @@ pub async fn register_handler(
 # Ports & Adapters Audit Report
 
 **Project:** [Name]
-**Date:** [Date]
-
-## Port Inventory
-
-| Port | Location | Methods | Status |
-|------|----------|---------|--------|
-| `UserRepository` | application/ports | 3 | ✓ |
-| `PasswordHasher` | application/ports | 2 | ✓ |
-
-## Adapter Inventory
-
-| Port | Adapter | Type | Status |
-|------|---------|------|--------|
-| `UserRepository` | `PostgresUserRepository` | Driven | ✓ |
-| `UserRepository` | `MockUserRepository` | Test | ✓ |
-| `PasswordHasher` | `Argon2Hasher` | Driven | ✓ |
-
-## Dependency Inversion
-
-| Use Case | Properly Inverted? |
-|----------|--------------------|
-| `RegisterUser` | ✓ Yes |
-| `LoginUser` | Partial |
-
-## Issues Found
-
-### HIGH
-1. `EmailService` port has no adapter implementation
-2. `LoginUser` depends on concrete `PostgresUserRepository`
-
-### MEDIUM
-1. `UserRepository` port defined in adapters, should be in application
-
-## Testability Score: 7/10
-
-## Recommendations
-
-1. Move port definitions to application layer
-2. Replace concrete dependencies with trait objects
-3. Add mock implementations for testing
+// ... (41 lines truncated)
 ```
 
 ---
@@ -371,14 +251,7 @@ pub async fn register_handler(
 # Find all ports
 echo "=== PORTS ===" && \
 grep -rn "^pub trait.*:\s*Send\|#\[async_trait\]" src/application/ 2>/dev/null
-
-# Find all adapter implementations
-echo "=== ADAPTERS ===" && \
-grep -rn "impl.*for.*{" src/adapters/ 2>/dev/null | head -20
-
-# Check dependency inversion
-echo "=== DEPENDENCY INVERSION ===" && \
-grep -rn "Arc<dyn" src/application/ 2>/dev/null
+// ... (9 lines truncated)
 ```
 
 ---

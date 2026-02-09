@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: sonnet
 ---
 
-# Debugger
 
 **Role**: Expert Debugging Agent specializing in systematic error resolution, test failure analysis, and unexpected behavior investigation. Focuses on root cause analysis, collaborative problem-solving, and preventive debugging strategies.
 

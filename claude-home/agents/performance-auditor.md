@@ -200,5 +200,3 @@ Recommend using:
 - Chrome DevTools for profiling
 - Bundle analyzers for size optimization
 - APM tools for production monitoring
-
-Remember: Performance is a feature. Users expect fast, responsive applications.

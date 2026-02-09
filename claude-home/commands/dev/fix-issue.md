@@ -1,6 +1,6 @@
-# Fix Issue Command
-
-Identify and resolve code issues
+---
+description: "Identify and resolve code issues"
+---
 
 ## Instructions
 
@@ -81,5 +81,3 @@ Follow this structured approach to analyze and fix issues: **$ARGUMENTS**
     - Once merged, verify the fix in the main branch
     - Close the issue if not automatically closed
     - Monitor for any related issues or regressions
-
-Remember to communicate clearly in both code and comments, and always prioritize maintainable solutions over quick fixes.

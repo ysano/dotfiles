@@ -1,6 +1,6 @@
-# Git Status Command
-
-Show detailed git repository status
+---
+description: "Show detailed git repository status"
+---
 
 *Command originally created by IndyDevDan (YouTube: https://www.youtube.com/@indydevdan) / DislerH (GitHub: https://github.com/disler)*
 

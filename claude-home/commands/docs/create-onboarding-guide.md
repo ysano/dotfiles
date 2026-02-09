@@ -1,6 +1,6 @@
-# Create Onboarding Guide
-
-Create developer onboarding guide
+---
+description: "Create developer onboarding guide"
+---
 
 ## Instructions
 

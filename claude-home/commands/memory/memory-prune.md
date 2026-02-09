@@ -5,9 +5,8 @@ tools:
   - edit
   - bash
 arguments: $PRUNE_CRITERIA
+description: "Prune by age"
 ---
-
-# Memory Tree Pruning
 
 Selectively remove low-value, outdated, or irrelevant nodes from the semantic tree to maintain quality and performance.
 
@@ -187,7 +186,6 @@ Recovery:
 ### Custom Criteria
 
 ```bash
-# Prune by age
 /memory:prune --older-than 60
 
 # Prune by value

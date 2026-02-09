@@ -1,6 +1,6 @@
-# Configure PAC (Product as Code) Project
-
-Configure and initialize a project following the Product as Code specification for structured, version-controlled product management
+---
+description: "Configure and initialize a project following the Product as Code specification for structured, version-controlled product management"
+---
 
 ## Instructions
 

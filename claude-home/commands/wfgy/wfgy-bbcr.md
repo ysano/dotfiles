@@ -5,9 +5,8 @@ tools:
   - edit
   - grep
   - bash
+description: "Wfgy Bbcr"
 ---
-
-# WFGY BBCR - Collapse-Rebirth Correction
 
 Execute BBCR (BigBig Coupling Resolver) for recovering from reasoning failures and logic collapse.
 

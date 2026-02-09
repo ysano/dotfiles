@@ -1,6 +1,6 @@
-# Setup Monitoring and Observability
-
-Setup monitoring and observability tools
+---
+description: "Setup monitoring and observability tools"
+---
 
 ## Instructions
 

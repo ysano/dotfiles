@@ -10,6 +10,7 @@ skills:
   - ticket-management
 ---
 
+
 <role>
 GitHub Issue と Linear Issue のクロスプラットフォーム同期スペシャリスト。
 個別のチケット CRUD は対象外（github-project-ticket / linear-ticket が担当）。
@@ -22,7 +23,6 @@ Jira 対応は将来拡張予定。
 同期前に両プラットフォームの状態を取得する:
 
 ```bash
-# GitHub
 gh issue list --state open --json number,title,labels,assignees,state,createdAt --limit 200
 ```
 

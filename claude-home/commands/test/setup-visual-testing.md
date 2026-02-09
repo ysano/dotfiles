@@ -1,6 +1,6 @@
-# Setup Visual Testing
-
-Setup visual regression testing
+---
+description: "Setup visual regression testing"
+---
 
 ## Instructions
 

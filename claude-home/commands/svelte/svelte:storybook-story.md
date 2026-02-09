@@ -1,6 +1,6 @@
-# /svelte:storybook-story
-
-Create comprehensive Storybook stories for Svelte components using modern patterns and best practices.
+---
+description: "Create comprehensive Storybook stories for Svelte components using modern patterns and best practices."
+---
 
 ## Instructions
 

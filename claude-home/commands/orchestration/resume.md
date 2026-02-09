@@ -1,6 +1,6 @@
-# Orchestration Resume Command
-
-Resume work on existing task orchestrations after session loss or context switch.
+---
+description: "Resume work on existing task orchestrations after session loss or context switch."
+---
 
 ## Usage
 
@@ -240,13 +240,6 @@ The command reads from:
 - TASK-STATUS-TRACKER.yaml for current state
 - Task files for detailed context
 - Git for working directory state
-
-## Best Practices
-
-1. **Use at Session Start**: Run `/orchestration/resume` when starting work
-2. **Save State**: Use `--save-state` before extended breaks
-3. **Check Dependencies**: Review blocked tasks that may now be unblocked
-4. **Commit Regularly**: Keep git state aligned with task progress
 
 ## Notes
 

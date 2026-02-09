@@ -5,9 +5,8 @@ tools:
   - grep
   - bash
 arguments: $QUERY
+description: "Verbose analysis"
 ---
-
-# Knowledge Boundary Detection
 
 Analyze semantic position relative to knowledge boundaries to prevent hallucination and identify uncertainty zones.
 
@@ -138,7 +137,6 @@ Boundary detection integrates with:
 ## Advanced Options
 
 ```bash
-# Verbose analysis
 /boundary:detect "query" --verbose
 
 # With automatic bridging

@@ -1,6 +1,6 @@
-# Add Package to Workspace
-
-Add and configure new project dependencies
+---
+description: "Add and configure new project dependencies"
+---
 
 ## Instructions
 

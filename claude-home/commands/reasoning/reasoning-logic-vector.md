@@ -4,9 +4,8 @@ tools:
   - write
   - grep
 arguments: $ANALYSIS_CONTEXT
+description: "Analyze specific time range"
 ---
-
-# Logic Vector Analysis
 
 Analyze the logic flow direction (λ_observe) to understand reasoning patterns and identify potential issues.
 
@@ -200,7 +199,6 @@ Confidence: [percentage]%
 ## Advanced Options
 
 ```bash
-# Analyze specific time range
 /reasoning:logic-vector --from "node_10" --to "node_30"
 
 # Focus on specific pattern

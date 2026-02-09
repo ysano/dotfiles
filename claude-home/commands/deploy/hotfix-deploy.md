@@ -1,6 +1,6 @@
-# Hotfix Deploy Command
-
-Deploy critical hotfixes quickly
+---
+description: "Deploy critical hotfixes quickly"
+---
 
 ## Instructions
 
@@ -247,7 +247,6 @@ Follow this emergency hotfix deployment process: **$ARGUMENTS**
 **Emergency Escalation Guidelines:**
 
 ```bash
-# Emergency contact information
 ON_CALL_ENGINEER="+1-555-0123"
 SENIOR_ENGINEER="+1-555-0124"
 ENGINEERING_MANAGER="+1-555-0125"

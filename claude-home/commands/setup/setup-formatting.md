@@ -1,6 +1,6 @@
-# Setup Formatting Command
-
-Configure code formatting tools
+---
+description: "Configure code formatting tools"
+---
 
 ## Instructions
 
@@ -58,5 +58,3 @@ Setup code formatting following these steps: **$ARGUMENTS**
    npm install -D husky lint-staged
    echo '{"*.{js,ts,tsx}": ["prettier --write", "eslint --fix"]}' > .lintstagedrc
    ```
-
-Remember to run formatting on entire codebase initially and configure team IDE settings consistently.

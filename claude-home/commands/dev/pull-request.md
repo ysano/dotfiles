@@ -33,7 +33,6 @@ allowed-tools: [Bash, Read]
 ### PR Templateが存在する場合
 
 ```bash
-# PR Template確認
 cat .github/pull_request_template.md
 
 # 状態確認

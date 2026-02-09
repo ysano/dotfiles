@@ -1,6 +1,7 @@
-# Task: Convert Project Rules to Claude Code Hooks
-
 ---
+description: "Convert natural language project rules into Claude Code hook configurations"
+---
+
 **Attribution**: This command is based on the excellent work by zxdxjtu from the [claudecode-rule2hook](https://github.com/zxdxjtu/claudecode-rule2hook) repository. 
 Licensed under MIT License. Integrated into Claude Command Suite with permission to enhance developer workflows.
 ---
@@ -191,14 +192,6 @@ You are an expert at converting natural language project rules into Claude Code 
 }
 ```
 
-## Best Practices for Command Generation
-
-1. **Error Handling**: Add `|| true` or `2>/dev/null` to prevent hook failures from blocking Claude
-2. **Quiet Mode**: Use quiet flags (--quiet, -q) when available
-3. **Path Safety**: Use relative paths or check existence
-4. **Performance**: Keep commands fast to avoid slowing down Claude
-5. **Logging**: Redirect verbose output to avoid cluttering Claude's interface
-
 ## Common Rule Patterns
 
 - "Format [language] files after editing" → PostToolUse + Edit|MultiEdit|Write
@@ -219,3 +212,4 @@ You are an expert at converting natural language project rules into Claude Code 
 
 ## User Input
 $ARGUMENTS
+

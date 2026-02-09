@@ -4,9 +4,8 @@ tools:
   - write
   - edit
   - bash
+description: "Light compression"
 ---
-
-# Memory Compression
 
 Compress the semantic tree by merging similar nodes and removing redundancy while preserving essential information.
 
@@ -204,7 +203,6 @@ Next Steps:
 ## Advanced Options
 
 ```bash
-# Light compression
 /memory:compress --level light
 
 # Target specific size

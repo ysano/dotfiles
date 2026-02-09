@@ -1,6 +1,6 @@
-# Write Tests Command
-
-Write unit and integration tests
+---
+description: "Write unit and integration tests"
+---
 
 ## Instructions
 
@@ -168,5 +168,3 @@ RSpec.describe ClassName do
   end
 end
 ```
-
-Remember to prioritize testing critical business logic and user-facing functionality first, then expand coverage to supporting code.

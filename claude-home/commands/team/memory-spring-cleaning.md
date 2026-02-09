@@ -1,6 +1,6 @@
-# Memory Spring Cleaning
-
-Clean and organize project memory
+---
+description: "Clean and organize project memory"
+---
 
 ## Instructions
 

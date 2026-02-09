@@ -5,9 +5,8 @@ tools:
   - bash
   - grep
 arguments: $CHECKPOINT_NAME
+description: "Memory Checkpoint"
 ---
-
-# Memory Checkpoint Creation
 
 Create a checkpoint of the current semantic tree state for recovery, branching, or milestone marking.
 

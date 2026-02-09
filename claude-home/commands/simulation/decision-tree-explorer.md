@@ -1,6 +1,6 @@
-# Decision Tree Explorer
-
-Explore decision branches with probability weighting, expected value analysis, and scenario-based optimization.
+---
+description: "Explore decision branches with probability weighting, expected value analysis, and scenario-based optimization."
+---
 
 ## Instructions
 
@@ -22,29 +22,7 @@ You are tasked with creating a comprehensive decision tree analysis to explore c
 Missing Decision Scope:
 "I need clarity on the decision you're analyzing. Please specify:
 - Primary Decision: The main choice you need to make
-- Decision Level: Strategic, tactical, or operational
-- Decision Type: Go/no-go, resource allocation, priority ranking, or option selection
-- Alternative Options: What choices are you considering?
-
-Examples:
-- Strategic: 'Should we enter the European market next year?'
-- Investment: 'Which of 3 product features should we build first?'
-- Operational: 'Should we migrate to microservices or improve the monolith?'
-- Crisis: 'How should we respond to the new competitor launch?'"
-
-Missing Success Criteria:
-"How will you evaluate if this decision was successful?
-- Financial Metrics: Revenue impact, cost savings, ROI targets
-- Strategic Metrics: Market share, competitive position, capability building
-- Operational Metrics: Efficiency gains, quality improvements, risk reduction
-- Timeline Metrics: Speed to market, implementation time, payback period"
-
-Missing Resource Context:
-"What constraints limit your decision options?
-- Budget: Available investment capital and operating funds
-- Time: Implementation deadlines and resource availability windows
-- Capabilities: Team skills, technology infrastructure, operational capacity
-- Regulatory: Compliance requirements and approval processes"
+// ... (24 lines truncated)
 ```
 
 ### 2. Decision Architecture Mapping
@@ -95,18 +73,7 @@ Missing Resource Context:
 For each option, evaluate:
 - Technical Feasibility: Can this actually be implemented?
 - Economic Feasibility: Do benefits justify costs?
-- Operational Feasibility: Do we have capability to execute?
-- Timeline Feasibility: Can this be done in available time?
-- Political Feasibility: Will stakeholders support this?
-
-Feasibility Scoring (1-10 scale):
-Option: [name]
-- Technical: [score] - [reasoning]
-- Economic: [score] - [reasoning]
-- Operational: [score] - [reasoning]
-- Timeline: [score] - [reasoning]
-- Political: [score] - [reasoning]
-Overall Feasibility: [average score]
+// ... (13 lines truncated)
 ```
 
 ### 4. Probability Assessment Framework
@@ -132,24 +99,7 @@ Overall Feasibility: [average score]
 Use multiple estimation approaches:
 
 1. Historical Data Analysis:
-   - Similar past decisions and outcomes
-   - Success/failure rates in comparable situations
-   - Market adoption patterns for similar offerings
-
-2. Expert Consultation:
-   - Domain expert probability estimates
-   - Cross-functional team input and perspectives
-   - External advisor and consultant insights
-
-3. Market Validation:
-   - Customer research and feedback
-   - Competitive analysis and market dynamics
-   - Regulatory and environmental factor assessment
-
-4. Monte Carlo Simulation:
-   - Run multiple probability scenarios
-   - Test sensitivity to assumption changes
-   - Generate confidence intervals for estimates
+// ... (19 lines truncated)
 ```
 
 ### 5. Expected Value Calculation
@@ -168,22 +118,7 @@ Use multiple estimation approaches:
 Value Calculation Framework:
 
 Financial Value:
-- Direct Revenue Impact: $[amount] ± [uncertainty range]
-- Cost Savings: $[amount] ± [uncertainty range]
-- Investment Required: $[amount] and timeline
-- NPV Calculation: $[net present value] over [timeframe]
-
-Strategic Value:
-- Market Position Improvement: [qualitative + quantitative]
-- Competitive Advantage Creation: [sustainable differentiation]
-- Capability Building: [new skills and infrastructure]
-- Option Value: [future opportunities enabled]
-
-Risk Value:
-- Risk Reduction: [quantified risk mitigation]
-- Downside Protection: [worst-case scenario costs]
-- Opportunity Cost: [alternative options foregone]
-- Reversibility: [cost and difficulty of changing course]
+// ... (17 lines truncated)
 ```
 
 #### Expected Value Integration
@@ -191,17 +126,7 @@ Risk Value:
 Expected Value Formula Application:
 EV = Σ(Probability × Outcome Value) for all scenarios
 
-Example Calculation:
-Option A: New Product Launch
-- Best Case (20% probability): $10M revenue, 80% margin = $8M profit
-- Base Case (60% probability): $5M revenue, 70% margin = $3.5M profit  
-- Worst Case (20% probability): $1M revenue, 50% margin = $0.5M profit
-
-Expected Value = (0.20 × $8M) + (0.60 × $3.5M) + (0.20 × $0.5M)
-= $1.6M + $2.1M + $0.1M = $3.8M
-
-Investment Required: $2M
-Net Expected Value: $1.8M
+// ... (12 lines truncated)
 ```
 
 ### 6. Risk Analysis and Sensitivity Testing
@@ -227,14 +152,7 @@ Net Expected Value: $1.8M
 Risk Mitigation Framework:
 
 For each significant risk:
-1. Risk Description: [specific risk scenario]
-2. Probability Assessment: [likelihood of occurrence]
-3. Impact Assessment: [severity if it occurs]
-4. Early Warning Indicators: [signals to watch for]
-5. Prevention Strategies: [actions to reduce probability]
-6. Mitigation Strategies: [actions to reduce impact]
-7. Contingency Plans: [responses if risk materializes]
-8. Risk Ownership: [who monitors and responds]
+// ... (9 lines truncated)
 ```
 
 ### 7. Decision Tree Visualization and Analysis
@@ -246,20 +164,7 @@ For each significant risk:
 Decision Tree Format:
 
 [Decision Point] 
-├── Option A [probability: X%]
-│   ├── Scenario A1 [probability: Y%] → Outcome: $Z
-│   ├── Scenario A2 [probability: Y%] → Outcome: $Z
-│   └── Scenario A3 [probability: Y%] → Outcome: $Z
-├── Option B [probability: X%]
-│   ├── Scenario B1 [probability: Y%] → Outcome: $Z
-│   └── Scenario B2 [probability: Y%] → Outcome: $Z
-└── Option C [probability: X%]
-    └── Scenario C1 [probability: Y%] → Outcome: $Z
-
-Expected Values:
-- Option A: $[calculated EV]
-- Option B: $[calculated EV]  
-- Option C: $[calculated EV]
+// ... (15 lines truncated)
 ```
 
 #### Decision Path Analysis
@@ -285,33 +190,7 @@ Expected Values:
 Decision Recommendation Format:
 
 ## Primary Recommendation: [Selected Option]
-
-### Executive Summary
-- Recommended Decision: [specific choice and rationale]
-- Expected Value: $[amount] with [confidence level]%
-- Key Success Factors: [critical requirements for success]
-- Major Risks: [primary concerns and mitigation approaches]
-- Implementation Timeline: [key milestones and dependencies]
-
-### Supporting Analysis
-- Expected Value Calculation: [detailed breakdown]
-- Probability Assessments: [key assumptions and sources]
-- Risk Assessment: [major risks and mitigation strategies]
-- Sensitivity Analysis: [critical variables and break-even points]
-- Alternative Options: [other viable choices and trade-offs]
-
-### Implementation Guidance
-- Immediate Next Steps: [specific actions required]
-- Success Metrics: [measurable indicators of progress]
-- Decision Points: [future choice points and triggers]
-- Resource Requirements: [budget, team, timeline needs]
-- Stakeholder Communication: [alignment and buy-in strategies]
-
-### Contingency Planning
-- Plan B Options: [alternative approaches if primary fails]
-- Early Warning Systems: [risk monitoring and triggers]
-- Decision Reversal: [exit strategies and switching costs]
-- Adaptive Strategies: [adjustment mechanisms for changing conditions]
+// ... (28 lines truncated)
 ```
 
 ### 9. Decision Quality Validation
@@ -365,17 +244,10 @@ Decision Recommendation Format:
 ## Usage Examples
 
 ```bash
-# Strategic business decision
 /simulation:decision-tree-explorer Should we acquire competitor X for $50M or build competing product internally?
 
 # Product development prioritization
-/simulation:decision-tree-explorer Which of 5 product features should we build first given limited engineering resources?
-
-# Technology architecture choice
-/simulation:decision-tree-explorer Microservices vs monolith architecture for our new platform?
-
-# Market expansion decision
-/simulation:decision-tree-explorer European market entry strategy: direct expansion vs partnership vs acquisition?
+// ... (8 lines truncated)
 ```
 
 ## Quality Indicators

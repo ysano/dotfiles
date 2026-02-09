@@ -1,6 +1,6 @@
-# Setup Comprehensive Testing
-
-Setup complete testing infrastructure
+---
+description: "Setup complete testing infrastructure"
+---
 
 ## Instructions
 

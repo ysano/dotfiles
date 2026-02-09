@@ -1,6 +1,6 @@
-# Troubleshooting Guide Generator Command
-
-Generate troubleshooting documentation
+---
+description: "Generate troubleshooting documentation"
+---
 
 ## Instructions
 
@@ -57,27 +57,7 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
    ### Slow Response Times
    
    **Symptoms:**
-   - API responses > 5 seconds
-   - User interface freezing
-   - Database timeouts
-   
-   **Diagnostic Steps:**
-   1. Check system resources (CPU, memory, disk)
-   2. Review application logs for errors
-   3. Analyze database query performance
-   4. Check network connectivity and latency
-   
-   **Common Causes:**
-   - Database connection pool exhaustion
-   - Inefficient database queries
-   - Memory leaks in application
-   - Network bandwidth limitations
-   
-   **Solutions:**
-   - Restart application services
-   - Optimize database queries
-   - Increase connection pool size
-   - Scale infrastructure resources
+// ... (22 lines truncated)
    ```
 
 6. **Error Code Documentation**
@@ -86,20 +66,7 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
    ## Error Code Reference
    
    ### HTTP Status Codes
-   - **500 Internal Server Error**
-     - Check application logs for stack traces
-     - Verify database connectivity
-     - Check environment variables
-   
-   - **404 Not Found**
-     - Verify URL routing configuration
-     - Check if resources exist
-     - Review API endpoint documentation
-   
-   - **503 Service Unavailable**
-     - Check service health status
-     - Verify load balancer configuration
-     - Check for maintenance mode
+// ... (15 lines truncated)
    ```
 
 7. **Environment-Specific Issues**
@@ -114,11 +81,7 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
    ### Database Connection Issues
    
    **Symptoms:**
-   - "Connection refused" errors
-   - "Too many connections" errors
-   - Slow query performance
-   
-   **Diagnostic Commands:**
+// ... (6 lines truncated)
    ```sql
    -- Check active connections
    SHOW PROCESSLIST;
@@ -192,21 +155,7 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
     ### Authentication Failures
     
     **Symptoms:**
-    - 401 Unauthorized responses
-    - Token validation errors
-    - Session timeout issues
-    
-    **Diagnostic Steps:**
-    1. Verify credentials and tokens
-    2. Check token expiration
-    3. Validate authentication service
-    4. Review CORS configuration
-    
-    **Common Solutions:**
-    - Refresh authentication tokens
-    - Clear browser cookies/cache
-    - Verify CORS headers
-    - Check API key permissions
+// ... (16 lines truncated)
     ```
 
 12. **Deployment and Configuration Issues**
@@ -253,21 +202,7 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
     ## Escalation Matrix
     
     ### Severity Levels
-    
-    **Critical (P1):** System down, data loss
-    - Immediate response required
-    - Escalate to on-call engineer
-    - Notify management within 30 minutes
-    
-    **High (P2):** Major functionality impaired
-    - Response within 2 hours
-    - Escalate to senior engineer
-    - Provide hourly updates
-    
-    **Medium (P3):** Minor functionality issues
-    - Response within 8 hours
-    - Assign to appropriate team member
-    - Provide daily updates
+// ... (16 lines truncated)
     ```
 
 15. **Recovery Procedures**
@@ -297,14 +232,7 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
     ## Communication Channels
     
     ### Immediate Response
-    - Slack: #incidents channel
-    - Phone: On-call rotation
-    - Email: alerts@company.com
-    
-    ### Status Updates
-    - Status page: status.company.com
-    - Twitter: @company_status
-    - Internal wiki: troubleshooting section
+// ... (9 lines truncated)
     ```
 
 19. **Documentation Maintenance**
@@ -325,14 +253,10 @@ Follow this systematic approach to create troubleshooting guides: **$ARGUMENTS**
 
 **Log Analysis:**
 ```bash
-# Search for specific errors
 grep -i "error" /var/log/app.log | tail -50
 
 # Analyze log patterns
-awk '{print $1}' access.log | sort | uniq -c | sort -nr
-
-# Monitor logs in real-time
-tail -f /var/log/app.log | grep -i "exception"
+// ... (5 lines truncated)
 ```
 
 **Performance Profiling:**
@@ -340,16 +264,5 @@ tail -f /var/log/app.log | grep -i "exception"
 # System performance
 iostat -x 1
 sar -u 1 10
-vmstat 1 10
-
-# Application profiling
-strace -p [PID]
-perf record -p [PID]
+// ... (6 lines truncated)
 ```
-
-Remember to:
-- Keep troubleshooting guides up-to-date
-- Test all documented procedures regularly
-- Collect feedback from users and improve guides
-- Include screenshots and visual aids where helpful
-- Make guides searchable and well-organized

@@ -1,6 +1,6 @@
-# Setup Kubernetes Deployment
-
-Configure Kubernetes deployment manifests
+---
+description: "Configure Kubernetes deployment manifests"
+---
 
 ## Instructions
 

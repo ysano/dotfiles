@@ -1,6 +1,6 @@
-# 🚀 Skill Builder - Quick Start Guide
-
-Build production-ready Claude Code Skills in minutes!
+---
+description: "Build production-ready Claude Code Skills in minutes!"
+---
 
 ## Fastest Path to Success
 
@@ -22,21 +22,7 @@ That's it! The system will guide you through everything.
 Example conversation:
 
 Agent: "What specific task or workflow should this skill help with?"
-You: "Help me write conventional commit messages"
-
-Agent: "When should Claude automatically use this skill?"
-You: "When I'm about to commit code or ask about commit messages"
-
-Agent: "Does this need to execute code or just provide instructions?"
-You: "Just instructions, no code needed"
-
-... a few more questions ...
-
-Agent: "Here's the specification I've created..."
-[Shows detailed spec]
-
-Agent: "Does this look good? Should I proceed to generation?"
-You: "Yes, looks perfect!"
+// ... (16 lines truncated)
 ```
 
 ### Phase 2: Generation (1-2 minutes)
@@ -47,11 +33,7 @@ You: "Yes, looks perfect!"
 Creating skill structure...
 ✅ Created commit-helper/SKILL.md
 ✅ Added frontmatter with proper metadata
-✅ Wrote clear instructions
-✅ Included 3 examples
-✅ Set up file structure
-
-Location: ~/.claude/skills/commit-helper/
+// ... (6 lines truncated)
 ```
 
 ### Phase 3: Validation (30 seconds)
@@ -62,11 +44,7 @@ Location: ~/.claude/skills/commit-helper/
 Running 10 validation checks...
 ✅ YAML frontmatter valid
 ✅ Description clear and discoverable
-✅ File structure correct
-✅ No security issues
-
-Score: 9/10 ⭐⭐⭐⭐⭐
-Status: PRODUCTION READY
+// ... (6 lines truncated)
 ```
 
 ### Phase 4: Documentation (1 minute)
@@ -77,10 +55,7 @@ Status: PRODUCTION READY
 Enhancing documentation...
 ✅ Added 5 comprehensive examples
 ✅ Created best practices section
-✅ Added troubleshooting guide
-✅ Included common pitfalls
-
-Your skill is ready to use!
+// ... (5 lines truncated)
 ```
 
 ## First-Time Examples
@@ -127,10 +102,7 @@ Your skill is ready to use!
 ~/.claude/skills/pdf-form-filler/
 ├── SKILL.md
 ├── FORMS.md
-├── REFERENCE.md
-└── scripts/
-    ├── fill_form.py
-    └── validate.py
+// ... (5 lines truncated)
 ```
 
 **How to Use**:
@@ -193,75 +165,6 @@ The elicitation agent will ask which you prefer.
 
 **A**: Yes! Templates are in `.claude/commands/skills/templates/`. But using `/skills:build-skill` is recommended as it ensures quality.
 
-## Tips for Success
-
-### 1. Be Specific in Elicitation
-
-❌ **Vague**: "I need help with files"
-
-✅ **Specific**: "I need to extract text and tables from PDF files, and also fill out PDF forms"
-
-### 2. Provide Examples
-
-When asked, share:
-- Example inputs
-- Desired outputs
-- Edge cases
-- Existing workflows
-
-### 3. Review the Specification
-
-The elicitation agent shows you the plan before building. Read it carefully!
-
-### 4. Test Immediately
-
-After creation, test with:
-```
-"Use [skill-name] to [example task]"
-```
-
-### 5. Iterate Based on Usage
-
-Skills can be refined over time. Keep the specification document for reference.
-
-## Troubleshooting
-
-### Skill Not Loading
-
-**Check location**:
-```bash
-ls ~/.claude/skills/
-ls .claude/skills/
-```
-
-**Check YAML**:
-```bash
-head -20 ~/.claude/skills/my-skill/SKILL.md
-```
-
-**Restart Claude Code** to reload skills
-
-### Skill Not Triggering
-
-**Test triggers**:
-```bash
-.claude/commands/skills/scripts/test-skill-trigger.sh ~/.claude/skills/my-skill
-```
-
-**Use explicit invocation**:
-```
-"Use the [skill-name] skill to [task]"
-```
-
-### Validation Errors
-
-**Run validator**:
-```bash
-.claude/commands/skills/scripts/validate-skill.sh ~/.claude/skills/my-skill
-```
-
-**Fix issues** listed in the report, then re-validate
-
 ## Advanced Usage
 
 ### Creating Project-Wide Skills
@@ -294,15 +197,10 @@ See: https://docs.anthropic.com/claude-code/plugins
 For quick prototyping:
 
 ```bash
-# Copy template
 cp .claude/commands/skills/templates/simple-skill-template.md \
    ~/.claude/skills/my-skill/SKILL.md
 
-# Replace placeholders
-sed -i 's/{{SKILL_NAME}}/My Skill/g' ~/.claude/skills/my-skill/SKILL.md
-
-# Validate
-.claude/commands/skills/scripts/validate-skill.sh ~/.claude/skills/my-skill
+// ... (6 lines truncated)
 ```
 
 But `/skills:build-skill` is recommended for production use.

@@ -1,6 +1,6 @@
-# CI/CD Setup Command
-
-Setup continuous integration pipeline
+---
+description: "Setup continuous integration pipeline"
+---
 
 ## Instructions
 
@@ -34,24 +34,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    name: CI/CD Pipeline
    
    on:
-     push:
-       branches: [ main, develop ]
-     pull_request:
-       branches: [ main ]
-   
-   jobs:
-     test:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v3
-         - name: Setup Node.js
-           uses: actions/setup-node@v3
-           with:
-             node-version: '18'
-             cache: 'npm'
-         - run: npm ci
-         - run: npm run test
-         - run: npm run build
+// ... (19 lines truncated)
    ```
 
    **GitLab CI Example:**
@@ -59,16 +42,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    stages:
      - test
      - build
-     - deploy
-   
-   test:
-     stage: test
-     script:
-       - npm ci
-       - npm run test
-     cache:
-       paths:
-         - node_modules/
+// ... (11 lines truncated)
    ```
 
 5. **Environment Configuration**
@@ -88,15 +62,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    test:
      strategy:
        matrix:
-         node-version: [16, 18, 20]
-     runs-on: ubuntu-latest
-     steps:
-       - uses: actions/checkout@v3
-       - uses: actions/setup-node@v3
-         with:
-           node-version: ${{ matrix.node-version }}
-       - run: npm ci
-       - run: npm test
+// ... (10 lines truncated)
    ```
 
 7. **Code Quality Gates**
@@ -116,10 +82,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    - name: Cache node modules
      uses: actions/cache@v3
      with:
-       path: ~/.npm
-       key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-       restore-keys: |
-         ${{ runner.os }}-node-
+// ... (5 lines truncated)
    ```
 
 9. **Docker Integration**
@@ -133,14 +96,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    FROM node:18-alpine AS builder
    WORKDIR /app
    COPY package*.json ./
-   RUN npm ci --only=production
-   
-   FROM node:18-alpine AS runtime
-   WORKDIR /app
-   COPY --from=builder /app/node_modules ./node_modules
-   COPY . .
-   EXPOSE 3000
-   CMD ["npm", "start"]
+// ... (9 lines truncated)
    ```
 
 10. **Deployment Strategies**
@@ -172,11 +128,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    security:
      runs-on: ubuntu-latest
      steps:
-       - uses: actions/checkout@v3
-       - name: Run Snyk to check for vulnerabilities
-         uses: snyk/actions/node@master
-         env:
-           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+// ... (6 lines truncated)
    ```
 
 14. **Database Migration Handling**
@@ -202,21 +154,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
    deploy-staging:
      needs: test
      if: github.ref == 'refs/heads/develop'
-     runs-on: ubuntu-latest
-     steps:
-       - name: Deploy to staging
-         run: |
-           # Deploy to staging environment
-   
-   deploy-production:
-     needs: test
-     if: github.ref == 'refs/heads/main'
-     runs-on: ubuntu-latest
-     environment: production
-     steps:
-       - name: Deploy to production
-         run: |
-           # Deploy to production environment
+// ... (16 lines truncated)
    ```
 
 17. **Rollback and Recovery**
@@ -259,50 +197,7 @@ Follow this systematic approach to implement CI/CD: **$ARGUMENTS**
 name: Full CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test:coverage
-      - run: npm run build
-
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Security scan
-        run: npm audit --audit-level=high
-
-  deploy-staging:
-    needs: [lint-and-test, security-scan]
-    if: github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to staging
-        run: echo "Deploying to staging"
-
-  deploy-production:
-    needs: [lint-and-test, security-scan]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to production
-        run: echo "Deploying to production"
+// ... (45 lines truncated)
 ```
 
 Start with basic CI and gradually add more sophisticated features as your team and project mature.

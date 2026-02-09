@@ -6,9 +6,8 @@ tools:
   - grep
   - bash
 arguments: $QUERY
+description: "Run with custom parameters"
 ---
-
-# WFGY Formula All - Complete Reasoning Pipeline
 
 Apply all four WFGY formula modules (BBMC, BBPF, BBCR, BBAM) in sequence for comprehensive semantic reasoning.
 
@@ -125,7 +124,6 @@ Expected improvements over baseline:
 ## Advanced Options
 
 ```bash
-# Run with custom parameters
 /wfgy:formula-all "query" --paths 10 --gamma 0.5 --threshold 0.7
 
 # Run with verbose logging

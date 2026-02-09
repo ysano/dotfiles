@@ -1,6 +1,6 @@
-# Create PAC Ticket
-
-Create a new ticket within an epic following the Product as Code specification
+---
+description: "Create a new ticket within an epic following the Product as Code specification"
+---
 
 ## Instructions
 

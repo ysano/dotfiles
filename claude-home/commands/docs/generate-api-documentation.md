@@ -1,6 +1,6 @@
-# Generate API Documentation
-
-Auto-generate API reference documentation
+---
+description: "Auto-generate API reference documentation"
+---
 
 ## Instructions
 

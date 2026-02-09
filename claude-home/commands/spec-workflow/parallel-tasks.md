@@ -1,8 +1,7 @@
 ---
 allowed-tools: Task, TodoWrite, mcp__spec-workflow__spec-list, mcp__spec-workflow__manage-tasks, mcp__spec-workflow__spec-status, mcp__linear__list_issues, mcp__linear__list_projects, Bash, Read, LS, Grep, Glob
+description: "Example for spec-workflow"
 ---
-
-# Parallel Tasks Execution
 
 Deploy specialized AI agents to work on multiple tasks simultaneously while maintaining coordination and task tracking. This command can reduce development time by 60-80% through intelligent agent coordination and task parallelization.
 
@@ -44,7 +43,6 @@ Deploy specialized AI agents to work on multiple tasks simultaneously while main
 
 **Task Analysis:**
 ```bash
-# Example for spec-workflow
 1. Get task list with dependencies and file information
 2. Analyze task descriptions for type classification
 3. Identify file modification conflicts between tasks

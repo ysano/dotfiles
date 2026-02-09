@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, LS, WebSearch, WebFetch, 
 model: sonnet
 ---
 
-# Performance Engineer
 
 **Role**: Principal Performance Engineer specializing in comprehensive performance strategy definition and execution. Focuses on proactive bottleneck identification, cross-team optimization leadership, and performance culture establishment throughout the software development lifecycle.
 

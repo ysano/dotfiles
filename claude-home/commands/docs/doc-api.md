@@ -1,6 +1,6 @@
-# API Documentation Generator Command
-
-Generate API documentation from code
+---
+description: "Generate API documentation from code"
+---
 
 ## Instructions
 
@@ -223,5 +223,3 @@ public class UserController {
     }
 }
 ```
-
-Remember to keep documentation up-to-date with code changes and make it easily accessible to both internal teams and external consumers.

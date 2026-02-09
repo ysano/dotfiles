@@ -4,9 +4,8 @@ tools:
   - grep
   - bash
 arguments: $OPTIONS
+description: "View high-tension nodes only"
 ---
-
-# Semantic Tree Viewer
 
 Display the structure and contents of the active semantic tree, showing nodes, relationships, and reasoning patterns.
 
@@ -131,7 +130,6 @@ Suggested Next: Based on patterns...
 ## Advanced Filters
 
 ```bash
-# View high-tension nodes only
 /semantic:tree-view --tension 0.7 1.0
 
 # View BBPF explorations

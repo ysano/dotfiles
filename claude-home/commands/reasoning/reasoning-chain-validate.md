@@ -4,9 +4,8 @@ tools:
   - write
   - grep
   - bash
+description: "Validate specific chain segment"
 ---
-
-# Reasoning Chain Validation
 
 Validate the logical consistency and coherence of reasoning chains to ensure sound conclusions.
 
@@ -203,7 +202,6 @@ Risk of Fallacy: [Low/Medium/High]
 ## Advanced Options
 
 ```bash
-# Validate specific chain segment
 /reasoning:chain-validate --from "step3" --to "step7"
 
 # Strict validation mode

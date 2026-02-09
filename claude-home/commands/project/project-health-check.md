@@ -1,6 +1,6 @@
-# Project Health Check
-
-Analyze overall project health and metrics
+---
+description: "Analyze overall project health and metrics"
+---
 
 ## 実行手順
 
@@ -14,7 +14,6 @@ Analyze overall project health and metrics
 
 #### Code Health Metrics
 ```bash
-# Code churn analysis
 git log --format=format: --name-only --since="30 days ago" | sort | uniq -c | sort -rg
 
 # Contributor activity

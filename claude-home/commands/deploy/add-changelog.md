@@ -1,6 +1,6 @@
-# Add Changelog Command
-
-Generate and maintain project changelog
+---
+description: "Generate and maintain project changelog"
+---
 
 ## Instructions
 
@@ -76,5 +76,3 @@ Setup and maintain changelog following these steps: **$ARGUMENTS**
    - Include in release notes
    - Link to GitHub releases
    - Tag versions consistently
-
-Remember to keep entries clear, categorized, and focused on user-facing changes.

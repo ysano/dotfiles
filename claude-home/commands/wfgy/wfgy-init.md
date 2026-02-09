@@ -5,9 +5,8 @@ tools:
   - edit
   - bash
   - glob
+description: "Apply all formulas to complex reasoning"
 ---
-
-# WFGY System Initialization
 
 Initialize the complete WFGY (WanFaGuiYi) semantic reasoning system with all core mathematical modules for enhanced AI reasoning and memory.
 
@@ -73,7 +72,6 @@ The system will create:
 
 After initialization:
 ```bash
-# Apply all formulas to complex reasoning
 /wfgy:formula-all "Your complex reasoning task"
 
 # Build semantic memory nodes

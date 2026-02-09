@@ -5,9 +5,8 @@ tools:
   - edit
   - grep
 arguments: $TOPIC
+description: "Semantic Node Build"
 ---
-
-# Semantic Node Builder
 
 Create and record semantic nodes in the active WFGY tree to capture reasoning insights and maintain memory.
 

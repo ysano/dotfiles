@@ -1,6 +1,6 @@
-# Test Coverage Command
-
-Analyze and report test coverage
+---
+description: "Analyze and report test coverage"
+---
 
 ## Instructions
 
@@ -155,7 +155,6 @@ Follow this systematic approach to analyze and improve test coverage: **$ARGUMEN
 **Sample Coverage Commands:**
 
 ```bash
-# JavaScript with Jest
 npm test -- --coverage --coverage-reporters=html,text,lcov
 
 # Python with pytest
@@ -167,5 +166,3 @@ mvn clean test jacoco:report
 # .NET Core
 dotnet test --collect:"XPlat Code Coverage"
 ```
-
-Remember that 100% coverage is not always the goal - focus on meaningful coverage that actually improves code quality and catches bugs.

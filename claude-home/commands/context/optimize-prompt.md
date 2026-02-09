@@ -1,6 +1,6 @@
-# Optimize Prompt for Token Efficiency
-
-Takes an input prompt and returns ONLY a token-optimized version that preserves meaning while minimizing token count. Based on LLM tokenization principles: common words tokenize more efficiently, unusual words break into more tokens, and conciseness reduces cost.
+---
+description: "Takes an input prompt and returns ONLY a token-optimized version that preserves meaning while minimizing token count. Based on LLM tokenization principles: common words tokenize more efficiently, unusual words break into more tokens, and conciseness reduces cost."
+---
 
 **Output Format**: Return only the optimized prompt text with no additional commentary, analysis, or explanation.
 
@@ -129,3 +129,4 @@ Create commits and branches for release. Add model:inherit to agent frontmatter 
 - For creative writing, may want to preserve style over efficiency
 - Technical prompts often benefit most from optimization
 - Test optimized prompts to ensure they produce desired results
+
