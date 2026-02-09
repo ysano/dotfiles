@@ -1,34 +1,14 @@
 ---
-description: "Analyze directory structure and purpose"
+description: "Analyze directory structure and create CLAUDE.md documentation"
 ---
 
 ## Instructions
 
-1. **Target Directory**
-   - Focus on the specified directory `$ARGUMENTS` or the current working directory
+Analyze the specified directory: **$ARGUMENTS** (default: current working directory)
 
-2. **Investigate Architecture**
-   - Analyze the implementation principles and architecture of the code in this directory and its subdirectories
-   - Look for:
-     - Design patterns being used
-     - Dependencies and their purposes
-     - Key abstractions and interfaces
-     - Naming conventions and code organization
-
-3. **Create or Update Documentation**
-   - Create a CLAUDE.md file capturing this knowledge
-   - If one already exists, update it with newly discovered information
-   - Include:
-     - Purpose and responsibility of this module
-     - Key architectural decisions
-     - Important implementation details
-     - Common patterns used throughout the code
-     - Any gotchas or non-obvious behaviors
-
-4. **Ensure Proper Placement**
-   - Place the CLAUDE.md file in the directory being analyzed
-   - This ensures the context is loaded when working in that specific area
-
-## Credit
-
-This command is based on the work of Thomas Landgraf: https://thomaslandgraf.substack.com/p/claude-codes-memory-working-with
+1. **Structure** - ディレクトリ構成を調査し、各サブディレクトリ/ファイルの役割を特定
+2. **Architecture** - 設計パターン、依存関係、命名規約、主要な抽象化を分析
+3. **Document** - 分析結果を対象ディレクトリ内の CLAUDE.md に記録（既存の場合は更新）
+   - モジュールの目的と責任
+   - アーキテクチャ上の決定事項
+   - 重要な実装詳細と注意点

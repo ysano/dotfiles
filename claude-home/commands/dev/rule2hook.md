@@ -2,214 +2,52 @@
 description: "Convert natural language project rules into Claude Code hook configurations"
 ---
 
-**Attribution**: This command is based on the excellent work by zxdxjtu from the [claudecode-rule2hook](https://github.com/zxdxjtu/claudecode-rule2hook) repository. 
-Licensed under MIT License. Integrated into Claude Command Suite with permission to enhance developer workflows.
----
-
-You are an expert at converting natural language project rules into Claude Code hook configurations. Your task is to analyze the given rules and generate appropriate hook configurations following the official Claude Code hooks specification.
-
 ## Instructions
 
-1. If rules are provided as arguments, analyze those rules
-2. If no arguments are provided, read and analyze the CLAUDE.md file from these locations:
-   - `./CLAUDE.md` (project memory)
-   - `./CLAUDE.local.md` (local project memory)  
-   - `~/.claude/CLAUDE.md` (user memory)
+Convert rules into Claude Code hooks: **$ARGUMENTS**
 
-3. For each rule, determine:
-   - The appropriate hook event (PreToolUse, PostToolUse, Stop, Notification)
-   - The tool matcher pattern (exact tool names or regex)
-   - The command to execute
+引数がない場合は `./CLAUDE.md`, `./CLAUDE.local.md`, `~/.claude/CLAUDE.md` からルールを読み取る。
 
-4. Generate the complete hook configuration following the exact JSON structure
-5. Save it to `~/.claude/hooks.json` (merge with existing hooks if present)
-6. Provide a summary of what was configured
+### Hook Events
 
-## Hook Events
+| Event | Timing | Use Case |
+|-------|--------|----------|
+| **PreToolUse** | ツール実行前 | 検証、ブロック、セキュリティチェック |
+| **PostToolUse** | ツール実行後 | フォーマット、Lint、テスト実行 |
+| **Stop** | セッション終了時 | ステータス確認、クリーンアップ |
 
-### PreToolUse
-- **When**: Runs BEFORE a tool is executed
-- **Common Keywords**: "before", "check", "validate", "prevent", "scan", "verify"
-- **Available Tool Matchers**: 
-  - `Task` - Before launching agent tasks
-  - `Bash` - Before running shell commands
-  - `Glob` - Before file pattern matching
-  - `Grep` - Before content searching
-  - `Read` - Before reading files
-  - `Edit` - Before editing single files
-  - `MultiEdit` - Before batch editing files
-  - `Write` - Before writing/creating files
-  - `WebFetch` - Before fetching web content
-  - `WebSearch` - Before web searching
-  - `TodoRead` - Before reading todo list
-  - `TodoWrite` - Before updating todo list
-- **Special Feature**: Can block tool execution if command returns non-zero exit code
+### Matcher
 
-### PostToolUse
-- **When**: Runs AFTER a tool completes successfully
-- **Common Keywords**: "after", "following", "once done", "when finished"
-- **Available Tool Matchers**: Same as PreToolUse
-- **Common Uses**: Formatting, linting, building, testing after file changes
+- Exact: `"Edit"` / Multiple: `"Edit|MultiEdit|Write"` / Regex: `".*Edit"`
+- 省略時: 全ツールに適用
 
-### Stop
-- **When**: Runs when Claude Code finishes responding
-- **Common Keywords**: "finish", "complete", "end task", "done", "wrap up"
-- **No matcher needed**: Applies to all completions
-- **Common Uses**: Final status checks, summaries, cleanup
+### Conversion Process
 
-### Notification
-- **When**: Runs when Claude Code sends notifications
-- **Common Keywords**: "notify", "alert", "inform", "message"
-- **Special**: Rarely used for rule conversion
+各ルールについて:
+1. キーワードから適切な Event を判定（"before"→Pre, "after"→Post, "when done"→Stop）
+2. 対象ツールの matcher を決定
+3. 実行コマンドを生成
 
-## Hook Configuration Structure
-
-```json
-{
-  "hooks": {
-    "EventName": [
-      {
-        "matcher": "ToolName|AnotherTool|Pattern.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "your-command-here"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-## Matcher Patterns
-
-- **Exact match**: `"Edit"` - matches only Edit tool
-- **Multiple tools**: `"Edit|MultiEdit|Write"` - matches any of these
-- **Regex patterns**: `".*Edit"` - matches Edit and MultiEdit
-- **All tools**: Omit matcher field entirely
-
-## Examples with Analysis
-
-### Example 1: Python Formatting
-**Rule**: "Format Python files with black after editing"
-**Analysis**: 
-- Keyword "after" → PostToolUse
-- "editing" → Edit|MultiEdit|Write tools
-- "Python files" → command should target .py files
+### Output Format
 
 ```json
 {
   "hooks": {
     "PostToolUse": [{
       "matcher": "Edit|MultiEdit|Write",
-      "hooks": [{
-        "type": "command",
-        "command": "black . --quiet 2>/dev/null || true"
-      }]
+      "hooks": [{"type": "command", "command": "your-command-here"}]
     }]
   }
 }
 ```
 
-### Example 2: Git Status Check
-**Rule**: "Run git status when finishing a task"
-**Analysis**:
-- "finishing" → Stop event
-- No specific tool mentioned → no matcher needed
+### Examples
 
-```json
-{
-  "hooks": {
-    "Stop": [{
-      "hooks": [{
-        "type": "command",
-        "command": "git status"
-      }]
-    }]
-  }
-}
-```
+**"Format Python files after editing"** → PostToolUse + `"Edit|MultiEdit|Write"` + `black . --quiet 2>/dev/null || true`
 
-### Example 3: Security Scan
-**Rule**: "Check for hardcoded secrets before saving any file"
-**Analysis**:
-- "before" → PreToolUse
-- "saving any file" → Write|Edit|MultiEdit
+**"Check for secrets before saving"** → PreToolUse + `"Write|Edit|MultiEdit"` + `git secrets --scan 2>/dev/null || echo 'OK'`
 
-```json
-{
-  "hooks": {
-    "PreToolUse": [{
-      "matcher": "Write|Edit|MultiEdit",
-      "hooks": [{
-        "type": "command",
-        "command": "git secrets --scan 2>/dev/null || echo 'No secrets found'"
-      }]
-    }]
-  }
-}
-```
+### Output
 
-### Example 4: Test Runner
-**Rule**: "Run npm test after modifying files in tests/ directory"
-**Analysis**:
-- "after modifying" → PostToolUse
-- "files" → Edit|MultiEdit|Write
-- Note: Path filtering happens in the command, not the matcher
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [{
-      "matcher": "Edit|MultiEdit|Write",
-      "hooks": [{
-        "type": "command",
-        "command": "npm test 2>/dev/null || echo 'Tests need attention'"
-      }]
-    }]
-  }
-}
-```
-
-### Example 5: Command Logging
-**Rule**: "Log all bash commands before execution"
-**Analysis**:
-- "before execution" → PreToolUse
-- "bash commands" → Bash tool specifically
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [{
-      "matcher": "Bash",
-      "hooks": [{
-        "type": "command",
-        "command": "echo \"[$(date)] Executing bash command\" >> ~/.claude/command.log"
-      }]
-    }]
-  }
-}
-```
-
-## Common Rule Patterns
-
-- "Format [language] files after editing" → PostToolUse + Edit|MultiEdit|Write
-- "Run [command] before committing" → PreToolUse + Bash (when git commit detected)
-- "Check for [pattern] before saving" → PreToolUse + Write|Edit|MultiEdit
-- "Execute [command] when done" → Stop event
-- "Validate [something] before running commands" → PreToolUse + Bash
-- "Clear cache after modifying config" → PostToolUse + Edit|MultiEdit|Write
-- "Notify when [condition]" → Usually PostToolUse with specific matcher
-
-## Important Notes
-
-1. Always merge with existing hooks - don't overwrite
-2. Test commands work before adding to hooks
-3. Consider performance impact of hooks
-4. Use specific matchers when possible to avoid unnecessary executions
-5. Commands run with full user permissions - be careful with destructive operations
-
-## User Input
-$ARGUMENTS
-
+- 既存の `~/.claude/hooks.json` とマージ（上書きしない）
+- 生成した設定のサマリーを報告

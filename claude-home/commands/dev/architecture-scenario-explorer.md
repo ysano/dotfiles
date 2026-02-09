@@ -1,190 +1,45 @@
 ---
-description: "Explore architectural decisions through systematic scenario analysis with trade-off evaluation and future-proofing assessment."
+description: "Explore architectural decisions through systematic scenario analysis with trade-off evaluation"
 ---
 
 ## Instructions
 
-You are tasked with systematically exploring architectural decisions through comprehensive scenario modeling to optimize system design choices. Follow this approach: **$ARGUMENTS**
+Systematically evaluate architectural options for: **$ARGUMENTS**
 
-### 1. Prerequisites Assessment
+Think harder about this analysis.
 
-**Critical Architecture Context Validation:**
+### 1. Context Gathering
 
-- **System Scope**: What system or component architecture are you designing?
-- **Scale Requirements**: What are the expected usage patterns and growth projections?
-- **Constraints**: What technical, business, or resource constraints apply?
-- **Timeline**: What is the implementation timeline and evolution roadmap?
-- **Success Criteria**: How will you measure architectural success?
+- **System Scope**: 対象システム/コンポーネントを特定
+- **Constraints**: 技術的・ビジネス・リソース制約を確認
+- **Success Criteria**: 何をもって成功とするかを定義
 
-**If context is unclear, guide systematically:**
-
-```
-Missing System Scope:
-"What specific system architecture needs exploration?
-- New System Design: Greenfield application or service architecture
-// ... (15 lines truncated)
-```
+不明な点があればユーザーに質問してから進める。
 
 ### 2. Architecture Option Generation
 
-**Systematically identify architectural approaches:**
+最低3つの異なるアーキテクチャアプローチを特定し、各オプションについて:
+- 構造特性（コンポーネント構成、通信パターン）
+- 品質属性（パフォーマンス、スケーラビリティ、保守性）
+- 実装コスト・複雑度
 
-#### Architecture Pattern Matrix
-```
-Architectural Approach Framework:
+### 3. Scenario-Based Evaluation
 
-Monolithic Patterns:
-// ... (23 lines truncated)
-```
+各アーキテクチャを以下のシナリオで検証:
+- **負荷シナリオ**: 通常/ピーク/障害時の挙動
+- **進化シナリオ**: 要件変更・技術変化への適応性
+- **コストシナリオ**: インフラ・運用・開発コスト推移
 
-#### Architecture Variation Specification
-```
-For each architectural option:
+### 4. Trade-off Analysis
 
-Structural Characteristics:
-// ... (17 lines truncated)
-```
+品質属性間のトレードオフをマトリックスで可視化:
+- 各属性のビジネス優先度に基づく重み付け
+- Pareto フロンティアの特定
 
-### 3. Scenario Framework Development
+### 5. Recommendation
 
-**Create comprehensive architectural testing scenarios:**
-
-#### Usage Scenario Matrix
-```
-Multi-Dimensional Scenario Framework:
-
-Load Scenarios:
-// ... (23 lines truncated)
-```
-
-#### Scenario Impact Modeling
-- Performance impact under each scenario type
-- Cost implications for infrastructure and operations
-- Development velocity and team productivity effects
-- Risk assessment and mitigation requirements
-
-### 4. Trade-off Analysis Framework
-
-**Systematic evaluation of architectural trade-offs:**
-
-#### Quality Attribute Trade-off Matrix
-```
-Architecture Quality Assessment:
-
-Performance Trade-offs:
-// ... (23 lines truncated)
-```
-
-#### Decision Matrix Construction
-- Weight assignment for different quality attributes based on business priorities
-- Scoring methodology for each architecture option across quality dimensions
-- Sensitivity analysis for weight and score variations
-- Pareto frontier identification for non-dominated solutions
-
-### 5. Future-Proofing Assessment
-
-**Evaluate architectural adaptability and evolution potential:**
-
-#### Technology Evolution Scenarios
-```
-Future-Proofing Analysis Framework:
-
-Technology Trend Integration:
-// ... (17 lines truncated)
-```
-
-#### Adaptability Scoring
-- Architecture flexibility for requirement changes
-- Technology migration feasibility and cost
-- Team skill evolution and learning curve management
-- Investment protection and technical debt management
-
-### 6. Architecture Simulation Engine
-
-**Model architectural behavior under different scenarios:**
-
-#### Performance Simulation Framework
-```
-Multi-Layer Architecture Simulation:
-
-Component-Level Simulation:
-// ... (23 lines truncated)
-```
-
-#### Cost Modeling Integration
-- Infrastructure cost estimation across different scenarios
-- Development and operational cost projection
-- Total cost of ownership analysis over multi-year timeline
-- Cost optimization opportunities and trade-off analysis
-
-### 7. Risk Assessment and Mitigation
-
-**Comprehensive architectural risk evaluation:**
-
-#### Technical Risk Framework
-```
-Architecture Risk Assessment:
-
-Implementation Risks:
-// ... (17 lines truncated)
-```
-
-#### Risk Mitigation Strategy Development
-- Specific mitigation approaches for identified risks
-- Contingency planning and alternative architecture options
-- Early warning indicators and monitoring strategies
-- Risk acceptance criteria and stakeholder communication
-
-### 8. Decision Framework and Recommendations
-
-**Generate systematic architectural guidance:**
-
-#### Architecture Decision Record (ADR) Format
-```
-## Architecture Decision: [System Name] - [Decision Topic]
-
-### Context and Problem Statement
-// ... (38 lines truncated)
-```
-
-### 9. Continuous Architecture Evolution
-
-**Establish ongoing architectural assessment and improvement:**
-
-#### Architecture Health Monitoring
-- Performance metric tracking against architectural predictions
-- Technical debt accumulation and remediation planning
-- Team productivity and development velocity measurement
-- User satisfaction and business outcome correlation
-
-#### Evolutionary Architecture Practices
-- Regular architecture review and fitness function evaluation
-- Incremental improvement identification and implementation
-- Technology trend assessment and adoption planning
-- Cross-team architecture knowledge sharing and standardization
-
-## Usage Examples
-
-```bash
-/dev:architecture-scenario-explorer Evaluate monolith to microservices migration for e-commerce platform with 1M+ users
-
-# New system architecture design
-// ... (8 lines truncated)
-```
-
-## Quality Indicators
-
-- **Green**: Multiple architectures analyzed, comprehensive scenarios tested, validated trade-offs
-- **Yellow**: Some architectural options considered, basic scenario coverage, estimated trade-offs
-- **Red**: Single architecture focus, limited scenario analysis, unvalidated assumptions
-
-## Common Pitfalls to Avoid
-
-- Architecture astronauting: Over-engineering for theoretical rather than real requirements
-- Cargo cult architecture: Copying successful patterns without understanding context
-- Technology bias: Choosing architecture based on technology preferences rather than requirements
-- Premature optimization: Solving performance problems that don't exist yet
-- Scalability obsession: Over-optimizing for scale that may never materialize
-- Evolution blindness: Not planning for architectural change and growth
-
-Transform architectural decisions from opinion-based debates into systematic, evidence-driven choices through comprehensive scenario exploration and trade-off analysis.
+ADR (Architecture Decision Record) 形式で出力:
+- **Context**: 問題の背景
+- **Decision**: 推奨アプローチと根拠
+- **Consequences**: 受け入れるトレードオフ
+- **Alternatives**: 却下した候補とその理由

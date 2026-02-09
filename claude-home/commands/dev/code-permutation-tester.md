@@ -1,172 +1,40 @@
 ---
-description: "Test multiple code variations through simulation before implementation with quality gates and performance prediction."
+description: "Test multiple code implementation approaches through systematic comparison before committing to one"
 ---
 
 ## Instructions
 
-You are tasked with systematically testing multiple code implementation approaches through simulation to optimize decisions before actual development. Follow this approach: **$ARGUMENTS**
+Systematically compare implementation approaches for: **$ARGUMENTS**
 
-### 1. Prerequisites Assessment
+Think harder about this analysis.
 
-**Critical Code Context Validation:**
+### 1. Scope Definition
 
-- **Code Scope**: What specific code area/function/feature are you testing variations for?
-- **Variation Types**: What different approaches are you considering?
-- **Quality Criteria**: How will you evaluate which variation is best?
-- **Constraints**: What technical, performance, or resource constraints apply?
-- **Decision Timeline**: When do you need to choose an implementation approach?
+- 対象のコード領域/機能を特定
+- 評価基準を明確化（パフォーマンス、可読性、保守性、メモリ使用量等）
+- 制約条件を確認
 
-**If context is unclear, guide systematically:**
+### 2. Variation Generation
 
-```
-Missing Code Scope:
-"What specific code area needs permutation testing?
-- Algorithm Implementation: Different algorithmic approaches for the same problem
-// ... (15 lines truncated)
-```
+最低3つの異なる実装アプローチを設計:
+- 各アプローチの核心的な違いを明示
+- コード例（実行可能な最小単位）を提示
 
-### 2. Code Variation Generation
+### 3. Quality Gate Evaluation
 
-**Systematically identify and structure implementation alternatives:**
+各アプローチを以下の観点で評価:
+- **パフォーマンス**: 時間/空間計算量、ベンチマーク予測
+- **保守性**: コード複雑度、テスタビリティ
+- **リスク**: エッジケース、障害モード
 
-#### Implementation Approach Matrix
-```
-Code Variation Framework:
+### 4. Comparison Matrix
 
-Algorithmic Variations:
-// ... (23 lines truncated)
-```
+| 観点 | Approach A | Approach B | Approach C |
+|------|-----------|-----------|-----------|
+| パフォーマンス | ... | ... | ... |
+| 保守性 | ... | ... | ... |
+| リスク | ... | ... | ... |
 
-#### Variation Specification Framework
-```
-For each code variation:
+### 5. Recommendation
 
-Implementation Details:
-// ... (17 lines truncated)
-```
-
-### 3. Simulation Framework Design
-
-**Create testing environment for code variations:**
-
-#### Code Simulation Methodology
-```
-Multi-Dimensional Testing Approach:
-
-Performance Simulation:
-// ... (23 lines truncated)
-```
-
-#### Testing Environment Setup
-- Isolated testing environments for each variation
-- Consistent data sets and test scenarios across variations
-- Automated testing pipeline and result collection
-- Realistic production environment simulation
-
-### 4. Quality Gate Framework
-
-**Establish systematic evaluation criteria:**
-
-#### Multi-Criteria Evaluation Matrix
-```
-Code Quality Assessment Framework:
-
-Performance Gates (25% weight):
-// ... (25 lines truncated)
-```
-
-#### Threshold Management
-- Minimum acceptable scores for each quality dimension
-- Trade-off analysis for competing quality attributes
-- Conditional gates based on specific use case requirements
-- Risk-adjusted thresholds for different implementation approaches
-
-### 5. Predictive Performance Modeling
-
-**Forecast real-world behavior before implementation:**
-
-#### Performance Prediction Framework
-```
-Multi-Layer Performance Modeling:
-
-Micro-Benchmarks:
-// ... (23 lines truncated)
-```
-
-#### Confidence Interval Calculation
-- Statistical analysis of performance variation across test runs
-- Confidence levels for performance predictions under different conditions
-- Sensitivity analysis for key performance parameters
-- Risk assessment for performance-related business impacts
-
-### 6. Risk and Trade-off Analysis
-
-**Systematic evaluation of implementation choices:**
-
-#### Technical Risk Assessment
-```
-Risk Evaluation Framework:
-
-Implementation Risks:
-// ... (17 lines truncated)
-```
-
-#### Trade-off Optimization
-- Pareto frontier analysis for competing objectives
-- Multi-objective optimization for quality attributes
-- Scenario-based trade-off evaluation
-- Stakeholder preference weighting and consensus building
-
-### 7. Decision Matrix and Recommendations
-
-**Generate systematic implementation guidance:**
-
-#### Code Variation Evaluation Summary
-```
-## Code Permutation Analysis: [Feature/Module Name]
-
-### Variation Comparison Matrix
-// ... (35 lines truncated)
-```
-
-### 8. Continuous Learning Integration
-
-**Establish feedback loops for approach refinement:**
-
-#### Implementation Validation
-- Real-world performance comparison to simulation predictions
-- Developer experience and productivity measurement
-- User feedback and satisfaction assessment
-- Business outcome tracking and success evaluation
-
-#### Knowledge Capture
-- Decision rationale documentation and lessons learned
-- Best practice identification and pattern library development
-- Anti-pattern recognition and avoidance strategies
-- Team capability building and expertise development
-
-## Usage Examples
-
-```bash
-/dev:code-permutation-tester Test 5 different sorting algorithms for large dataset processing with memory and speed constraints
-
-# Architecture pattern evaluation
-// ... (8 lines truncated)
-```
-
-## Quality Indicators
-
-- **Green**: Multiple variations tested, comprehensive quality gates, validated performance predictions
-- **Yellow**: Some variations tested, basic quality assessment, estimated performance  
-- **Red**: Single approach, minimal testing, unvalidated assumptions
-
-## Common Pitfalls to Avoid
-
-- Premature optimization: Over-engineering for theoretical rather than real requirements
-- Analysis paralysis: Testing too many variations without making decisions
-- Context ignorance: Not considering real-world constraints and team capabilities
-- Quality tunnel vision: Optimizing for single dimension while ignoring others
-- Simulation disconnect: Testing scenarios that don't match production reality
-- Decision delay: Not acting on simulation results in timely manner
-
-Transform code implementation from guesswork into systematic, evidence-based decision making through comprehensive variation testing and simulation.
+推奨アプローチとその根拠を提示。トレードオフを明示し、どの条件で別のアプローチが有利になるかも記載。
