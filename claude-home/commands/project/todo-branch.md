@@ -5,152 +5,82 @@ description: "Structured workflow to transform vague todos into implemented feat
 ## Workflow
 
 **CRITICAL**
-- You MUST follow workflow phases in order: INIT → SELECT → REFINE → IMPLEMENT → COMMIT
-- You MUST get user confirmation or input at each STOP
-- You MUST iterate on refinement STOPs until user confirms
-- You MUST NOT mention yourself in commit messages or add yourself as a commiter
-- You MUST consult with the user in case of unexpected errors
-- You MUST not forget to stage files you added/deleted/modified in the IMPLEMENT phase
+- フェーズ順序を厳守: INIT → SELECT → REFINE → IMPLEMENT → COMMIT
+- 各 STOP でユーザー確認を取得
+- REFINE の STOP はユーザーが承認するまで繰り返す
+- コミットメッセージに自分自身への言及を含めない
+- 予期しないエラーはユーザーに相談
+- IMPLEMENT で追加/削除/変更したファイルのステージを忘れない
 
 ### INIT
-1. Read `todos/project-description.md` in full
-   - If missing:
-      - Use parallel Task agents to analyze codebase:
-         - Identify purpose, features
-         - Identify languages, frameworks, tools (build, dependency management, test, etc.)
-         - Identify components and architecture
-         - Extract commands from build scripts (package.json, CMakeLists.txt, etc.)
-         - Map structure, key files, and entry points
-         - Identify test setup and how to create new tests
-      - Present proposed project description using template below
-         ```markdown
-         # Project: [Name]
-         [Concise description]
 
-         ## Features
-         [List of key features and purpose]
+1. `todos/project-description.md` を読む
+   - 存在しない場合:
+     - 並列 Task エージェントでコードベースを分析（目的、技術スタック、構造、コマンド、テスト設定）
+     - 以下のテンプレートで提案:
+       ```markdown
+       # Project: [Name]
+       [Concise description]
+       ## Features / ## Tech Stack / ## Structure / ## Architecture / ## Commands / ## Testing
+       ```
+     - STOP → "修正はありますか？ (y/n)"
+     - 承認後 `todos/project-description.md` に書き出し
 
-         ## Tech Stack
-         [Languages, frameworks, build tools, etc.]
-
-         ## Structure
-         [Key directories, entry points, important files]
-
-         ## Architecture
-         [How components interact, main modules]
-
-         ## Commands
-         - Build: [command]
-         - Test: [command]
-         - Lint: [command]
-         - Dev/Run: [command if applicable]
-
-         ## Testing
-         [How to create and run tests]
-         ```
-      - STOP → Any corrections needed? (y/n)"
-      - Write confirmed content to `todos/project-description.md`
-
-2. Check for orphaned tasks: `mkdir -p todos/work todos/done && orphaned_count=0 && for d in todos/work/*/task.md; do [ -f "$d" ] || continue; pid=$(grep "^**Agent PID:" "$d" | cut -d' ' -f3); [ -n "$pid" ] && ps -p "$pid" >/dev/null 2>&1 && continue; orphaned_count=$((orphaned_count + 1)); task_name=$(basename $(dirname "$d")); task_title=$(head -1 "$d" | sed 's/^# //'); echo "$orphaned_count. $task_name: $task_title"; done`
-   - If orphaned tasks exist:
-      - Present numbered list of orphaned tasks
-      - STOP → "Resume orphaned task? (number or title/ignore)"
-      - If resume:
-         - Get task folder from numbered list
-         - Read task.md and analyis.md from selected task in full
-         - Update `**Agent PID:** [Bash(echo $PPID)]` in task.md
-         - If Status is "Refining": Continue to REFINE
-         - If Status is "InProgress": Continue to IMPLEMENT
-         - If Status is "AwaitingCommit": Continue to COMMIT
-      - If ignore: Continue to SELECT
+2. 孤立タスクをチェック:
+   ```bash
+   mkdir -p todos/work todos/done && orphaned_count=0 && for d in todos/work/*/task.md; do [ -f "$d" ] || continue; pid=$(grep "^**Agent PID:" "$d" | cut -d' ' -f3); [ -n "$pid" ] && ps -p "$pid" >/dev/null 2>&1 && continue; orphaned_count=$((orphaned_count + 1)); task_name=$(basename $(dirname "$d")); task_title=$(head -1 "$d" | sed 's/^# //'); echo "$orphaned_count. $task_name: $task_title"; done
+   ```
+   - 孤立タスクがあれば一覧表示 → STOP → "再開しますか？ (番号/ignore)"
+   - 再開: task.md と analysis.md を読み、PID を更新、Status に応じたフェーズへ
+   - 無視: SELECT へ
 
 ### SELECT
-1. Read `todos/todos.md` in full
-2. Present numbered list of todos with one line summaries
-3. STOP → "Which todo would you like to work on? (enter number)"
-4. Create ONE task folder with proper timestamp:
-   - First get timestamp: `TIMESTAMP=$(date +%Y%m%d-%H%M%S)`
-   - Create slug from task title (lowercase, replace spaces with hyphens)
-   - Create folder: `mkdir -p "todos/work/${TIMESTAMP}-[task-title-slug]"`
-   - Store folder path in variable: `TASK_DIR="todos/work/${TIMESTAMP}-[task-title-slug]"`
-   - **IMPORTANT**: Use this same `$TASK_DIR` variable throughout the workflow
-5. Initialize `${TASK_DIR}/task.md` from template:
+
+1. `todos/todos.md` を読み、番号付き一覧を表示
+2. STOP → "どの todo に取り組みますか？ (番号)"
+3. タスクフォルダ作成: `TASK_DIR="todos/work/$(date +%Y%m%d-%H%M%S)-[slug]"` → 以降このパスを使用
+4. `${TASK_DIR}/task.md` を初期化:
    ```markdown
    # [Task Title]
    **Status:** Refining
    **Agent PID:** [Bash(echo $PPID)]
-
-   ## Original Todo
-   [raw todo text from todos/todos.md]
-
-   ## Description
-   [what we're building]
-   
-   *Read [analysis.md](./analysis.md) in full for detailed codebase research and context*
-
-   ## Implementation Plan
-   [how we are building it]
-   - [ ] Code change with location(s) if applicable (src/file.ts:45-93)
-   - [ ] Automated test: ...
-   - [ ] User test: ...
-
-   ## Notes
-   [Implementation notes]
+   ## Original Todo / ## Description / ## Implementation Plan / ## Notes
    ```
-6. Remove selected todo from `todos/todos.md`
+5. 選択した todo を `todos/todos.md` から削除
 
 ### REFINE
-1. Research codebase with parallel Task agents:
-   - Where in codebase changes are needed for this todo
-   - What existing patterns/structures to follow
-   - Which files need modification
-   - What related features/code already exist
-2. Append analysis by agents verbatim to `${TASK_DIR}/analysis.md`
-3. Draft description → STOP → "Use this description? (y/n)"
-4. Draft implementation plan → STOP → "Use this implementation plan? (y/n)"
-5. Update `${TASK_DIR}/task.md` with fully refined content and set `**Status**: InProgress`
+
+1. 並列 Task エージェントでコードベースを調査（変更箇所、既存パターン、関連コード）
+2. 分析結果を `${TASK_DIR}/analysis.md` に記録
+3. 説明をドラフト → STOP → "この説明でよいですか？ (y/n)"
+4. 実装計画をドラフト → STOP → "この実装計画でよいですか？ (y/n)"
+5. `${TASK_DIR}/task.md` を更新、`**Status**: InProgress` に設定
 
 ### IMPLEMENT
-1. Execute the implementation plan checkbox by checkbox:
-   - **During this process, if you discover unforeseen work is needed, you MUST:**
-      - Pause and propose a new checkbox for the plan
-      - STOP → "Add this new checkbox to the plan? (y/n)"
-      - Add new checkbox to `${TASK_DIR}/task.md` before proceeding
-   - For the current checkbox:
-      - Make code changes
-      - Summarize changes
-      - STOP → "Approve these changes? (y/n)"
-      - Mark checkbox complete in `${TASK_DIR}/task.md`
-      - Stage progress: `git add -A`
-2. After all checkboxes are complete, run project validation (lint/test/build).
-    - If validation fails:
-      - Report full error(s)
-      - Propose one or more new checkboxes to fix the issue
-      - STOP → "Add these checkboxes to the plan? (y/n)"
-      - Add new checkbox(es) to implementation plan in `${TASK_DIR}/task.md`
-      - Go to step 1 of `IMPLEMENT`.
-3. Present user test steps → STOP → "Do all user tests pass? (y/n)"
-   - If no: Gather information from user on what failed and return to step 1 to fix issues
-4. Check if project description needs updating:
-   - If implementation changed structure, features, or commands:
-      - Present proposed updates to `todos/project-description.md`
-      - STOP → "Update project description as shown? (y/n)"
-      - If yes, update `todos/project-description.md`
-5. Set `**Status**: AwaitingCommit` in `${TASK_DIR}/task.md`
+
+1. 実装計画のチェックボックスを順に実行:
+   - 未予見の作業が必要な場合: 新しいチェックボックスを提案 → STOP → "追加しますか？ (y/n)"
+   - 各チェックボックスで: コード変更 → 変更サマリー → STOP → "承認しますか？ (y/n)" → 完了マーク → `git add -A`
+2. 全チェックボックス完了後、プロジェクト検証（lint/test/build）実行
+   - 失敗時: エラー報告 → 修正チェックボックスを提案 → STOP → ステップ1に戻る
+3. ユーザーテスト手順を提示 → STOP → "全テストパスしましたか？ (y/n)"
+   - No: 失敗内容を確認しステップ1に戻る
+4. 実装で構造/機能/コマンドが変わった場合、`todos/project-description.md` の更新を提案 → STOP
+5. `**Status**: AwaitingCommit` に設定
 
 ### COMMIT
-1. Present summary of what was done
-2. STOP → "Ready to commit all changes? (y/n)"
-3. Set `**Status**: Done` in `${TASK_DIR}/task.md`
-4. Move task and analysis to done:
-   - Get base name: `TASK_NAME=$(basename "${TASK_DIR}")`
-   - `mv "${TASK_DIR}/task.md" "todos/done/${TASK_NAME}.md"`
-   - `mv "${TASK_DIR}/analysis.md" "todos/done/${TASK_NAME}-analysis.md"`
-   - `rmdir "${TASK_DIR}"`
-5. Stage all changes: `git add -A`
-6. STOP → Show the commit message to the user "Use this commit message? (y/n)"
-   - - **CRITICAL** Do NOT mention yourself in the commit message or add yourself as a committer!
-6. **CRITICAL**: Create **ONE SINGLE COMMIT** that includes BOTH the implementation changes AND the todos/ folder changes: `git commit -m "[task-title]: [summary of changes]"`
-   - This commit must include: code changes + task management changes + todos.md updates
-   - Never make separate commits for code vs task management
-7. STOP → "Task complete! Continue with next todo? (y/n)"
+
+1. 完了サマリーを表示
+2. STOP → "コミットしますか？ (y/n)"
+3. `**Status**: Done` に設定
+4. タスクを done に移動:
+   ```bash
+   TASK_NAME=$(basename "${TASK_DIR}")
+   mv "${TASK_DIR}/task.md" "todos/done/${TASK_NAME}.md"
+   mv "${TASK_DIR}/analysis.md" "todos/done/${TASK_NAME}-analysis.md"
+   rmdir "${TASK_DIR}"
+   ```
+5. `git add -A`
+6. コミットメッセージを表示 → STOP → "このメッセージでよいですか？ (y/n)"
+7. **1つのコミット**で全変更（コード + タスク管理）をコミット: `git commit -m "[task-title]: [summary]"`
+8. STOP → "完了！次の todo に取り組みますか？ (y/n)"

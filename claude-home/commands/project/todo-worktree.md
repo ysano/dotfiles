@@ -1,159 +1,84 @@
 ---
-description: "Structured workflow to transform vague todos into implemented features using git worktrees and VS Code handoff. Supports task isolation, resumption, and clean commit history."
+description: "Structured workflow to transform vague todos into implemented features using git worktrees and VS Code handoff."
 ---
 
 ## Workflow
 
 **CRITICAL**
-- You MUST follow workflow phases in order: INIT → SELECT → REFINE → IMPLEMENT → COMMIT
-- You MUST get user confirmation or input at each STOP
-- You MUST iterate on refinement STOPs until user confirms
-- You MUST NOT mention yourself in commit messages or add yourself as a commiter
-- You MUST consult with the user in case of unexpected errors
-- You MUST not forget to commits files you added/deleted/modified in the IMPLEMENT phase
+- フェーズ順序を厳守: INIT → SELECT → REFINE → IMPLEMENT → COMMIT
+- 各 STOP でユーザー確認を取得
+- REFINE の STOP はユーザーが承認するまで繰り返す
+- コミットメッセージに自分自身への言及を含めない
+- 予期しないエラーはユーザーに相談
+- IMPLEMENT で追加/削除/変更したファイルのコミットを忘れない
 
 ### INIT
-1. Check for task resume: If `task.md` exists in current directory:
-     - Read `task.md` and `todos/project-description.md` in full in parallel
-     - Update `**Agent PID:** [Bash(echo $PPID)]` in task.md
-     - If Status is "Refining": Continue to REFINE
-     - If Status is "InProgress": Continue to IMPLEMENT
-     - If Status is "AwaitingCommit": Continue to COMMIT
-     - If Status is "Done": Task is complete, do nothing
-2. Add `/todos/worktrees/` to .gitignore: `rg -q "/todos/worktrees/" .gitignore || echo -e "\n/todos/worktrees/" >> .gitignore`
-3. Read `todos/project-description.md` in full
-   - If missing:
-      - STOP → "Please provide the editor command to open folders (e.g. 'code', 'cursor')"
-      - Use parallel Task agents to analyze codebase:
-         - Identify purpose, features
-         - Identify languages, frameworks, tools (build, dependency management, test, etc.)
-         - Identify components and architecture
-         - Extract commands from build scripts (package.json, CMakeLists.txt, etc.)
-         - Map structure, key files, and entry points
-         - Identify test setup and how to create new tests
-      - Present proposed project description using template below
-         ```markdown
-         # Project: [Name]
-         [Concise description]
 
-         ## Features
-         [List of key features and purpose]
+1. タスク再開チェック: カレントディレクトリに `task.md` が存在する場合:
+   - task.md と `todos/project-description.md` を並列で読み、PID を更新
+   - Status に応じたフェーズへ（Refining→REFINE, InProgress→IMPLEMENT, AwaitingCommit→COMMIT, Done→終了）
 
-         ## Tech Stack
-         [Languages, frameworks, build tools, etc.]
+2. `.gitignore` に `/todos/worktrees/` を追加: `rg -q "/todos/worktrees/" .gitignore || echo -e "\n/todos/worktrees/" >> .gitignore`
 
-         ## Structure
-         [Key directories, entry points, important files]
+3. `todos/project-description.md` を読む
+   - 存在しない場合:
+     - STOP → "エディタコマンドを教えてください（例: 'code', 'cursor'）"
+     - 並列 Task エージェントでコードベースを分析
+     - テンプレートで提案（Features / Tech Stack / Structure / Architecture / Commands / Testing / Editor）
+     - STOP → "修正はありますか？ (y/n)"
+     - 承認後書き出し
 
-         ## Architecture
-         [How components interact, main modules]
-
-         ## Commands
-         - Build: [command]
-         - Test: [command]
-         - Lint: [command]
-         - Dev/Run: [command if applicable]
-
-         ## Testing
-         [How to create and run tests]
-
-         ## Editor
-         - Open folder: [command]
-         ```
-      - STOP → Any corrections needed? (y/n)"
-      - Write confirmed content to `todos/project-description.md`
-
-4. Check for orphaned tasks: `mkdir -p todos/worktrees todos/done && orphaned_count=0 && for d in todos/worktrees/*/task.md; do [ -f "$d" ] || continue; pid=$(grep "^**Agent PID:" "$d" | cut -d' ' -f3); [ -n "$pid" ] && ps -p "$pid" >/dev/null 2>&1 && continue; orphaned_count=$((orphaned_count + 1)); task_name=$(basename $(dirname "$d")); task_title=$(head -1 "$d" | sed 's/^# //'); echo "$orphaned_count. $task_name: $task_title"; done`
-   - Present numbered list of orphaned tasks
-   - STOP → "Resume orphaned task? (number or title/ignore)"
-      - If resume
-         - Open editor at worktree: `[editor-command] /absolute/path/to/todos/worktrees/[task-name]/`
-         - STOP → "Editor opened at worktree. Run `claude "/todo"` in worktree"
-      - else go to SELECT
+4. 孤立タスクをチェック:
+   ```bash
+   mkdir -p todos/worktrees todos/done && orphaned_count=0 && for d in todos/worktrees/*/task.md; do [ -f "$d" ] || continue; pid=$(grep "^**Agent PID:" "$d" | cut -d' ' -f3); [ -n "$pid" ] && ps -p "$pid" >/dev/null 2>&1 && continue; orphaned_count=$((orphaned_count + 1)); task_name=$(basename $(dirname "$d")); task_title=$(head -1 "$d" | sed 's/^# //'); echo "$orphaned_count. $task_name: $task_title"; done
+   ```
+   - 一覧表示 → STOP → "再開しますか？ (番号/ignore)"
+   - 再開: エディタで worktree を開く → STOP → "worktree で `claude "/todo"` を実行してください"
+   - 無視: SELECT へ
 
 ### SELECT
-1. Read `todos/todos.md` in full
-2. Present numbered list of todos with one line summaries
-3. STOP → "Which todo would you like to work on? (enter number)"
-4. Remove selected todo from `todos/todos.md` and commit: `git commit -am "Remove todo: [task-title]"`
-5. Create git worktree with branch: `git worktree add -b [task-title-slug] todos/worktrees/$(date +%Y-%m-%d-%H-%M-%S)-[task-title-slug]/ HEAD`
-6. Change CWD to worktree: `cd todos/worktrees/[timestamp]-[task-title-slug]/`
-7. Initialize `task.md` from template in worktree root:
-   ```markdown
-   # [Task Title]
-   **Status:** Refining
-   **Agent PID:** [Bash(echo $PPID)]
 
-   ## Original Todo
-   [raw todo text from todos/todos.md]
-
-   ## Description
-   [what we're building]
-   
-   *Read [analysis.md](./analysis.md) in full for detailed codebase research and context*
-
-   ## Implementation Plan
-   [how we are building it]
-   - [ ] Code change with location(s) if applicable (src/file.ts:45-93)
-   - [ ] Automated test: ...
-   - [ ] User test: ...
-
-   ## Notes
-   [Implementation notes]
-   ```
-8. Commit and push initial task setup: `git add . && git commit -m "[task-title]: Initialization" && git push -u origin [task-title-slug]`
+1. `todos/todos.md` を読み、番号付き一覧を表示
+2. STOP → "どの todo に取り組みますか？ (番号)"
+3. 選択した todo を削除してコミット: `git commit -am "Remove todo: [task-title]"`
+4. Worktree 作成: `git worktree add -b [slug] todos/worktrees/$(date +%Y-%m-%d-%H-%M-%S)-[slug]/ HEAD`
+5. CWD を worktree に変更
+6. `task.md` を初期化（Status: Refining, Agent PID, Original Todo, Description, Implementation Plan, Notes）
+7. コミット＆プッシュ: `git add . && git commit -m "[task-title]: Initialization" && git push -u origin [slug]`
 
 ### REFINE
-1. Research codebase with parallel Task agents:
-   - Where in codebase changes are needed for this todo
-   - What existing patterns/structures to follow
-   - Which files need modification
-   - What related features/code already exist
-2. Append analysis by agents verbatim to `analysis.md`
-3. Draft description → STOP → "Use this description? (y/n)"
-4. Draft implementation plan → STOP → "Use this implementation plan? (y/n)"
-5. Update `task.md` with fully refined content and set `**Status**: InProgress`
-6. Commit refined plan: `git add -A && git commit -m "[task-title]: Refined plan"`
-7. Open editor at worktree: `[editor-command] /absolute/path/to/todos/worktrees/[timestamp]-[task-title-slug]/`
-8. STOP → "Editor opened at worktree. Run `claude "/todo"` in worktree to start implementation"
+
+1. 並列 Task エージェントでコードベースを調査
+2. 分析結果を `analysis.md` に記録
+3. 説明をドラフト → STOP → "この説明でよいですか？ (y/n)"
+4. 実装計画をドラフト → STOP → "この実装計画でよいですか？ (y/n)"
+5. task.md を更新、`**Status**: InProgress`
+6. コミット: `git add -A && git commit -m "[task-title]: Refined plan"`
+7. エディタで worktree を開く → STOP → "worktree で `claude "/todo"` を実行して実装を開始してください"
 
 ### IMPLEMENT
-1. Execute the implementation plan checkbox by checkbox:
-   - **During this process, if you discover unforeseen work is needed, you MUST:**
-      - Pause and propose a new checkbox for the plan
-      - STOP → "Add this new checkbox to the plan? (y/n)"
-      - Add new checkbox to `task.md` before proceeding
-   - For the current checkbox:
-      - Make code changes
-      - Summarize changes
-      - STOP → "Approve these changes? (y/n)"
-      - Mark checkbox complete in `task.md`
-      - Commit progress, including added/modified/deleted files: `git add -A && git commit -m "[text of checkbox]"`
-2. After all checkboxes are complete, run project validation (lint/test/build).
-    - If validation fails:
-      - Report full error(s)
-      - Propose one or more new checkboxes to fix the issue
-      - STOP → "Add these checkboxes to the plan? (y/n)"
-      - Add new checkbox(es) to implementation plan in `task.md`
-      - Go to step 1 of `IMPLEMENT`.
-3. Present user test steps → STOP → "Do all user tests pass? (y/n)"
-4. Check if project description needs updating:
-   - If implementation changed structure, features, or commands:
-      - Present proposed updates to `todos/project-description.md`
-      - STOP → "Update project description as shown? (y/n)"
-      - If yes, update `todos/project-description.md`
-5. Set `**Status**: AwaitingCommit` in `task.md`
-6. Commit: `git add -A && git commit -m "Complete implementation"`
+
+1. 実装計画のチェックボックスを順に実行:
+   - 未予見の作業: 新チェックボックスを提案 → STOP → task.md に追加
+   - 各チェックボックス: コード変更 → サマリー → STOP → "承認しますか？" → 完了マーク → `git add -A && git commit -m "[checkbox text]"`
+2. 全完了後、プロジェクト検証（lint/test/build）
+   - 失敗: エラー報告 → 修正チェックボックス提案 → STOP → ステップ1に戻る
+3. ユーザーテスト → STOP → "全テストパスしましたか？ (y/n)"
+4. project-description.md の更新が必要か確認 → STOP
+5. `**Status**: AwaitingCommit`、コミット: `git add -A && git commit -m "Complete implementation"`
 
 ### COMMIT
-1. Present summary of what was done
-2. STOP → "Ready to create PR? (y/n)"
-3. Set `**Status**: Done` in `task.md`
-4. Move task and analysis to done with git tracking:
-   - `git mv task.md todos/done/[timestamp]-[task-title-slug].md`
-   - `git mv analysis.md todos/done/[timestamp]-[task-title-slug]-analysis.md`
-5. Commit all changes: `git add -A && git commit -m "Complete"`
-6. Push branch to remote and create pull request using GitHub CLI
-7. STOP → "PR created. Delete the worktree? (y/n)"
-   - If yes: `git -C "$(git rev-parse --show-toplevel)" worktree remove todos/worktrees/[timestamp]-[task-title-slug]`
-   - Note: If Claude was spawned in the worktree, the working directory will become invalid after removal
+
+1. 完了サマリーを表示
+2. STOP → "PR を作成しますか？ (y/n)"
+3. `**Status**: Done`
+4. タスクを done に移動:
+   ```bash
+   git mv task.md todos/done/[timestamp]-[slug].md
+   git mv analysis.md todos/done/[timestamp]-[slug]-analysis.md
+   ```
+5. コミット: `git add -A && git commit -m "Complete"`
+6. リモートにプッシュし、GitHub CLI で PR を作成
+7. STOP → "worktree を削除しますか？ (y/n)"
+   - Yes: `git -C "$(git rev-parse --show-toplevel)" worktree remove todos/worktrees/[timestamp]-[slug]`
+   - 注意: worktree 内で Claude を起動した場合、削除後に CWD が無効になる
