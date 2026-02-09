@@ -56,6 +56,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-learning-capture.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

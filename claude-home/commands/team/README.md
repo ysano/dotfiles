@@ -1,17 +1,27 @@
 # Team Commands
 
-This namespace contains commands for team collaboration, project management, and workflow optimization. These commands help improve team productivity and communication.
+Commands for team collaboration, project management, and workflow optimization.
 
 ## Available Commands
 
-- **architecture-review.md** - Conduct architecture reviews and provide recommendations
-- **dependency-mapper.md** - Map and visualize project dependencies
-- **estimate-assistant.md** - Assist with task estimation and capacity planning
-- **issue-triage.md** - Triage and prioritize issues effectively
-- **memory-spring-cleaning.md** - Clean up and organize project knowledge and documentation
-- **migration-assistant.md** - Assist with code and infrastructure migrations
-- **retrospective-analyzer.md** - Analyze sprint retrospectives and identify patterns
-- **session-learning-capture.md** - Capture and document learning from development sessions
-- **sprint-planning.md** - Facilitate sprint planning and task breakdown
-- **standup-report.md** - Generate standup reports and progress summaries
-- **team-workload-balancer.md** - Balance workload across team members
+| Command | Description | Notes |
+|---------|-------------|-------|
+| `architecture-review` | Review and improve system architecture | |
+| `decision-quality-analyzer` | Analyze decision quality with bias detection and scenario testing | |
+| `dependency-mapper` | Map and visualize project dependencies | |
+| `estimate-assistant` | Generate data-backed project time estimates | |
+| `github-issue-automation` | Automate GitHub Issue creation, triage, and lifecycle | Delegates to `github-project-ticket` agent |
+| `github-project-manager` | Manage sprints and milestones via GitHub Projects V2 | Delegates to `github-project-board` agent |
+| `github-workflow-automation` | Automate workflows with GitHub Actions and Project automation | |
+| `issue-triage` | Triage and prioritize issues effectively | |
+| `memory-spring-cleaning` | Clean and organize project memory files | |
+| `migration-assistant` | Plan and execute system migrations | |
+| `retrospective-analyzer` | Analyze sprint retrospectives for insights | |
+| `sprint-planning` | Plan and organize sprint workflows | |
+| `standup-report` | Generate daily standup reports from git and project data | |
+| `team-workload-balancer` | Balance team workload distribution | |
+
+## Related
+
+- `session-learning-capture` is now a **Stop hook** in `hooks/session-learning-capture.sh` (auto-triggers on session end)
+- Agent delegates use `github-projects-v2` and `ticket-management` skills for platform knowledge

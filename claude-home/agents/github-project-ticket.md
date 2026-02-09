@@ -1,6 +1,6 @@
 ---
 name: github-project-ticket
-description: GitHub Issue の操作・分析。チケット CRUD、ラベル・アサイン管理、バックログ分析に使用。
+description: GitHub Issue の CRUD・トリアージ・バックログ分析・自動化テンプレート設計。チケットライフサイクル全体を管理。
 color: green
 tools: Bash, Read, Write, Grep, Glob
 model: sonnet
@@ -33,7 +33,7 @@ gh project field-list PROJECT_NUMBER --owner OWNER --format json
 ### 作成
 ```bash
 gh issue list --search "TITLE" --state open --json number,title
-gh issue create --title "..." --body "..." --label "bug,priority:high" --assignee "@me" --project "PROJECT_NAME"
+gh issue create --title "..." --body "..." --label "bug,priority:high" --assignee "$(gh api user -q .login)" --project "PROJECT_NAME"
 ```
 
 ### 更新
@@ -47,7 +47,7 @@ gh project item-edit --project-id PROJECT_ID --id ITEM_ID --field-id FIELD_ID --
 ### 検索・フィルタ
 ```bash
 # CLI フィルタ（--limit でページネーション制御、デフォルト30件）
-gh issue list --label "bug" --state open --assignee "@me" --limit 200 --json number,title,labels,assignees,createdAt
+gh issue list --label "bug" --state open --assignee "$(gh api user -q .login)" --limit 200 --json number,title,labels,assignees,createdAt
 
 # GraphQL で高度な検索（例: 長期未更新の Issue）
 gh api graphql -f query='
@@ -88,6 +88,30 @@ gh issue reopen NUMBER
 ### レポート出力
 分析結果は Markdown テーブルで構造化し、アクションアイテムを付記する。
 </analysis>
+
+<automation>
+## 自動化・テンプレート
+
+### Issue テンプレート管理
+- `.github/ISSUE_TEMPLATE/` にバグレポート・機能リクエスト・カスタムテンプレートを作成
+- `.github/labeler.yml` で自動ラベリングルールを設定
+- ラベル/パスベースのアサインルーティングを設定
+
+### PR-Issue 連携
+- PR が `Closes #N` / `Fixes #N` で Issue を参照するよう確認
+- PR マージ時の自動クローズ設定（GitHub Actions）
+- PR イベントでのステータス自動更新
+
+### CI/CD Issue 統合
+- ビルド失敗時のバグ Issue 自動作成
+- セキュリティスキャン結果からの Issue 作成
+- 依存関係更新失敗の追跡
+
+### ワークフロー自動化（GitHub Actions）
+- Stale issue の自動クリーンアップ
+- コンテンツ分析による自動トリアージ
+- マイルストーン期限での SLA 追跡
+</automation>
 
 <guidelines>
 ## 実行ガイドライン
