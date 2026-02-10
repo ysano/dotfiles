@@ -71,6 +71,50 @@
 
 後からロードされた設定が優先。`deny` は `allow` より優先。
 
+### MCP ツールパーミッション
+
+MCP ツールは `mcp__<server>__<tool>` パターンで命名される。
+
+```json
+{
+  "allow": [
+    "mcp__memory__create_entities",
+    "mcp__memory__*"
+  ],
+  "deny": [
+    "mcp__filesystem__write_file"
+  ]
+}
+```
+
+### Skill パーミッション
+
+```json
+{
+  "allow": [
+    "Skill(commit)",
+    "Skill(review-pr *)"
+  ],
+  "deny": [
+    "Skill(deploy *)"
+  ]
+}
+```
+
+- `Skill(name)` → 完全一致
+- `Skill(name *)` → プレフィックス一致（引数付き）
+
+### Task（サブエージェント）パーミッション
+
+```json
+{
+  "deny": [
+    "Task(Explore)",
+    "Task(my-custom-agent)"
+  ]
+}
+```
+
 ### ベストプラクティス
 
 - **最小権限**: 必要なコマンドのみ許可

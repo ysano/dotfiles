@@ -5,7 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 ---
 
-Coding Agent プロンプト（commands, agents, skills, context files）を作成・編集する際のガイドライン。
+Coding Agent プロンプト（skills, agents, context files）を作成・編集する際のガイドライン。
 
 **重要**: 対応するプロンプトタイプの詳細リファレンスを必ず Read してから作業を開始すること。
 
@@ -13,16 +13,17 @@ Coding Agent プロンプト（commands, agents, skills, context files）を作�
 
 | タイプ | 配置場所 | 呼び出し方 | 用途 | リファレンス |
 |--------|----------|------------|------|--------------|
-| **Command** | `.claude/commands/<name>.md` | `/command-name` | ユーザー向け再利用可能タスク | `references/command.md` |
-| **Agent** | `.{.super-agent,.claude}/agents/<name>.md` | `@agent-name` / Task tool | 特化型サブエージェント | `references/agent.md` |
-| **Skill** | `{.super-agent|.claude|.codex|.github}/skills/<name>/SKILL.md` | Skill tool / 自動 | 再利用可能な知識・ガイドライン | `references/skill.md` |
-| **Context File** | `.claude/CLAUDE.md` 等 | 自動ロード | 常時必要なプロジェクトコンテキスト | `references/context-file.md` |
-| **Document** | 任意 | 手動参照 | スタンドアロンプロンプト | - |
+| **Skill** | `.claude/skills/<name>/SKILL.md` | `/skill-name` / 自動 | 再利用可能な知識・タスク・ワークフロー | `references/skill.md` |
+| **Agent** | `.claude/agents/<name>.md` | Task tool | 特化型サブエージェント | `references/agent.md` |
+| **Context File** | `CLAUDE.md` 等 | 自動ロード | 常時必要なプロジェクトコンテキスト | `references/context-file.md` |
+
+> Commands は Skills に統合された。既存の `.claude/commands/` はそのまま動作する。
 
 **その他のリファレンス**:
+- `references/command.md` - レガシー Command フォーマット（Skills 推奨）
 - `references/orchestration.md` - サブエージェントを呼び出すオーケストレーター設計
 - `references/permission-syntax.md` - allowed-tools の権限構文
-- `references/hooks.md` - ライフサイクルフックの設定
+- `references/hooks.md` - ライフサイクルフック（14イベント、3ハンドラー型）
 
 ## コア原則
 
@@ -44,7 +45,7 @@ Coding Agent プロンプト（commands, agents, skills, context files）を作�
 
 ## フォーマットルール
 
-- **h1 見出し禁止**: `#` で始めない
+- **H1 見出し**: Skills では使用可。Agents/Commands では禁止（フロントマターが代替）
 - **言語**: `description` はプロジェクトの主要言語、本文も主要言語で可
 - **XML タグ**: 複数セクションがある場合は構造化に活用
 
@@ -65,3 +66,4 @@ Coding Agent プロンプト（commands, agents, skills, context files）を作�
 ## Extended Thinking
 
 複雑な推論には "think harder"、非常に深い分析には "ultrathink" をプロンプトに含める。
+Skill 内に "ultrathink" を記述すると、Skill 実行時に extended thinking が有効化される。
