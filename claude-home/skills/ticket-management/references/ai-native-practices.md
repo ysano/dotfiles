@@ -17,7 +17,7 @@ AI Agent が PR 作成する前に満たすべき条件:
 
 ### Human Review 完了条件
 
-ARE（AI Review Engineer）がマージ前に確認すべき条件:
+ARE（AI Reliability Engineer）がマージ前に確認すべき条件:
 
 - [ ] ロジックの正しさ（AI ハルシネーションがないか）
 - [ ] エッジケースの網羅性
@@ -28,14 +28,16 @@ ARE（AI Review Engineer）がマージ前に確認すべき条件:
 
 ### Hooks 強制
 
-コミット時に自動検証を実行し、DoD 違反を防止する:
+Claude Code Hooks でエージェントの操作をリアルタイムに検証し、DoD 違反を防止する:
 
-| Hook | 検証内容 | 失敗時 |
-|---|---|---|
-| pre-commit | lint / formatter / 型チェック | コミット拒否 |
-| pre-commit | 変更ファイルに対応するテストファイルの存在 | 警告表示 |
-| pre-push | 全テスト実行 | プッシュ拒否 |
-| commit-msg | Conventional Commits 形式の検証 | コミット拒否 |
+| イベント | matcher | 検証内容 | 失敗時（exit code 2） |
+|---|---|---|---|
+| PreToolUse | `Bash` | 危険コマンド（`rm -rf /`, `git push --force`）をブロック | ツール実行を拒否 |
+| PreToolUse | `Write` | コードファイル書き込み前に PLAN.md / Spec の存在を確認 | 書き込みを拒否（「まず計画を立てて」と警告） |
+| PostToolUse | `Bash` | `git push` 成功検知 → チケットにコミットハッシュを自動記録 | 非ブロック（記録失敗を報告） |
+
+補完として Git Hooks（pre-commit: lint/型チェック、pre-push: テスト実行）も併用する。
+Claude Code Hooks の構文詳細は `prompt-engineering` Skill の `references/hooks.md` を参照。
 
 ### DoD レベル
 
@@ -83,7 +85,7 @@ Human Review の優先度を AI が自動判定する。
 
 ## 品質メトリクス
 
-### MTTV（Mean Time To Value）
+### MTTV（Mean Time to Verification）
 
 PR 作成から人間承認（マージ）までの時間。
 

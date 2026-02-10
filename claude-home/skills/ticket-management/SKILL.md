@@ -9,8 +9,10 @@ description: >
 ---
 
 プラットフォームに依存しない AI-DDL チケット管理理論。
-デフォルトは GitHub Projects V2、大規模（100 名超）は Jira（選択基準は `references/organization-topology.md`）。
+デフォルトは GitHub Projects V2、大規模（30 名以上）は Jira（選択基準は `references/organization-topology.md`）。
 個別プラットフォームの操作方法は各プラットフォーム固有の Skill（github-projects-v2, jira）を参照。
+
+> **出典**: `.steering/ai-ddl.md` — AI駆動開発ライフサイクル原典。本 Skill はその実践的抽出。
 
 ## AI-DDL とは
 

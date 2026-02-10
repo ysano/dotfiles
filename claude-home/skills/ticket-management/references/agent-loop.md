@@ -22,7 +22,7 @@ Agent Loop: AI Agent × 人間のハイブリッドチームにおける循環�
 | 6 | **Human Review** | ARE | ロジック検証、ハルシネーション検出 | レビュー承認 + マージ |
 | 7 | **Done** | - | ドキュメント更新、メトリクス記録 | MTTV / Turns-Used / AI-Confidence 記録済み |
 
-**ARE** = AI Review Engineer: AI 生成コードのレビューに特化した人間レビュアー。
+**ARE** = AI Reliability Engineer: AI 生成コードのレビュー・統合テスト・ハルシネーション検出を担う品質ゲートキーパー。
 
 ## 差し戻しルール
 
