@@ -2,11 +2,12 @@
 name: github-projects-v2
 description: >
   GitHub Projects V2 のデータモデル、ID体系、制約事項の知識ベース。
-  詳細な CLI コマンドや GraphQL パターンは references/ を参照。
+  CLAUDE.md の XML タグ形式記述パターンと gh CLI / GraphQL API 操作を提供。
   チケット管理・ボード管理エージェントが参照。
 ---
 
 GitHub Projects V2 を `gh` CLI と GraphQL API で操作するための知識ベース。
+CLAUDE.md に XML タグ形式でプロジェクト情報を記述し、LLM が構造化データとして参照・操作できるようにする。
 
 ## リファレンスガイド
 
@@ -15,6 +16,62 @@ GitHub Projects V2 を `gh` CLI と GraphQL API で操作するための知識�
 | `references/cli-commands.md` | `gh project` サブコマンド一覧、引数、ページネーション | CLI で操作するとき |
 | `references/graphql-api.md` | クエリ・ミューテーション・ページネーションパターン | CLI で不可能な操作、バッチ処理、高度な取得 |
 | `references/filtering.md` | 修飾子・演算子・特殊値 | ビューフィルタ設定・Issue 検索時 |
+
+## CLAUDE.md XML タグ記述パターン
+
+CLAUDE.md の `## タスク管理` セクションに XML タグでプロジェクト情報を記述する。
+LLM がパースしやすく、`gh project item-edit` の引数に直接マッピングできる。
+
+### XML タグ構造
+
+| 要素 | 親 | 属性 | 説明 |
+|---|---|---|---|
+| `<github-project>` | - | `id`（Node ID）, `url` | プロジェクト全体 |
+| `<field>` | `github-project` | `name`, `id`（Field Node ID） | カスタムフィールド |
+| `<option>` | `field` | `name`, `id`（Option ID） | Single Select の選択肢 |
+
+Iteration フィールドは `<option>` なしの空要素: `<field name="Iteration" id="..."/>`
+
+### 構造例
+
+```xml
+<github-project id="PVT_kwDOA3jeEM4BNkoc" url="https://github.com/orgs/monstar-lab-group/projects/17">
+  <field name="Status" id="PVTSSF_lADOA3jeEM4BNkoczg8hxsU">
+    <option name="Backlog" id="f75ad846"/>
+    <option name="Ready" id="e18bf179"/>
+    <option name="In progress" id="47fc9ee4"/>
+    <option name="In review" id="aba860b9"/>
+    <option name="Done" id="98236657"/>
+  </field>
+  <field name="Priority" id="PVTSSF_lADOA3jeEM4BNkoczg8hxzQ">
+    <option name="P0" id="79628723"/>
+    <option name="P1" id="0a877460"/>
+    <option name="P2" id="da944a9c"/>
+  </field>
+  <field name="Iteration" id="PVTIF_lADOA3jeEM4BNkoczg8hxzc"/>
+</github-project>
+```
+
+### CLI 引数へのマッピング
+
+XML 属性値をそのまま `gh project item-edit` の引数に渡す:
+
+```
+gh project item-edit \
+  --project-id <github-project の id> \
+  --id <ITEM_ID> \
+  --field-id <field の id> \
+  --single-select-option-id <option の id>
+```
+
+複数フィールドの一括更新例は [references/cli-commands.md](references/cli-commands.md) を参照。
+新規プロジェクトの XML タグ生成手順も同ファイルを参照。
+
+### 設計原則
+
+- **80%ルール適合**: タスク管理はセッション中の頻出操作
+- **複数リポジトリ共有**: 同じプロジェクトを参照するリポジトリで同一 XML ブロックを使用
+- **トークン効率**: 構造化 XML はフラットテキストより高情報密度
 
 ## データモデル
 
