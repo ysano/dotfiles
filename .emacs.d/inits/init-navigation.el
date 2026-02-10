@@ -15,6 +15,15 @@
   :config
   (vertico-mode 1))
 
+;; Vertico ディレクトリ操作拡張
+(use-package vertico-directory
+  :after vertico
+  :ensure nil                         ;; vertico同梱、別途インストール不要
+  :bind (:map vertico-map
+         ("C-l" . vertico-directory-up)
+         ("DEL" . vertico-directory-delete-char))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
+
 ;; 補完スタイル - スペース区切りで柔軟にマッチ
 (use-package orderless
   :ensure t
