@@ -73,6 +73,10 @@ AI Agent が実装に要したプロンプト往復回数。
 | 7-10 | 異常 | Spec Definition に差し戻し。5 要素を再記述 |
 | 10 超 | 粒度超過 | チケット分割を検討 |
 
+### Spec-Link
+
+設計書（Notion / Google Docs / リポジトリ内 MD）への URL リンク。AI Agent がコンテキストとして参照する。
+
 ### Review-Priority
 
 Human Review の優先度を AI が自動判定する。
