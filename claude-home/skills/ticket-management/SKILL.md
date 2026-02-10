@@ -60,9 +60,9 @@ AI-Driven Development Lifecycle。従来の人間中心チケット管理を AI 
 
 ## AI Janitor 3 ルール
 
-1. **Stale 自動検証**: Backlog 7 日超の Bug は AI が再現テストを実行。再現不可ならクローズ候補
+1. **Stale 自動検証**: Backlog 30 日超の Bug は AI が再現テストを実行。再現不可ならクローズ候補
 2. **4 時間ルール**: AI Implementation が 4 時間超 → 自動で Spec Definition に差し戻し（粒度超過）
-3. **Churn 3 回ルール**: プロンプト往復 3 回超 → 仕様曖昧。Spec Definition に差し戻し
+3. **Churn 3 回ルール**: プロンプト往復 3 回超 → 仕様曖昧の兆候。4-6 回は Spec 補足、7 回超は Spec Definition に差し戻し
 
 ## チケットタイプ
 
@@ -93,8 +93,8 @@ AI-Driven Development Lifecycle。従来の人間中心チケット管理を AI 
 
 ### 差し戻し判定
 - **4 時間ルール**: AI Implementation が 4 時間超過 → Spec Definition に差し戻すこと
-- **Churn 3 回ルール**: プロンプト往復 3 回超 → 処理を停止し、Spec Definition への差し戻しを提案すること
+- **Churn 3 回ルール**: プロンプト往復 3 回超 → `[Churn Alert]` を通知し、Spec の曖昧箇所を特定・補足すること。7 回超は Spec Definition への差し戻しを提案すること
 
 ### 鮮度管理
-- **Stale Bug**: Backlog 7 日超の Bug を検知した場合、AI 再現テストを実行すること。再現不可ならクローズ候補としてマークすること
+- **Stale Bug**: Backlog 30 日超の Bug を検知した場合、AI 再現テストを実行すること。再現不可ならクローズ候補としてマークすること
 </constraints>
