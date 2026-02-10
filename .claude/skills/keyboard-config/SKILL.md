@@ -15,10 +15,12 @@ allowed-tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep
 
 ```
 karabiner/
-  ├── karabiner.json                          (4,209行)  メイン設定
+  ├── karabiner.json                          メイン設定（ハードリンクで ~/.config/karabiner/ と同一実体）
+  ├── excluded_apps.json                      除外アプリ定義（単一管理ポイント）
+  ├── apply_excluded_apps.py                  excluded_apps.json → karabiner.json 一括反映スクリプト
   └── assets/
       └── complex_modifications/
-          └── emacs-like.json                  (4,132行)  読み取り専用バックアップ
+          └── emacs-like.json                  読み取り専用バックアップ
 
 .skhdrc                                        (230行)   skhd ホットキー定義
 .yabairc                                       (71行)    yabai ウィンドウマネージャー設定
@@ -36,7 +38,7 @@ mayu/
 |---|---|
 | `.skhdrc` | `link.sh` → `$HOME/.skhdrc` |
 | `.yabairc` | `link.sh` → `$HOME/.yabairc` |
-| `karabiner/` | 手動: `~/.config/karabiner/` にシンボリックまたはコピー |
+| `karabiner/karabiner.json` | ハードリンク: `~/.config/karabiner/karabiner.json` と同一実体（編集即反映） |
 | `keyboard-maestro/` | 手動: Keyboard Maestro アプリにインポート |
 
 ## Emacs Mode State Machine
@@ -63,15 +65,22 @@ emacs_mode_markset  = 0 | 1    C-SPC マークセットの有効/無効
 - 例: `[Emacs Mode|C-x] C-s to Save (Command+S)`
 
 ### Bundle Identifiers (除外アプリ)
-全ルールで同一の `bundle_identifiers` 除外リストを使用すること（36パターン）。
+`karabiner/excluded_apps.json` で一元管理。`apply_excluded_apps.py` で全ルールに一括反映。
+
+**除外アプリの追加/削除手順**:
+```bash
+# 1. excluded_apps.json を編集
+# 2. 反映（ハードリンクのため Karabiner-Elements に即反映）
+python3 karabiner/apply_excluded_apps.py
+```
+
 主なカテゴリ:
-- **エディタ**: VSCode, GNU Emacs, Aquamacs
+- **エディタ**: VSCode, GNU Emacs, Aquamacs, Ghostty
 - **ターミナル**: Terminal.app, iTerm2, Hyper
 - **リモートデスクトップ**: RDP, TeamViewer, VMware, Parallels, VirtualBox
 - **Vim/X11**: MacVim, X11 環境
 
-**一貫性ルール**: 新しいルール追加時は既存ルールの `bundle_identifiers` をコピーすること。
-アプリ除外を追加/削除する場合は**全ルール**を一括更新すること。
+**一貫性ルール**: 除外アプリの変更は必ず `excluded_apps.json` 経由で行うこと。`karabiner.json` を直接編集してはならない。
 
 ### skhd Modifier Hierarchy
 修飾キーの使い分け:
@@ -92,7 +101,7 @@ Karabiner と競合するバインドは無効化して `# conflict karabiner` �
 
 ### Karabiner: 新しい Emacs Mode ルールの追加
 
-`rules` 配列に以下の構造でルールを追加する。`bundle_identifiers` は既存ルールからコピーすること。
+`rules` 配列に以下の構造でルールを追加する。`bundle_identifiers` は空配列で記述し、`apply_excluded_apps.py` で自動反映する。
 
 ```json
 {
@@ -100,7 +109,7 @@ Karabiner と競合するバインドは無効化して `# conflict karabiner` �
   "manipulators": [{
     "conditions": [
       {
-        "bundle_identifiers": [ "...既存ルールからコピー..." ],
+        "bundle_identifiers": [],
         "type": "frontmost_application_unless"
       },
       { "name": "emacs_mode_cx", "type": "variable_if", "value": 0 }
@@ -142,7 +151,7 @@ alt - <key> : yabai -m window --focus <direction>
   "manipulators": [{
     "conditions": [
       {
-        "bundle_identifiers": [ "...既存ルールからコピー..." ],
+        "bundle_identifiers": [],
         "type": "frontmost_application_unless"
       },
       { "name": "emacs_mode_cx", "type": "variable_if", "value": 1 }
@@ -178,12 +187,14 @@ alt - d : yabai -m window --toggle zoom-parent
 
 ### Karabiner ルール追加
 - [ ] `[Emacs Mode]` プレフィックスでルール命名
-- [ ] 既存ルールから `bundle_identifiers` をコピー
+- [ ] `bundle_identifiers` は空配列で記述（`apply_excluded_apps.py` が反映）
 - [ ] `emacs_mode_cx` 条件を適切に設定（C-x サブルールかどうか）
+- [ ] `python3 karabiner/apply_excluded_apps.py` で除外アプリを反映
 - [ ] `check_karabiner.sh` で JSON構文・除外アプリ一貫性・重複を検証
 
 ### 除外アプリの追加/削除
-- [ ] **全ルール**の `bundle_identifiers` を一括更新（部分更新は禁止）
+- [ ] `karabiner/excluded_apps.json` を編集（karabiner.json を直接編集しない）
+- [ ] `python3 karabiner/apply_excluded_apps.py` で全ルールに一括反映
 - [ ] `check_karabiner.sh` の Bundle Identifier Consistency チェックで PASS を確認
 
 ### skhd ホットキー追加

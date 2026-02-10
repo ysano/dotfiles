@@ -133,7 +133,62 @@ echo "$consistency_result" | grep '^DETAIL|' | sed 's/^DETAIL|//' || true
 echo ""
 
 # =============================================================================
-# Check 3: 同一キー+同一条件のルール重複検出
+# Check 3: excluded_apps.json との同期チェック
+# =============================================================================
+echo -e "${BOLD}--- Excluded Apps Sync ---${NC}"
+
+EXCLUDED_APPS="$DOTFILES_ROOT/karabiner/excluded_apps.json"
+if [[ -f "$EXCLUDED_APPS" ]]; then
+    sync_result=$(KARABINER_JSON="$KARABINER_JSON" EXCLUDED_APPS="$EXCLUDED_APPS" python3 << 'PYEOF'
+import json, os, sys
+
+karabiner_path = os.environ["KARABINER_JSON"]
+excluded_path = os.environ["EXCLUDED_APPS"]
+
+with open(excluded_path) as f:
+    expected = json.load(f)["bundle_identifiers"]
+
+with open(karabiner_path) as f:
+    data = json.load(f)
+
+for profile in data.get("profiles", []):
+    for rule in profile.get("complex_modifications", {}).get("rules", []):
+        if "[Emacs Mode" not in rule.get("description", ""):
+            continue
+        for manip in rule.get("manipulators", []):
+            for cond in manip.get("conditions", []):
+                if cond.get("type") == "frontmost_application_unless":
+                    actual = cond.get("bundle_identifiers", [])
+                    if actual != expected:
+                        missing = set(expected) - set(actual)
+                        extra = set(actual) - set(expected)
+                        parts = []
+                        if missing:
+                            parts.append(f"missing: {missing}")
+                        if extra:
+                            parts.append(f"extra: {extra}")
+                        if not parts:
+                            parts.append("order differs")
+                        desc = rule.get("description", "unknown")
+                        print(f"FAIL|karabiner.json out of sync with excluded_apps.json ({desc}: {', '.join(parts)}). Run: python3 karabiner/apply_excluded_apps.py")
+                        sys.exit(0)
+                    break
+            break
+        break
+
+print(f"PASS|karabiner.json matches excluded_apps.json ({len(expected)} patterns)")
+PYEOF
+    )
+    level=$(echo "$sync_result" | head -1 | cut -d'|' -f1)
+    msg=$(echo "$sync_result" | head -1 | cut -d'|' -f2-)
+    result "$level" "$msg"
+else
+    result WARN "excluded_apps.json not found at $EXCLUDED_APPS (skipping sync check)"
+fi
+echo ""
+
+# =============================================================================
+# Check 4: 同一キー+同一条件のルール重複検出
 # =============================================================================
 echo -e "${BOLD}--- Rule Duplicate Detection ---${NC}"
 
