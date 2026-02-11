@@ -21,6 +21,14 @@
 | `settings-comprehensive.json` | フル機能 |
 | `settings-performance.json` | パフォーマンス重視 |
 | `settings-team.json` | チーム協業向け |
+| `settings-ai-dlc.json` | AI-DLC ワークフロー向け |
+
+### AI-DLC 固有
+
+| スクリプト | 用途 |
+|-----------|------|
+| `check-spec-existence.py` | コード変更前に Spec/Plan の存在確認（PreToolUse） |
+| `auto-update-ticket.sh` | git push 後にチケットにコミット自動記録（PostToolUse） |
 
 ### Svelte 固有
 
