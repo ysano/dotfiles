@@ -11,7 +11,7 @@ claude-home/
 ├── agents/      (71ファイル / 8領域)       - Task ツールで起動
 ├── hooks/       (11汎用 + svelte/12)      - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
-├── skills/      (6スキル)                  - 知識ベース・API統合
+├── skills/      (7スキル)                  - 知識ベース・API統合
 └── settings.local.json                     - ローカル権限設定
 ```
 
@@ -24,7 +24,7 @@ claude-home/
 /handoff                 # 特殊コマンド（カテゴリなし）
 ```
 
-主要カテゴリ: dev, test, deploy, security, docs, performance, setup, project, team, orchestration, simulation, svelte, rust
+主要カテゴリ: dev, test, deploy, security, docs, performance, setup, project, team, ai-dlc, orchestration, simulation, svelte, rust
 
 ## Agents 起動方法
 
@@ -40,12 +40,14 @@ Task: semantic-architect   # WFGY推論系
 
 | スキル | 種別 | 用途 |
 |--------|------|------|
-| ticket-management | 理論 | AI-DDL チケット管理フレームワーク |
+| ticket-management | 理論 | AI-DLC チケット管理フレームワーク |
 | github-projects-v2 | 知識ベース | GH Projects V2 API/CLI |
 | linear | API統合 | Linear GraphQL/MCP (`LINEAR_API_TOKEN`) |
 | jira | API統合 | Jira Cloud MCP (Atlassian Plugin) |
 | cloudflare-manager | API統合 | CF Workers/KV/R2 (`CLOUDFLARE_API_KEY`) |
+| ai-dlc-ceremonies | 理論 | AI-DLC セレモニー運営パターン・役割変化 |
 | prompt-engineering | 理論 | Coding Agent プロンプト設計 |
+| prompt-management | タスク | プロンプト作成・更新・レビュー・削除 |
 
 ## 設計原則
 
@@ -59,7 +61,8 @@ Task: semantic-architect   # WFGY推論系
 |------|------|
 | `docs/README.md` | WFGY推論エージェント詳細 |
 | `docs/WORKFLOW_EXAMPLES.md` | エージェントチェーンパターン |
-| `skills/ticket-management/` | AI-DDL 理論・Atomic Spec・Agent Loop |
+| `skills/ticket-management/` | AI-DLC 理論・Atomic Spec・Agent Loop |
+| `skills/ai-dlc-ceremonies/` | AI-DLC セレモニー運営・役割変化 |
 | `skills/github-projects-v2/references/` | GH Projects V2 CLI/GraphQL |
 | `skills/linear/references/` | Linear API/MCP |
 | `skills/jira/references/` | Jira MCP ツール・アーキテクチャ |
