@@ -1,24 +1,24 @@
 ---
 name: ticket-management
 description: >
-  AI-DDL（AI-Driven Development Lifecycle）に基づくチケット管理理論。
+  AI-DLC（AI-Driven Development Lifecycle）に基づくチケット管理理論。
   Use when creating Atomic Specs, designing Agent Loops, running AI Janitor checks,
   splitting tasks for AI agents, reviewing ticket quality, defining AI-Native DoD,
   choosing ticket types, or designing hybrid team workflows.
   チケット操作エージェント (github-project-ticket, ticket-sync) が参照。
 ---
 
-プラットフォームに依存しない AI-DDL チケット管理理論。
+プラットフォームに依存しない AI-DLC チケット管理理論。
 デフォルトは GitHub Projects V2、大規模（30 名以上）は Jira（選択基準は `references/organization-topology.md`）。
 個別プラットフォームの操作方法は各プラットフォーム固有の Skill（github-projects-v2, jira）を参照。
 
-> **出典**: `.steering/ai-ddl.md` — AI駆動開発ライフサイクル原典。本 Skill はその実践的抽出。
+> **出典**: `.steering/ai-dlc.md` — AI駆動開発ライフサイクル原典。本 Skill はその実践的抽出。
 
-## AI-DDL とは
+## AI-DLC とは
 
 AI-Driven Development Lifecycle。従来の人間中心チケット管理を AI Agent × 人間のハイブリッドチーム向けに再定義したフレームワーク。
 
-| 観点 | 従来型 | AI-DDL |
+| 観点 | 従来型 | AI-DLC |
 |---|---|---|
 | **粒度** | 1-3 営業日 | コンテキストウィンドウ単位（Atomic Spec） |
 | **ライフサイクル** | 線形 5 段階 | 循環型 7 段階（Agent Loop） |
