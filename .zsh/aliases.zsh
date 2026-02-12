@@ -249,6 +249,33 @@ if has_command procs; then
 fi
 
 # ================================
+# Document Conversion
+# ================================
+
+# Markdown to PDF (pandoc + lualatex + mermaid-filter + emoji)
+if has_command pandoc; then
+    md2pdf() {
+        if [[ $# -eq 0 ]]; then
+            echo "Usage: md2pdf <file.md>" >&2
+            return 1
+        fi
+        if [[ ! -f "$1" ]]; then
+            echo "md2pdf: $1: No such file" >&2
+            return 1
+        fi
+        if ! has_command mermaid-filter; then
+            echo "md2pdf: mermaid-filter is required but not found" >&2
+            return 1
+        fi
+        local output="${1:r}.pdf"
+        pandoc "$1" -f gfm -o "$output" --pdf-engine=lualatex -F mermaid-filter \
+            -V CJKmainfont="Hiragino Mincho ProN" \
+            -V CJKmonofont="Cica" && \
+            echo "$output"
+    }
+fi
+
+# ================================
 # Initialization
 # ================================
 

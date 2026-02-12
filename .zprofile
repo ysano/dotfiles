@@ -74,7 +74,7 @@ setup_macos() {
 
     # GNU tools preference
     safe_path_prepend "/opt/homebrew/opt/gnu-tar/libexec/gnubin"
-    
+
     # Java setup for macOS
     if [[ -d "/opt/homebrew/opt/openjdk" ]]; then
         export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include $CPPFLAGS"
@@ -168,6 +168,16 @@ path=(
     "/usr/sbin"
     "/sbin"
 )
+
+# Append system paths from /etc/paths.d (TeX, etc.)
+if [[ -d /etc/paths.d ]]; then
+    for _pfile in /etc/paths.d/*(N); do
+        while IFS= read -r _p; do
+            [[ -d "$_p" ]] && safe_path_append "$_p"
+        done < "$_pfile"
+    done
+    unset _pfile _p
+fi
 
 # ================================
 # Development Environment Setup
