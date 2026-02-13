@@ -19,14 +19,14 @@
    **コード品質チェック**:
    ```
    Task tool:
-     subagent_type: code-auditor
-     prompt: "Audit /path/to/src for quality issues. Report findings as structured list."
+     subagent_type: code-reviewer
+     prompt: "Review /path/to/src for quality issues. Report findings as structured list."
    ```
 
    **セキュリティチェック**:
    ```
    Task tool:
-     subagent_type: security-auditor
+     subagent_type: security-reviewer
      prompt: "Scan /path/to/src for OWASP Top 10 vulnerabilities."
    ```
 

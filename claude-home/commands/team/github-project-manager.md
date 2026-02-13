@@ -4,11 +4,11 @@ description: "Manage sprints, workload, and milestones via GitHub Projects V2"
 
 ## Instructions
 
-Delegate to the `github-project-board` agent with the user's context:
+Delegate to the `github-board-agent` agent with the user's context:
 
 ```
 Task tool:
-  subagent_type: github-project-board
+  subagent_type: github-board-agent
   prompt: |
     $ARGUMENTS
 

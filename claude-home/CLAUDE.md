@@ -7,11 +7,12 @@ dotfiles固有モジュールは `.claude/` を参照。
 
 ```
 claude-home/
-├── commands/    (179ファイル / 21カテゴリ) - `/category:command` で実行
-├── agents/      (71ファイル / 8領域)       - Task ツールで起動
-├── hooks/       (11汎用 + svelte/12)      - イベント駆動型自動化
+├── commands/    (200ファイル / 22カテゴリ) - `/category:command` で実行
+├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
+├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
-├── skills/      (7スキル)                  - 知識ベース・API統合
+├── skills/      (11スキル)                 - 知識ベース・API統合
+├── scripts/     (5スクリプト)              - メンテナンスユーティリティ
 └── settings.local.json                     - ローカル権限設定
 ```
 
@@ -30,7 +31,7 @@ claude-home/
 
 ```bash
 Task: backend-architect    # 開発系
-Task: code-auditor         # 品質系
+Task: code-reviewer    # 品質系
 Task: semantic-architect   # WFGY推論系
 ```
 
@@ -47,6 +48,8 @@ Task: semantic-architect   # WFGY推論系
 | cloudflare-manager | API統合 | CF Workers/KV/R2 (`CLOUDFLARE_API_KEY`) |
 | ai-dlc-ceremonies | 理論 | AI-DLC セレモニー運営パターン・役割変化 |
 | ai-dlc-upstream | 理論 | AI-DLC 上流ワークフロー契約（PRD/Architecture/Stories） |
+| ai-dlc-estimate | 理論 | AI-DLC 見積もり技法 (AEF/Value-Based) |
+| ai-dlc-sier | 理論 | 次世代 SIer 構造変革 (5ビジネスドメイン) |
 | prompt-engineering | 理論 | Coding Agent プロンプト設計 |
 | prompt-management | タスク | プロンプト作成・更新・レビュー・削除 |
 
@@ -60,6 +63,7 @@ Task: semantic-architect   # WFGY推論系
 
 | パス | 内容 |
 |------|------|
+| `docs/catalog.md` | 全モジュール棚卸し・AI-DLC分類・整理方針 |
 | `docs/README.md` | WFGY推論エージェント詳細 |
 | `docs/WORKFLOW_EXAMPLES.md` | エージェントチェーンパターン |
 | `skills/ticket-management/` | AI-DLC 理論・Atomic Spec・Agent Loop |

@@ -4,11 +4,11 @@ description: "Automate GitHub Issue creation, triage, and lifecycle management"
 
 ## Instructions
 
-Delegate to the `github-project-ticket` agent with the user's context:
+Delegate to the `github-ticket-agent` agent with the user's context:
 
 ```
 Task tool:
-  subagent_type: github-project-ticket
+  subagent_type: github-ticket-agent
   prompt: |
     $ARGUMENTS
 

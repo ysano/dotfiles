@@ -130,10 +130,10 @@ This command orchestrates four specialized agents to build production-ready Clau
 
 ### Phase 4: Documentation Enhancement
 
-**Agent**: `skill-documenter-agent`
+**Agent**: `skill-docs-agent`
 
 1. **Activate Documenter Agent**
-   - Launch the skill-documenter-agent using the Task tool
+   - Launch the skill-docs-agent using the Task tool
    - Provide skill path and specification
    - Request comprehensive documentation
 

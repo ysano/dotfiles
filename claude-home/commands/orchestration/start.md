@@ -1,5 +1,5 @@
 ---
-description: "Initiates the task orchestration workflow using the three-agent system (task-orchestrator, task-decomposer, and dependency-analyzer) to create a comprehensive execution plan."
+description: "Initiates the task orchestration workflow using the two-agent system (orchestration-agent and dependency-reviewer) to create a comprehensive execution plan."
 ---
 
 ## Usage
@@ -10,12 +10,12 @@ description: "Initiates the task orchestration workflow using the three-agent sy
 
 ## Description
 
-This command activates the task-orchestrator agent to process requirements and create a hyper-efficient execution plan. The orchestrator will:
+This command activates the orchestration-agent agent to process requirements and create a hyper-efficient execution plan. The orchestrator will:
 
 1. **Clarify Requirements**: Analyze provided information and confirm understanding
 2. **Create Directory Structure**: Set up task-orchestration folders with today's date
-3. **Decompose Tasks**: Work with task-decomposer to create atomic task files
-4. **Analyze Dependencies**: Use dependency-analyzer to identify conflicts and parallelization opportunities
+3. **Decompose Tasks**: Break down into atomic task files
+4. **Analyze Dependencies**: Use dependency-reviewer to identify conflicts and parallelization opportunities
 5. **Generate Master Plan**: Create comprehensive coordination documents
 
 ## Input Formats

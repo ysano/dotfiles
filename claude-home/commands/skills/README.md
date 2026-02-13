@@ -74,7 +74,7 @@ Creates skills through a structured 4-phase process:
 
 **Triggers automatically when**: Validating new or modified skills
 
-### 📚 skill-documenter-agent
+### 📚 skill-docs-agent
 
 **Expert at creating comprehensive documentation**
 

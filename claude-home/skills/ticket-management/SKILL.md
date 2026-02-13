@@ -5,7 +5,7 @@ description: >
   Use when creating Atomic Specs, designing Agent Loops, running AI Janitor checks,
   splitting tasks for AI agents, reviewing ticket quality, defining AI-Native DoD,
   choosing ticket types, or designing hybrid team workflows.
-  チケット操作エージェント (github-project-ticket, ticket-sync) が参照。
+  チケット操作エージェント (github-ticket-agent, ticket-sync-agent) が参照。
 ---
 
 プラットフォームに依存しない AI-DLC チケット管理理論。

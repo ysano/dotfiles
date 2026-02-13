@@ -70,15 +70,15 @@ Create task groups based on content analysis:
 
 ```yaml
 Testing Tasks:
-  - test-automator: Unit tests, test configuration, coverage
-  - qa-expert: Quality assurance, validation, acceptance testing
+  - test-operator: Unit tests, test configuration, coverage
+  - qa-reviewer: Quality assurance, validation, acceptance testing
   - playwright-test-architect: E2E tests, integration testing
 
 Performance Tasks:
-  - performance-engineer: Benchmarking, optimization, metrics
+  - performance-architect: Benchmarking, optimization, metrics
 
 Deployment Tasks:
-  - deployment-engineer: CI/CD, scripts, infrastructure automation
+  - deploy-operator: CI/CD, scripts, infrastructure automation
 
 Development Tasks:
   - typescript-pro: TypeScript development, refactoring
@@ -87,8 +87,8 @@ Development Tasks:
   - golang-pro: Go services, system programming
 
 Documentation Tasks:
-  - documentation-expert: Technical docs, guides, architecture
-  - api-documenter: API documentation, examples, SDKs
+  - docs-pro: Technical docs, guides, architecture
+  - api-docs-pro: API documentation, examples, SDKs
 ```
 
 **Conflict Detection:**

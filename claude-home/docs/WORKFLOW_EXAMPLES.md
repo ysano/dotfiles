@@ -8,7 +8,7 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ```bash
 # 1. Strategic Planning
-"Use strategic-analyst to model scenarios for adding a user analytics dashboard to our SaaS product"
+"Use strategy-architect to model scenarios for adding a user analytics dashboard to our SaaS product"
 
 # 2. Architecture Design  
 "Have project-architect design the dashboard module structure with React and TypeScript"
@@ -17,22 +17,22 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 "Create the dashboard components following our design"
 
 # 4. Code Review
-"Use code-auditor to review the dashboard implementation"
+"Use code-reviewer to review the dashboard implementation"
 
 # 5. Security Check
-"Have security-auditor specifically check the data access patterns in the dashboard"
+"Have security-reviewer specifically check the data access patterns in the dashboard"
 
 # 6. Test Generation
-"Use test-engineer to create comprehensive tests for the dashboard components"
+"Use test-operator to create comprehensive tests for the dashboard components"
 
 # 7. Performance Analysis
-"Have performance-auditor analyze the dashboard rendering performance"
+"Have performance-reviewer analyze the dashboard rendering performance"
 
 # 8. Integration Setup
 "Use integration-manager to create Linear tasks for remaining dashboard work"
 
 # 9. Release Preparation
-"Have release-manager prepare the dashboard feature for deployment"
+"Have release-operator prepare the dashboard feature for deployment"
 ```
 
 ## 🐛 Bug Fix Workflow
@@ -44,19 +44,19 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 "Use integration-manager to sync GitHub issue #456 about the login bug to Linear"
 
 # 2. Code Analysis
-"Have code-auditor analyze the authentication module for potential issues"
+"Have code-reviewer analyze the authentication module for potential issues"
 
 # 3. Security Review
-"Use security-auditor to check if this is a security vulnerability"
+"Use security-reviewer to check if this is a security vulnerability"
 
 # 4. Fix Implementation
 "Fix the authentication bug in the login handler"
 
 # 5. Test Creation
-"Have test-engineer create regression tests for this bug"
+"Have test-operator create regression tests for this bug"
 
 # 6. Hotfix Release
-"Use release-manager to prepare and deploy a hotfix"
+"Use release-operator to prepare and deploy a hotfix"
 ```
 
 ## 🏗️ New Project Setup Workflow
@@ -65,7 +65,7 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ```bash
 # 1. Strategic Analysis
-"Use strategic-analyst to evaluate microservice vs monolith for our inventory system"
+"Use strategy-architect to evaluate microservice vs monolith for our inventory system"
 
 # 2. Project Setup
 "Have project-architect create a new Node.js microservice for inventory management"
@@ -74,13 +74,13 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 "Use integration-manager to set up GitHub-Linear sync for the new project"
 
 # 4. Architecture Review
-"Have architecture-auditor review the microservice boundaries and API design"
+"Have architecture-reviewer review the microservice boundaries and API design"
 
 # 5. Test Infrastructure
-"Use test-engineer to set up the testing framework and initial tests"
+"Use test-operator to set up the testing framework and initial tests"
 
 # 6. CI/CD Setup
-"Have release-manager configure the deployment pipeline"
+"Have release-operator configure the deployment pipeline"
 ```
 
 ## 🔍 Code Quality Improvement Workflow
@@ -92,22 +92,22 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 "Run all code auditors on the legacy payments module"
 
 # Agent Chain Activation:
-- code-auditor → Identifies general issues
-- architecture-auditor → Finds design problems  
-- performance-auditor → Discovers bottlenecks
-- security-auditor → Uncovers vulnerabilities
+- code-reviewer → Identifies general issues
+- architecture-reviewer → Finds design problems  
+- performance-reviewer → Discovers bottlenecks
+- security-reviewer → Uncovers vulnerabilities
 
 # 2. Prioritization
-"Use strategic-analyst to prioritize which technical debt to address first"
+"Use strategy-architect to prioritize which technical debt to address first"
 
 # 3. Task Creation
 "Have integration-manager create Linear tasks for each improvement"
 
 # 4. Implementation
-"Refactor the payment processing based on architecture-auditor recommendations"
+"Refactor the payment processing based on architecture-reviewer recommendations"
 
 # 5. Testing
-"Use test-engineer to ensure refactoring didn't break functionality"
+"Use test-operator to ensure refactoring didn't break functionality"
 ```
 
 ## 🚢 Release Preparation Workflow
@@ -116,22 +116,22 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ```bash
 # 1. Pre-Release Analysis
-"Have code-auditor do a complete review of all changes for v2.0"
+"Have code-reviewer do a complete review of all changes for v2.0"
 
 # 2. Security Audit
-"Use security-auditor to do a final security check before release"
+"Use security-reviewer to do a final security check before release"
 
 # 3. Performance Baseline
-"Have performance-auditor establish performance metrics for v2.0"
+"Have performance-reviewer establish performance metrics for v2.0"
 
 # 4. Test Coverage
-"Use test-engineer to ensure we have >90% test coverage"
+"Use test-operator to ensure we have >90% test coverage"
 
 # 5. Release Preparation
-"Have release-manager prepare the v2.0 release with changelog and migration guide"
+"Have release-operator prepare the v2.0 release with changelog and migration guide"
 
 # 6. Deployment Planning
-"Use strategic-analyst to model rollout strategies for v2.0"
+"Use strategy-architect to model rollout strategies for v2.0"
 ```
 
 ## 🔄 Integration Sync Workflow
@@ -161,19 +161,19 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ```bash
 # 1. Performance Analysis
-"Use performance-auditor to analyze the user API endpoints"
+"Use performance-reviewer to analyze the user API endpoints"
 
 # 2. Database Review
-"Have performance-auditor specifically check database queries in the user service"
+"Have performance-reviewer specifically check database queries in the user service"
 
 # 3. Architecture Assessment
-"Use architecture-auditor to evaluate if the service architecture is causing bottlenecks"
+"Use architecture-reviewer to evaluate if the service architecture is causing bottlenecks"
 
 # 4. Implementation
-"Implement the caching strategy recommended by performance-auditor"
+"Implement the caching strategy recommended by performance-reviewer"
 
 # 5. Testing
-"Have test-engineer create performance tests to verify improvements"
+"Have test-operator create performance tests to verify improvements"
 
 # 6. Monitoring Setup
 "Use project-architect to add performance monitoring"
@@ -185,19 +185,19 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ```bash
 # 1. Immediate Assessment
-"Use security-auditor to investigate the reported XSS vulnerability in comments"
+"Use security-reviewer to investigate the reported XSS vulnerability in comments"
 
 # 2. Impact Analysis
-"Have strategic-analyst model the potential impact of this vulnerability"
+"Have strategy-architect model the potential impact of this vulnerability"
 
 # 3. Fix Development
-"Implement security-auditor's recommended fixes immediately"
+"Implement security-reviewer's recommended fixes immediately"
 
 # 4. Testing
-"Use test-engineer to create security-specific tests"
+"Use test-operator to create security-specific tests"
 
 # 5. Emergency Release
-"Have release-manager prepare an emergency security patch"
+"Have release-operator prepare an emergency security patch"
 
 # 6. Post-Mortem
 "Use integration-manager to create tasks for security improvements"
@@ -209,13 +209,13 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ```bash
 # 1. Current State Analysis
-"Use architecture-auditor to document our current monolith architecture"
+"Use architecture-reviewer to document our current monolith architecture"
 
 # 2. Scenario Modeling
-"Have strategic-analyst model scenarios for migrating to microservices over 18 months"
+"Have strategy-architect model scenarios for migrating to microservices over 18 months"
 
 # 3. Risk Assessment
-"Use strategic-analyst to identify risks and mitigation strategies"
+"Use strategy-architect to identify risks and mitigation strategies"
 
 # 4. Implementation Planning
 "Have project-architect create a phased migration plan"
@@ -228,27 +228,27 @@ This guide provides practical examples of how to use the Claude Command Suite ag
 
 ### Pattern 1: Sequential Analysis
 ```
-code-auditor → security-auditor → performance-auditor → test-engineer
+code-reviewer → security-reviewer → performance-reviewer → test-operator
 ```
 Use when: Doing comprehensive code review
 
 ### Pattern 2: Parallel Analysis
 ```
-        ┌→ security-auditor ─┐
-Issue ──┼→ performance-auditor ├→ Report
-        └→ architecture-auditor ┘
+        ┌→ security-reviewer ─┐
+Issue ──┼→ performance-reviewer ├→ Report
+        └→ architecture-reviewer ┘
 ```
 Use when: Investigating complex problems
 
 ### Pattern 3: Iterative Improvement
 ```
-code-auditor → Fix Issues → code-auditor → test-engineer → release-manager
+code-reviewer → Fix Issues → code-reviewer → test-operator → release-operator
 ```
 Use when: Ensuring high code quality
 
 ### Pattern 4: Strategic to Tactical
 ```
-strategic-analyst → project-architect → integration-manager → development
+strategy-architect → project-architect → integration-manager → development
 ```
 Use when: Planning new features or projects
 
@@ -263,21 +263,21 @@ Use when: Planning new features or projects
 
 ### Multi-Project Coordination
 ```bash
-"Use strategic-analyst to plan the API versioning strategy across our 5 microservices, 
+"Use strategy-architect to plan the API versioning strategy across our 5 microservices, 
 then have project-architect create a consistent structure for each service, 
 and finally use integration-manager to create coordinated Linear tasks for all teams"
 ```
 
 ### Continuous Quality Monitoring
 ```bash
-"Set up a workflow where code-auditor reviews every PR, 
-test-engineer ensures test coverage doesn't drop, 
-and release-manager maintains a rolling changelog"
+"Set up a workflow where code-reviewer reviews every PR, 
+test-operator ensures test coverage doesn't drop, 
+and release-operator maintains a rolling changelog"
 ```
 
 ### Architecture Evolution
 ```bash
-"Have architecture-auditor analyze our system monthly, 
-strategic-analyst model the impact of suggested changes, 
+"Have architecture-reviewer analyze our system monthly, 
+strategy-architect model the impact of suggested changes, 
 and project-architect implement approved improvements"
 ```

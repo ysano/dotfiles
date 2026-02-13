@@ -10,8 +10,8 @@ Commands for team collaboration, project management, and workflow optimization.
 | `decision-quality-analyzer` | Analyze decision quality with bias detection and scenario testing | |
 | `dependency-mapper` | Map and visualize project dependencies | |
 | `estimate-assistant` | Generate data-backed project time estimates | |
-| `github-issue-automation` | Automate GitHub Issue creation, triage, and lifecycle | Delegates to `github-project-ticket` agent |
-| `github-project-manager` | Manage sprints and milestones via GitHub Projects V2 | Delegates to `github-project-board` agent |
+| `github-issue-automation` | Automate GitHub Issue creation, triage, and lifecycle | Delegates to `github-ticket-agent` agent |
+| `github-project-manager` | Manage sprints and milestones via GitHub Projects V2 | Delegates to `github-board-agent` agent |
 | `github-workflow-automation` | Automate workflows with GitHub Actions and Project automation | |
 | `issue-triage` | Triage and prioritize issues effectively | |
 | `memory-spring-cleaning` | Clean and organize project memory files | |

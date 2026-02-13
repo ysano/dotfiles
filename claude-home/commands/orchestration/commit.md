@@ -291,7 +291,7 @@ auto_commit:
 
 ## Notes
 
-- Integrates with task-commit-manager agent for complex scenarios
+- Integrates with commit-operator agent for complex scenarios
 - Respects .gitignore and excluded files
 - Supports conventional commits specification
 - Maintains traceable history between tasks and commits

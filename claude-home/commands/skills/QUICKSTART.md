@@ -49,7 +49,7 @@ Running 10 validation checks...
 
 ### Phase 4: Documentation (1 minute)
 
-**skill-documenter-agent** enhances docs:
+**skill-docs-agent** enhances docs:
 
 ```
 Enhancing documentation...

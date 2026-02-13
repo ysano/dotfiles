@@ -25,7 +25,6 @@ This collection of 8 specialized agents brings the power of WFGY's mathematical 
 |-------|---------|------|---------------|
 | **logic-synthesizer** | Synthesis | 🔄 | Explores parallel solution paths and synthesizes optimal outcomes |
 | **decision-navigator** | Navigator | 🧭 | Guides strategic decision-making with semantic validation |
-| **knowledge-mapper** | Cartographer | 🗺️ | Creates knowledge graphs and maps concept relationships |
 | **cognitive-debugger** | Debugger | 🔧 | Diagnoses and repairs reasoning failures |
 
 ## 🚀 Quick Start
@@ -132,15 +131,6 @@ graph TD
   - `*trade-off-matrix` - Compare options
 - **Use When**: Making strategic choices, evaluating trade-offs, planning actions
 
-### knowledge-mapper (Cartographer)
-- **Purpose**: Knowledge visualization
-- **Key Commands**:
-  - `*build-graph` - Create knowledge graph
-  - `*trace-path` - Find concept connections
-  - `*identify-clusters` - Find knowledge domains
-  - `*learning-path` - Generate learning sequence
-- **Use When**: Understanding relationships, learning new domains, organizing knowledge
-
 ### cognitive-debugger (Debugger)
 - **Purpose**: Error diagnosis and recovery
 - **Key Commands**:
@@ -193,10 +183,10 @@ Task: decision-navigator
 ### 3. Knowledge Organization
 
 ```bash
-# Map current knowledge
-Task: knowledge-mapper
-> *build-graph
-> *identify-clusters
+# Map and visualize knowledge
+Task: semantic-architect
+> *map-connections
+> *visualize-map
 
 # Optimize memory
 Task: memory-curator
@@ -275,7 +265,7 @@ Agents are designed to work together:
 4. **Monitor Boundaries**: Keep boundary-guardian active for safety
 5. **Export Regularly**: Save semantic trees for persistence
 6. **Document Decisions**: Use decision-navigator for strategic choices
-7. **Map Complex Domains**: Use knowledge-mapper for understanding
+7. **Map Complex Domains**: Use semantic-architect for knowledge mapping
 8. **Debug Systematically**: Use cognitive-debugger when things fail
 
 ## 🚨 Troubleshooting

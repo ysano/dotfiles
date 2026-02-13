@@ -84,18 +84,18 @@ maintaining coordination and task tracking.
 - `golang-pro` - Go service development
 
 **Testing Agents:**
-- `test-automator` - Comprehensive test suite creation
-- `qa-expert` - Quality assurance and validation
+- `test-operator` - Comprehensive test suite creation
+- `qa-reviewer` - Quality assurance and validation
 - `playwright-test-architect` - End-to-end testing
 
 **Infrastructure Agents:**
-- `deployment-engineer` - CI/CD pipelines and deployment scripts
-- `performance-engineer` - Performance optimization and benchmarking
-- `security-auditor` - Security analysis and hardening
+- `deploy-operator` - CI/CD pipelines and deployment scripts
+- `performance-architect` - Performance optimization and benchmarking
+- `security-reviewer` - Security analysis and hardening
 
 **Documentation Agents:**
-- `documentation-expert` - Technical documentation creation
-- `api-documenter` - API documentation and examples
+- `docs-pro` - Technical documentation creation
+- `api-docs-pro` - API documentation and examples
 
 **Task Management Systems**
 

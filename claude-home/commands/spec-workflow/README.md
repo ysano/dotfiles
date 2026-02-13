@@ -89,8 +89,8 @@ Deploy multiple agents to implement a complete feature:
 This might deploy:
 - `typescript-pro` for backend implementation
 - `react-pro` for frontend components
-- `test-automator` for test creation
-- `documentation-expert` for docs
+- `test-operator` for test creation
+- `docs-pro` for docs
 
 ### Bug Fix Sprint
 
@@ -119,18 +119,18 @@ The parallel-tasks command can deploy these specialized agents:
 - **golang-pro** - Go service development
 
 ### Testing Agents
-- **test-automator** - Comprehensive test suite creation
-- **qa-expert** - Quality assurance and validation
+- **test-operator** - Comprehensive test suite creation
+- **qa-reviewer** - Quality assurance and validation
 - **playwright-test-architect** - End-to-end testing
 
 ### Infrastructure Agents
-- **deployment-engineer** - CI/CD pipelines and scripts
-- **performance-engineer** - Performance optimization
-- **security-auditor** - Security analysis
+- **deploy-operator** - CI/CD pipelines and scripts
+- **performance-architect** - Performance optimization
+- **security-reviewer** - Security analysis
 
 ### Documentation Agents
-- **documentation-expert** - Technical documentation
-- **api-documenter** - API documentation and examples
+- **docs-pro** - Technical documentation
+- **api-docs-pro** - API documentation and examples
 
 ## ⚙️ Configuration Options
 

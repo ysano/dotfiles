@@ -85,7 +85,7 @@ commands/ (196) / agents/ (95) / hooks/ (22) / skills/ (6)
 
 ## 実行方法
 /dev:git-status    # Commands
-Task: code-auditor # Agents
+Task: code-reviewer # Agents
 
 ## 設計原則
 - ドメイン分離: 汎用=claude-home/、専用=.claude/
