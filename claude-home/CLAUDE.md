@@ -46,6 +46,7 @@ Task: semantic-architect   # WFGY推論系
 | jira | API統合 | Jira Cloud MCP (Atlassian Plugin) |
 | cloudflare-manager | API統合 | CF Workers/KV/R2 (`CLOUDFLARE_API_KEY`) |
 | ai-dlc-ceremonies | 理論 | AI-DLC セレモニー運営パターン・役割変化 |
+| ai-dlc-upstream | 理論 | AI-DLC 上流ワークフロー契約（PRD/Architecture/Stories） |
 | prompt-engineering | 理論 | Coding Agent プロンプト設計 |
 | prompt-management | タスク | プロンプト作成・更新・レビュー・削除 |
 
@@ -63,6 +64,7 @@ Task: semantic-architect   # WFGY推論系
 | `docs/WORKFLOW_EXAMPLES.md` | エージェントチェーンパターン |
 | `skills/ticket-management/` | AI-DLC 理論・Atomic Spec・Agent Loop |
 | `skills/ai-dlc-ceremonies/` | AI-DLC セレモニー運営・役割変化 |
+| `skills/ai-dlc-upstream/` | AI-DLC 上流ワークフロー契約・成果物フォーマット |
 | `skills/github-projects-v2/references/` | GH Projects V2 CLI/GraphQL |
 | `skills/linear/references/` | Linear API/MCP |
 | `skills/jira/references/` | Jira MCP ツール・アーキテクチャ |

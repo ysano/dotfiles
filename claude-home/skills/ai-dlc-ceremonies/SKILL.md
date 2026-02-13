@@ -69,3 +69,9 @@ AI-DLC (AI Development Lifecycle) セレモニー知識ベース。
 | Agent Loop 7段階ライフサイクル | `ticket-management` > `references/agent-loop.md` |
 | AI-Native DoD / カスタムフィールド | `ticket-management` > `references/ai-native-practices.md` |
 | 組織トポロジー / ツール選択 | `ticket-management` > `references/organization-topology.md` |
+
+## 上流パイプラインとの接続
+
+セレモニー実行の前段階として、上流ワークフローが成果物を準備する。
+上流パイプライン（PRD → Architecture → Stories）の詳細は `ai-dlc-upstream` Skill を参照。
+上流コマンド: `/ai-dlc:create-prd`, `/ai-dlc:create-architecture`, `/ai-dlc:create-stories`, `/ai-dlc:quick-spec`
