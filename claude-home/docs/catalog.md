@@ -8,11 +8,11 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 |---|---|---|
 | Commands | 200 (22 categories + 4 top-level) | `commands/` |
 | Agents | 66 | `agents/` |
-| Skills | 12 | `skills/` |
+| Skills | 13 | `skills/` |
 | Hooks | 14 (general 11 + svelte 3) | `hooks/` |
 | Hook Settings | 6 presets | `hooks/settings-*.json` |
 | Maintenance Scripts | 5 | `scripts/` |
-| **Total** | **303** | |
+| **Total** | **304** | |
 
 ---
 
@@ -108,6 +108,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/security:security-audit` | セキュリティ評価 |
 | Command | `/performance:performance-audit` | パフォーマンス監査 |
 | Skill | security | セキュリティ監査・堅牢化・依存関係・認証手順 |
+| Skill | performance | パフォーマンス監査・ビルド・バンドル・DB・CDN・キャッシュ・監視手順 |
 | Hook | check-spec-existence.py | Write/Edit 前に Spec 存在確認 |
 | Hook | typescript-check.py | TS 型チェック |
 | Hook | test-runner.sh | テスト自動実行 |
@@ -229,7 +230,7 @@ CLAUDE.md / SKILL 設計、AI ガバナンスリード。
 
 **Commands**: dev/*, test/*, security/*, docs/*, deploy/*, setup/*, performance/*, project/*, team/*
 **Agents**: 全開発系 (-pro), 全品質系 (-reviewer), 全インフラ系 (-operator), docs-pro, debug-pro
-**Skills**: prompt-engineering, prompt-management, security
+**Skills**: prompt-engineering, prompt-management, security, performance
 **Hooks**: bash-validator, format-and-lint, session-learning-capture
 
 ### Tier 2: Framework (技術スタック依存) — ~10%
@@ -467,7 +468,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 
 ---
 
-## Skills Inventory (12)
+## Skills Inventory (13)
 
 ### Theory / Knowledge Base
 
@@ -480,6 +481,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 | ai-dlc-sier | Theory | SIer 構造変革 (5 ビジネスドメイン) |
 | prompt-engineering | Theory | Coding Agent プロンプト設計ガイドライン |
 | security | Knowledge Base | セキュリティ監査・堅牢化・依存関係・認証 (OWASP/NIST/CIS) |
+| performance | Knowledge Base | パフォーマンス監査・ビルド・バンドル・DB・CDN・キャッシュ・監視 |
 
 ### API Integration
 
