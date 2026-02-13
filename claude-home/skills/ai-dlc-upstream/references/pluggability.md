@@ -103,6 +103,9 @@ BMAD 文書にない AI-DLC 必須要素:
 - [ ] Atomic Spec Constraints for Story 3, 5
 - [ ] Success Metrics baseline values
 
+### Structural Changes
+- {description of structural reorganization applied during conversion}
+
 ### Not Applicable
 - N/A items from source document
 ```

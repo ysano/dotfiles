@@ -20,7 +20,9 @@ Fetch open issues that are sprint candidates:
 gh issue list --state open --json number,title,body,labels,milestone --limit 100
 ```
 
-For each issue, check Atomic Spec 5 elements (Context, Current Behavior, Expected Behavior, Constraints, Verification). Report completeness as a quality score.
+**Upstream pipeline fallback**: If few or no issues are found, also check for upstream story files using Glob `docs/stories-*.md` and `docs/spec-*.md`. Read and assess stories from these files using the same 5-element quality check below. This ensures the pipeline works even when stories have not yet been converted to GitHub Issues.
+
+For each issue (or story from file), check Atomic Spec 5 elements (Context, Current Behavior, Expected Behavior, Constraints, Verification). Report completeness as a quality score.
 
 **1.2 Dependency Detection**
 

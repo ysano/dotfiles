@@ -20,7 +20,9 @@ Read the PRD document:
 - If `$ARGUMENTS` contains context but no file: search for PRD files in `docs/prd-*.md`
 - If no PRD exists: ask user whether to create one first (`/ai-dlc:create-prd`) or proceed with inline requirements
 
-Extract from PRD:
+**Inline requirements path**: If proceeding without a PRD, derive requirements from `$ARGUMENTS` context. Set `linked-prd: none (inline)` in metadata. FR-NNN traceability will be limited — generate provisional identifiers (PFR-001, etc.) and flag them as provisional in the output.
+
+Extract from PRD (or derive from inline context):
 - **FR-NNN** functional requirements (full list)
 - **NFR** non-functional requirements
 - **User Personas** (for understanding access patterns)

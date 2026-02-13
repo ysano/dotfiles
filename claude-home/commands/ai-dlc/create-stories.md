@@ -67,6 +67,8 @@ Decomposition rules:
 - **Vertical slice**: Prefer end-to-end slices over horizontal layers
 - **Parallelization**: Identify stories that can run concurrently
 
+**FR Coverage Check**: After decomposition, verify that every FR-NNN from the PRD is covered by at least one Story. List any uncovered FR and create additional Stories or flag for discussion.
+
 ### Step 4: Dependency Graph
 
 Visualize inter-story and inter-epic dependencies:

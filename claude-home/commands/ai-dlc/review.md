@@ -29,7 +29,9 @@ Verify the PR → Issue → Atomic Spec chain:
 
 **2.1 Issue Link**
 
-Extract linked issue from PR body or branch name (e.g., `fix/123-description`, `feat/456-feature`):
+Extract linked issue from PR body or branch name. Common patterns:
+- Branch name: `fix/123-description`, `feat/456-feature` (extract number after `/`)
+- PR body keywords: `Closes #N`, `Fixes #N`, `Resolves #N`, `Related to #N`
 
 ```bash
 gh issue view $ISSUE_NUMBER --json number,title,body,labels
@@ -89,7 +91,7 @@ Standard code quality checks plus AI-DLC specific gates.
 - Lines changed: <= 300 (warn at 250, fail at 400+)
 - If exceeded: recommend splitting per `ticket-management` granularity rules
 
-**Churn Indicator:**
+**Churn Indicator** (count `CHANGES_REQUESTED` reviews as rounds):
 - 1-3 review rounds: Normal
 - 4-6 rounds: `[Churn Alert]` — Spec may need supplementation
 - 7+ rounds: Recommend returning to Spec Definition stage

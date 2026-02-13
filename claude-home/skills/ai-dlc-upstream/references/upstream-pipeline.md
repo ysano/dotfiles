@@ -96,6 +96,10 @@ Quick Spec は Story 数 5 以下のプロジェクトに適用。
 
 ### Gate 4: /ai-dlc:plan 接続
 
+**前提条件**: create-stories の出力が以下のいずれかの形式で `/ai-dlc:plan` から利用可能であること:
+1. **GitHub Issues**（推奨）: `/ai-dlc:create-stories` の Option B で `gh issue create` 実行済み
+2. **ファイル**（フォールバック）: `docs/stories-*.md` または `docs/spec-*.md` として存在。plan がファイルからも読み込む
+
 `/ai-dlc:plan` Phase 1 "Spec Quality Check" が Upstream Stories を検証:
 - Atomic Spec 5 要素スコア [0-5]/5
 - Ready / Needs Revision の判定
