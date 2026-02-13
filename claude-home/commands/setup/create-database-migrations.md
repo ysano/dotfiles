@@ -2,16 +2,17 @@
 description: "Create and manage database migrations"
 ---
 
-## Instructions
+データベースマイグレーションを作成・管理する。
 
-1. **Migration Strategy and Planning**
-   - Analyze current database schema and target changes
-   - Plan migration strategy for zero-downtime deployments
-   - Define rollback procedures and data safety measures
-   - Assess migration complexity and potential risks
-   - Plan for data transformation and validation
+手順の詳細は `setup` Skill の `references/database-migrations.md` を参照。
 
-2. **Migration Framework Setup**
+1. `setup` Skill の `references/database-migrations.md` を Read して手順を確認
+2. マイグレーション戦略を策定し、フレームワークを選定
+3. マイグレーションファイルを作成し、テスト
+4. 本番デプロイ統合を設定
+5. 結果を報告
+
+See also: `/setup:design-database-schema`, `/deploy:ci-setup`
    - Set up comprehensive migration framework:
 
    **Node.js Migration Framework:**

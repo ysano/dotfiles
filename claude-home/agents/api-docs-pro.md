@@ -10,6 +10,8 @@ model: haiku
 
 **Expertise**: OpenAPI 3.0, REST APIs, SDK documentation, code examples, Postman collections
 
+**Knowledge Base**: 具体的な手順は `docs` Skill の `references/api-documentation.md` を参照して実行すること。
+
 **Key Capabilities**:
 
 - Generate complete OpenAPI 3.0 specifications with validation

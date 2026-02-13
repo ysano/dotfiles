@@ -11,7 +11,7 @@ claude-home/
 ├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
 ├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
-├── skills/      (13スキル)                 - 知識ベース・API統合
+├── skills/      (18スキル)                 - 知識ベース・API統合
 ├── scripts/     (5スクリプト)              - メンテナンスユーティリティ
 └── settings.local.json                     - ローカル権限設定
 ```
@@ -54,6 +54,11 @@ Task: semantic-architect   # WFGY推論系
 | prompt-management | タスク | プロンプト作成・更新・レビュー・削除 |
 | security | 知識ベース | セキュリティ監査・堅牢化・依存関係・認証 |
 | performance | 知識ベース | パフォーマンス監査・ビルド・バンドル・DB・CDN・キャッシュ・監視 |
+| test | 知識ベース | テスト戦略・単体/結合/E2E・カバレッジ・負荷・ミューテーション |
+| deploy | 知識ベース | CI/CD・コンテナ・K8s・リリース・ロールバック・ホットフィックス |
+| setup | 知識ベース | 開発環境・Linting・Formatting・DB・API設計・モノレポ |
+| docs | 知識ベース | アーキテクチャ文書・API文書・オンボーディング・マイグレーション |
+| simulation | 知識ベース | シナリオ探索・デジタルツイン・意思決定木・市場モデリング |
 
 ## 設計原則
 

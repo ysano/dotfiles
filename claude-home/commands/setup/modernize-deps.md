@@ -2,53 +2,16 @@
 description: "Update and modernize project dependencies"
 ---
 
-## Instructions
+プロジェクトの依存関係を更新・近代化する。
 
-Follow this approach to modernize dependencies: **$ARGUMENTS**
+手順の詳細は `setup` Skill の `references/dependency-modernization.md` を参照。
 
-1. **Dependency Audit**
-   ```bash
-   # Check outdated packages
-   npm outdated
-   pip list --outdated
-   composer outdated
-   
-   # Security audit
-   npm audit
-   pip-audit
-   ```
+アプローチの指定: **$ARGUMENTS**
 
-2. **Update Strategy**
-   - Start with patch updates (1.2.3 → 1.2.4)
-   - Then minor updates (1.2.3 → 1.3.0)
-   - Finally major updates (1.2.3 → 2.0.0)
-   - Test thoroughly between each step
+1. `setup` Skill の `references/dependency-modernization.md` を Read して手順を確認
+2. 依存関係の監査を実施
+3. 段階的更新戦略に従い実施
+4. テスト・ドキュメントを更新
+5. 結果を報告
 
-3. **Automated Updates**
-   ```bash
-   # Safe updates
-   npm update
-   pip install -U package-name
-   
-   # Interactive updates
-   npx npm-check-updates -i
-   ```
-
-4. **Breaking Changes Review**
-   - Read changelogs and migration guides
-   - Identify deprecated APIs
-   - Plan code changes needed
-   - Update tests and documentation
-
-5. **Testing and Validation**
-   ```bash
-   npm test
-   npm run build
-   npm run lint
-   ```
-
-6. **Documentation Updates**
-   - Update README.md
-   - Revise installation instructions
-   - Update API documentation
-   - Note breaking changes
+See also: `/security:dependency-audit`, `/test:test-coverage`

@@ -2,73 +2,15 @@
 description: "Setup code linting and quality tools"
 ---
 
-## Instructions
+コードリンティングと品質ツールをセットアップする。
 
-Follow this systematic approach to setup linting: **$ARGUMENTS**
+手順の詳細は `setup` Skill の `references/linting.md` を参照。
 
-1. **Project Analysis**
-   - Identify programming languages and frameworks
-   - Check existing linting configuration
-   - Review current code style and patterns
-   - Assess team preferences and requirements
+アプローチの指定: **$ARGUMENTS**
 
-2. **Tool Selection by Language**
+1. `setup` Skill の `references/linting.md` を Read して手順を確認
+2. プロジェクトを分析し、言語に応じたリンティングツールを選定
+3. 設定・IDE 統合・CI/CD パイプライン統合を実施
+4. 結果を報告
 
-   **JavaScript/TypeScript:**
-   ```bash
-   npm install -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
-   npm install -D prettier eslint-config-prettier eslint-plugin-prettier
-   ```
-
-   **Python:**
-   ```bash
-   pip install flake8 black isort mypy pylint
-   ```
-
-   **Java:**
-   ```bash
-   # Add to pom.xml or build.gradle
-   # Checkstyle, SpotBugs, PMD
-   ```
-
-3. **Configuration Setup**
-
-   **ESLint (.eslintrc.json):**
-   ```json
-   {
-     "extends": [
-       "eslint:recommended",
-       "@typescript-eslint/recommended",
-       "prettier"
-     ],
-     "parser": "@typescript-eslint/parser",
-     "plugins": ["@typescript-eslint"],
-     "rules": {
-       "no-console": "warn",
-       "no-unused-vars": "error",
-       "@typescript-eslint/no-explicit-any": "warn"
-     }
-   }
-   ```
-
-4. **IDE Integration**
-   - Configure VS Code settings
-   - Setup auto-fix on save
-   - Install relevant extensions
-
-5. **CI/CD Integration**
-   ```yaml
-   - name: Lint code
-     run: npm run lint
-   ```
-
-6. **Package.json Scripts**
-   ```json
-   {
-     "scripts": {
-       "lint": "eslint src --ext .ts,.tsx",
-       "lint:fix": "eslint src --ext .ts,.tsx --fix",
-       "format": "prettier --write src"
-     }
-   }
-   ```
+See also: `/setup:setup-formatting`, `/deploy:ci-setup`

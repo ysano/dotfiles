@@ -2,59 +2,15 @@
 description: "Configure code formatting tools"
 ---
 
-## Instructions
+コードフォーマットツールを設定する。
 
-Setup code formatting following these steps: **$ARGUMENTS**
+手順の詳細は `setup` Skill の `references/code-formatting.md` を参照。
 
-1. **Language-Specific Tools**
+セットアップ手順: **$ARGUMENTS**
 
-   **JavaScript/TypeScript:**
-   ```bash
-   npm install -D prettier
-   echo '{"semi": true, "singleQuote": true, "tabWidth": 2}' > .prettierrc
-   ```
+1. `setup` Skill の `references/code-formatting.md` を Read して手順を確認
+2. 言語に応じたフォーマットツールを選定・インストール
+3. IDE 統合・pre-commit フックを設定
+4. 結果を報告
 
-   **Python:**
-   ```bash
-   pip install black isort
-   echo '[tool.black]\nline-length = 88\ntarget-version = ["py38"]' > pyproject.toml
-   ```
-
-   **Java:**
-   ```bash
-   # Google Java Format or Spotless plugin
-   ```
-
-2. **Configuration Files**
-
-   **.prettierrc:**
-   ```json
-   {
-     "semi": true,
-     "singleQuote": true,
-     "tabWidth": 2,
-     "trailingComma": "es5",
-     "printWidth": 80
-   }
-   ```
-
-3. **IDE Setup**
-   - Install formatter extensions
-   - Enable format on save
-   - Configure keyboard shortcuts
-
-4. **Scripts and Automation**
-   ```json
-   {
-     "scripts": {
-       "format": "prettier --write .",
-       "format:check": "prettier --check ."
-     }
-   }
-   ```
-
-5. **Pre-commit Hooks**
-   ```bash
-   npm install -D husky lint-staged
-   echo '{"*.{js,ts,tsx}": ["prettier --write", "eslint --fix"]}' > .lintstagedrc
-   ```
+See also: `/setup:setup-linting`, `/setup:setup-development-environment`

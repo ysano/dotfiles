@@ -7,12 +7,12 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | 種別 | 数 | 配置 |
 |---|---|---|
 | Commands | 200 (22 categories + 4 top-level) | `commands/` |
-| Agents | 66 | `agents/` |
-| Skills | 13 | `skills/` |
+| Agents | 67 | `agents/` |
+| Skills | 18 | `skills/` |
 | Hooks | 14 (general 11 + svelte 3) | `hooks/` |
 | Hook Settings | 6 presets | `hooks/settings-*.json` |
 | Maintenance Scripts | 5 | `scripts/` |
-| **Total** | **304** | |
+| **Total** | **310** | |
 
 ---
 
@@ -109,6 +109,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/performance:performance-audit` | パフォーマンス監査 |
 | Skill | security | セキュリティ監査・堅牢化・依存関係・認証手順 |
 | Skill | performance | パフォーマンス監査・ビルド・バンドル・DB・CDN・キャッシュ・監視手順 |
+| Skill | test | テスト戦略・単体/結合/E2E・カバレッジ・負荷テスト手順 |
 | Hook | check-spec-existence.py | Write/Edit 前に Spec 存在確認 |
 | Hook | typescript-check.py | TS 型チェック |
 | Hook | test-runner.sh | テスト自動実行 |
@@ -134,6 +135,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/deploy:setup-kubernetes-deployment` | K8s デプロイ |
 | Hook | auto-update-ticket.sh | push 時に Issue 自動コメント |
 | Hook | format-and-lint.sh | Prettier + ESLint 自動修正 |
+| Skill | deploy | CI/CD・コンテナ・K8s・リリース・ロールバック手順 |
 | Agent | deploy-operator | CI/CD パイプライン |
 | Agent | cloud-architect | クラウドインフラ設計 |
 | Agent | azure-devops-operator | Azure DevOps |
@@ -191,7 +193,7 @@ AI システム運用監視、デリバリーパイプライン最適化。
 - `/orchestration:*` commands (10 commands)
 - `/deploy:*` commands
 - `deploy-operator`, `release-operator` agents
-- `cloudflare-manager` skill
+- `deploy`, `cloudflare-manager` skills
 
 ### Senior Architect
 
@@ -230,7 +232,7 @@ CLAUDE.md / SKILL 設計、AI ガバナンスリード。
 
 **Commands**: dev/*, test/*, security/*, docs/*, deploy/*, setup/*, performance/*, project/*, team/*
 **Agents**: 全開発系 (-pro), 全品質系 (-reviewer), 全インフラ系 (-operator), docs-pro, debug-pro
-**Skills**: prompt-engineering, prompt-management, security, performance
+**Skills**: prompt-engineering, prompt-management, security, performance, test, deploy, setup, docs
 **Hooks**: bash-validator, format-and-lint, session-learning-capture
 
 ### Tier 2: Framework (技術スタック依存) — ~10%
@@ -263,6 +265,7 @@ Claude Code 自体の拡張・推論強化。
 ### Tier 5: Experimental (実験的) — ~9%
 
 **Commands**: simulation/* (8 commands)
+**Skills**: simulation
 **Agents**: prompt-reviewer (multi-model review)
 
 ---
@@ -368,7 +371,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 
 ---
 
-## Agents Inventory (66)
+## Agents Inventory (67)
 
 ### `-architect` — 戦略設計 (8)
 
@@ -438,7 +441,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 | test-operator | テスト自動化 CI/CD | haiku |
 | commit-operator | タスク完了・Git ワークフロー | default |
 
-### `-agent` — メタ/オーケストレーション (12)
+### `-agent` — メタ/オーケストレーション (13)
 
 | Agent | Description | Model |
 |---|---|---|
@@ -454,6 +457,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 | github-ticket-agent | GH Issue CRUD・トリアージ | default |
 | linear-ticket-agent | Linear Issue 操作・分析 | default |
 | ticket-sync-agent | GH ↔ Linear 同期 | default |
+| skill-migration-agent | Command → Skill マイグレーション | sonnet |
 
 ### WFGY 固有名 — 認知システム (6)
 
@@ -468,7 +472,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 
 ---
 
-## Skills Inventory (13)
+## Skills Inventory (18)
 
 ### Theory / Knowledge Base
 
@@ -482,6 +486,11 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 | prompt-engineering | Theory | Coding Agent プロンプト設計ガイドライン |
 | security | Knowledge Base | セキュリティ監査・堅牢化・依存関係・認証 (OWASP/NIST/CIS) |
 | performance | Knowledge Base | パフォーマンス監査・ビルド・バンドル・DB・CDN・キャッシュ・監視 |
+| test | Knowledge Base | テスト戦略・単体/結合/E2E・カバレッジ・負荷・ミューテーション |
+| deploy | Knowledge Base | CI/CD・コンテナ・K8s・リリース・ロールバック・ホットフィックス |
+| setup | Knowledge Base | 開発環境・Linting・Formatting・DB・API設計・モノレポ |
+| docs | Knowledge Base | アーキテクチャ文書・API文書・オンボーディング・マイグレーション |
+| simulation | Knowledge Base | シナリオ探索・デジタルツイン・意思決定木・市場モデリング |
 
 ### API Integration
 

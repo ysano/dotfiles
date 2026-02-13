@@ -1,82 +1,44 @@
 # Simulation Commands
 
-*Inspired by "AI agents at their most under-leveraged point" by AI News & Strategy Daily | Nate B. Jones*  
-*Source: https://www.youtube.com/watch?v=duA2AwL7keg*
+AI agents を reality simulator として活用 - 実行から指数的な意思決定価値へ。
 
-AI agents as reality simulators - moving beyond execution to exponential decision value through modeling.
+> **Knowledge Base**: 各コマンドの詳細な手順は `simulation` Skill (`skills/simulation/`) に集約されている。
+> コマンドは Skill への薄いエントリーポイントとして機能する。
 
-## Philosophy
+## 哲学
 
-Traditional AI agents focus on execution - turning a 10-minute email into a zero-minute email. These simulation commands unlock exponential leverage by using AI agents as **world modelers** rather than just task executors.
+従来の AI agents は実行に焦点を当てる (10分のメールを0分に)。
+これらのシミュレーションコマンドは、AI agents を **world modelers** として使用することで指数的レバレッジを解放する。
 
-The core concept: `LLM + Tools + Guidance + Simulated World = Reality Simulator`
-
-## Value Levers
-
-### 1. Alternate Timeline Advantage
-- Explore multiple business scenarios before commitment
-- Test product launches, marketing campaigns, and strategic decisions
-- Run "what-if" analyses across different market conditions
-
-### 2. Time Compression  
-- Your competitor runs 3 iterations, you run 300
-- Compress 10-year market cycles into 10-hour simulations
-- Rapid prototyping for strategies, not just products
-
-### 3. Compounding Intelligence
-- Each simulation develops better priors for decision-making
-- Find pricing cliffs, hidden market segments, breakthrough opportunities
-- Discover patterns invisible to linear execution approaches
+コアコンセプト: `LLM + Tools + Guidance + Simulated World = Reality Simulator`
 
 ## Available Commands
 
-### Core Simulation Tools
-- `business-scenario-explorer` - Multi-timeline business exploration with constraint validation
-- `digital-twin-creator` - Systematic digital twin creation with data quality checks
-- `decision-tree-explorer` - Decision branch analysis with probability weighting
-- `market-response-modeler` - Customer/market response simulation with segment analysis
+### コアシミュレーションツール
+- **business-scenario-explorer.md** - 制約検証付き複数タイムラインビジネス探索
+- **digital-twin-creator.md** - データ品質チェック付きデジタルツイン作成
+- **decision-tree-explorer.md** - 確率重み付け意思決定ブランチ分析
+- **market-response-modeler.md** - セグメント分析付き顧客/市場反応シミュレーション
 
-### Advanced Modeling
-- `timeline-compressor` - Accelerated scenario testing with confidence intervals  
-- `constraint-modeler` - World constraint modeling with assumption validation
-- `future-scenario-generator` - Scenario generation with plausibility scoring
-- `simulation-calibrator` - Test and refine simulation accuracy
+### 高度なモデリング
+- **timeline-compressor.md** - 信頼区間付き加速シナリオテスト
+- **constraint-modeler.md** - 前提検証付き世界制約モデリング
+- **future-scenario-generator.md** - 妥当性スコアリング付きシナリオ生成
+- **simulation-calibrator.md** - シミュレーション精度テストと改良
 
-## Key Features
+### ドキュメント
+- **SIMULATION_EXAMPLES.md** - 包括的な例と使用パターン
 
-All simulation commands include:
+## はじめに
 
-- **Input Validation**: Intelligent guidance when critical information is missing
-- **Progressive Questioning**: Adaptive follow-up questions based on context
-- **Quality Gates**: Warnings about inputs that could lead to poor simulations
-- **Calibration Guidance**: Help test assumptions against reality
-- **Confidence Scoring**: Reliability indicators for simulation outputs
-- **Iteration Loops**: Guided refinement cycles for continuous improvement
+1. **シミュレーション初心者?** `SIMULATION_EXAMPLES.md` で実践例を確認
+2. **制約を理解** - `constraint-modeler` で意思決定環境をマッピング
+3. **前提をテスト** - `simulation-calibrator` でデータ品質を検証
+4. **特定ツールを適用** - シナリオに基づいてコマンドを選択
+5. **反復と改良** - 実世界フィードバックに基づき改善
 
-## Getting Started
+## Related
 
-1. **New to simulation?** Start with [SIMULATION_EXAMPLES.md](./SIMULATION_EXAMPLES.md) for practical examples
-2. **Understand your constraints** - Use `constraint-modeler` to map your decision environment
-3. **Test assumptions** - Use `simulation-calibrator` to validate your data quality
-4. **Apply specific tools** - Choose simulation commands based on your scenario
-5. **Iterate and refine** - Improve based on real-world feedback
-
-## 📖 Documentation
-
-- **[SIMULATION_EXAMPLES.md](./SIMULATION_EXAMPLES.md)** - Comprehensive examples and usage patterns
-- **Individual command docs** - Each command has detailed instructions and examples
-
-## Examples from Industry
-
-- **Renault**: Cut vehicle development time 60% with digital twins predicting crash outcomes
-- **BMW**: Simulated thousands of factory line changes overnight for optimal layouts
-- **Formula 1**: Real-time pit strategy simulations for energy allocation optimization
-- **Ad Networks**: Pre-test creative mixes for ROI optimization without spend
-
-## Philosophy in Practice
-
-> "If we have the capability to have clearer foresight and choose not to use it, does this raise our moral responsibility for future timelines? We now have the compute to think more deeply - and we should use it."
-
-Stop asking "How can AI do this task?" Start asking "How can AI show me different futures and help me make better decisions?"
-
-Where would a digital twin save you from your next big mistake?
+- **Skill**: `simulation` - 手順詳細、シミュレーション種別クイックリファレンス、価値レバー
+- **Agent**: `strategy-architect` - ビジネス・技術シナリオモデリング専門エージェント
+- **Agent**: `decision-navigator` - WFGY semantic validation による戦略的意思決定専門エージェント

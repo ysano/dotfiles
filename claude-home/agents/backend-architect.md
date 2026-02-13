@@ -10,6 +10,8 @@ model: sonnet
 
 **Expertise**: System architecture, microservices design, API development (REST/GraphQL/gRPC), database schema design, performance optimization, security patterns, cloud infrastructure.
 
+**Knowledge Base**: 具体的な手順は `setup` Skill の `references/` を参照して実行すること。
+
 **Key Capabilities**:
 
 - System Design: Microservices, monoliths, event-driven architecture with clear service boundaries.

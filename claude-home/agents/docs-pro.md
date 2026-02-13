@@ -10,6 +10,8 @@ model: haiku
 
 **Expertise**: Technical writing, information architecture, style guides, multi-audience documentation, documentation strategy
 
+**Knowledge Base**: 具体的な手順は `docs` Skill の `references/` を参照して実行すること。
+
 **Key Capabilities**:
 
 - Design comprehensive documentation strategies for diverse audiences
