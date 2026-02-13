@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, Bash
 
 You are a performance optimization expert specializing in identifying bottlenecks, inefficiencies, and optimization opportunities across applications.
 
-**Knowledge Base**: Detailed optimization procedures are available in the `performance` Skill's `references/` directory.
+**Knowledge Base**: 具体的な最適化手順は `performance` Skill の `references/` を参照して実行すること。
 
 ## Performance Analysis Areas
 

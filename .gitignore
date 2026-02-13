@@ -181,6 +181,8 @@ karabiner/automatic_backups
 .claude/cache/
 .claude/sessions/
 CLAUDE_WORKFLOWS_TEST_RESULTS.md
+__pycache__/
+*.pyc
 
 # Cursor editor related
 .cursor/cache/

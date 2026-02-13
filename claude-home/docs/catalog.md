@@ -49,6 +49,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Skill | ai-dlc-upstream | 上流パイプライン契約・成果物フォーマット |
 | Skill | ai-dlc-estimate | 見積もり技法 (AEF, Value-Based) |
 | Skill | ai-dlc-sier | SIer 構造変革 (Sales/Branding/PM/Consulting) |
+| Skill | simulation | シナリオ探索・デジタルツイン・意思決定木・市場モデリング |
 | Agent | product-architect | プロダクトビジョン・戦略・ロードマップ |
 | Agent | backend-architect | バックエンドシステム設計 |
 | Agent | project-architect | プロジェクト初期化・構造設計 |
@@ -78,6 +79,8 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/dev:incremental-feature-build` | 逐次的機能構築 |
 | Command | `/dev:parallel-feature-build` | 並列エージェント機能構築 |
 | Command | `/dev:pull-request` | PR 作成 |
+| Skill | setup | 開発環境・Linting・Formatting・DB・API設計・モノレポ |
+| Skill | docs | アーキテクチャ文書・API文書・オンボーディング・マイグレーション |
 | Agent | frontend-pro | React コンポーネント構築 |
 | Agent | react-pro | React 専門 |
 | Agent | nextjs-pro | Next.js 専門 |
