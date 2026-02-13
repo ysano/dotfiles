@@ -1,6 +1,6 @@
 ---
 name: skill-migration-agent
-description: Migrates a command category into a Skill by creating SKILL.md, reference files, converting commands to thin wrappers, and updating related agents. Processes one category per invocation.
+description: Migrates a command category into a Skill by creating SKILL.md, reference files, converting commands to thin wrappers, and updating related agents. Use when migrating command categories into Skills. Processes one category per invocation.
 tools: Read, Write, Edit, Glob, Grep, Bash, LS
 model: sonnet
 ---
@@ -73,81 +73,18 @@ user-invocable: true
 
 ### Step 5: Command Conversion
 
-各 Command を薄いラッパーに変換:
-
-```markdown
----
-description: "[short description]"
----
-
-[日本語 1 行の概要]
-
-手順の詳細は `[category]` Skill の `references/[name].md` を参照。
-
-1. `[category]` Skill の `references/[name].md` を Read して手順を確認
-2. 手順に従い実施
-3. 結果を報告
-
-See also: `/[category]:[related-command1]`, `/[category]:[related-command2]`
-```
+各 Command を薄いラッパー (13行以内) に変換。形式は `commands/security/security-audit.md` を参照。
+構成: FM (description) → 日本語 1 行概要 → Skill reference 参照指示 → See also。
 
 ### Step 6: Agent Update
 
-関連 Agent に Knowledge Base 参照を追加（まだない場合）:
-
-Agent 本文の冒頭付近（**Role** や最初の説明文の後）に 1 行追加:
-
-```
-**Knowledge Base**: 具体的な手順は `[category]` Skill の `references/` を参照して実行すること。
-```
-
-既に Knowledge Base 行がある Agent にはカテゴリ参照を追記。
+関連 Agent の冒頭付近に `**Knowledge Base**: 具体的な手順は [category] Skill の references/ を参照して実行すること。` を追加。既存の Knowledge Base 行がある場合はカテゴリ参照を追記。
 
 ### Step 7: README Update
 
-`claude-home/commands/[category]/README.md` を更新:
-
-```markdown
-# [Category] Commands
-
-[日本語 1 行の概要]
-
-> **Knowledge Base**: 各コマンドの詳細な手順は `[category]` Skill (`skills/[category]/`) に集約されている。
-> コマンドは Skill への薄いエントリーポイントとして機能する。
-
-## Available Commands
-
-- **[command].md** - [description]
-...
-
-## Related
-
-- **Skill**: `[category]` - [Quick Reference 内容の要約]
-- **Agent**: `[agent-name]` - [Agent の概要]
-```
+`commands/[category]/README.md` を更新。形式は `commands/security/README.md` を参照。
+Knowledge Base blockquote + Available Commands + Related (Skill, Agent) セクション。
 
 ### Step 8: Report
 
-完了後、以下を出力:
-
-```
-## Migration Report: [category]
-
-### Created
-- skills/[category]/SKILL.md
-- skills/[category]/references/[file1].md
-- ...
-
-### Modified
-- commands/[category]/[command1].md (→ thin wrapper)
-- ...
-- commands/[category]/README.md
-- agents/[agent-name].md (Knowledge Base 追加)
-
-### Verification Checklist
-- [ ] SKILL.md < 100 行
-- [ ] 各 reference 70-100 行
-- [ ] 各 Command ラッパー ~13 行
-- [ ] reference 数 = Command 数
-- [ ] Quick Reference テーブルがカテゴリ固有
-```
+作成/変更した全ファイル一覧と検証チェックリスト (SKILL.md 行数、reference 行数、Command 行数、reference 数 = Command 数、Quick Reference テーブル) を出力。
