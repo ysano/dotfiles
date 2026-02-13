@@ -11,7 +11,7 @@ claude-home/
 ├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
 ├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
-├── skills/      (11スキル)                 - 知識ベース・API統合
+├── skills/      (12スキル)                 - 知識ベース・API統合
 ├── scripts/     (5スクリプト)              - メンテナンスユーティリティ
 └── settings.local.json                     - ローカル権限設定
 ```
@@ -52,6 +52,7 @@ Task: semantic-architect   # WFGY推論系
 | ai-dlc-sier | 理論 | 次世代 SIer 構造変革 (5ビジネスドメイン) |
 | prompt-engineering | 理論 | Coding Agent プロンプト設計 |
 | prompt-management | タスク | プロンプト作成・更新・レビュー・削除 |
+| security | 知識ベース | セキュリティ監査・堅牢化・依存関係・認証 |
 
 ## 設計原則
 
