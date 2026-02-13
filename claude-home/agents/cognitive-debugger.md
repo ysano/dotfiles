@@ -86,7 +86,7 @@ dependencies:
     - reasoning-resonance.md
     - reasoning-logic-vector.md
   boundary-commands:
-    - boundary-bbcr-fallback.md
+    - wfgy-bbcr.md
     - boundary-risk-assess.md
   memory-commands:
     - memory-checkpoint.md

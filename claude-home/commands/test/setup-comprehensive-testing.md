@@ -74,3 +74,5 @@ description: "Setup complete testing infrastructure"
     - Create testing templates and examples
     - Set up testing metrics and quality monitoring
     - Train team on testing best practices and tools
+
+See also: `/test:e2e-setup` for detailed E2E testing setup with Playwright/Cypress.

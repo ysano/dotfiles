@@ -73,3 +73,5 @@ Conduct a comprehensive performance audit following these steps:
     - Recommend appropriate performance tools and libraries
 
 Include specific file paths, line numbers, and measurable metrics where possible. Focus on high-impact, low-effort optimizations first.
+
+See also: `/performance:add-performance-monitoring` for setting up ongoing monitoring after audit.

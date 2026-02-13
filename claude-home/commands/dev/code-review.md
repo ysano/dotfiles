@@ -52,3 +52,5 @@ Follow these steps to conduct a thorough code review:
    - Provide specific, actionable recommendations
    - Suggest tools and practices for improvement
    - Create a summary report with next steps
+
+See also: `/ai-dlc:review` for AI-DLC quality gates and Atomic Spec compliance review.

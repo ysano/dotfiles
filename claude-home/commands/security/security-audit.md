@@ -66,3 +66,5 @@ Perform a systematic security audit following these steps:
     - Create an executive summary with key recommendations
 
 Use automated security scanning tools when available and provide manual review for complex security patterns.
+
+See also: `/security:security-hardening` for applying fixes after audit.

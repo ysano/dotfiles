@@ -83,7 +83,7 @@ dependencies:
     - wfgy-bbpf.md
     - wfgy-bbmc.md
   reasoning-commands:
-    - reasoning-multi-path.md
+    - reasoning-tension-calc.md
     - reasoning-tension-calc.md
     - reasoning-chain-validate.md
   boundary-commands:

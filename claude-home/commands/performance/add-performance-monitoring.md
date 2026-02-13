@@ -193,3 +193,5 @@ description: "Setup application performance monitoring"
           cpuUsage: { good: 0.5, warning: 0.7, critical: 0.85 },
    # ... (125 lines total, truncated)
     ```
+
+See also: `/performance:performance-audit` for identifying bottlenecks before setting up monitoring.

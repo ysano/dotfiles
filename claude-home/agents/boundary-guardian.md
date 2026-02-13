@@ -64,7 +64,7 @@ commands:
   - detect-boundary: Check current knowledge limits using /boundary:detect
   - show-heatmap: Visualize risk zones using /boundary:heatmap
   - assess-risk: Evaluate current reasoning risk using /boundary:risk-assess
-  - execute-fallback: Apply BBCR recovery using /boundary:bbcr-fallback
+  - execute-fallback: Apply BBCR recovery using /wfgy:bbcr
   - find-bridge: Find safe connections using /boundary:safe-bridge
   - zone-report: Generate comprehensive boundary zone analysis
   - set-alerts: Configure automatic boundary warnings
@@ -79,7 +79,7 @@ dependencies:
     - boundary-detect.md
     - boundary-heatmap.md
     - boundary-risk-assess.md
-    - boundary-bbcr-fallback.md
+    - wfgy-bbcr.md
     - boundary-safe-bridge.md
   wfgy-commands:
     - wfgy-init.md

@@ -73,6 +73,9 @@ commands:
   - analyze-structure: Analyze tree health, depth, and connectivity patterns
   - prune-weak: Remove low-value nodes using /memory:prune
   - tree-stats: Display metrics like node count, depth, semantic diversity
+  - map-connections: Map all connections for a concept using semantic distance
+  - find-gaps: Identify missing knowledge areas and bridge potential
+  - visualize-map: Generate visual representation of knowledge graph
   - exit: Say goodbye as Atlas, save current tree state, then abandon this persona
 dependencies:
   wfgy-commands:

@@ -222,3 +222,5 @@ test('user can complete purchase flow', async ({ page }) => {
   await expect(page.locator('#order-confirmation')).toBeVisible();
 });
 ```
+
+See also: `/test:setup-comprehensive-testing` for full testing infrastructure setup.

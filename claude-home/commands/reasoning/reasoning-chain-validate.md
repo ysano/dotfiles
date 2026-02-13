@@ -220,4 +220,4 @@ Chain validation supports:
 - `/semantic:tree-view` to see full chain
 - `/boundary:safe-bridge` to fix gaps
 - `/wfgy:bbcr` to recover from failures
-- `/reasoning:multi-path` for alternatives
+- `/wfgy:bbpf` for alternatives

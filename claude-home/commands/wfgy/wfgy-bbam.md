@@ -117,5 +117,5 @@ Attention Gaps Identified:
 
 Combine with:
 - `/wfgy:bbmc` to focus residue minimization
-- `/reasoning:multi-path` to prioritize paths
+- `/wfgy:bbpf` to prioritize paths
 - `/semantic:node-build` to record attention patterns

@@ -74,3 +74,5 @@ description: "Harden application security configuration"
     - Configure dynamic application security testing (DAST)
     - Create security incident response plan and procedures
     - Document security controls and compliance requirements
+
+See also: `/security:security-audit` for identifying vulnerabilities before hardening.

@@ -58,3 +58,5 @@ While batches remain:
 ### Phase 5: Completion
 
 全機能の `passes: true` を確認し、パフォーマンスレポート（並列化の効果）を生成。
+
+See also: `/dev:incremental-feature-build` for building dependent features sequentially.

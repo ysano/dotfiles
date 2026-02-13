@@ -118,14 +118,14 @@ Optimizes attention distribution across reasoning elements.
 | `/boundary:detect` | Check knowledge limits | Prevent hallucination |
 | `/boundary:heatmap` | Visualize risk zones | Understand coverage |
 | `/boundary:risk-assess` | Evaluate current risk | Safety check |
-| `/boundary:bbcr-fallback` | Execute recovery | Handle failures |
+| `/wfgy:bbcr` | Execute recovery | Handle failures |
 | `/boundary:safe-bridge` | Find connections | Navigate unknowns |
 
 ### 🔍 Reasoning Operations (`/reasoning:*`)
 
 | Command | Description | Primary Use Case |
 |---------|-------------|------------------|
-| `/reasoning:multi-path` | Parallel exploration | Complex problem solving |
+| `/wfgy:bbpf` | Parallel exploration | Complex problem solving |
 | `/reasoning:tension-calc` | Measure semantic distance | Assess reasoning jumps |
 | `/reasoning:logic-vector` | Analyze logic flow | Identify patterns |
 | `/reasoning:resonance` | Measure stability | Monitor coherence |
@@ -204,7 +204,7 @@ Optimizes attention distribution across reasoning elements.
 /semantic:tree-init "Debug_MemoryLeak"
 
 # Explore multiple hypotheses
-/reasoning:multi-path "Possible causes of memory leak"
+/wfgy:bbpf "Possible causes of memory leak"
 
 # Validate reasoning chain
 /reasoning:chain-validate

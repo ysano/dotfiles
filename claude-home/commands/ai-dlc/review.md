@@ -140,3 +140,5 @@ After presenting the report, offer to:
 - Drill down into specific findings
 - Check related PRs for the same Epic
 - Flag for Spec Definition revision if churn is high
+
+See also: `/dev:code-review` for general code quality review without AI-DLC gates.

@@ -46,3 +46,5 @@ cat .feature-tracking/features.json | jq '[.features[] | select(.passes == false
 ```
 
 最終サマリーを PROGRESS.md に記録し、完了 commit を作成。
+
+See also: `/dev:parallel-feature-build` for building independent features in parallel.

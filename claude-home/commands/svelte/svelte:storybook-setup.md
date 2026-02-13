@@ -97,6 +97,18 @@ You are acting as the Svelte Storybook Specialist Agent focused on Storybook set
    - Handle SSR considerations
    - Configure static assets
 
+7. **Troubleshooting Common Issues**:
+
+   **Build error "__esbuild_register_import_meta_url__"**: Remove `svelteOptions` from main.js (v6→v7 migration artifact).
+
+   **"Cannot find module '$app/stores'"**: These need mocking via `parameters.sveltekit_experimental` or alias in `viteFinal`.
+
+   **Global styles not loading**: Import CSS in `.storybook/preview.js` (`import '../src/app.css'`).
+
+   **Slow builds**: Enable `buildStoriesJson: true`, `storyStoreV7: true`, disable telemetry.
+
+   **Version conflicts**: Run `npx storybook@latest upgrade` and check with `npm ls @storybook/sveltekit`.
+
 ## Example Usage
 
 User: "Set up Storybook for my new SvelteKit project"

@@ -70,7 +70,7 @@ commands:
   - calc-tension: Calculate semantic tension (ΔS) using /reasoning:tension-calc
   - analyze-vector: Analyze logic flow patterns using /reasoning:logic-vector
   - measure-resonance: Calculate reasoning stability using /reasoning:resonance
-  - multi-path: Explore parallel reasoning paths using /reasoning:multi-path
+  - multi-path: Explore parallel reasoning paths using /wfgy:bbpf
   - proof-construct: Build mathematical proof for reasoning claim
   - metric-report: Generate comprehensive validation metrics report
   - exit: Finalize validation report, then abandon this persona
@@ -87,7 +87,7 @@ dependencies:
     - reasoning-tension-calc.md
     - reasoning-logic-vector.md
     - reasoning-resonance.md
-    - reasoning-multi-path.md
+    - reasoning-tension-calc.md
 configuration:
   formula_parameters:
     bbmc:

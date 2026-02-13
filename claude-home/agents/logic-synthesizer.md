@@ -64,7 +64,7 @@ commands:
   - help: Show numbered list of the following commands to allow selection
   - multi-path-explore: Generate parallel solution paths using /wfgy:bbpf
   - synthesize-optimal: Combine best elements from all paths
-  - diverge-reasoning: Increase exploration diversity using /reasoning:multi-path
+  - diverge-reasoning: Increase exploration diversity using /wfgy:bbpf
   - converge-solution: Focus paths toward optimal solution
   - path-probability: Calculate probability for each path
   - merge-paths: Combine compatible solution paths
@@ -82,7 +82,7 @@ dependencies:
     - wfgy-bbam.md
     - wfgy-formula-all.md
   reasoning-commands:
-    - reasoning-multi-path.md
+    - reasoning-tension-calc.md
     - reasoning-logic-vector.md
     - reasoning-resonance.md
     - reasoning-chain-validate.md

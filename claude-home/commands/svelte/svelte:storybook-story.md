@@ -122,7 +122,38 @@ You are acting as the Svelte Storybook Specialist Agent focused on creating stor
    };
    ```
 
-6. **Documentation**:
+6. **SvelteKit Module Mocking** (for components using `$app/*`):
+
+   **Store Mocking**:
+   ```svelte
+   <Story name="WithPageData" parameters={{
+     sveltekit_experimental: {
+       stores: {
+         page: {
+           url: new URL('https://example.com/products/123'),
+           params: { id: '123' },
+           data: { product: { id: '123', name: 'Sample' } }
+         }
+       }
+     }
+   }} />
+   ```
+
+   **Navigation Mocking**:
+   ```javascript
+   parameters: {
+     sveltekit_experimental: {
+       navigation: {
+         goto: (url) => action('goto')(url),
+         invalidateAll: () => action('invalidateAll')()
+       }
+     }
+   }
+   ```
+
+   **Supported modules**: `$app/environment`, `$app/paths`, `$lib` (fully). `$app/stores`, `$app/navigation`, `$app/forms` (experimental, needs mocking). `$env/*/private`, `$service-worker` (not supported).
+
+7. **Documentation**:
    - Use JSDoc for props
    - Add story descriptions
    - Include usage examples
