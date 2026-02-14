@@ -1,5 +1,5 @@
 ---
-description: "Display AI-DLC lifecycle health dashboard with sprint progress, spec quality, and ceremony tracking"
+description: "Display AI-DLC lifecycle health dashboard with sprint progress, spec quality, ceremony tracking, DORA Four Keys, and AI effectiveness metrics"
 ---
 
 ## Instructions
@@ -110,12 +110,75 @@ find docs/ -name "spec-*.md" -o -name "stories-*.md" -o -name "prd-*.md" | head 
 | Calibration | Bi-weekly | [evidence] | Done / Missing |
 ```
 
-### 5. Overall Health Score
+### 5. DORA Four Keys
+
+Load `ai-dlc-observability` skill for metrics definitions and thresholds.
+
+Run the sprint aggregation script:
+
+```bash
+python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR"
+```
+
+If the script succeeds, parse the JSON output and display DORA metrics:
+
+```markdown
+## DORA Four Keys
+| Metric | Value | Level | Details |
+|---|---|---|---|
+| VDF (Delivery Frequency) | [N]/day | [LEVEL] | [qualified]/[total] PRs in [N] days |
+| SVLT (Lead Time) | [N]h | [LEVEL] | Cognitive: [N]h, Verify: [N]h |
+| Rework Rate | [N]% | [LEVEL] | [N] high-churn files / [N] total |
+| TTC (Time to Correct) | [N]h | [LEVEL] | [N] bugs resolved |
+```
+
+If the script fails or is not available, skip this section with a note:
+"DORA metrics unavailable — run `python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py` to generate"
+
+### 6. AI Effectiveness
+
+From the same script output, display:
+
+```markdown
+## AI Effectiveness
+### AI-Confidence: [value] ([LEVEL])
+| Component | Score | Weight |
+|---|---|---|
+| Spec Quality (SQ) | [N] | 0.30 |
+| Churn Inverse (CI) | [N] | 0.25 |
+| Turns/Resolution (TPR) | [N] | 0.25 |
+| Session Efficiency (SE) | [N] | 0.20 |
+
+### MTTV
+- Macro (PR cycle): [N]h median
+- Micro (per turn): [N]s
+
+### High Churn Files
+- [file] ([N] edits)
+```
+
+### 7. Economics
+
+If the script output `economics.available` is true, display cost metrics:
+
+```markdown
+## Economics
+| Metric | Value |
+|---|---|
+| Tokens/Commit | [N] |
+| Cost/PR | $[N] |
+| Cost/Issue | $[N] |
+```
+
+If `economics.available` is false, display:
+"Economics data requires OTel — set `CLAUDE_CODE_ENABLE_TELEMETRY=1` to enable"
+
+### 8. Overall Health Score
 
 Aggregate into a single health indicator:
 
 ```markdown
-## Lifecycle Health: [Good / Attention / Critical]
+## Lifecycle Health: [Healthy / Attention / Critical]
 
 | Dimension | Score | Details |
 |---|---|---|
@@ -124,6 +187,9 @@ Aggregate into a single health indicator:
 | Blockers | [emoji] | [N] active |
 | Churn Risk | [emoji] | [N] issues |
 | Stale Issues | [emoji] | [N] issues |
+| DORA Level | [emoji] | VDF/SVLT/Rework/TTC overall |
+| AI-Confidence | [emoji] | [value] ([LEVEL]) |
+| Sprint Health | [emoji] | [value] from aggregate-sprint.py |
 | Ceremonies | [emoji] | [N]/[expected] completed |
 
 ### Recommended Actions

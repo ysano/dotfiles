@@ -75,6 +75,17 @@ AI-DLC (AI Development Lifecycle) セレモニー知識ベース。
 | AI-Native DoD / カスタムフィールド | `ticket-management` > `references/ai-native-practices.md` |
 | 組織トポロジー / ツール選択 | `ticket-management` > `references/organization-topology.md` |
 
+## Observability との接続
+
+セレモニーの効果を定量評価するメトリクスは `ai-dlc-observability` Skill を参照:
+
+| トピック | 参照先 |
+|---|---|
+| DORA Four Keys (VDF/SVLT/Rework/TTC) 定義・閾値 | `ai-dlc-observability` > `references/dora-four-keys.md` |
+| AI-Confidence・Sprint Health Score 算出式 | `ai-dlc-observability` > `references/ai-dlc-metrics.md` |
+| L1-L4 メトリクスレイヤリング | `ai-dlc-observability` > `references/metrics-layering.md` |
+| Sprint 集計スクリプト | `ai-dlc-observability` > `scripts/aggregate-sprint.py` |
+
 ## 上流パイプラインとの接続
 
 セレモニー実行の前段階として、上流ワークフローが成果物を準備する。

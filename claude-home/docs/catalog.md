@@ -8,11 +8,11 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 |---|---|---|
 | Commands | 207 (22 categories + 4 top-level) | `commands/` |
 | Agents | 67 | `agents/` |
-| Skills | 18 | `skills/` |
+| Skills | 19 | `skills/` |
 | Hooks | 16 (general 13 + svelte 3) | `hooks/` |
 | Hook Settings | 6 presets | `hooks/settings-*.json` |
 | Maintenance Scripts | 5 | `scripts/` |
-| **Total** | **311** | |
+| **Total** | **312** | |
 
 ---
 
@@ -72,6 +72,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/orchestration:start` | タスクオーケストレーション開始 |
 | Skill | ticket-management | Atomic Spec・Agent Loop・AI Janitor |
 | Skill | ai-dlc-ceremonies | セレモニーパターン・役割変化 |
+| Skill | ai-dlc-observability | メトリクス定義・DORA 統合・Sprint Health |
 | Agent | orchestration-agent | 複合タスク調整・依存管理・分解 |
 | Agent | team-agent | マルチエージェントチーム編成 |
 
@@ -164,6 +165,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/ai-dlc:calibrate` | エージェント設定・性能分析 |
 | Hook | session-learning-capture.sh | セッション終了時学習記録 |
 | Hook | metrics-collector.py | セッション終了時 AI メトリクス自動収集 (G5) |
+| Skill | ai-dlc-observability | DORA Four Keys・AI-Confidence・Sprint Health |
 | Agent | legacy-pro | レガシーシステム近代化 |
 | Agent | dx-pro | 開発者体験最適化 |
 
@@ -260,7 +262,7 @@ CLAUDE.md / SKILL 設計、AI ガバナンスリード。
 AI-DLC 採用プロジェクトで有効。
 
 **Commands**: ai-dlc/*
-**Skills**: ticket-management, ai-dlc-ceremonies, ai-dlc-upstream, ai-dlc-estimate, ai-dlc-sier, github-projects-v2, linear, jira
+**Skills**: ticket-management, ai-dlc-ceremonies, ai-dlc-upstream, ai-dlc-estimate, ai-dlc-sier, ai-dlc-observability, github-projects-v2, linear, jira
 **Hooks**: check-spec-existence, auto-update-ticket, churn-counter, metrics-collector
 **Settings**: settings-ai-dlc.json
 **Agents**: github-board-agent, github-ticket-agent, linear-ticket-agent, ticket-sync-agent
@@ -483,7 +485,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 
 ---
 
-## Skills Inventory (18)
+## Skills Inventory (19)
 
 ### Theory / Knowledge Base
 
@@ -502,6 +504,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 | setup | Knowledge Base | 開発環境・Linting・Formatting・DB・API設計・モノレポ |
 | docs | Knowledge Base | アーキテクチャ文書・API文書・オンボーディング・マイグレーション |
 | simulation | Knowledge Base | シナリオ探索・デジタルツイン・意思決定木・市場モデリング |
+| ai-dlc-observability | Knowledge Base | DORA Four Keys・AI-Confidence・Sprint Health・メトリクスレイヤリング |
 
 ### API Integration
 
