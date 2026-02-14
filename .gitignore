@@ -183,6 +183,8 @@ karabiner/automatic_backups
 CLAUDE_WORKFLOWS_TEST_RESULTS.md
 __pycache__/
 *.pyc
+.coverage
+.pytest_cache/
 
 # Cursor editor related
 .cursor/cache/
