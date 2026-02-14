@@ -4,7 +4,7 @@ description: "Verify sprint outcomes with AI output quality assessment"
 
 ## Instructions
 
-Generate an AI-DLC sprint verification report. Load `ai-dlc-ceremonies` skill for verification session patterns. Load `ticket-management` skill for DoD / quality metrics context.
+Generate an AI-DLC sprint verification report. Load `ai-dlc-ceremonies` skill for verification session patterns. Load `ticket-management` skill for DoD / quality metrics context. Load `ai-dlc-observability` skill for MTTV / AI-Confidence / Sprint Health metrics.
 
 Sprint range: `$ARGUMENTS`
 
@@ -28,7 +28,7 @@ Map: PR → Issue → Sprint Goal alignment.
 
 Flag orphan PRs (no linked issue) and orphan issues (closed without PR).
 
-### Step 3: Quality Assessment
+### Step 3: Quality Assessment (ENHANCED)
 
 **Review Statistics**:
 - Average review rounds per PR
@@ -41,9 +41,33 @@ Flag orphan PRs (no linked issue) and orphan issues (closed without PR).
 git log --since="[sprint_start]" --stat -- "**/*test*" "**/*spec*" "**/*.test.*"
 ```
 
-**AI-Confidence Distribution** (if project uses this field):
-- Collect from issue/PR metadata if available
-- Distribution: 90-100, 80-89, 60-79, 0-59
+Run sprint aggregation:
+
+```bash
+python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py \
+  --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR"
+```
+
+**Quantitative Metrics** (from script output):
+
+| Metric | Value | Level |
+|---|---|---|
+| MTTV Macro (PR cycle) | [N]h | — |
+| MTTV Micro (per turn) | [N]s | — |
+| AI-Confidence | [N] | [LEVEL] |
+| Sprint Health | [N] | [LEVEL] |
+| Rework Rate | [N]% | [LEVEL] |
+
+Merge with existing review statistics and test coverage analysis.
+
+**AI-Confidence Components**:
+
+| Component | Score | Implication |
+|---|---|---|
+| Spec Quality | [N] | [Higher = specs well-defined] |
+| Churn Inverse | [N] | [Higher = less rework] |
+| Turns/Resolution | [N] | [Higher = efficient sessions] |
+| Session Efficiency | [N] | [Higher = more productive tool use] |
 
 ### Step 4: Output Done vs Outcome Done Gap
 
@@ -76,6 +100,9 @@ For each completed issue:
 | PRs with rejection | [N]/[total] ([%]) | [vs previous] |
 | Avg MTTV | [N]h | [vs previous] |
 | Test file changes | +[N]/-[N] | - |
+| MTTV (PR cycle) | [N]h | [vs previous sprint] |
+| AI-Confidence | [N] ([LEVEL]) | [vs previous sprint] |
+| Sprint Health | [N] ([LEVEL]) | [vs previous sprint] |
 
 ### Output Done vs Outcome Done
 | Issue | Output Done | Outcome Done | Gap |

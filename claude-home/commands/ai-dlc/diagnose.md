@@ -4,7 +4,7 @@ description: "Generate data-driven sprint diagnostic for retrospective"
 
 ## Instructions
 
-Generate an AI-DLC data-driven diagnostic report for a retrospective session. Load `ai-dlc-ceremonies` skill for diagnostic session patterns. Load `ticket-management` skill for Churn / AI-Confidence / Janitor rules context.
+Generate an AI-DLC data-driven diagnostic report for a retrospective session. Load `ai-dlc-ceremonies` skill for diagnostic session patterns. Load `ticket-management` skill for Churn / AI-Confidence / Janitor rules context. Load `ai-dlc-observability` skill for DORA Four Keys / Sprint Health metrics context.
 
 Sprint range: `$ARGUMENTS`
 
@@ -24,7 +24,7 @@ gh issue list --state closed --json number,closedAt,milestone --limit 200
 
 Calculate: planned vs actual completion rate, trend across recent sprints.
 
-**B.2 Quality Metrics**
+**B.2 Quality Metrics (EXTENDED)**
 
 ```bash
 # PR statistics: review rounds, rejections
@@ -37,14 +37,34 @@ gh issue list --state all --label "bug" --json number,title,createdAt,state --li
 git log --since="[sprint_start]" --stat -- "**/*test*" "**/*spec*" "**/*.test.*"
 ```
 
-**B.3 Interaction Churn Analysis**
+Run sprint aggregation for quantitative data:
 
-If Turns-Used data is available in issue metadata, analyze high-churn tickets. Otherwise, approximate from PR review round counts and commit frequency per issue.
+```bash
+python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py \
+  --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR"
+```
 
-Classify root causes:
-- **spec**: ambiguous or incomplete specification
-- **scope**: task too large for single context window
-- **technical**: unexpected technical complexity or dependency
+From the script output, extract and display:
+- DORA Four Keys (VDF/SVLT/Rework/TTC) with levels
+- AI-Confidence breakdown (4 components)
+- MTTV Macro/Micro
+
+Merge with existing PR/bug/test analysis from GitHub CLI.
+
+**B.3 Interaction Churn Analysis (ENHANCED)**
+
+**File-level churn** (from aggregate-sprint.py alerts):
+Display all files with 3+ edits from the script output `alerts` array.
+Classify root causes: spec (ambiguous spec), scope (task too large), technical (unexpected complexity).
+
+**Session-level analysis** (from script output `activity`):
+- Total sessions: [N], Total turns: [N]
+- Avg turns/session: [N] (ideal: ≤10, concern: >25)
+- Top tools: [tool distribution] — high Read/Grep ratio may indicate exploration churn
+
+If sessions show avg_turns > 25, flag as "High interaction churn" and investigate root causes.
+
+Additionally, approximate from PR review round counts and commit frequency per issue for items not tracked in session data.
 
 **B.4 Past Action Item Tracking**
 
@@ -55,6 +75,21 @@ gh issue list --state all --label "retro-action" --json number,title,state --lim
 ```
 
 If no structured tracking, note the absence and recommend establishing it.
+
+**B.5 Sprint Comparison**
+
+Read previous sprint data from `~/.claude/metrics/sprints.jsonl`.
+Compare current sprint metrics vs previous:
+
+| Metric | Previous | Current | Trend |
+|---|---|---|---|
+| VDF | [N] | [N] | [improving/declining] |
+| SVLT | [N]h | [N]h | [improving/declining] |
+| Rework Rate | [N]% | [N]% | [improving/declining] |
+| AI-Confidence | [N] | [N] | [improving/declining] |
+| Sprint Health | [N] | [N] | [improving/declining] |
+
+If no previous sprint data exists, note: "First sprint with observability — baseline established."
 
 **Generate Before Report**:
 
@@ -71,13 +106,40 @@ If no structured tracking, note the absence and recommend establishing it.
 - Bugs opened this sprint: [N] | Bug density trend: [up/down/stable]
 - Test file changes: +[N]/-[N]
 
-### Interaction Churn Analysis
-| Issue | Indicator | Root Cause | Category |
-|---|---|---|---|
-| #N | [N] review rounds / [N] commits | [description] | [spec/scope/technical] |
+### DORA Four Keys
+| Metric | Value | Level |
+|---|---|---|
+| VDF (Value Delivery Frequency) | [N] | [LEVEL] |
+| SVLT (Spec-to-Value Lead Time) | [N]h | [LEVEL] |
+| Rework Rate | [N]% | [LEVEL] |
+| TTC (Time to Correct) | [N]h | [LEVEL] |
 
+### AI-Confidence
+| Component | Score | Weight |
+|---|---|---|
+| Spec Quality (SQ) | [N] | 0.30 |
+| Churn Inverse (CI) | [N] | 0.25 |
+| Turns/Resolution (TPR) | [N] | 0.25 |
+| Session Efficiency (SE) | [N] | 0.20 |
+| **Composite** | **[N]** | — |
+
+### Interaction Churn Analysis
+| Issue/File | Indicator | Root Cause | Category |
+|---|---|---|---|
+| [file/issue] | [N] edits / [N] review rounds | [description] | [spec/scope/technical] |
+
+Session activity: [N] sessions, [N] total turns, avg [N] turns/session
 Most common root cause: [category] ([N]/[total])
 Pattern: [summary of recurring issues]
+
+### Sprint Comparison
+| Metric | Previous | Current | Trend |
+|---|---|---|---|
+| VDF | [N] | [N] | [improving/declining] |
+| SVLT | [N]h | [N]h | [improving/declining] |
+| Rework Rate | [N]% | [N]% | [improving/declining] |
+| AI-Confidence | [N] | [N] | [improving/declining] |
+| Sprint Health | [N] | [N] | [improving/declining] |
 
 ### Past Action Items
 | Action | Source | Status | Impact |

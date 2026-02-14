@@ -12,12 +12,12 @@ AI-DLC Observability の 4 層構造。各レイヤーの責務・ストレー�
 ├─────────────────────────────────────────────────┤
 │ L3 Sprint       sprints.jsonl (集計結果)          │
 │                 aggregate-sprint.py              │
-│                 /ai-dlc:status, /ai-dlc:diagnose │
+│                 status / diagnose / verify       │
 ├─────────────────────────────────────────────────┤
 │ L2 Session      sessions.jsonl (G5)              │
 │                 churn cache (G3)                  │
 │                 spec cache (G4)                   │
-│                 Hook 自動収集                     │
+│                 Hook 自動収集 / digest 直接参照    │
 ├─────────────────────────────────────────────────┤
 │ L1 Real-time    OTel Collector                   │
 │                 claude_code.api_request events    │
@@ -45,7 +45,7 @@ Solo 開発では通常 OTel 未設定。L2-L3 で十分な可視性を確保す
 |---|---|
 | 責務 | セッション毎のメトリクス自動収集 |
 | ストレージ | ローカルファイル (下表) |
-| 消費者 | L3 集計スクリプト |
+| 消費者 | L3 集計スクリプト, `/ai-dlc:digest` (直接読み取り) |
 | 頻度 | セッション終了時 / ファイル編集時 |
 
 | ファイル | Hook | 内容 |
@@ -60,7 +60,7 @@ Solo 開発では通常 OTel 未設定。L2-L3 で十分な可視性を確保す
 |---|---|
 | 責務 | Sprint 粒度の複合メトリクス算出 |
 | ストレージ | `~/.claude/metrics/sprints.jsonl` |
-| 消費者 | `/ai-dlc:status`, `/ai-dlc:diagnose` |
+| 消費者 | `/ai-dlc:status`, `/ai-dlc:diagnose`, `/ai-dlc:verify` |
 | 頻度 | コマンド実行時 (on-demand) |
 
 集計スクリプト: `scripts/aggregate-sprint.py`
@@ -102,18 +102,25 @@ Phase 1 では L4 の自動化は対象外（手動の `/ai-dlc:calibrate` で�
 [Claude Code Session]
     │
     ├── G3 churn-counter.py ──→ /tmp/claude-churn-cache/
+    │                                    │
+    │                              /ai-dlc:digest (直接)
+    │                                    │
     ├── G4 check-spec-existence.py ──→ /tmp/claude-spec-quality-cache/
-    └── G5 metrics-collector.py ──→ ~/.claude/metrics/sessions.jsonl
-                                          │
-                                          ▼
-                                  aggregate-sprint.py
-                                    + GitHub CLI (gh)
-                                          │
-                                          ▼
-                                  ~/.claude/metrics/sprints.jsonl
-                                          │
-                                          ▼
-                              /ai-dlc:status, /ai-dlc:diagnose
+    │                                    │
+    └── G5 metrics-collector.py ──→ sessions.jsonl
+                                         │
+                                   /ai-dlc:digest (直接)
+                                         │
+                                         ▼
+                               aggregate-sprint.py + gh CLI
+                                         │
+                                         ▼
+                                   sprints.jsonl
+                                    │         │
+                              L3 消費者    L4 消費者
+                              status      calibrate
+                              diagnose    (履歴比較)
+                              verify
 ```
 
 ## sessions.jsonl ローテーション方針

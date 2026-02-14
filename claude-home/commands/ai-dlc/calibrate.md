@@ -4,7 +4,7 @@ description: "Analyze AI agent configuration and performance for calibration"
 
 ## Instructions
 
-Generate an AI-DLC agent calibration report. Load `ai-dlc-ceremonies` skill for calibration session patterns. Load `ticket-management` skill for quality metrics context. Load `prompt-engineering` skill for Hooks / CLAUDE.md design patterns.
+Generate an AI-DLC agent calibration report. Load `ai-dlc-ceremonies` skill for calibration session patterns. Load `ticket-management` skill for quality metrics context. Load `prompt-engineering` skill for Hooks / CLAUDE.md design patterns. Load `ai-dlc-observability` skill for DORA Four Keys / AI-Confidence / Sprint Health trend analysis.
 
 Focus area: `$ARGUMENTS`
 
@@ -100,12 +100,45 @@ gh issue list --state closed --json number,title,comments --limit 50
 
 Categorize by root cause: spec quality, scope, technical complexity.
 
-### 4. AI-Confidence Distribution (if available)
+### 4. AI-Confidence & Sprint Health Trend (ENHANCED)
 
-If the project tracks AI-Confidence scores in issue metadata or PR descriptions, aggregate:
-- Distribution across score bands (90-100, 80-89, 60-79, 0-59)
-- Task categories with consistently low confidence
-- Correlation with churn / rejection rates
+Run sprint aggregation for the most recent period:
+
+```bash
+python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py \
+  --since "[30_days_ago]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR"
+```
+
+From the script output, display current AI-Confidence components:
+
+| Component | Score | Weight | Assessment |
+|---|---|---|---|
+| Spec Quality (SQ) | [N] | 0.30 | [good/needs improvement] |
+| Churn Inverse (CI) | [N] | 0.25 | [good/needs improvement] |
+| Turns/Resolution (TPR) | [N] | 0.25 | [good/needs improvement] |
+| Session Efficiency (SE) | [N] | 0.20 | [good/needs improvement] |
+| **Composite** | **[N]** | — | **[LEVEL]** |
+
+**L4 Trend Analysis**:
+
+Read sprint history from `~/.claude/metrics/sprints.jsonl`.
+Plot trend for the last 3-5 sprints (if available):
+
+| Sprint | Health | AI-Confidence | VDF | SVLT | Rework |
+|---|---|---|---|---|---|
+| [date range] | [N] | [N] | [N] | [N]h | [N]% |
+
+Detect:
+- **Improving**: 3+ consecutive increases — recommend maintaining current approach
+- **Declining**: 3+ consecutive decreases — flag specific degrading components
+- **Oscillating**: alternating up/down — investigate external factors
+
+Correlate trends with CLAUDE.md/SKILL change history:
+
+```bash
+git log --since="[oldest_sprint_start]" --format="%h %ad %s" --date=short \
+  -- CLAUDE.md .claude/CLAUDE.md .claude/skills/*/SKILL.md
+```
 
 ### 5. Generate Calibration Report
 
@@ -140,6 +173,14 @@ If the project tracks AI-Confidence scores in issue metadata or PR descriptions,
 | Technical | [N] | [%] | #N, #N |
 
 **Trend vs previous calibration**: [improving/stable/worsening]
+
+### Sprint Health Trend
+| Sprint | Health | Level | AI-Confidence | DORA Overall |
+|---|---|---|---|---|
+| [sprint_id] | [value] | [level] | [value] | [avg DORA level] |
+
+**Trend**: [improving/stable/declining] over [N] sprints
+**Root cause of changes**: [correlation with CLAUDE.md/SKILL modifications]
 
 ### Improvement Recommendations
 | Priority | Action | Expected Impact | Effort |
