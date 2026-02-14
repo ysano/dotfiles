@@ -3,7 +3,7 @@ name: ai-dlc-observability
 description: >
   AI-DLC observability metrics and DORA Four Keys integration.
   Use when computing sprint health, AI effectiveness, or project metrics.
-  Referenced by /ai-dlc:status, /ai-dlc:diagnose, /ai-dlc:digest.
+  Referenced by /ai-dlc:status, /ai-dlc:diagnose, /ai-dlc:digest, /ai-dlc:calibrate, /ai-dlc:verify.
 user-invocable: false
 ---
 
@@ -35,8 +35,8 @@ AI-DLC Observability フレームワーク。DORA Four Keys と AI-DLC 固有メ
 | レイヤー | 責務 | ストレージ | 消費者 |
 |---|---|---|---|
 | L1 Real-time | API リクエスト毎のテレメトリ | OTel Collector / Prometheus | Grafana ダッシュボード |
-| L2 Session | セッション毎の集計 | `~/.claude/metrics/sessions.jsonl` | L3 集計スクリプト |
-| L3 Sprint | スプリント粒度の複合メトリクス | `~/.claude/metrics/sprints.jsonl` | `/ai-dlc:status`, `/ai-dlc:diagnose` |
+| L2 Session | セッション毎の集計 | `~/.claude/metrics/sessions.jsonl` | L3 集計スクリプト, `/ai-dlc:digest` |
+| L3 Sprint | スプリント粒度の複合メトリクス | `~/.claude/metrics/sprints.jsonl` | `/ai-dlc:status`, `/ai-dlc:diagnose`, `/ai-dlc:verify` |
 | L4 Trend | 長期トレンド・回帰分析 | sprints.jsonl 履歴 | `/ai-dlc:calibrate` |
 
 詳細: `references/metrics-layering.md`
@@ -56,15 +56,42 @@ AI-DLC Observability フレームワーク。DORA Four Keys と AI-DLC 固有メ
 Sprint 粒度のメトリクス集計には決定的スクリプトを使用:
 
 ```bash
-# 基本（直近7日）
+# 基本（直近7日、Solo 閾値）
 python3 .claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py
 
 # 期間指定
-python3 .claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py \
-  --since 2026-02-10 --until 2026-02-14
+python3 ... --since 2026-02-10 --until 2026-02-14
+
+# チームスケール指定（Pod/Squad で閾値が変わる）
+python3 ... --team-size pod
+python3 ... --team-size squad
+
+# 診断情報付き
+python3 ... --verbose
+
+# 計算のみ（sprints.jsonl 書き込みなし）
+python3 ... --dry-run
 
 # プロジェクト指定
 python3 ... --project-dir /home/user/dotfiles
+
+# テスト実行
+python3 -m pytest .claude/skills/ai-dlc-observability/scripts/tests/ -v
+```
+
+## セッションローテーション
+
+sessions.jsonl の肥大化を防ぐローテーションスクリプト:
+
+```bash
+# 30日超をアーカイブ（デフォルト）
+python3 .claude/skills/ai-dlc-observability/scripts/rotate-sessions.py
+
+# 60日超をアーカイブ
+python3 ... --days 60
+
+# 確認のみ
+python3 ... --dry-run
 ```
 
 ## クロスリファレンス
@@ -75,11 +102,15 @@ python3 ... --project-dir /home/user/dotfiles
 | セレモニーパターン・役割変化 | `ai-dlc-ceremonies` Skill |
 | 見積もり技法 (AEF, Value-Based) | `ai-dlc-estimate` Skill |
 | 非開発者向けアクセス | `references/non-developer-access.md` |
+| トラブルシューティング | `references/troubleshooting.md` |
 
 <constraints>
 - OTel 未設定環境では Economics セクションをスキップ（Solo デフォルト）
 - GitHub CLI (`gh`) 未認証環境では DORA セクションを null で続行
-- sessions.jsonl は 30 日超のエントリをローテーション対象とする
-- Sprint Health Score の閾値は Solo/Pod/Squad で異なる
+- sessions.jsonl は 30 日超のエントリをローテーション対象 (`rotate-sessions.py`)
+- DORA 閾値は `--team-size solo|pod|squad` で切替（Solo デフォルト）。Rework Rate のみ全スケール共通
+- Sprint Health Score / AI-Confidence 閾値は全スケール共通
 - コスト情報は Session JSONL に含まれない（OTel 専用）
+- `--dry-run` で sprints.jsonl 書き込みを抑止可能
+- `--verbose` で診断情報を stderr に出力
 </constraints>
