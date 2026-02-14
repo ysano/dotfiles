@@ -102,6 +102,8 @@ Categorize by root cause: spec quality, scope, technical complexity.
 
 ### 4. AI-Confidence & Sprint Health Trend (ENHANCED)
 
+**Current Sprint Aggregation**:
+
 Run sprint aggregation for the most recent period:
 
 ```bash
@@ -121,24 +123,19 @@ From the script output, display current AI-Confidence components:
 
 **L4 Trend Analysis**:
 
-Read sprint history from `~/.claude/metrics/sprints.jsonl`.
-Plot trend for the last 3-5 sprints (if available):
-
-| Sprint | Health | AI-Confidence | VDF | SVLT | Rework |
-|---|---|---|---|---|---|
-| [date range] | [N] | [N] | [N] | [N]h | [N]% |
-
-Detect:
-- **Improving**: 3+ consecutive increases — recommend maintaining current approach
-- **Declining**: 3+ consecutive decreases — flag specific degrading components
-- **Oscillating**: alternating up/down — investigate external factors
-
-Correlate trends with CLAUDE.md/SKILL change history:
+Run trend analysis script to detect improving/declining/oscillating patterns:
 
 ```bash
-git log --since="[oldest_sprint_start]" --format="%h %ad %s" --date=short \
-  -- CLAUDE.md .claude/CLAUDE.md .claude/skills/*/SKILL.md
+python3 ~/.claude/skills/ai-dlc-observability/scripts/analyze-trend.py \
+  --project-dir "$CLAUDE_PROJECT_DIR" --format markdown --verbose
 ```
+
+Embed the Markdown output directly into the calibration report. The script automatically:
+- Loads sprint history from `~/.claude/metrics/sprints.jsonl`
+- Detects trend direction per metric (10 metrics, weighted)
+- Computes overall trend score
+- Generates P0/P1/P2 recommendations
+- Correlates with CLAUDE.md/SKILL.md git change history
 
 ### 5. Generate Calibration Report
 
@@ -175,12 +172,7 @@ git log --since="[oldest_sprint_start]" --format="%h %ad %s" --date=short \
 **Trend vs previous calibration**: [improving/stable/worsening]
 
 ### Sprint Health Trend
-| Sprint | Health | Level | AI-Confidence | DORA Overall |
-|---|---|---|---|---|
-| [sprint_id] | [value] | [level] | [value] | [avg DORA level] |
-
-**Trend**: [improving/stable/declining] over [N] sprints
-**Root cause of changes**: [correlation with CLAUDE.md/SKILL modifications]
+(analyze-trend.py --format markdown の出力を埋め込み)
 
 ### Improvement Recommendations
 | Priority | Action | Expected Impact | Effort |

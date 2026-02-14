@@ -50,6 +50,7 @@ AI-DLC Observability フレームワーク。DORA Four Keys と AI-DLC 固有メ
 | churn cache | L2 | `churn-counter.py` (G3 PostToolUse Hook) | ファイル別修正回数 |
 | spec cache | L2 | `check-spec-existence.py` (G4 PreToolUse Hook) | Spec 品質 0-5 スコア |
 | GitHub CLI | L3 | `aggregate-sprint.py` 実行時 | PR/Issue メタデータ |
+| sprints.jsonl | L4 | `analyze-trend.py` 実行時 | L3 蓄積データの時系列分析 |
 
 ## 集計スクリプト
 
@@ -77,6 +78,30 @@ python3 ... --project-dir /home/user/dotfiles
 
 # テスト実行
 python3 -m pytest .claude/skills/ai-dlc-observability/scripts/tests/ -v
+```
+
+## トレンド分析
+
+複数スプリントの時系列分析で改善/悪化/振動傾向を検出 (L4):
+
+```bash
+# JSON 出力（デフォルト）
+python3 .claude/skills/ai-dlc-observability/scripts/analyze-trend.py
+
+# Markdown 出力（/ai-dlc:calibrate 埋め込み用）
+python3 ... --format markdown
+
+# 直近 5 スプリントのみ
+python3 ... --lookback 5
+
+# プロジェクト指定
+python3 ... --project-dir /home/user/project
+
+# 診断情報付き
+python3 ... --verbose
+
+# カスタム sprints.jsonl パス
+python3 ... --sprints /path/to/sprints.jsonl
 ```
 
 ## セッションローテーション
@@ -113,4 +138,5 @@ python3 ... --dry-run
 - コスト情報は Session JSONL に含まれない（OTel 専用）
 - `--dry-run` で sprints.jsonl 書き込みを抑止可能
 - `--verbose` で診断情報を stderr に出力
+- `analyze-trend.py` は 2 sprint 以上で有意な分析（1 sprint 以下は `insufficient_data`）
 </constraints>

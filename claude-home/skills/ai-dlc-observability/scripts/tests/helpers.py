@@ -68,3 +68,43 @@ def make_churn_data(**files):
 def make_spec_scores(**specs):
     """Create spec scores dict. Usage: make_spec_scores(**{"spec.md": 4, "spec2.md": 2})"""
     return {path: {"score": score} for path, score in specs.items()}
+
+
+def make_sprint(
+    *,
+    sprint_id="2026-02-03_2026-02-09",
+    sprint_health=0.75,
+    ai_confidence=0.70,
+    vdf=1.5,
+    svlt_hours=8.0,
+    rework_rate=0.10,
+    ttc_hours=None,
+    mttv_macro=None,
+    mttv_micro=None,
+    session_count=10,
+    total_turns=200,
+    project_dir="/home/user/project",
+    team_size="solo",
+):
+    """Create a sprint record matching aggregate-sprint.py output schema."""
+    return {
+        "sprint_id": sprint_id,
+        "project_dir": project_dir,
+        "team_size": team_size,
+        "dora": {
+            "vdf": {"value": vdf, "level": "HIGH"},
+            "svlt": {"value_hours": svlt_hours, "level": "HIGH"},
+            "rework_rate": {"value": rework_rate, "level": "HIGH"},
+            "ttc": {"value_hours": ttc_hours, "level": "MEDIUM"} if ttc_hours is not None else None,
+        },
+        "ai_dlc": {
+            "sprint_health": {"value": sprint_health, "level": "HEALTHY"},
+            "ai_confidence": {"value": ai_confidence, "level": "HIGH"},
+            "mttv_macro_hours": mttv_macro,
+            "mttv_micro_seconds": mttv_micro,
+        },
+        "activity": {
+            "session_count": session_count,
+            "total_turns": total_turns,
+        },
+    }
