@@ -28,7 +28,7 @@ AI-DLC Observability フレームワーク。DORA Four Keys と AI-DLC 固有メ
 | MTTV Macro | 速度 | PR merge cycle 中央値 | GitHub CLI | `references/ai-dlc-metrics.md` |
 | MTTV Micro | 速度 | active_time / turns | sessions.jsonl (G5) | `references/ai-dlc-metrics.md` |
 | Token Efficiency | 経済性 | Tokens/Commit, Cost/PR | OTel Events | `references/ai-dlc-metrics.md` |
-| Sprint Health Score | 総合 | 5要素均等加重 | 複合 | `references/ai-dlc-metrics.md` |
+| Sprint Health Score | 総合 | 6要素均等加重 (DORA 4 + AI-Confidence + Spec Coverage) | 複合 | `references/ai-dlc-metrics.md` |
 
 ## 4層レイヤリング
 

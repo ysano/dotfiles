@@ -141,30 +141,52 @@ export CLAUDE_CODE_ENABLE_TELEMETRY=1
 
 スプリント全体の健全性を 0-1 スケールで総合評価する複合指標。
 
-### 5 要素均等加重
+### 6 要素均等加重
 
 | 要素 | 重み | 算出方法 |
 |---|---|---|
-| VDF Score | 0.20 | DORA レベル → 数値変換 (Elite=1.0, High=0.75, Medium=0.5, Low=0.25) |
-| SVLT Score | 0.20 | 同上 |
-| Rework Score | 0.20 | 同上 |
-| AI-Confidence | 0.20 | そのまま使用 (0-1) |
-| Spec Coverage | 0.20 | score >= 3 の Issue 比率 |
+| VDF Score | 1/6 | DORA レベル → 数値変換 (Elite=1.0, High=0.75, Medium=0.5, Low=0.25) |
+| SVLT Score | 1/6 | 同上 |
+| TTC Score | 1/6 | 同上。**バグ 0 件 = ELITE (1.0)**（「不明」ではなく「最良」） |
+| Rework Score | 1/6 | 同上 |
+| AI-Confidence | 1/6 | そのまま使用 (0-1) |
+| Spec Coverage | 1/6 | score >= 3 の Issue 比率 |
+
+DORA Four Keys 4指標すべてを含めることで、チーム展開時の Throughput × Stability 両軸を完全にカバーする。
+
+### TTC null の意味論
+
+| 状況 | 意味 | 適用値 |
+|---|---|---|
+| バグ 0 件 (bug_count == 0) | 最良の状態 | 1.0 (ELITE) |
+| バグあり + TTC データあり | 通常算出 | LEVEL_TO_SCORE[level] |
+| バグあり + TTC データなし | データ不足 | 0.5 (中立) |
 
 ### 算出式
 
 ```python
 LEVEL_TO_SCORE = {"ELITE": 1.0, "HIGH": 0.75, "MEDIUM": 0.5, "LOW": 0.25}
 
-def calc_sprint_health(vdf_level, svlt_level, rework_level,
-                       ai_confidence, spec_coverage):
+def calc_sprint_health(dora, ai_confidence, spec_coverage, bug_count):
     scores = []
-    for level in [vdf_level, svlt_level, rework_level]:
-        if level:
-            scores.append(LEVEL_TO_SCORE.get(level, 0.5))
+    for key in ["vdf", "svlt"]:
+        entry = dora.get(key)
+        if entry and entry.get("level"):
+            scores.append(LEVEL_TO_SCORE.get(entry["level"], 0.5))
         else:
-            scores.append(0.5)  # データ不足時は中立値
+            scores.append(0.5)
 
+    # TTC: no bugs = ELITE, not "unknown"
+    ttc = dora.get("ttc")
+    if ttc and ttc.get("level"):
+        scores.append(LEVEL_TO_SCORE.get(ttc["level"], 0.5))
+    elif bug_count == 0:
+        scores.append(1.0)  # best possible state
+    else:
+        scores.append(0.5)
+
+    rework = dora.get("rework_rate")
+    scores.append(LEVEL_TO_SCORE.get(rework["level"], 0.5) if rework else 0.5)
     scores.append(ai_confidence if ai_confidence else 0.5)
     scores.append(spec_coverage if spec_coverage is not None else 0.5)
 

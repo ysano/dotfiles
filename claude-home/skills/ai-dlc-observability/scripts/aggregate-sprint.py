@@ -458,18 +458,28 @@ def calc_mttv_micro(sessions):
     return round(total_duration / total_turns, 1)
 
 
-def calc_sprint_health(dora, ai_confidence_value, spec_coverage):
-    """Calculate Sprint Health Score (0-1)."""
+def calc_sprint_health(dora, ai_confidence_value, spec_coverage, bug_count):
+    """Calculate Sprint Health Score (0-1). 6 elements equally weighted."""
     scores = []
 
-    # DORA levels → scores
-    for key in ["vdf", "svlt", "ttc"]:
+    # DORA levels → scores (VDF, SVLT)
+    for key in ["vdf", "svlt"]:
         entry = dora.get(key)
         if entry and entry.get("level"):
             scores.append(LEVEL_TO_SCORE.get(entry["level"], 0.5))
         else:
-            scores.append(0.5)
+            scores.append(0.5)  # data unavailable → neutral
 
+    # TTC: null semantics differ — no bugs = ELITE, not "unknown"
+    ttc = dora.get("ttc")
+    if ttc and ttc.get("level"):
+        scores.append(LEVEL_TO_SCORE.get(ttc["level"], 0.5))
+    elif bug_count == 0:
+        scores.append(1.0)  # no bugs to fix = best possible state
+    else:
+        scores.append(0.5)  # bugs exist but TTC data missing
+
+    # Rework Rate
     rework = dora.get("rework_rate")
     if rework and rework.get("level"):
         scores.append(LEVEL_TO_SCORE.get(rework["level"], 0.5))
@@ -632,8 +642,9 @@ def main():
     ai_confidence = calc_ai_confidence(spec_scores, churn_data, activity)
     mttv_macro = calc_mttv_macro(merged_prs) if merged_prs else None
     mttv_micro = calc_mttv_micro(sessions)
+    actual_bug_count = len(bug_issues) if bug_issues else 0
     sprint_health = calc_sprint_health(
-        dora, ai_confidence["value"], spec_coverage
+        dora, ai_confidence["value"], spec_coverage, actual_bug_count
     )
 
     # Alerts
