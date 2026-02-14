@@ -1,5 +1,102 @@
 # Observability トラブルシューティング
 
+## Solo 環境セットアップ
+
+AI-DLC Observability の Hook（G3/G4/G5）は `settings-ai-dlc.json` で定義されているが、
+`~/.claude/settings.json` への登録は手動で行う必要がある。
+
+> **将来**: Plugin Marketplace 配布時は自動登録される予定。
+
+### 手順
+
+1. **Hook スクリプトのデプロイ確認**
+
+```bash
+# link.sh でシンボリックリンク展開済みか確認
+ls ~/.claude/hooks/{churn-counter.py,check-spec-existence.py,metrics-collector.py}
+```
+
+2. **`~/.claude/settings.json` に Hook エントリを追加**
+
+既存の `hooks` オブジェクトに以下を **マージ** する（既存エントリは削除しない）:
+
+```jsonc
+{
+  "hooks": {
+    // --- 既存の hooks エントリはそのまま維持 ---
+
+    // G4: Spec 存在チェック (PreToolUse に追加)
+    "PreToolUse": [
+      // ... 既存エントリ ...
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/check-spec-existence.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+
+    // G3: Churn カウンター (PostToolUse に追加)
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/churn-counter.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+
+    // G5: メトリクスコレクター (Stop に追加)
+    "Stop": [
+      {
+        // ... 既存の Stop hooks ...
+        "hooks": [
+          // ... 既存エントリ ...
+          {
+            "type": "command",
+            "command": ".claude/hooks/metrics-collector.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+3. **メトリクスディレクトリ作成**
+
+```bash
+mkdir -p ~/.claude/metrics
+```
+
+4. **動作確認**
+
+```bash
+# 新しい Claude Code セッションを開始・終了し、データ生成を確認
+ls ~/.claude/metrics/sessions.jsonl
+ls /tmp/claude-churn-cache/
+ls /tmp/claude-spec-quality-cache/
+```
+
+### 完全な Hook 参照
+
+| Hook | イベント | スクリプト | 目的 |
+|------|----------|-----------|------|
+| G3 | PostToolUse (Write/Edit/MultiEdit) | `churn-counter.py` | ファイル変更頻度を記録 |
+| G4 | PreToolUse (Write/Edit/MultiEdit) | `check-spec-existence.py` | Spec ファイル品質を評価 |
+| G5 | Stop | `metrics-collector.py` | セッションメトリクスを収集 |
+
+---
+
 ## 症状と対処
 
 ### sessions データなし
@@ -7,7 +104,7 @@
 **原因**: G5 Stop Hook (`metrics-collector.py`) が未稼働。
 
 **対処**:
-1. `~/.claude/hooks.json` に Stop Hook エントリがあるか確認
+1. `~/.claude/settings.json` の `hooks.Stop` に Hook エントリがあるか確認（上記セットアップ参照）
 2. `ls ~/.claude/metrics/sessions.jsonl` でファイル存在を確認
 3. Hook を手動テスト: 新しい Claude Code セッションを開始・終了し、ファイルを再確認
 
