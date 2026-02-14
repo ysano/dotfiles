@@ -7,7 +7,7 @@ dotfiles固有モジュールは `.claude/` を参照。
 
 ```
 claude-home/
-├── commands/    (200ファイル / 22カテゴリ) - `/category:command` で実行
+├── commands/    (207ファイル / 22カテゴリ) - `/category:command` で実行
 ├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
 ├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント

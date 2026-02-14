@@ -48,11 +48,25 @@ AI-人間協働チーム向けのセレモニー運営を支援する。
 
 | コマンド | 用途 | 対応セレモニー |
 |---|---|---|
+| `/ai-dlc:status` | ライフサイクル健全性ダッシュボード（進捗 + Spec 品質 + Blocker/Churn/Stale） | Health Dashboard |
+| `/ai-dlc:refine` | バックログリファインメント（Atomic Spec スコアリング + Stale 検知 + 優先度提案） | Backlog Refinement |
 | `/ai-dlc:plan` | 3 フェーズスプリント計画（AI 事前分析 + 人間判断 + 配信） | 3-Phase Planning |
 | `/ai-dlc:digest` | 2 層デイリーダイジェスト（AI ダイジェスト + 判断アジェンダ） | Async Digest |
 | `/ai-dlc:verify` | スプリント成果検証（トレーサビリティ + Outcome Done ギャップ） | Verification Session |
 | `/ai-dlc:diagnose` | データ駆動型レトロ診断（Before/During/After） | Diagnostic Session |
 | `/ai-dlc:calibrate` | エージェント設定・パフォーマンス分析 | Agent Calibration |
+
+## セレモニー頻度（スケール別）
+
+| セレモニー | Solo (1人) | Pod (3-5人) | Squad (10-30人) |
+|---|---|---|---|
+| Health Dashboard (`status`) | 随時 | スプリント開始/中間 | 毎日 |
+| Backlog Refinement (`refine`) | スプリント毎 | スプリント毎 | スプリント毎 |
+| 3-Phase Planning (`plan`) | スプリント毎 | スプリント毎 | スプリント毎 |
+| Async Digest (`digest`) | 不要 | 毎日 | 毎日 |
+| Verification (`verify`) | スプリント毎 | 日次軽量 + 週次正式 | 週次正式 |
+| Diagnostic (`diagnose`) | スプリント毎 | スプリント毎 | スプリント毎 |
+| Agent Calibration (`calibrate`) | 月1回 | 2週に1回 | 2週に1回 |
 
 ## 使い分け: `/ai-dlc:*` vs `/team:*`
 
@@ -72,8 +86,10 @@ Upstream:      /ai-dlc:quick-spec     → 軽量スペック（小規模）
                /ai-dlc:create-architecture → アーキテクチャ設計
                /ai-dlc:create-stories → Story 分解
 
+Pre-Sprint:    /ai-dlc:refine         → バックログリファインメント
 Sprint Start:  /ai-dlc:plan           → 3フェーズ計画
 Daily:         /ai-dlc:digest         → 非同期ダイジェスト
+               /ai-dlc:status         → 健全性ダッシュボード
 PR Review:     /ai-dlc:review         → 品質ゲートレビュー
 Sprint End:    /ai-dlc:verify         → 成果検証
                /ai-dlc:diagnose       → レトロ用診断

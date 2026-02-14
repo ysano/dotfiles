@@ -17,6 +17,8 @@ AI-DLC (AI Development Lifecycle) セレモニー知識ベース。
 
 | セレモニー | 目的 | 参照 | 対応コマンド |
 |---|---|---|---|
+| **Health Dashboard** | ライフサイクル健全性の俯瞰（進捗・Spec品質・Blocker/Churn/Stale・セレモニー実施状況） | - | `/ai-dlc:status` |
+| **Backlog Refinement** | Atomic Spec 5要素スコアリング + Stale 検知 + 優先度リランキング | - | `/ai-dlc:refine` |
 | **3-Phase Planning** | AI 事前分析 + 人間の戦略判断 + 配信準備 | `references/planning-phases.md` | `/ai-dlc:plan` |
 | **Async Digest** | 2層デイリー: AI ダイジェスト + 判断アジェンダ | `references/async-digest.md` | `/ai-dlc:digest` |
 | **Diagnostic Session** | データ駆動型レトロ: Before/During/After | `references/diagnostic-session.md` | `/ai-dlc:diagnose` |
@@ -27,11 +29,12 @@ AI-DLC (AI Development Lifecycle) セレモニー知識ベース。
 
 ## スケール別頻度
 
-| チームスケール | スプリント長 | Planning | Digest | Diagnostic | Verification | Calibration |
-|---|---|---|---|---|---|---|
-| **Pod (1-10名)** | 1-3日 | スプリント毎 | 毎日 | スプリント毎 | 日次軽量デモ + 週次正式 | 2週に1回 |
-| **Squad (10-30名)** | 3-5日 | スプリント毎 | 毎日 | スプリント毎 | 週次正式 | 2週に1回 |
-| **Enterprise (30名以上)** | 1週間 | スプリント毎 | 毎日 | スプリント毎 | 週次 + 月次戦略 | 2週に1回 |
+| チームスケール | スプリント長 | Health Dashboard | Refinement | Planning | Digest | Diagnostic | Verification | Calibration |
+|---|---|---|---|---|---|---|---|---|
+| **Solo (1名)** | 1-2日 | 随時 | スプリント毎 | スプリント毎 | - | スプリント毎 | スプリント毎 | 月1回 |
+| **Pod (1-10名)** | 1-3日 | スプリント開始/中間 | スプリント毎 | スプリント毎 | 毎日 | スプリント毎 | 日次軽量 + 週次正式 | 2週に1回 |
+| **Squad (10-30名)** | 3-5日 | 毎日 | スプリント毎 | スプリント毎 | 毎日 | スプリント毎 | 週次正式 | 2週に1回 |
+| **Enterprise (30名以上)** | 1週間 | 毎日 | スプリント毎 | スプリント毎 | 毎日 | スプリント毎 | 週次 + 月次戦略 | 2週に1回 |
 
 ## 5 設計原則
 

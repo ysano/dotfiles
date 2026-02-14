@@ -6,13 +6,13 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 
 | 種別 | 数 | 配置 |
 |---|---|---|
-| Commands | 200 (22 categories + 4 top-level) | `commands/` |
+| Commands | 207 (22 categories + 4 top-level) | `commands/` |
 | Agents | 67 | `agents/` |
 | Skills | 18 | `skills/` |
 | Hooks | 14 (general 11 + svelte 3) | `hooks/` |
 | Hook Settings | 6 presets | `hooks/settings-*.json` |
 | Maintenance Scripts | 5 | `scripts/` |
-| **Total** | **310** | |
+| **Total** | **309** | |
 
 ---
 
@@ -57,12 +57,19 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 
 ### Planning (スプリント計画)
 
+```
+/ai-dlc:refine → /ai-dlc:plan → /ai-dlc:digest (daily) → /ai-dlc:status (随時)
+     │                │                │                         │
+     └─ Backlog 精査   └─ Sprint 計画    └─ 日次ダイジェスト        └─ 健全性確認
+```
+
 | 種別 | モジュール | 説明 |
 |---|---|---|
+| Command | `/ai-dlc:status` | ライフサイクル健全性ダッシュボード |
+| Command | `/ai-dlc:refine` | バックログリファインメント (Atomic Spec スコアリング) |
 | Command | `/ai-dlc:plan` | 3 フェーズスプリント計画 |
 | Command | `/ai-dlc:digest` | 非同期 AI ダイジェスト + 人間判断アジェンダ |
 | Command | `/orchestration:start` | タスクオーケストレーション開始 |
-| Command | `/team:sprint-planning` | スプリントワークフロー計画 |
 | Skill | ticket-management | Atomic Spec・Agent Loop・AI Janitor |
 | Skill | ai-dlc-ceremonies | セレモニーパターン・役割変化 |
 | Agent | orchestration-agent | 複合タスク調整・依存管理・分解 |
@@ -154,7 +161,6 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 |---|---|---|
 | Command | `/ai-dlc:diagnose` | データ駆動スプリント診断 |
 | Command | `/ai-dlc:calibrate` | エージェント設定・性能分析 |
-| Command | `/team:retrospective-analyzer` | レトロスペクティブ分析 |
 | Hook | session-learning-capture.sh | セッション終了時学習記録 |
 | Agent | legacy-pro | レガシーシステム近代化 |
 | Agent | dx-pro | 開発者体験最適化 |
@@ -177,7 +183,7 @@ AI-DLC の役割定義と対応モジュール。
 
 AI-人間協調パターン、エージェントガバナンス、フロー最適化。
 
-- `/ai-dlc:plan`, `/ai-dlc:diagnose`, `/ai-dlc:calibrate`
+- `/ai-dlc:status`, `/ai-dlc:refine`, `/ai-dlc:plan`, `/ai-dlc:diagnose`, `/ai-dlc:calibrate`
 - `ai-dlc-ceremonies` skill
 - `team-agent`, `orchestration-agent` agents
 
@@ -273,7 +279,7 @@ Claude Code 自体の拡張・推論強化。
 
 ---
 
-## Commands Inventory (208)
+## Commands Inventory (207)
 
 ### Top-Level (4)
 
@@ -286,7 +292,7 @@ Claude Code 自体の拡張・推論強化。
 
 ### ai-dlc (13)
 
-calibrate, create-architecture, create-prd, create-stories, diagnose, digest, plan, quick-spec, review, translate-upstream, verify
+calibrate, create-architecture, create-prd, create-stories, diagnose, digest, plan, quick-spec, refine, review, status, translate-upstream, verify
 
 ### boundary (4)
 
@@ -360,9 +366,9 @@ parallel-tasks, parallel-tasks-help, spec-workflow-setup
 
 svelte:a11y, svelte:component, svelte:debug, svelte:migrate, svelte:optimize, svelte:scaffold, svelte:storybook-setup, svelte:storybook-story, svelte:storybook-migrate, svelte:test, svelte:test-setup, svelte:test-fix, svelte:test-coverage
 
-### team (15)
+### team (11)
 
-architecture-review, decision-quality-analyzer, dependency-mapper, estimate-assistant, github-issue-automation, github-project-manager, github-workflow-automation, issue-triage, memory-spring-cleaning, migration-assistant, retrospective-analyzer, sprint-planning, standup-report, team-workload-balancer
+architecture-review, decision-quality-analyzer, dependency-mapper, estimate-assistant, github-issue-automation, github-project-manager, github-workflow-automation, issue-triage, memory-spring-cleaning, migration-assistant, team-workload-balancer
 
 ### test (9)
 
