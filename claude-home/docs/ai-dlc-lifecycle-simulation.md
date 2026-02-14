@@ -92,7 +92,7 @@
 2. `/dev:incremental-feature-build` で段階的実装
 3. AI 生成コードを自分でレビュー
 
-**ギャップ**: Churn カウンター (G3) がない。Solo は自己管理で対応可能。
+**ギャップ**: なし（`churn-counter.py` フック実装済み）。
 
 ### Pod
 
@@ -102,7 +102,7 @@
 2. `/dev:parallel-feature-build` で並列エージェント構築
 3. `/dev:pull-request` で PR 作成
 
-**ギャップ**: Churn カウンター (G3) の自動検知がないため、3/7 回ルール違反に気づきにくい。
+**ギャップ**: なし（`churn-counter.py` フック実装済み）。
 
 ### Squad
 
@@ -125,7 +125,7 @@
 2. `/test:write-tests` でテスト作成
 3. `/ai-dlc:review` でセルフレビュー
 
-**ギャップ**: `check-spec-existence.py` が存在確認のみで品質スコアリングしない (G4)。
+**ギャップ**: なし（`check-spec-existence.py` に Atomic Spec 5要素品質スコアリング実装済み）。
 
 ### Pod
 
@@ -135,7 +135,7 @@
 2. Sprint 終了時に `/ai-dlc:verify` で成果検証
 3. `code-reviewer`, `security-reviewer` で多角的レビュー
 
-**ギャップ**: AI メトリクス自動収集 (G5) がないため、Verification Session でデータ手動集計。
+**ギャップ**: なし（`metrics-collector.py` フック実装済み）。
 
 ### Squad
 
@@ -145,7 +145,7 @@
 2. `architecture-reviewer` でアーキテクチャ整合性確認
 3. `test-operator` で CI/CD パイプライン統合
 
-**ギャップ**: G4, G5 の影響が累積。Squad 規模では手動集計コスト大。
+**ギャップ**: なし（G4, G5 フック実装済み）。
 
 ---
 
@@ -193,7 +193,7 @@
 2. `/ai-dlc:calibrate` で CLAUDE.md/SKILL 調整
 3. `session-learning-capture.sh` で学習記録
 
-**ギャップ**: AI メトリクス自動収集 (G5) がないため、振り返りデータが不完全。
+**ギャップ**: なし（`metrics-collector.py` フック実装済み）。
 
 ### Pod
 
@@ -204,7 +204,7 @@
 3. `/ai-dlc:calibrate` でエージェント調整
 4. `dx-pro` で開発体験改善
 
-**ギャップ**: G5 (AI メトリクス自動収集)。改善の効果測定が定性的になりがち。
+**ギャップ**: なし（`metrics-collector.py` フック実装済み）。
 
 ### Squad
 
@@ -214,7 +214,7 @@
 2. cross-Pod の改善パターンを集約
 3. `/ai-dlc:calibrate` で組織全体のエージェント調整
 
-**ギャップ**: G5 の影響最大。組織横断の改善メトリクスが手動集計。
+**ギャップ**: なし（`metrics-collector.py` フック実装済み）。
 
 ---
 
@@ -226,9 +226,9 @@
 |----|----------|----------|--------|------|
 | G1 | 全体 | ライフサイクル健全性ダッシュボード（`/ai-dlc:status`）がない | 高 | **今回実装** |
 | G2 | Planning | バックログリファインメント（`/ai-dlc:refine`）がない。plan は Sprint 計画で、Backlog 精査セレモニーが欠落 | 高 | **今回実装** |
-| G3 | Development | Churn カウンター（3/7 回ルール）のフック自動化がない | 中 | 将来課題 |
-| G4 | Verification | `check-spec-existence.py` が存在確認のみで品質スコアリングしない | 中 | 将来課題 |
-| G5 | Improvement | AI メトリクス（AI-Confidence, MTTV, Turns-Used）の自動収集がない | 中 | 将来課題 |
+| G3 | Development | Churn カウンター（3/7 回ルール）のフック自動化がない | 中 | **実装済み** (`churn-counter.py`) |
+| G4 | Verification | `check-spec-existence.py` が存在確認のみで品質スコアリングしない | 中 | **実装済み** (Atomic Spec 5要素スコアリング追加) |
+| G5 | Improvement | AI メトリクス（AI-Confidence, MTTV, Turns-Used）の自動収集がない | 中 | **実装済み** (`metrics-collector.py`) |
 | G6 | 全体 | `orchestration/*` と AI-DLC Agent Loop が未接続 | 中 | 将来課題 |
 | G7 | Upstream | 上流品質ゲート (Gate 1-4) がフック自動化されていない | 低 | 将来課題 |
 | G8 | 全体 | Hook イベント利用率 36%（14 中 5 のみ使用） | 低 | 将来課題 |
@@ -253,23 +253,19 @@
 
 ## 将来課題詳細
 
-### G3: Churn カウンター自動化
+### G3: Churn カウンター自動化 -- 実装済み
 
-**現状**: Churn（同一ファイルへの繰り返し修正）は `/ai-dlc:diagnose` で事後分析のみ。
-**理想**: PostToolUse フックで Edit/Write の対象ファイルを追跡し、同一ファイルが 3 回修正されたら警告、7 回で Spec 見直し提案。
-**実装案**: `hooks/churn-counter.py` (PostToolUse: Write/Edit/MultiEdit)
+`hooks/churn-counter.py` (PostToolUse: Write/Edit/MultiEdit) として実装。
+同一ファイルの修正回数を自動追跡し、3 回で警告、7 回で Spec Definition 差し戻し推奨。
 
-### G4: Spec 品質スコアリング
+### G4: Spec 品質スコアリング -- 実装済み
 
-**現状**: `check-spec-existence.py` は Spec ファイルの存在有無のみチェック。
-**理想**: Atomic Spec 5 要素（Context, Current Behavior, Expected Behavior, Constraints, Verification）の各要素を正規表現またはヘッダー検出でスコアリングし、3/5 未満で警告。
-**実装案**: `check-spec-existence.py` を拡張、または新フック `spec-quality-gate.py` を追加。
+`check-spec-existence.py` を拡張。Atomic Spec 5 要素（Context, Current Behavior, Expected Behavior, Constraints, Verification）を正規表現でスコアリングし、3/5 未満で不足要素を警告。mtime ベースのキャッシュ付き。
 
-### G5: AI メトリクス自動収集
+### G5: AI メトリクス自動収集 -- 実装済み
 
-**現状**: AI-Confidence, MTTV (Mean Time to Verify), Turns-Used 等のメトリクスは手動集計。
-**理想**: Stop フックでセッションメトリクスを自動記録。`.claude/metrics/` にログ蓄積。
-**実装案**: `hooks/ai-metrics-collector.sh` (Stop event)
+`hooks/metrics-collector.py` (Stop event) として実装。
+セッション JSONL から Turns-Used、ツール使用分布、変更ファイルを自動収集し `~/.claude/metrics/sessions.jsonl` に記録。
 
 ### G6: orchestration と Agent Loop の接続
 

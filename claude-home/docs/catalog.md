@@ -9,10 +9,10 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Commands | 207 (22 categories + 4 top-level) | `commands/` |
 | Agents | 67 | `agents/` |
 | Skills | 18 | `skills/` |
-| Hooks | 14 (general 11 + svelte 3) | `hooks/` |
+| Hooks | 16 (general 13 + svelte 3) | `hooks/` |
 | Hook Settings | 6 presets | `hooks/settings-*.json` |
 | Maintenance Scripts | 5 | `scripts/` |
-| **Total** | **309** | |
+| **Total** | **311** | |
 
 ---
 
@@ -106,6 +106,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Agent | data-pipeline-pro | ETL / データ基盤 |
 | Agent | data-pro | SQL / BigQuery |
 | Agent | ml-pro | ML ライフサイクル |
+| Hook | churn-counter.py | ファイル変更頻度追跡、3/7回ルール警告 (G3) |
 
 ### Verification (検証)
 
@@ -120,7 +121,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Skill | security | セキュリティ監査・堅牢化・依存関係・認証手順 |
 | Skill | performance | パフォーマンス監査・ビルド・バンドル・DB・CDN・キャッシュ・監視手順 |
 | Skill | test | テスト戦略・単体/結合/E2E・カバレッジ・負荷テスト手順 |
-| Hook | check-spec-existence.py | Write/Edit 前に Spec 存在確認 |
+| Hook | check-spec-existence.py | Write/Edit 前に Spec 存在確認 + 品質スコアリング (G4) |
 | Hook | typescript-check.py | TS 型チェック |
 | Hook | test-runner.sh | テスト自動実行 |
 | Hook | bash-validator.py | Bash コマンド安全性検証 |
@@ -162,6 +163,7 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 | Command | `/ai-dlc:diagnose` | データ駆動スプリント診断 |
 | Command | `/ai-dlc:calibrate` | エージェント設定・性能分析 |
 | Hook | session-learning-capture.sh | セッション終了時学習記録 |
+| Hook | metrics-collector.py | セッション終了時 AI メトリクス自動収集 (G5) |
 | Agent | legacy-pro | レガシーシステム近代化 |
 | Agent | dx-pro | 開発者体験最適化 |
 
@@ -259,7 +261,7 @@ AI-DLC 採用プロジェクトで有効。
 
 **Commands**: ai-dlc/*
 **Skills**: ticket-management, ai-dlc-ceremonies, ai-dlc-upstream, ai-dlc-estimate, ai-dlc-sier, github-projects-v2, linear, jira
-**Hooks**: check-spec-existence, auto-update-ticket
+**Hooks**: check-spec-existence, auto-update-ticket, churn-counter, metrics-collector
 **Settings**: settings-ai-dlc.json
 **Agents**: github-board-agent, github-ticket-agent, linear-ticket-agent, ticket-sync-agent
 
@@ -520,18 +522,20 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 
 ## Hooks Inventory
 
-### General Hooks (11)
+### General Hooks (13)
 
 | Hook | Event | Matcher | Purpose | Timeout |
 |---|---|---|---|---|
-| check-spec-existence.py | PreToolUse | Write/Edit/MultiEdit | Spec 存在確認 | 5s |
+| check-spec-existence.py | PreToolUse | Write/Edit/MultiEdit | Spec 存在確認 + Atomic Spec 5要素品質スコアリング (G4) | 5s |
 | bash-validator.py | PreToolUse | Bash | コマンド安全性検証 | 5s |
 | auto-update-ticket.sh | PostToolUse | Bash (git push) | Issue 自動コメント | 10s |
+| churn-counter.py | PostToolUse | Write/Edit/MultiEdit | ファイル変更頻度追跡、3/7回ルール警告 (G3) | 5s |
 | typescript-check.py | PostToolUse | Write/Edit/MultiEdit | TS 型チェック | 30s |
 | bundle-size-check.py | Pre/PostToolUse | Write/Edit/MultiEdit | バンドルサイズ監視 | 30s/120s |
 | format-and-lint.sh | PostToolUse | Write/Edit/MultiEdit | Prettier + ESLint | 10s |
 | prompt-enhancer.py | UserPromptSubmit | (all) | Svelte コンテキスト注入 | 5s |
 | session-learning-capture.sh | Stop | (all) | 学習記録リマインド | 10s |
+| metrics-collector.py | Stop | (all) | セッション終了時 AI メトリクス自動収集 (G5) | 15s |
 | test-runner.sh | Pre/PostToolUse | Write/Edit/MultiEdit | テスト自動実行 | 30s/60s |
 | svelte-validator.py | PostToolUse | Write/Edit/MultiEdit | Svelte 構文検証 | 10s |
 | component-analyzer.py | PostToolUse | Write/Edit/MultiEdit | コンポーネント複雑度分析 | 10s |
@@ -549,7 +553,7 @@ wfgy-bbam, wfgy-bbcr, wfgy-bbmc, wfgy-bbpf, wfgy-formula-all, wfgy-init
 | Preset | Use Case | Active Hooks |
 |---|---|---|
 | settings-minimal.json | ソロ開発 | format-and-lint のみ |
-| settings-ai-dlc.json | AI-DLC ワークフロー | check-spec, bash-validator, auto-update-ticket, session-learning |
+| settings-ai-dlc.json | AI-DLC ワークフロー | check-spec, bash-validator, auto-update-ticket, churn-counter, session-learning, metrics-collector |
 | settings-comprehensive.json | フル機能 | 全 general hooks + Svelte |
 | settings-performance.json | パフォーマンス重視 | bundle-size, component-analyzer, performance-analyzer |
 | settings-team.json | チーム協業 | naming-convention, doc-enforcer, todo-tracker, security-check |

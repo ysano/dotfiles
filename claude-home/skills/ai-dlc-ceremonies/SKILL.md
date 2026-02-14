@@ -57,8 +57,10 @@ AI-DLC (AI Development Lifecycle) セレモニー知識ベース。
 
 | Hook | イベント | 目的 |
 |---|---|---|
-| `check-spec-existence.py` | PreToolUse (Write/Edit/MultiEdit) | コード変更前に Spec/Plan の存在確認 |
+| `check-spec-existence.py` | PreToolUse (Write/Edit/MultiEdit) | コード変更前に Spec/Plan の存在確認 + Atomic Spec 5要素品質スコアリング (G4) |
 | `auto-update-ticket.sh` | PostToolUse (Bash) | git push 後にチケットにコミット自動記録 |
+| `churn-counter.py` | PostToolUse (Write/Edit/MultiEdit) | ファイル変更頻度追跡、3/7回ルール警告 (G3) |
+| `metrics-collector.py` | Stop | セッション終了時 AI メトリクス自動収集 (G5) |
 
 設定プリセット: `hooks/settings-ai-dlc.json`
 
