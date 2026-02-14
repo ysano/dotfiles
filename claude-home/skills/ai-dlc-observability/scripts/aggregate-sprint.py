@@ -29,13 +29,35 @@ SPRINTS_FILE = os.path.join(METRICS_DIR, "sprints.jsonl")
 CHURN_CACHE_DIR = "/tmp/claude-churn-cache"
 SPEC_CACHE_DIR = "/tmp/claude-spec-quality-cache"
 
-# DORA thresholds (Solo scale)
-DORA_THRESHOLDS = {
-    "vdf": {"ELITE": 2.0, "HIGH": 1.0, "MEDIUM": 0.5},
-    "svlt": {"ELITE": 4, "HIGH": 8, "MEDIUM": 24},     # hours (lower is better)
-    "rework": {"ELITE": 0.05, "HIGH": 0.15, "MEDIUM": 0.30},  # (lower is better)
-    "ttc": {"ELITE": 1, "HIGH": 4, "MEDIUM": 8},        # hours (lower is better)
+# DORA thresholds by team scale
+DORA_THRESHOLDS_BY_SCALE = {
+    "solo": {
+        "vdf": {"ELITE": 2.0, "HIGH": 1.0, "MEDIUM": 0.5},
+        "svlt": {"ELITE": 4, "HIGH": 8, "MEDIUM": 24},
+        "rework": {"ELITE": 0.05, "HIGH": 0.15, "MEDIUM": 0.30},
+        "ttc": {"ELITE": 1, "HIGH": 4, "MEDIUM": 8},
+    },
+    "pod": {
+        "vdf": {"ELITE": 5.0, "HIGH": 2.0, "MEDIUM": 1.0},
+        "svlt": {"ELITE": 8, "HIGH": 24, "MEDIUM": 48},
+        "rework": {"ELITE": 0.05, "HIGH": 0.15, "MEDIUM": 0.30},
+        "ttc": {"ELITE": 4, "HIGH": 8, "MEDIUM": 24},
+    },
+    "squad": {
+        "vdf": {"ELITE": 10.0, "HIGH": 5.0, "MEDIUM": 2.0},
+        "svlt": {"ELITE": 24, "HIGH": 48, "MEDIUM": 96},
+        "rework": {"ELITE": 0.05, "HIGH": 0.15, "MEDIUM": 0.30},
+        "ttc": {"ELITE": 8, "HIGH": 24, "MEDIUM": 48},
+    },
 }
+VALID_TEAM_SIZES = ("solo", "pod", "squad")
+
+
+def get_dora_thresholds(team_size):
+    """Return DORA thresholds dict for the given team scale."""
+    if team_size not in VALID_TEAM_SIZES:
+        raise ValueError(f"Invalid team_size: {team_size}")
+    return DORA_THRESHOLDS_BY_SCALE[team_size]
 
 AI_CONFIDENCE_WEIGHTS = {"sq": 0.30, "ci": 0.25, "tpr": 0.25, "se": 0.20}
 
@@ -43,6 +65,12 @@ LEVEL_TO_SCORE = {"ELITE": 1.0, "HIGH": 0.75, "MEDIUM": 0.5, "LOW": 0.25}
 
 
 # --- Utility ---
+
+def log(msg, verbose=False):
+    """Print diagnostic message to stderr if verbose is enabled."""
+    if verbose:
+        print(f"[aggregate-sprint] {msg}", file=sys.stderr)
+
 
 def parse_iso(ts_str):
     """Parse ISO 8601 timestamp string to datetime (UTC)."""
@@ -233,7 +261,7 @@ def extract_issue_number(pr):
     return None
 
 
-def calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir):
+def calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir, thresholds):
     """Calculate DORA Four Keys from GitHub data."""
     dora = {
         "vdf": None,
@@ -248,7 +276,7 @@ def calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir):
     # --- VDF ---
     qualified_prs = [pr for pr in merged_prs if extract_issue_number(pr)]
     vdf_value = len(qualified_prs) / max(sprint_days, 1)
-    vdf_level = classify_level_higher_better(vdf_value, DORA_THRESHOLDS["vdf"])
+    vdf_level = classify_level_higher_better(vdf_value, thresholds["vdf"])
     dora["vdf"] = {
         "value": round(vdf_value, 2),
         "level": vdf_level,
@@ -296,7 +324,7 @@ def calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir):
         median_svlt = sorted(svlt_hours_list)[len(svlt_hours_list) // 2]
         median_cognitive = sorted(cognitive_hours_list)[len(cognitive_hours_list) // 2]
         median_verify = sorted(verify_hours_list)[len(verify_hours_list) // 2]
-        svlt_level = classify_level_lower_better(median_svlt, DORA_THRESHOLDS["svlt"])
+        svlt_level = classify_level_lower_better(median_svlt, thresholds["svlt"])
         dora["svlt"] = {
             "value_hours": round(median_svlt, 1),
             "level": svlt_level,
@@ -317,7 +345,7 @@ def calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir):
 
         if ttc_hours_list:
             median_ttc = sorted(ttc_hours_list)[len(ttc_hours_list) // 2]
-            ttc_level = classify_level_lower_better(median_ttc, DORA_THRESHOLDS["ttc"])
+            ttc_level = classify_level_lower_better(median_ttc, thresholds["ttc"])
             dora["ttc"] = {
                 "value_hours": round(median_ttc, 1),
                 "level": ttc_level,
@@ -400,7 +428,7 @@ def calc_ai_confidence(spec_scores, churn_data, activity):
     }
 
 
-def calc_rework_rate(churn_data, total_modified_files):
+def calc_rework_rate(churn_data, total_modified_files, thresholds):
     """Calculate Rework Rate from churn data."""
     if churn_data is None:
         return None
@@ -415,7 +443,7 @@ def calc_rework_rate(churn_data, total_modified_files):
     else:
         rate = len(high_churn_files) / total_modified_files
 
-    level = classify_level_lower_better(rate, DORA_THRESHOLDS["rework"])
+    level = classify_level_lower_better(rate, thresholds["rework"])
 
     return {
         "value": round(rate, 2),
@@ -557,6 +585,13 @@ def main():
                         help="End date (YYYY-MM-DD). Default: today")
     parser.add_argument("--project-dir", type=str, default=None,
                         help="Project directory. Default: CLAUDE_PROJECT_DIR or cwd")
+    parser.add_argument("--team-size", type=str, default="solo",
+                        choices=["solo", "pod", "squad"],
+                        help="Team scale for threshold classification (default: solo)")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Print diagnostic info to stderr")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Compute but do not append to sprints.jsonl")
     args = parser.parse_args()
 
     # Resolve dates
@@ -583,15 +618,22 @@ def main():
     # Resolve project dir
     project_dir = args.project_dir or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
 
+    # Resolve thresholds
+    thresholds = get_dora_thresholds(args.team_size)
+    log(f"team_size={args.team_size}, sprint={since_str}..{until_str}, project={project_dir}", args.verbose)
+
     # --- Step 1: Sessions ---
     sessions = load_sessions(since_dt, until_dt, project_dir)
     activity = aggregate_sessions(sessions)
+    log(f"sessions={len(sessions)}, turns={activity['total_turns']}, files={activity['file_count']}", args.verbose)
 
     # --- Step 2: Churn cache ---
     churn_data = load_churn_data(project_dir)
+    log(f"churn_data={'loaded' if churn_data else 'none'}", args.verbose)
 
     # --- Step 3: Spec quality cache ---
     spec_scores = load_spec_scores(project_dir)
+    log(f"spec_scores={'loaded (' + str(len(spec_scores)) + ' files)' if spec_scores else 'none'}", args.verbose)
     spec_coverage = None
     if spec_scores:
         total_specs = len(spec_scores)
@@ -632,10 +674,12 @@ def main():
     # --- Step 5: Compute metrics ---
 
     # DORA
-    dora = calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir)
+    dora = calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir, thresholds)
+    log(f"dora: vdf={dora.get('vdf')}, svlt={dora.get('svlt')}, ttc={dora.get('ttc')}", args.verbose)
 
     # Rework Rate (from churn, not GitHub)
-    rework = calc_rework_rate(churn_data, activity["file_count"])
+    rework = calc_rework_rate(churn_data, activity["file_count"], thresholds)
+    log(f"rework_rate={rework}", args.verbose)
     dora["rework_rate"] = rework
 
     # AI-DLC
@@ -656,6 +700,7 @@ def main():
         "since": since_str,
         "until": until_str,
         "project_dir": project_dir,
+        "team_size": args.team_size,
         "computed_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "dora": dora,
         "ai_dlc": {
@@ -684,12 +729,15 @@ def main():
     print(json.dumps(output, indent=2, ensure_ascii=False))
 
     # Append to sprints.jsonl
-    try:
-        os.makedirs(METRICS_DIR, exist_ok=True)
-        with open(SPRINTS_FILE, "a") as f:
-            f.write(json.dumps(output, ensure_ascii=False) + "\n")
-    except OSError as e:
-        print(f"Warning: failed to write to {SPRINTS_FILE}: {e}", file=sys.stderr)
+    if not args.dry_run:
+        try:
+            os.makedirs(METRICS_DIR, exist_ok=True)
+            with open(SPRINTS_FILE, "a") as f:
+                f.write(json.dumps(output, ensure_ascii=False) + "\n")
+        except OSError as e:
+            print(f"Warning: failed to write to {SPRINTS_FILE}: {e}", file=sys.stderr)
+    else:
+        log("Dry run: skipping sprints.jsonl append", args.verbose)
 
 
 if __name__ == "__main__":
