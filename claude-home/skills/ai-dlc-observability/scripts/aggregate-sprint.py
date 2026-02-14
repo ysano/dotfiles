@@ -292,9 +292,6 @@ def calc_dora(merged_prs, closed_issues, bug_issues, sprint_days, project_dir, t
 
     for pr in qualified_prs:
         issue_num = extract_issue_number(pr)
-        if not issue_num:
-            continue
-
         pr_created = parse_iso(pr.get("createdAt"))
         pr_merged = parse_iso(pr.get("mergedAt"))
         if not pr_created or not pr_merged:
