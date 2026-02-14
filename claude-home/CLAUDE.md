@@ -11,7 +11,7 @@ claude-home/
 ├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
 ├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
-├── skills/      (18スキル)                 - 知識ベース・API統合
+├── skills/      (19スキル)                 - 知識ベース・API統合
 ├── scripts/     (5スクリプト)              - メンテナンスユーティリティ
 └── settings.local.json                     - ローカル権限設定
 ```
@@ -59,9 +59,11 @@ Task: semantic-architect   # WFGY推論系
 | setup | 知識ベース | 開発環境・Linting・Formatting・DB・API設計・モノレポ |
 | docs | 知識ベース | アーキテクチャ文書・API文書・オンボーディング・マイグレーション |
 | simulation | 知識ベース | シナリオ探索・デジタルツイン・意思決定木・市場モデリング |
+| ai-dlc-observability | 知識ベース | DORA Four Keys・AI-Confidence・Sprint Health |
 
 ## 設計原則
 
+- **チーム展開前提**: Solo 環境で開発・検証するが、Pod/Squad/Enterprise へのデプロイを想定して設計する。Solo 最適化のために汎用性を犠牲にしない
 - **ドメイン分離**: `claude-home/`=汎用、`.claude/skills/`=dotfiles専用
 - **レイヤード**: Commands(UI) → Agents(ロジック) → Skills(知識) → Hooks(イベント)
 - **出典追跡**: `.gitattributes` で Claude-Command-Suite / Original を管理
