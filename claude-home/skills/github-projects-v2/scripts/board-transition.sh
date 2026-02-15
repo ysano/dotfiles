@@ -23,7 +23,7 @@
 
 set -euo pipefail
 
-RATE_LIMIT_DELAY=1  # seconds between mutations
+RATE_LIMIT_DELAY="${RATE_LIMIT_DELAY:-1}"  # seconds between mutations
 
 # --- Colors ---
 RED='\033[0;31m'
