@@ -1,0 +1,18 @@
+name: observability-tests
+
+on:
+  push:
+    paths: ['claude-home/skills/ai-dlc-observability/**']
+  pull_request:
+    paths: ['claude-home/skills/ai-dlc-observability/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - run: pip install pytest
+    - run: python3 -m pytest claude-home/skills/ai-dlc-observability/scripts/tests/ -v

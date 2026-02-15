@@ -103,6 +103,55 @@ def _classify_ai_confidence_level(value):
     return "LOW"
 
 
+def make_pod_sessions(member_count=3, project_dir="/home/team/project",
+                      base_date="2026-02-10", turns_per_member=20):
+    """Create multiple sessions simulating Pod members.
+
+    Each member gets a 1-hour session staggered by start time,
+    with shared and unique modified files.
+    """
+    sessions = []
+    for i in range(member_count):
+        hour = 9 + i
+        sessions.append(make_session(
+            project_dir=project_dir,
+            start_time=f"{base_date}T{hour:02d}:00:00Z",
+            end_time=f"{base_date}T{hour+1:02d}:00:00Z",
+            total_turns=turns_per_member,
+            user_turns=turns_per_member // 2,
+            assistant_turns=turns_per_member - turns_per_member // 2,
+            tool_counts={"Edit": 5, "Read": 8, "Bash": 3, "Write": 2},
+            modified_files=[f"src/module_{i}.py", "src/shared.py"],
+        ))
+    return sessions
+
+
+def make_reviewed_pr(number, body, reviewers=2, rounds=1, rejected=False,
+                     createdAt="2026-02-10T10:00:00Z",
+                     mergedAt="2026-02-10T14:00:00Z"):
+    """Create a PR with review metadata for Pod workflow.
+
+    Extends make_pr with reviewDecision, reviews list, and reviewRounds.
+    """
+    pr = make_pr(
+        number=number,
+        body=body,
+        createdAt=createdAt,
+        mergedAt=mergedAt,
+    )
+    pr["reviewDecision"] = "CHANGES_REQUESTED" if rejected else "APPROVED"
+    pr["reviews"] = [
+        {"author": f"reviewer-{j+1}", "state": "APPROVED"}
+        for j in range(reviewers)
+    ]
+    if rejected and rounds > 1:
+        pr["reviews"] = [
+            {"author": "reviewer-1", "state": "CHANGES_REQUESTED"},
+        ] + pr["reviews"]
+    pr["reviewRounds"] = rounds
+    return pr
+
+
 def make_sprint(
     *,
     sprint_id="2026-02-03_2026-02-09",
