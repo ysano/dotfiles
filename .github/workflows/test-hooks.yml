@@ -1,0 +1,15 @@
+name: Test Hooks
+on:
+  push:
+    paths: ['claude-home/hooks/*.sh']
+  pull_request:
+    paths: ['claude-home/hooks/*.sh']
+jobs:
+  test-hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get install -y jq
+      - name: Run hook unit tests
+        run: bash .github/scripts/test-hooks.sh
