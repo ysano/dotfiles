@@ -621,15 +621,9 @@ class TestSquadStatusWorkflow:
     def test_squad_six_statuses_from_script(self):
         """Squad status options match setup-ai-dlc-board.sh get_status_options output."""
         import subprocess
-        # Source the function from setup script and call it
+        # Extract get_status_options function logic and verify independently
+        # (sourcing the full script fails due to arg validation with die())
         result = subprocess.run(
-            ["bash", "-c",
-             'source claude-home/skills/github-projects-v2/scripts/setup-ai-dlc-board.sh 2>/dev/null; '
-             'get_status_options squad'],
-            capture_output=True, text=True, cwd="/home/user/dotfiles",
-        )
-        # The script calls die() on missing args during source, so parse the function directly
-        result2 = subprocess.run(
             ["bash", "-c", """
 get_status_options() {
   case "$1" in
@@ -642,7 +636,7 @@ get_status_options squad
 """],
             capture_output=True, text=True,
         )
-        options = result2.stdout.strip().split(",")
+        options = result.stdout.strip().split(",")
         assert options == ["Triage", "Backlog", "Ready", "In Progress", "Review", "Done"]
         assert len(options) == 6
 
