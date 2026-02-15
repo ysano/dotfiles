@@ -78,7 +78,7 @@ def load_sprints(path, project_dir=None):
                 continue
             sprints.append(entry)
 
-    sprints.sort(key=lambda s: s.get("sprint_id", ""))
+    sprints.sort(key=lambda s: (s.get("since", ""), s.get("computed_at", "")))
     return sprints
 
 
@@ -331,12 +331,16 @@ def generate_recommendations(trends, sprints):
 
 # --- Git Correlation ---
 
-def git_log_correlation(project_dir, since_sprint_id):
-    """Retrieve CLAUDE.md/SKILL.md change log (best-effort)."""
+def git_log_correlation(project_dir, since_date):
+    """Retrieve CLAUDE.md/SKILL.md change log (best-effort).
+
+    Args:
+        project_dir: Path to the git repository to inspect.
+        since_date: Date string (YYYY-MM-DD) for --since filter.
+    """
     if not project_dir:
         return None
 
-    since_date = since_sprint_id.split("_")[0] if since_sprint_id else None
     if not since_date:
         return None
 
@@ -511,8 +515,8 @@ def main():
     history = build_history_table(sprints)
 
     # Git correlation
-    oldest_id = sprints[0].get("sprint_id") if sprints else None
-    git_log = git_log_correlation(project_dir, oldest_id)
+    oldest_since = sprints[0].get("since") if sprints else None
+    git_log = git_log_correlation(project_dir, oldest_since)
 
     # Recommendations
     recs = generate_recommendations(trends, sprints)

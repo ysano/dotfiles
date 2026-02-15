@@ -74,6 +74,36 @@ class TestLoadSprints:
         assert result[0]["sprint_id"] == "2026-02-03_2026-02-09"
         assert result[1]["sprint_id"] == "2026-02-10_2026-02-16"
 
+    def test_sort_by_since_when_custom_sprint_names(self, tmp_path):
+        """Custom sprint names should sort by 'since' date, not sprint_id."""
+        f = tmp_path / "sprints.jsonl"
+        # Sprint 2 has earlier since date but later alphabetical name
+        s1 = make_sprint(sprint_id="Sprint 2")
+        s1["since"] = "2026-02-03"
+        s1["until"] = "2026-02-09"
+        s2 = make_sprint(sprint_id="Sprint 1")
+        s2["since"] = "2026-02-10"
+        s2["until"] = "2026-02-16"
+        f.write_text(json.dumps(s1) + "\n" + json.dumps(s2) + "\n")
+        result = load_sprints(str(f))
+        # Should be sorted by since date, not sprint_id
+        assert result[0]["sprint_id"] == "Sprint 2"  # since=02-03
+        assert result[1]["sprint_id"] == "Sprint 1"  # since=02-10
+
+    def test_sort_same_since_uses_computed_at(self, tmp_path):
+        """Same since date should use computed_at as tiebreaker."""
+        f = tmp_path / "sprints.jsonl"
+        s1 = make_sprint(sprint_id="Sprint 2")
+        s1["since"] = "2026-02-10"
+        s1["computed_at"] = "2026-02-15T14:00:00Z"
+        s2 = make_sprint(sprint_id="Sprint 1")
+        s2["since"] = "2026-02-10"
+        s2["computed_at"] = "2026-02-15T10:00:00Z"
+        f.write_text(json.dumps(s1) + "\n" + json.dumps(s2) + "\n")
+        result = load_sprints(str(f))
+        assert result[0]["sprint_id"] == "Sprint 1"  # earlier computed_at
+        assert result[1]["sprint_id"] == "Sprint 2"  # later computed_at
+
     def test_empty_file(self, tmp_path):
         f = tmp_path / "sprints.jsonl"
         f.write_text("")
@@ -265,16 +295,36 @@ class TestGenerateRecommendations:
 
 class TestGitLogCorrelation:
     def test_returns_none_without_project_dir(self):
-        assert git_log_correlation(None, "2026-02-01_2026-02-07") is None
+        assert git_log_correlation(None, "2026-02-01") is None
 
-    def test_returns_none_without_sprint_id(self):
+    def test_returns_none_without_since_date(self):
         assert git_log_correlation("/tmp", None) is None
+
+    def test_returns_none_with_empty_since(self):
+        assert git_log_correlation("/tmp", "") is None
 
     def test_handles_file_not_found(self, monkeypatch):
         def mock_run(*args, **kwargs):
             raise FileNotFoundError("git not found")
         monkeypatch.setattr(subprocess, "run", mock_run)
-        assert git_log_correlation("/tmp", "2026-02-01_2026-02-07") is None
+        assert git_log_correlation("/tmp", "2026-02-01") is None
+
+    def test_uses_since_date_directly(self, monkeypatch):
+        """since_date is passed directly to git --since, not parsed from sprint_id."""
+        captured_args = {}
+        def mock_run(args, **kwargs):
+            captured_args["args"] = args
+            captured_args["cwd"] = kwargs.get("cwd")
+            from unittest.mock import MagicMock
+            result = MagicMock()
+            result.returncode = 0
+            result.stdout = "abc1234 2026-02-05 feat: update CLAUDE.md\n"
+            return result
+        monkeypatch.setattr(subprocess, "run", mock_run)
+        result = git_log_correlation("/home/user/project", "2026-02-01")
+        assert result is not None
+        assert "--since=2026-02-01" in captured_args["args"]
+        assert captured_args["cwd"] == "/home/user/project"
 
 
 # --- TestFormatMarkdown ---
