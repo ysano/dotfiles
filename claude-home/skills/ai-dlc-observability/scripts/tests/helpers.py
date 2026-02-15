@@ -126,6 +126,56 @@ def make_pod_sessions(member_count=3, project_dir="/home/team/project",
     return sessions
 
 
+def make_squad_sessions(member_count=8, components=None,
+                        project_dir="/home/team/project",
+                        base_date="2026-02-10", turns_per_member=25):
+    """Create multiple sessions simulating Squad members (6-10 ARE).
+
+    Each member gets a 2-hour session staggered by start time,
+    with Component-specific files, shared files, and MultiEdit usage.
+    """
+    if components is None:
+        components = ["Pod-A", "Pod-B", "Pod-C"]
+    sessions = []
+    for i in range(member_count):
+        hour = 9 + (i % 8)  # wrap around within working hours
+        comp = components[i % len(components)]
+        comp_dir = comp.lower().replace("-", "_")
+        sessions.append(make_session(
+            project_dir=project_dir,
+            start_time=f"{base_date}T{hour:02d}:00:00Z",
+            end_time=f"{base_date}T{hour+2:02d}:00:00Z",
+            total_turns=turns_per_member,
+            user_turns=turns_per_member // 2,
+            assistant_turns=turns_per_member - turns_per_member // 2,
+            tool_counts={"Edit": 6, "Read": 10, "Bash": 4, "Write": 3, "MultiEdit": 2},
+            modified_files=[
+                f"src/{comp_dir}/module_{i}.py",
+                f"src/{comp_dir}/shared.py",
+                "src/shared_infra.py",
+            ],
+        ))
+    return sessions
+
+
+def make_squad_reviewed_pr(number, body, component="Pod-A",
+                           agent_assigned="AI", reviewers=3, rounds=1,
+                           rejected=False,
+                           createdAt="2026-02-10T10:00:00Z",
+                           mergedAt="2026-02-10T16:00:00Z"):
+    """Create a PR with Squad-level metadata.
+
+    Extends make_reviewed_pr with Component and Agent-Assigned metadata.
+    """
+    pr = make_reviewed_pr(
+        number=number, body=body, reviewers=reviewers, rounds=rounds,
+        rejected=rejected, createdAt=createdAt, mergedAt=mergedAt,
+    )
+    pr["component"] = component
+    pr["agent_assigned"] = agent_assigned
+    return pr
+
+
 def make_reviewed_pr(number, body, reviewers=2, rounds=1, rejected=False,
                      createdAt="2026-02-10T10:00:00Z",
                      mergedAt="2026-02-10T14:00:00Z"):
