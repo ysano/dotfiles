@@ -30,6 +30,16 @@
             "type": "command",
             "command": ".claude/hooks/auto-update-ticket.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/board-status-updater.sh",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/ai-confidence-recorder.sh",
+            "timeout": 15
           }
         ]
       },
