@@ -1,5 +1,6 @@
-"""Tests for utility functions: parse_iso, classify_level_*, get_dora_thresholds, run_gh_command."""
+"""Tests for utility functions: parse_iso, classify_level_*, get_dora_thresholds, run_gh_command, TZ."""
 import subprocess
+from datetime import datetime, timezone, timedelta
 import pytest
 from aggregate_sprint import (
     parse_iso,
@@ -7,6 +8,8 @@ from aggregate_sprint import (
     classify_level_lower_better,
     get_dora_thresholds,
     run_gh_command,
+    resolve_local_tz,
+    parse_date_arg,
     VALID_TEAM_SIZES,
     DORA_THRESHOLDS_BY_SCALE,
 )
@@ -154,3 +157,68 @@ class TestRunGhCommand:
             raise subprocess.TimeoutExpired(cmd="gh", timeout=30)
         monkeypatch.setattr(subprocess, "run", mock_run)
         assert run_gh_command(["pr", "list"], "/tmp") is None
+
+
+# --- resolve_local_tz ---
+
+class TestResolveLocalTz:
+    def test_none_returns_system_tz(self):
+        tz = resolve_local_tz(None)
+        assert tz is not None
+        # Should be a valid timezone object
+        now = datetime.now(tz)
+        assert now.tzinfo is not None
+
+    def test_explicit_tz_name(self):
+        tz = resolve_local_tz("Asia/Tokyo")
+        assert tz is not None
+        dt = datetime(2026, 2, 10, 0, 0, 0, tzinfo=tz)
+        # JST is UTC+9
+        utc_dt = dt.astimezone(timezone.utc)
+        assert utc_dt.hour == 15  # 00:00 JST = 15:00 UTC previous day
+        assert utc_dt.day == 9
+
+    def test_utc(self):
+        tz = resolve_local_tz("UTC")
+        assert tz is not None
+
+
+# --- parse_date_arg ---
+
+class TestParseDateArg:
+    def test_start_of_day_utc(self):
+        utc = timezone.utc
+        dt = parse_date_arg("2026-02-10", utc, end_of_day=False)
+        assert dt.hour == 0
+        assert dt.minute == 0
+        assert dt.tzinfo == utc
+
+    def test_end_of_day_utc(self):
+        utc = timezone.utc
+        dt = parse_date_arg("2026-02-10", utc, end_of_day=True)
+        assert dt.hour == 23
+        assert dt.minute == 59
+        assert dt.second == 59
+
+    def test_jst_start_of_day_converted_to_utc(self):
+        jst = timezone(timedelta(hours=9))
+        dt = parse_date_arg("2026-02-10", jst, end_of_day=False)
+        # 2026-02-10 00:00 JST = 2026-02-09 15:00 UTC
+        assert dt.tzinfo == timezone.utc
+        assert dt.day == 9
+        assert dt.hour == 15
+
+    def test_jst_end_of_day_converted_to_utc(self):
+        jst = timezone(timedelta(hours=9))
+        dt = parse_date_arg("2026-02-10", jst, end_of_day=True)
+        # 2026-02-10 23:59:59 JST = 2026-02-10 14:59:59 UTC
+        assert dt.tzinfo == timezone.utc
+        assert dt.day == 10
+        assert dt.hour == 14
+        assert dt.minute == 59
+
+    def test_backward_compat_utc(self):
+        """When TZ is UTC, behavior matches original (UTC midnight)."""
+        utc = timezone.utc
+        dt = parse_date_arg("2026-02-10", utc, end_of_day=False)
+        assert dt == datetime(2026, 2, 10, 0, 0, 0, tzinfo=utc)

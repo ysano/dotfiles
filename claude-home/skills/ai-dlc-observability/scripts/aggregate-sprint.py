@@ -72,6 +72,47 @@ def log(msg, verbose=False):
         print(f"[aggregate-sprint] {msg}", file=sys.stderr)
 
 
+def resolve_local_tz(tz_name=None):
+    """Resolve timezone from name or system default.
+
+    Args:
+        tz_name: IANA timezone name (e.g., 'Asia/Tokyo') or None for system default.
+    Returns:
+        timezone object (fixed offset).
+    """
+    if tz_name:
+        try:
+            import zoneinfo
+            return zoneinfo.ZoneInfo(tz_name)
+        except (ImportError, KeyError):
+            # Fallback: try dateutil
+            pass
+
+    # System default: use time module
+    import time
+    local_offset = timedelta(seconds=-time.timezone if time.daylight == 0 else -time.altzone)
+    return timezone(local_offset)
+
+
+def parse_date_arg(date_str, local_tz, end_of_day=False):
+    """Parse YYYY-MM-DD date string as local timezone, convert to UTC.
+
+    Args:
+        date_str: Date in YYYY-MM-DD format.
+        local_tz: Timezone to interpret the date in.
+        end_of_day: If True, set time to 23:59:59.
+    Returns:
+        datetime in UTC.
+    """
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
+    if end_of_day:
+        dt = dt.replace(hour=23, minute=59, second=59)
+    # Attach local timezone
+    dt = dt.replace(tzinfo=local_tz)
+    # Convert to UTC
+    return dt.astimezone(timezone.utc)
+
+
 def parse_iso(ts_str):
     """Parse ISO 8601 timestamp string to datetime (UTC)."""
     if not ts_str:
@@ -582,34 +623,37 @@ def main():
                         help="End date (YYYY-MM-DD). Default: today")
     parser.add_argument("--project-dir", type=str, default=None,
                         help="Project directory. Default: CLAUDE_PROJECT_DIR or cwd")
+    parser.add_argument("--sprint-name", type=str, default=None,
+                        help="Custom sprint name (e.g., 'Sprint 1'). Default: since_until")
     parser.add_argument("--team-size", type=str, default="solo",
                         choices=["solo", "pod", "squad"],
                         help="Team scale for threshold classification (default: solo)")
+    parser.add_argument("--tz", type=str, default=None,
+                        help="Timezone for date interpretation (e.g., 'Asia/Tokyo'). Default: system local")
     parser.add_argument("--verbose", action="store_true",
                         help="Print diagnostic info to stderr")
     parser.add_argument("--dry-run", action="store_true",
                         help="Compute but do not append to sprints.jsonl")
     args = parser.parse_args()
 
-    # Resolve dates
+    # Resolve timezone
+    local_tz = resolve_local_tz(args.tz)
+
+    # Resolve dates (interpret YYYY-MM-DD as local TZ, convert to UTC)
     now = datetime.now(timezone.utc)
     if args.until:
-        until_dt = datetime.strptime(args.until, "%Y-%m-%d").replace(
-            hour=23, minute=59, second=59, tzinfo=timezone.utc
-        )
+        until_dt = parse_date_arg(args.until, local_tz, end_of_day=True)
     else:
         until_dt = now
 
     if args.since:
-        since_dt = datetime.strptime(args.since, "%Y-%m-%d").replace(
-            tzinfo=timezone.utc
-        )
+        since_dt = parse_date_arg(args.since, local_tz, end_of_day=False)
     else:
         since_dt = until_dt - timedelta(days=7)
 
     since_str = since_dt.strftime("%Y-%m-%d")
     until_str = until_dt.strftime("%Y-%m-%d")
-    sprint_id = f"{since_str}_{until_str}"
+    sprint_id = args.sprint_name if args.sprint_name else f"{since_str}_{until_str}"
     sprint_days = max((until_dt - since_dt).days, 1)
 
     # Resolve project dir
