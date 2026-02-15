@@ -8,6 +8,34 @@ Display a comprehensive AI-DLC lifecycle health dashboard. Load `ai-dlc-ceremoni
 
 Dashboard scope: `$ARGUMENTS` (default: current sprint / last 7 days)
 
+### 0. Board Field Integration (if available)
+
+If the project's CLAUDE.md contains `<github-project>` XML tags, read board-level fields for richer data:
+
+```bash
+# Parse project config from CLAUDE.md
+PROJECT_NUMBER=$(grep -oP 'url="https://github.com/(?:users|orgs)/[^/]+/projects/\K\d+' CLAUDE.md | head -1)
+OWNER=$(grep -oP 'url="https://github.com/(?:users|orgs)/\K[^/"]+' CLAUDE.md | head -1)
+
+# Fetch all items with field values
+gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json --limit 200
+```
+
+Extract and display board metrics where available:
+
+```markdown
+## Board Metrics
+| Metric | Value | Source |
+|---|---|---|
+| Status Distribution | Todo:[N] In Progress:[N] Review:[N] Done:[N] | Board |
+| Avg AI-Confidence | [N] | Board field |
+| Total Turns-Used | [N] | Board field |
+| Items with Spec-Link | [N]/[total] | Board field |
+| Review Queue | [N] items in Review | Board field |
+```
+
+If `<github-project>` tags are not found, skip this section and proceed with Issue-based analysis.
+
 ### 1. Sprint Progress
 
 Fetch current sprint status from GitHub Issues milestone:

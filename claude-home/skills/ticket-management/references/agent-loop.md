@@ -123,3 +123,50 @@ gh issue create --title "..." --body "..." --project <PROJECT_NUMBER>
 | In Progress | AI Planning + AI Implementation + Auto-Verification | デフォルトカラム |
 | Review | Human Review | カスタムステータス |
 | Done | Done | デフォルトカラム |
+
+## ボード統合（GitHub Projects V2）
+
+### チーム規模別ボードプロファイル
+
+チーム規模に応じて Status 数とカスタムフィールドを段階的に拡張する。
+セットアップスクリプト: `setup-ai-dlc-board.sh --scale <solo|pod|squad|enterprise>`
+
+| Scale | Status 数 | カスタムフィールド | 合計 | 選択基準 |
+|---|---|---|---|---|
+| Solo | 4 | Priority, Size | 4 | オーバーヘッド最小化 |
+| Pod | 4 | + AI-Confidence, Turns-Used, Spec-Link, Review-Priority | 8 | AI メトリクス追跡 |
+| Squad | 6 | + Component, Agent-Assigned, MTTV-Hours, Rework-Count, Sprint-Goal, Blocked-By | 14 | クロス Pod ルーティング |
+| Enterprise | 7 | + Security-Flag, Domain-Cluster, Compliance-Tag, Cost-USD, Approval-Status | 20 | コンプライアンス可視化 |
+
+### ステータス遷移とボード自動化
+
+**Hook 連携**（PostToolUse → Bash）:
+- `gh pr create` 検出 → Status を "Review" に自動更新（`board-status-updater.sh`）
+- 初回 `git push` 検出 → Status を "In Progress" に自動更新
+- `gh pr create` 検出 → AI-Confidence と Turns-Used をボードに記録（`ai-confidence-recorder.sh`）
+
+**Built-in Workflows**:
+- Item added → Status: Todo (Solo/Pod) / Triage (Squad+)
+- Item closed / PR merged → Status: Done
+- Auto-archive: Done + 14 日経過
+
+### AI-Native メトリクスフィールド
+
+| フィールド | 型 | 記録タイミング | ソース |
+|---|---|---|---|
+| AI-Confidence | Number (0-100) | PR 作成時（Hook 自動） | セッションメトリクス or 推定 |
+| Turns-Used | Number | PR 作成時（Hook 自動） | ブランチコミット数 |
+| MTTV-Hours | Number | スプリント検証時（`/ai-dlc:verify`） | PR createdAt → mergedAt |
+| Rework-Count | Number | スプリント検証時 | CHANGES_REQUESTED 回数 |
+| Review-Priority | Single Select | レビュー時（`/ai-dlc:review`） | AI-Confidence ベース判定 |
+
+### コマンド連携
+
+| Command | ボード読み取り | ボード書き込み |
+|---|---|---|
+| `/ai-dlc:status` | Status, Priority, AI-Confidence, Turns-Used | - |
+| `/ai-dlc:plan` | Status, Priority, Size, Blocked-By | Status(→In Progress), Iteration |
+| `/ai-dlc:verify` | Status(Done), AI-Confidence, Turns-Used | MTTV-Hours, Rework-Count |
+| `/ai-dlc:review` | AI-Confidence, Review-Priority | Review-Priority, AI-Confidence |
+
+テンプレートとセットアップ詳細: `github-projects-v2` Skill の `references/ai-dlc-board-templates.md` を参照。

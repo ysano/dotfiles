@@ -119,6 +119,33 @@ After human approval, outline the dispatch plan:
 3. Begin Agent Loop: Triage → Spec Definition → AI Planning
 ```
 
+### Phase 4: Board Status Update (if available)
+
+If the project's CLAUDE.md contains `<github-project>` XML tags, update board fields after human approval:
+
+```bash
+# Parse project config from CLAUDE.md
+PROJECT_NUMBER=$(grep -oP 'url="https://github.com/(?:users|orgs)/[^/]+/projects/\K\d+' CLAUDE.md | head -1)
+OWNER=$(grep -oP 'url="https://github.com/(?:users|orgs)/\K[^/"]+' CLAUDE.md | head -1)
+PROJECT_ID=$(grep -oP '<github-project id="\K[^"]+' CLAUDE.md | head -1)
+```
+
+For each approved agent-ready ticket:
+1. Update Status to "In Progress" (Solo/Pod) or "Ready" (Squad+)
+2. Set Iteration to current sprint (if Iteration field exists)
+
+```bash
+# Update Status
+gh project item-edit --project-id "$PROJECT_ID" --id "$ITEM_ID" \
+  --field-id "$STATUS_FIELD_ID" --single-select-option-id "$TARGET_STATUS_ID"
+
+# Set Iteration (if available)
+gh project item-edit --project-id "$PROJECT_ID" --id "$ITEM_ID" \
+  --field-id "$ITERATION_FIELD_ID" --iteration-id "$CURRENT_ITERATION_ID"
+```
+
+Rate limit: 1 second between mutations. Skip if `<github-project>` tags not found.
+
 ### Interactive Refinement
 
 After presenting results, offer to:

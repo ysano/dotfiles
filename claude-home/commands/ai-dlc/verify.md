@@ -124,6 +124,38 @@ For each completed issue:
 - [Suggested focus areas for next sprint]
 ```
 
+### Step 6: Record Metrics to Board (if available)
+
+If the project's CLAUDE.md contains `<github-project>` XML tags, write verification metrics back to board fields:
+
+```bash
+PROJECT_NUMBER=$(grep -oP 'url="https://github.com/(?:users|orgs)/[^/]+/projects/\K\d+' CLAUDE.md | head -1)
+OWNER=$(grep -oP 'url="https://github.com/(?:users|orgs)/\K[^/"]+' CLAUDE.md | head -1)
+PROJECT_ID=$(grep -oP '<github-project id="\K[^"]+' CLAUDE.md | head -1)
+```
+
+For each completed issue with a matching board item:
+
+| Field | Value | Source |
+|---|---|---|
+| MTTV-Hours | PR creation to merge time (hours) | PR `createdAt` vs `mergedAt` |
+| Rework-Count | Number of review round-trips | PR review `CHANGES_REQUESTED` count |
+| AI-Confidence | Final AI-Confidence score | aggregate-sprint.py output |
+
+```bash
+# Write MTTV-Hours (1 second between mutations)
+gh project item-edit --project-id "$PROJECT_ID" --id "$ITEM_ID" \
+  --field-id "$MTTV_HOURS_FIELD_ID" --number "$MTTV_HOURS"
+
+sleep 1
+
+# Write Rework-Count
+gh project item-edit --project-id "$PROJECT_ID" --id "$ITEM_ID" \
+  --field-id "$REWORK_COUNT_FIELD_ID" --number "$REWORK_COUNT"
+```
+
+Skip if `<github-project>` tags not found or fields (MTTV-Hours, Rework-Count) don't exist in the board.
+
 ### Interactive Follow-up
 
 Offer to:
