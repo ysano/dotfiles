@@ -26,9 +26,8 @@ def get_session_jsonl_path():
         return None
 
     # Encode project dir: /home/user/dotfiles -> -home-user-dotfiles
-    encoded = project_dir.replace("/", "-")
-    if encoded.startswith("-"):
-        pass  # keep leading dash
+    # Claude Code also replaces dots with dashes (e.g., github.com -> github-com)
+    encoded = project_dir.replace("/", "-").replace(".", "-")
 
     sessions_dir = os.path.expanduser(f"~/.claude/projects/{encoded}")
     jsonl_path = os.path.join(sessions_dir, f"{session_id}.jsonl")
