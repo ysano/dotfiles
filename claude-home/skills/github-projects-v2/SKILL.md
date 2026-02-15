@@ -16,6 +16,38 @@ CLAUDE.md に XML タグ形式でプロジェクト情報を記述し、LLM が�
 | `references/cli-commands.md` | `gh project` サブコマンド一覧、引数、ページネーション | CLI で操作するとき |
 | `references/graphql-api.md` | クエリ・ミューテーション・ページネーションパターン | CLI で不可能な操作、バッチ処理、高度な取得 |
 | `references/filtering.md` | 修飾子・演算子・特殊値 | ビューフィルタ設定・Issue 検索時 |
+| `references/ai-dlc-board-templates.md` | チーム規模別ボードテンプレート・ステータスマッピング | AI-DLC ボード設計・セットアップ時 |
+
+## AI-DLC ボードセットアップ
+
+チーム規模（Solo/Pod/Squad/Enterprise）に応じた GitHub Projects V2 ボードを自動構築する。
+
+### セットアップスクリプト
+
+```bash
+# Pod スケールでボード作成（リポジトリリンク付き）
+~/.claude/skills/github-projects-v2/scripts/setup-ai-dlc-board.sh \
+  --owner OWNER --title "Sprint N" --scale pod --repo REPO
+```
+
+スクリプトは以下を自動実行:
+1. プロジェクト作成 (`gh project create`)
+2. Status フィールドのオプション設定（GraphQL mutation）
+3. スケール別カスタムフィールド作成（冪等・1秒間隔）
+4. リポジトリリンク (`gh project link`)
+5. CLAUDE.md 用 XML タグを stdout に出力
+6. Built-in Workflow と Iteration フィールドの手動設定ガイド表示
+
+### スケール別フィールド数
+
+| Scale | Status 数 | カスタムフィールド | 合計 |
+|---|---|---|---|
+| Solo | 4 | Priority, Size | 4 |
+| Pod | 4 | + AI-Confidence, Turns-Used, Spec-Link, Review-Priority | 8 |
+| Squad | 6 | + Component, Agent-Assigned, MTTV-Hours, Rework-Count, Sprint-Goal, Blocked-By | 14 |
+| Enterprise | 7 | + Security-Flag, Domain-Cluster, Compliance-Tag, Cost-USD, Approval-Status | 20 |
+
+詳細なテンプレートとステータスマッピングは [references/ai-dlc-board-templates.md](references/ai-dlc-board-templates.md) を参照。
 
 ## CLAUDE.md XML タグ記述パターン
 
