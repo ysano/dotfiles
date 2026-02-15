@@ -145,7 +145,10 @@ Load `ai-dlc-observability` skill for metrics definitions and thresholds.
 Run the sprint aggregation script:
 
 ```bash
-python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR"
+# Auto-detect team scale from CLAUDE.md (fallback: solo)
+TEAM_SCALE=$(grep -oP '<github-project[^>]*scale="\K[^"]+' CLAUDE.md 2>/dev/null || echo "solo")
+
+python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR" --team-size "$TEAM_SCALE"
 ```
 
 If the script succeeds, parse the JSON output and display DORA metrics:
