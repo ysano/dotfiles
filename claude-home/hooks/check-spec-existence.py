@@ -84,12 +84,33 @@ def should_skip(file_path):
     return any(pattern in lower_path for pattern in SKIP_PATTERNS)
 
 
-def find_project_root():
-    """Find the project root (git root or CLAUDE_PROJECT_DIR)."""
+def find_project_root(file_path=None):
+    """Find the project root from file_path's git root, CLAUDE_PROJECT_DIR, or cwd.
+
+    Priority: file_path git root > CLAUDE_PROJECT_DIR > cwd git root > cwd.
+    The file_path-based detection fixes #17: when editing files in a different
+    repo than the Claude Code session directory.
+    """
+    # First: detect git root from file_path (most accurate)
+    if file_path:
+        try:
+            dir_path = os.path.dirname(os.path.abspath(file_path))
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True, text=True, timeout=3,
+                cwd=dir_path,
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            pass
+
+    # Fallback: CLAUDE_PROJECT_DIR
     project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
     if project_dir and os.path.isdir(project_dir):
         return project_dir
 
+    # Fallback: cwd git root
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
@@ -229,8 +250,8 @@ def main():
         print(json.dumps({"suppressOutput": True}))
         sys.exit(0)
 
-    # Check for plan/spec existence
-    root = find_project_root()
+    # Check for plan/spec existence (file_path-based detection for #17)
+    root = find_project_root(file_path)
     found, spec_path = has_plan_file(root)
 
     if found and spec_path:

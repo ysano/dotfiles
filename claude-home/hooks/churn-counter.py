@@ -37,9 +37,37 @@ def should_skip(file_path):
     return any(pattern in lower_path for pattern in SKIP_PATTERNS)
 
 
-def get_project_name():
-    """Derive a safe project name from CLAUDE_PROJECT_DIR."""
-    project_dir = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
+def detect_git_root(file_path):
+    """Detect git repository root from a file path.
+
+    Runs `git rev-parse --show-toplevel` from the file's parent directory
+    to find the actual project root, regardless of CLAUDE_PROJECT_DIR.
+    Returns None if detection fails.
+    """
+    import subprocess
+    try:
+        dir_path = os.path.dirname(os.path.abspath(file_path))
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=3,
+            cwd=dir_path,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass
+    return None
+
+
+def get_project_name(project_dir=None):
+    """Derive a safe project name from a project directory path.
+
+    Args:
+        project_dir: Explicit project directory. Falls back to
+                     CLAUDE_PROJECT_DIR or cwd if None.
+    """
+    if project_dir is None:
+        project_dir = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
     # Use last two path components for readability
     parts = project_dir.rstrip("/").split("/")
     return "_".join(parts[-2:]) if len(parts) >= 2 else parts[-1]
@@ -101,8 +129,9 @@ def main():
         print(json.dumps({"suppressOutput": True}))
         sys.exit(0)
 
-    # Load and update churn data
-    project_name = get_project_name()
+    # Detect actual project root from file_path (fixes #17: project_dir mismatch)
+    project_root = detect_git_root(file_path)
+    project_name = get_project_name(project_root)
     cache_path = os.path.join(CACHE_DIR, f"{project_name}_churn.json")
     data = load_churn_data(cache_path)
 
