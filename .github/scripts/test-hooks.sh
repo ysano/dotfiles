@@ -471,6 +471,469 @@ else
 fi
 
 ###############################################################################
+# Section 8 - board-transition.sh Argument Validation (T38-T45)
+# Tests the regex and validation at board-transition.sh L78-79
+###############################################################################
+echo ""
+echo "=== Section 8: board-transition.sh Argument Validation ==="
+
+# Validate issue_number: must match ^[0-9]+$
+validate_issue_number() {
+  [[ "$1" =~ ^[0-9]+$ ]] && echo "accept" || echo "reject"
+}
+
+# T38: "42" → accept
+if [[ $(validate_issue_number "42") == "accept" ]]; then
+  pass "T38: issue_number '42' accepted"
+else
+  fail "T38: issue_number '42' should be accepted"
+fi
+
+# T39: "abc" → reject
+if [[ $(validate_issue_number "abc") == "reject" ]]; then
+  pass "T39: issue_number 'abc' rejected"
+else
+  fail "T39: issue_number 'abc' should be rejected"
+fi
+
+# T40: "" → reject
+if [[ $(validate_issue_number "") == "reject" ]]; then
+  pass "T40: issue_number '' rejected"
+else
+  fail "T40: issue_number '' should be rejected"
+fi
+
+# T41: "-5" → reject
+if [[ $(validate_issue_number "-5") == "reject" ]]; then
+  pass "T41: issue_number '-5' rejected"
+else
+  fail "T41: issue_number '-5' should be rejected"
+fi
+
+# T42: "3.14" → reject
+if [[ $(validate_issue_number "3.14") == "reject" ]]; then
+  pass "T42: issue_number '3.14' rejected"
+else
+  fail "T42: issue_number '3.14' should be rejected"
+fi
+
+# T43: "99999" → accept
+if [[ $(validate_issue_number "99999") == "accept" ]]; then
+  pass "T43: issue_number '99999' accepted"
+else
+  fail "T43: issue_number '99999' should be accepted"
+fi
+
+# T44: target_status "" → reject (must not be empty)
+validate_target_status() {
+  [[ -z "$1" ]] && echo "reject" || echo "accept"
+}
+
+if [[ $(validate_target_status "") == "reject" ]]; then
+  pass "T44: target_status '' rejected"
+else
+  fail "T44: target_status '' should be rejected"
+fi
+
+# T45: target_status "In Progress" → accept (spaces allowed)
+if [[ $(validate_target_status "In Progress") == "accept" ]]; then
+  pass "T45: target_status 'In Progress' accepted"
+else
+  fail "T45: target_status 'In Progress' should be accepted"
+fi
+
+###############################################################################
+# Section 9 - Status Name → Option ID Resolution (T46-T51)
+# Tests the pattern at board-transition.sh L105-111
+###############################################################################
+echo ""
+echo "=== Section 9: Status Name → Option ID Resolution ==="
+
+TMPDIR_S9=$(mktemp -d)
+CLAUDE_MD_S9="$TMPDIR_S9/CLAUDE.md"
+cat > "$CLAUDE_MD_S9" <<'XMLEOF'
+## Task Management
+<github-project id="PVT_test123" url="https://github.com/users/testuser/projects/4">
+  <field name="Status" id="PVTSSF_status001">
+    <option name="Todo" id="98456001"/>
+    <option name="In Progress" id="98456002"/>
+    <option name="Review" id="98456003"/>
+    <option name="Done" id="98456004"/>
+  </field>
+  <field name="Priority" id="PVTSSF_priority001">
+    <option name="P0" id="77700001"/>
+    <option name="P1" id="77700002"/>
+    <option name="P2" id="77700003"/>
+  </field>
+</github-project>
+XMLEOF
+
+resolve_option_id() {
+  local target="$1"
+  local file="$2"
+  grep -B0 -A0 "name=\"$target\"" "$file" 2>/dev/null \
+    | grep -oP '<option name="'"$target"'" id="\K[^"]+' 2>/dev/null | head -1 || true
+}
+
+# T46: "Done" → 98456004
+RESULT46=$(resolve_option_id "Done" "$CLAUDE_MD_S9")
+if [[ "$RESULT46" == "98456004" ]]; then
+  pass "T46: 'Done' → $RESULT46"
+else
+  fail "T46: 'Done' expected 98456004, got '$RESULT46'"
+fi
+
+# T47: "In Progress" (space) → 98456002
+RESULT47=$(resolve_option_id "In Progress" "$CLAUDE_MD_S9")
+if [[ "$RESULT47" == "98456002" ]]; then
+  pass "T47: 'In Progress' → $RESULT47"
+else
+  fail "T47: 'In Progress' expected 98456002, got '$RESULT47'"
+fi
+
+# T48: "Blocked" (non-existent) → empty
+RESULT48=$(resolve_option_id "Blocked" "$CLAUDE_MD_S9")
+if [[ -z "$RESULT48" ]]; then
+  pass "T48: 'Blocked' → (empty, not found)"
+else
+  fail "T48: 'Blocked' expected empty, got '$RESULT48'"
+fi
+
+# T49: Available options listed on mismatch
+AVAILABLE49=$(grep -oP '<option name="\K[^"]+' "$CLAUDE_MD_S9" 2>/dev/null | sort -u | paste -sd ', ' -)
+if [[ "$AVAILABLE49" == *"Done"* && "$AVAILABLE49" == *"Todo"* ]]; then
+  pass "T49: Available options listed: $AVAILABLE49"
+else
+  fail "T49: Available options expected to contain Done and Todo, got '$AVAILABLE49'"
+fi
+
+# T50: "todo" (lowercase) → empty (case-sensitive)
+RESULT50=$(resolve_option_id "todo" "$CLAUDE_MD_S9")
+if [[ -z "$RESULT50" ]]; then
+  pass "T50: 'todo' (lowercase) → (empty, case-sensitive)"
+else
+  fail "T50: 'todo' expected empty, got '$RESULT50'"
+fi
+
+# T51: Priority "P0" → 77700001
+RESULT51=$(resolve_option_id "P0" "$CLAUDE_MD_S9")
+if [[ "$RESULT51" == "77700001" ]]; then
+  pass "T51: 'P0' → $RESULT51"
+else
+  fail "T51: 'P0' expected 77700001, got '$RESULT51'"
+fi
+
+rm -rf "$TMPDIR_S9"
+
+###############################################################################
+# Section 10 - Idempotency Check (T52-T55)
+# Tests the logic at board-transition.sh L147
+###############################################################################
+echo ""
+echo "=== Section 10: Idempotency Check ==="
+
+check_idempotent() {
+  local current="$1"
+  local target="$2"
+  if [[ "$current" == "$target" ]]; then
+    echo "skip"
+  else
+    echo "continue"
+  fi
+}
+
+# T52: current="Review" target="Review" → skip
+if [[ $(check_idempotent "Review" "Review") == "skip" ]]; then
+  pass "T52: Review→Review → skip (idempotent)"
+else
+  fail "T52: Review→Review should skip"
+fi
+
+# T53: current="Todo" target="In Progress" → continue
+if [[ $(check_idempotent "Todo" "In Progress") == "continue" ]]; then
+  pass "T53: Todo→In Progress → continue"
+else
+  fail "T53: Todo→In Progress should continue"
+fi
+
+# T54: current="" target="Done" → continue
+if [[ $(check_idempotent "" "Done") == "continue" ]]; then
+  pass "T54: (empty)→Done → continue"
+else
+  fail "T54: (empty)→Done should continue"
+fi
+
+# T55: current="null" target="Done" → continue
+if [[ $(check_idempotent "null" "Done") == "continue" ]]; then
+  pass "T55: 'null'→Done → continue"
+else
+  fail "T55: 'null'→Done should continue"
+fi
+
+###############################################################################
+# Section 11 - setup-ai-dlc-board.sh Scale Validation (T56-T63)
+# Tests the regex at setup-ai-dlc-board.sh L73
+###############################################################################
+echo ""
+echo "=== Section 11: Scale Validation ==="
+
+validate_scale() {
+  [[ "$1" =~ ^(solo|pod|squad|enterprise)$ ]] && echo "accept" || echo "reject"
+}
+
+# T56: "solo" → accept
+if [[ $(validate_scale "solo") == "accept" ]]; then
+  pass "T56: scale 'solo' accepted"
+else
+  fail "T56: scale 'solo' should be accepted"
+fi
+
+# T57: "pod" → accept
+if [[ $(validate_scale "pod") == "accept" ]]; then
+  pass "T57: scale 'pod' accepted"
+else
+  fail "T57: scale 'pod' should be accepted"
+fi
+
+# T58: "squad" → accept
+if [[ $(validate_scale "squad") == "accept" ]]; then
+  pass "T58: scale 'squad' accepted"
+else
+  fail "T58: scale 'squad' should be accepted"
+fi
+
+# T59: "enterprise" → accept
+if [[ $(validate_scale "enterprise") == "accept" ]]; then
+  pass "T59: scale 'enterprise' accepted"
+else
+  fail "T59: scale 'enterprise' should be accepted"
+fi
+
+# T60: "team" → reject
+if [[ $(validate_scale "team") == "reject" ]]; then
+  pass "T60: scale 'team' rejected"
+else
+  fail "T60: scale 'team' should be rejected"
+fi
+
+# T61: "" → reject
+if [[ $(validate_scale "") == "reject" ]]; then
+  pass "T61: scale '' rejected"
+else
+  fail "T61: scale '' should be rejected"
+fi
+
+# T62: "sol" → reject
+if [[ $(validate_scale "sol") == "reject" ]]; then
+  pass "T62: scale 'sol' rejected"
+else
+  fail "T62: scale 'sol' should be rejected"
+fi
+
+# T63: "Solo" (uppercase) → reject
+if [[ $(validate_scale "Solo") == "reject" ]]; then
+  pass "T63: scale 'Solo' (uppercase) rejected"
+else
+  fail "T63: scale 'Solo' should be rejected"
+fi
+
+###############################################################################
+# Section 12 - Scale Field Matrix (T64-T73)
+# Tests field generation logic at setup-ai-dlc-board.sh L183-213
+###############################################################################
+echo ""
+echo "=== Section 12: Scale Field Matrix ==="
+
+# Replicate the field generation logic from setup-ai-dlc-board.sh
+get_fields_for_scale() {
+  local scale="$1"
+  local fields=("Priority" "Size")  # Solo: always
+  if [[ "$scale" =~ ^(pod|squad|enterprise)$ ]]; then
+    fields+=("AI-Confidence" "Turns-Used" "Spec-Link" "Review-Priority")
+  fi
+  if [[ "$scale" =~ ^(squad|enterprise)$ ]]; then
+    fields+=("Component" "Agent-Assigned" "MTTV-Hours" "Rework-Count" "Sprint-Goal" "Blocked-By")
+  fi
+  if [[ "$scale" == "enterprise" ]]; then
+    fields+=("Security-Flag" "Domain-Cluster" "Compliance-Tag" "Cost-USD" "Approval-Status")
+  fi
+  echo "${fields[@]}"
+}
+
+count_fields() {
+  local fields
+  fields=$(get_fields_for_scale "$1")
+  echo "$fields" | wc -w
+}
+
+contains_field() {
+  local fields
+  fields=$(get_fields_for_scale "$1")
+  [[ " $fields " == *" $2 "* ]] && echo "yes" || echo "no"
+}
+
+# T64: Solo → 2 fields
+SOLO_COUNT=$(count_fields "solo")
+if [[ "$SOLO_COUNT" == "2" ]]; then
+  pass "T64: Solo → $SOLO_COUNT custom fields"
+else
+  fail "T64: Solo expected 2 fields, got $SOLO_COUNT"
+fi
+
+# T65: Pod → 6 fields
+POD_COUNT=$(count_fields "pod")
+if [[ "$POD_COUNT" == "6" ]]; then
+  pass "T65: Pod → $POD_COUNT custom fields"
+else
+  fail "T65: Pod expected 6 fields, got $POD_COUNT"
+fi
+
+# T66: Squad → 12 fields
+SQUAD_COUNT=$(count_fields "squad")
+if [[ "$SQUAD_COUNT" == "12" ]]; then
+  pass "T66: Squad → $SQUAD_COUNT custom fields"
+else
+  fail "T66: Squad expected 12 fields, got $SQUAD_COUNT"
+fi
+
+# T67: Enterprise → 17 fields
+ENT_COUNT=$(count_fields "enterprise")
+if [[ "$ENT_COUNT" == "17" ]]; then
+  pass "T67: Enterprise → $ENT_COUNT custom fields"
+else
+  fail "T67: Enterprise expected 17 fields, got $ENT_COUNT"
+fi
+
+# T68: Solo does NOT have AI-Confidence
+if [[ $(contains_field "solo" "AI-Confidence") == "no" ]]; then
+  pass "T68: Solo does not have AI-Confidence"
+else
+  fail "T68: Solo should not have AI-Confidence"
+fi
+
+# T69: Pod does NOT have Component
+if [[ $(contains_field "pod" "Component") == "no" ]]; then
+  pass "T69: Pod does not have Component"
+else
+  fail "T69: Pod should not have Component"
+fi
+
+# T70: Squad does NOT have Security-Flag
+if [[ $(contains_field "squad" "Security-Flag") == "no" ]]; then
+  pass "T70: Squad does not have Security-Flag"
+else
+  fail "T70: Squad should not have Security-Flag"
+fi
+
+# T71: Enterprise contains all Pod fields
+ENT_HAS_POD=true
+for f in AI-Confidence Turns-Used Spec-Link Review-Priority; do
+  if [[ $(contains_field "enterprise" "$f") != "yes" ]]; then
+    ENT_HAS_POD=false
+    break
+  fi
+done
+if $ENT_HAS_POD; then
+  pass "T71: Enterprise contains all Pod fields"
+else
+  fail "T71: Enterprise missing Pod field: $f"
+fi
+
+# T72: Enterprise contains all Squad fields
+ENT_HAS_SQUAD=true
+for f in Component Agent-Assigned MTTV-Hours Rework-Count Sprint-Goal Blocked-By; do
+  if [[ $(contains_field "enterprise" "$f") != "yes" ]]; then
+    ENT_HAS_SQUAD=false
+    break
+  fi
+done
+if $ENT_HAS_SQUAD; then
+  pass "T72: Enterprise contains all Squad fields"
+else
+  fail "T72: Enterprise missing Squad field: $f"
+fi
+
+# T73: Field types are correct
+# Replicate type assignment from setup-ai-dlc-board.sh
+get_field_type() {
+  case "$1" in
+    Priority|Size|Review-Priority|Component|Agent-Assigned|Security-Flag|Domain-Cluster|Compliance-Tag|Approval-Status) echo "SINGLE_SELECT" ;;
+    AI-Confidence|Turns-Used|MTTV-Hours|Rework-Count|Cost-USD) echo "NUMBER" ;;
+    Spec-Link|Sprint-Goal|Blocked-By) echo "TEXT" ;;
+  esac
+}
+
+T73_OK=true
+[[ $(get_field_type "Priority") != "SINGLE_SELECT" ]] && T73_OK=false
+[[ $(get_field_type "AI-Confidence") != "NUMBER" ]] && T73_OK=false
+[[ $(get_field_type "Spec-Link") != "TEXT" ]] && T73_OK=false
+if $T73_OK; then
+  pass "T73: Field types correct (Priority=SINGLE_SELECT, AI-Confidence=NUMBER, Spec-Link=TEXT)"
+else
+  fail "T73: Field types incorrect"
+fi
+
+###############################################################################
+# Section 13 - Issue Number Extraction (Implementation-aligned) (T74-T78)
+# Tests the actual hook regex: ([0-9]{2,}) + GH-([0-9]+)
+# (differs from Section 3's (^|[/_-])([0-9]+)(-|$))
+###############################################################################
+echo ""
+echo "=== Section 13: Issue Number Extraction (Hook Implementation) ==="
+
+# Matches the implementation in board-status-updater.sh L73-77
+extract_issue_number_impl() {
+  local branch="$1"
+  if [[ "$branch" =~ ([0-9]{2,}) ]]; then
+    echo "${BASH_REMATCH[1]}"
+  elif [[ "$branch" =~ GH-([0-9]+) ]]; then
+    echo "${BASH_REMATCH[1]}"
+  else
+    echo ""
+  fi
+}
+
+# T74: "feature/42-auth" → 42
+RESULT74=$(extract_issue_number_impl "feature/42-auth")
+if [[ "$RESULT74" == "42" ]]; then
+  pass "T74: feature/42-auth → $RESULT74"
+else
+  fail "T74: feature/42-auth expected 42, got '$RESULT74'"
+fi
+
+# T75: "fix-3-typo" (1 digit) → empty ({2,} requires 2+ digits)
+RESULT75=$(extract_issue_number_impl "fix-3-typo")
+if [[ -z "$RESULT75" ]]; then
+  pass "T75: fix-3-typo → (empty, 1-digit excluded by {2,})"
+else
+  fail "T75: fix-3-typo expected empty, got '$RESULT75'"
+fi
+
+# T76: "GH-5-fix-bug" → 5 (GH- prefix match)
+RESULT76=$(extract_issue_number_impl "GH-5-fix-bug")
+if [[ "$RESULT76" == "5" ]]; then
+  pass "T76: GH-5-fix-bug → $RESULT76"
+else
+  fail "T76: GH-5-fix-bug expected 5, got '$RESULT76'"
+fi
+
+# T77: "main" → empty
+RESULT77=$(extract_issue_number_impl "main")
+if [[ -z "$RESULT77" ]]; then
+  pass "T77: main → (empty)"
+else
+  fail "T77: main expected empty, got '$RESULT77'"
+fi
+
+# T78: "release/2026-02" → 2026 (first 2+ digit match)
+RESULT78=$(extract_issue_number_impl "release/2026-02")
+if [[ "$RESULT78" == "2026" ]]; then
+  pass "T78: release/2026-02 → $RESULT78"
+else
+  fail "T78: release/2026-02 expected 2026, got '$RESULT78'"
+fi
+
+###############################################################################
 # Summary
 ###############################################################################
 echo ""

@@ -1,9 +1,19 @@
 name: Test Hooks
 on:
   push:
-    paths: ['claude-home/hooks/*.sh']
+    paths:
+      - 'claude-home/hooks/*.sh'
+      - 'claude-home/skills/github-projects-v2/scripts/*.sh'
+      - '.github/scripts/test-hooks.sh'
+      - '.github/scripts/test-board-integration.sh'
+      - '.github/scripts/mock-gh.sh'
   pull_request:
-    paths: ['claude-home/hooks/*.sh']
+    paths:
+      - 'claude-home/hooks/*.sh'
+      - 'claude-home/skills/github-projects-v2/scripts/*.sh'
+      - '.github/scripts/test-hooks.sh'
+      - '.github/scripts/test-board-integration.sh'
+      - '.github/scripts/mock-gh.sh'
 jobs:
   test-hooks:
     runs-on: ubuntu-latest
@@ -13,3 +23,11 @@ jobs:
         run: sudo apt-get install -y jq
       - name: Run hook unit tests
         run: bash .github/scripts/test-hooks.sh
+  test-board-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get install -y jq
+      - name: Run board integration tests
+        run: bash .github/scripts/test-board-integration.sh
