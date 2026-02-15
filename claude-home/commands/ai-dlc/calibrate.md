@@ -2,6 +2,15 @@
 description: "Analyze AI agent configuration and performance for calibration"
 ---
 
+## Prerequisites
+
+Before running, verify:
+1. `analyze-trend.py` is accessible: `ls ~/.claude/skills/ai-dlc-observability/scripts/analyze-trend.py`
+2. `sprints.jsonl` contains 3+ sprints for trend analysis: `wc -l ~/.claude/metrics/sprints.jsonl`
+3. `gh` CLI is authenticated: `gh auth status`
+
+If sprints.jsonl has fewer than 3 entries, warn: "Calibration requires 3+ sprint history for trend detection. Run `/ai-dlc:verify` after each sprint to build history. Proceeding with available data."
+
 ## Instructions
 
 Generate an AI-DLC agent calibration report. Load `ai-dlc-ceremonies` skill for calibration session patterns. Load `ticket-management` skill for quality metrics context. Load `prompt-engineering` skill for Hooks / CLAUDE.md design patterns. Load `ai-dlc-observability` skill for DORA Four Keys / AI-Confidence / Sprint Health trend analysis.

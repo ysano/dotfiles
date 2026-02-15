@@ -2,6 +2,14 @@
 description: "Verify sprint outcomes with AI output quality assessment"
 ---
 
+## Prerequisites
+
+Before running, verify:
+1. `aggregate-sprint.py` is accessible: `ls ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py`
+2. `gh` CLI is authenticated: `gh auth status`
+
+If prerequisites fail, inform the user and suggest: `pip install -r requirements.txt` or `gh auth login`.
+
 ## Instructions
 
 Generate an AI-DLC sprint verification report. Load `ai-dlc-ceremonies` skill for verification session patterns. Load `ticket-management` skill for DoD / quality metrics context. Load `ai-dlc-observability` skill for MTTV / AI-Confidence / Sprint Health metrics.

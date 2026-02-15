@@ -2,6 +2,15 @@
 description: "Generate data-driven sprint diagnostic for retrospective"
 ---
 
+## Prerequisites
+
+Before running, verify:
+1. `aggregate-sprint.py` is accessible: `ls ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py`
+2. `gh` CLI is authenticated: `gh auth status`
+3. `sprints.jsonl` contains 2+ sprints for comparison: `wc -l ~/.claude/metrics/sprints.jsonl`
+
+If sprints.jsonl has fewer than 2 entries, warn: "Diagnostic requires sprint history for comparison. Run `/ai-dlc:verify` first to generate baseline data. Current data will be used for a single-sprint diagnostic."
+
 ## Instructions
 
 Generate an AI-DLC data-driven diagnostic report for a retrospective session. Load `ai-dlc-ceremonies` skill for diagnostic session patterns. Load `ticket-management` skill for Churn / AI-Confidence / Janitor rules context. Load `ai-dlc-observability` skill for DORA Four Keys / Sprint Health metrics context.
