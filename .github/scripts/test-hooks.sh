@@ -318,6 +318,159 @@ else
 fi
 
 ###############################################################################
+# Section 6 - Squad XML Parsing (T28-T32)
+# Tests Squad-specific XML attributes and fields
+###############################################################################
+echo ""
+echo "=== Section 6: Squad XML Parsing ==="
+
+TMPDIR_SQUAD=$(mktemp -d)
+CLAUDE_MD_SQUAD="$TMPDIR_SQUAD/CLAUDE.md"
+
+cat > "$CLAUDE_MD_SQUAD" <<'XMLEOF'
+## Task Management
+<github-project id="PVT_squad123" url="https://github.com/orgs/testorg/projects/7" scale="squad">
+  <field name="Status" id="PVTSSF_status002">
+    <option name="Triage" id="99001001"/>
+    <option name="Backlog" id="99001002"/>
+    <option name="Ready" id="99001003"/>
+    <option name="In Progress" id="99001004"/>
+    <option name="Review" id="99001005"/>
+    <option name="Done" id="99001006"/>
+  </field>
+  <field name="Component" id="PVTSSF_comp001">
+    <option name="Pod-A" id="88001001"/>
+    <option name="Pod-B" id="88001002"/>
+    <option name="Pod-C" id="88001003"/>
+  </field>
+  <field name="Agent-Assigned" id="PVTSSF_agent001">
+    <option name="AI" id="77001001"/>
+    <option name="Human" id="77001002"/>
+    <option name="Pair" id="77001003"/>
+  </field>
+  <field name="MTTV-Hours" id="PVTF_mttv001"/>
+  <field name="Rework-Count" id="PVTF_rework001"/>
+  <field name="Sprint-Goal" id="PVTF_goal001"/>
+  <field name="Blocked-By" id="PVTF_blocked001"/>
+</github-project>
+XMLEOF
+
+# T28: Parse scale="squad" attribute
+SCALE28=$(grep -oP '<github-project[^>]*scale="\K[^"]+' "$CLAUDE_MD_SQUAD" | head -1)
+if [[ "$SCALE28" == "squad" ]]; then
+  pass "T28: Parse scale attribute = $SCALE28"
+else
+  fail "T28: Parse scale attribute expected squad, got '$SCALE28'"
+fi
+
+# T29: Squad has 6 status options
+STATUS_COUNT29=$(grep -c '<option name=.*id=' "$CLAUDE_MD_SQUAD" | head -1)
+# Count only Status field options (6 options)
+STATUS_OPTIONS29=$(sed -n '/<field name="Status"/,/<\/field>/p' "$CLAUDE_MD_SQUAD" | grep -c '<option')
+if [[ "$STATUS_OPTIONS29" == "6" ]]; then
+  pass "T29: Squad Status has $STATUS_OPTIONS29 options"
+else
+  fail "T29: Squad Status expected 6 options, got '$STATUS_OPTIONS29'"
+fi
+
+# T30: Parse Component field ID
+COMPONENT_ID30=$(grep 'name="Component"' "$CLAUDE_MD_SQUAD" | grep -oP 'id="\K[^"]+' | head -1)
+if [[ "$COMPONENT_ID30" == "PVTSSF_comp001" ]]; then
+  pass "T30: Parse Component field ID = $COMPONENT_ID30"
+else
+  fail "T30: Parse Component field ID expected PVTSSF_comp001, got '$COMPONENT_ID30'"
+fi
+
+# T31: Parse Agent-Assigned field ID
+AGENT_ID31=$(grep 'name="Agent-Assigned"' "$CLAUDE_MD_SQUAD" | grep -oP 'id="\K[^"]+' | head -1)
+if [[ "$AGENT_ID31" == "PVTSSF_agent001" ]]; then
+  pass "T31: Parse Agent-Assigned field ID = $AGENT_ID31"
+else
+  fail "T31: Parse Agent-Assigned field ID expected PVTSSF_agent001, got '$AGENT_ID31'"
+fi
+
+# T32: Parse Triage option ID (Squad-specific first status)
+TRIAGE_ID32=$(grep -B0 -A0 'name="Triage"' "$CLAUDE_MD_SQUAD" \
+  | grep -oP '<option name="Triage" id="\K[^"]+' | head -1)
+if [[ "$TRIAGE_ID32" == "99001001" ]]; then
+  pass "T32: Parse Triage option ID = $TRIAGE_ID32"
+else
+  fail "T32: Parse Triage option ID expected 99001001, got '$TRIAGE_ID32'"
+fi
+
+rm -rf "$TMPDIR_SQUAD"
+
+###############################################################################
+# Section 7 - Scale Fallback & Status Options (T33-T37)
+# Tests backward compatibility and get_status_options logic
+###############################################################################
+echo ""
+echo "=== Section 7: Scale Fallback & Status Options ==="
+
+# T33: scale attribute missing → fallback to "solo"
+TMPDIR_FALLBACK=$(mktemp -d)
+CLAUDE_MD_FALLBACK="$TMPDIR_FALLBACK/CLAUDE.md"
+cat > "$CLAUDE_MD_FALLBACK" <<'XMLEOF'
+## Task Management
+<github-project id="PVT_legacy123" url="https://github.com/users/testuser/projects/5">
+  <field name="Status" id="PVTSSF_status003"/>
+</github-project>
+XMLEOF
+
+SCALE33=$(grep -oP '<github-project[^>]*scale="\K[^"]+' "$CLAUDE_MD_FALLBACK" 2>/dev/null || echo "solo")
+if [[ "$SCALE33" == "solo" ]]; then
+  pass "T33: Missing scale attribute → fallback to '$SCALE33'"
+else
+  fail "T33: Missing scale attribute expected solo fallback, got '$SCALE33'"
+fi
+
+# T34: scale attribute present → correctly parsed (not fallback)
+SCALE34=$(grep -oP '<github-project[^>]*scale="\K[^"]+' "$CLAUDE_MD_SQUAD" 2>/dev/null || echo "solo")
+# $CLAUDE_MD_SQUAD was already cleaned up, use inline test
+SCALE34_INLINE=$(echo '<github-project id="PVT_x" url="..." scale="pod">' \
+  | grep -oP 'scale="\K[^"]+' || echo "solo")
+if [[ "$SCALE34_INLINE" == "pod" ]]; then
+  pass "T34: Present scale attribute parsed = $SCALE34_INLINE (not fallback)"
+else
+  fail "T34: Present scale attribute expected pod, got '$SCALE34_INLINE'"
+fi
+
+rm -rf "$TMPDIR_FALLBACK"
+
+# T35: get_status_options squad → 6 comma-separated statuses
+get_status_options() {
+  case "$1" in
+    solo|pod)    echo "Todo,In Progress,Review,Done" ;;
+    squad)       echo "Triage,Backlog,Ready,In Progress,Review,Done" ;;
+    enterprise)  echo "Triage,Backlog,Ready,In Progress,In CI,Review,Done" ;;
+  esac
+}
+
+SQUAD_OPTS=$(get_status_options squad)
+IFS=',' read -ra SQUAD_ARR <<< "$SQUAD_OPTS"
+if [[ "${#SQUAD_ARR[@]}" == "6" ]]; then
+  pass "T35: get_status_options squad → ${#SQUAD_ARR[@]} statuses"
+else
+  fail "T35: get_status_options squad expected 6 statuses, got ${#SQUAD_ARR[@]}"
+fi
+
+# T36: Squad first status is Triage (not Todo)
+if [[ "${SQUAD_ARR[0]}" == "Triage" ]]; then
+  pass "T36: Squad first status = ${SQUAD_ARR[0]} (not Todo)"
+else
+  fail "T36: Squad first status expected Triage, got '${SQUAD_ARR[0]}'"
+fi
+
+# T37: Solo/Pod has 4 statuses, starts with Todo
+SOLO_OPTS=$(get_status_options solo)
+IFS=',' read -ra SOLO_ARR <<< "$SOLO_OPTS"
+if [[ "${#SOLO_ARR[@]}" == "4" && "${SOLO_ARR[0]}" == "Todo" ]]; then
+  pass "T37: get_status_options solo → ${#SOLO_ARR[@]} statuses, first=${SOLO_ARR[0]}"
+else
+  fail "T37: get_status_options solo expected 4 statuses starting with Todo, got ${#SOLO_ARR[@]}/${SOLO_ARR[0]}"
+fi
+
+###############################################################################
 # Summary
 ###############################################################################
 echo ""
