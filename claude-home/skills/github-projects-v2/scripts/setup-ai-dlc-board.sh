@@ -237,7 +237,7 @@ echo "Add the following to your CLAUDE.md under '## Task Management':"
 echo ""
 
 # Start XML
-echo "<github-project id=\"$PROJECT_ID\" url=\"$PROJECT_URL\">"
+echo "<github-project id=\"$PROJECT_ID\" url=\"$PROJECT_URL\" scale=\"$SCALE\">"
 
 # Emit fields (filter out built-in metadata fields)
 BUILTIN_FIELDS="Title|Assignees|Labels|Milestone|Repository|Linked pull requests|Reviewers|Tracks|Tracked by|Parent issue|Sub-issues progress"

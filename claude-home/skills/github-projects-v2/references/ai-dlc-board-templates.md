@@ -3,6 +3,10 @@
 チーム規模別の GitHub Projects V2 ボード設計テンプレート。
 `setup-ai-dlc-board.sh` で自動生成される XML タグの参考構造。
 
+### `scale` 属性
+
+`<github-project>` タグの `scale` 属性はチームスケールを示す。`status.md`, `diagnose.md`, `verify.md` コマンドが `aggregate-sprint.py` の `--team-size` を自動検出するために使用する。省略時は `solo` にフォールバックする。有効値: `solo`, `pod`, `squad`, `enterprise`。
+
 ## スケール別フィールド一覧
 
 | Field | Type | Solo | Pod | Squad | Enterprise |
@@ -32,7 +36,7 @@
 ### Solo (4 フィールド)
 
 ```xml
-<github-project id="PVT_..." url="https://github.com/users/OWNER/projects/N">
+<github-project id="PVT_..." url="https://github.com/users/OWNER/projects/N" scale="solo">
   <field name="Status" id="PVTSSF_...">
     <option name="Todo" id="..."/>
     <option name="In Progress" id="..."/>
@@ -55,7 +59,7 @@
 ### Pod (8 フィールド)
 
 ```xml
-<github-project id="PVT_..." url="https://github.com/users/OWNER/projects/N">
+<github-project id="PVT_..." url="https://github.com/users/OWNER/projects/N" scale="pod">
   <field name="Status" id="PVTSSF_...">
     <option name="Todo" id="..."/>
     <option name="In Progress" id="..."/>
@@ -87,7 +91,7 @@
 ### Squad (14 フィールド)
 
 ```xml
-<github-project id="PVT_..." url="https://github.com/orgs/ORG/projects/N">
+<github-project id="PVT_..." url="https://github.com/orgs/ORG/projects/N" scale="squad">
   <field name="Status" id="PVTSSF_...">
     <option name="Triage" id="..."/>
     <option name="Backlog" id="..."/>
@@ -135,7 +139,7 @@
 ### Enterprise (20 フィールド)
 
 ```xml
-<github-project id="PVT_..." url="https://github.com/orgs/ORG/projects/N">
+<github-project id="PVT_..." url="https://github.com/orgs/ORG/projects/N" scale="enterprise">
   <field name="Status" id="PVTSSF_...">
     <option name="Triage" id="..."/>
     <option name="Backlog" id="..."/>

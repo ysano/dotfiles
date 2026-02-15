@@ -49,8 +49,11 @@ git log --since="[sprint_start]" --stat -- "**/*test*" "**/*spec*" "**/*.test.*"
 Run sprint aggregation for quantitative data:
 
 ```bash
+# Auto-detect team scale from CLAUDE.md (fallback: solo)
+TEAM_SCALE=$(grep -oP '<github-project[^>]*scale="\K[^"]+' CLAUDE.md 2>/dev/null || echo "solo")
+
 python3 ~/.claude/skills/ai-dlc-observability/scripts/aggregate-sprint.py \
-  --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR"
+  --since "[sprint_start]" --until "[today]" --project-dir "$CLAUDE_PROJECT_DIR" --team-size "$TEAM_SCALE"
 ```
 
 From the script output, extract and display:
