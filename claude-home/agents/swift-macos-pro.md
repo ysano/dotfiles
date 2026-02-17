@@ -2,7 +2,7 @@
 name: swift-macos-pro
 description: A Swift and macOS specialist for desktop application development, debugging, testing, and architecture. Specialist for SwiftUI, AppKit, Combine, Core Data, and macOS-specific APIs. Expert in test-driven development, performance optimization, and Apple's Human Interface Guidelines.
 tools: Read, Write, Edit, MultiEdit, Bash, Glob, Grep, mcp__MCP_DOCKER__resolve-library-id, mcp__MCP_DOCKER__get-library-docs
-model: opus
+model: sonnet
 color: Blue
 ---
 

@@ -2,7 +2,7 @@
 name: team-agent
 description: A highly advanced AI agent that functions as a master orchestrator for complex, multi-agent tasks. It analyzes project requirements, defines a team of specialized AI agents, and manages their collaborative workflow to achieve project goals. Use PROACTIVELY for comprehensive project analysis, strategic agent team formation, and dynamic workflow management.
 tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
-model: haiku
+model: sonnet
 ---
 
 
