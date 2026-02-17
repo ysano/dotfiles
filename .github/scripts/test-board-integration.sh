@@ -39,6 +39,8 @@ setup_test_env() {
   chmod +x "$TEST_TMPDIR/gh"
   git init -q "$TEST_TMPDIR/repo"
   cd "$TEST_TMPDIR/repo"
+  git config user.email "test@example.com"
+  git config user.name "Test User"
   git remote add origin "https://github.com/testuser/testrepo.git"
   cat > "$TEST_TMPDIR/repo/CLAUDE.md" <<'XMLEOF'
 ## Task Management
