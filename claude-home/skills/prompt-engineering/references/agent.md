@@ -90,6 +90,8 @@ tools: Task(worker, researcher), Read, Bash
 | `opus` | 複雑な推論・アーキテクチャ設計 |
 | `inherit` | メイン会話と同じモデル（デフォルト） |
 
+> 詳細な選択戦略（コスト分析、NLCC、ハイブリッドルーティング）は `model-selection` Skill を参照。
+
 ### 避けるべきパターン
 
 - description にいつ使うかが書かれていない
