@@ -6,13 +6,17 @@ claude-home/ 配下の全モジュール棚卸し・AI-DLC 分類・整理方針
 
 | 種別 | 数 | 配置 |
 |---|---|---|
-| Commands | 207 (22 categories + 4 top-level) | `commands/` |
+| Commands | **0** (claude-plugins に移行済み) | ~~`commands/`~~ |
 | Agents | 67 | `agents/` |
-| Skills | 19 | `skills/` |
-| Hooks | 16 (general 13 + svelte 3) | `hooks/` |
+| Skills | 20 | `skills/` |
+| Hooks | 19 (general 16 + svelte 3) | `hooks/` |
 | Hook Settings | 6 presets | `hooks/settings-*.json` |
-| Maintenance Scripts | 5 | `scripts/` |
-| **Total** | **312** | |
+| Maintenance Scripts | 2 | `scripts/` |
+| **Total** | **114** (+ 移行済み Commands 121) | |
+
+> **Note**: 207 Commands は 2026-02 に claude-plugins リポジトリに移行完了。
+> 121 Keep → plugins, 63 Absorb → Skills が機能代替, 23 Delete。
+> インストール: `/plugin install <name>@ysano-plugins`
 
 ---
 
@@ -243,47 +247,49 @@ CLAUDE.md / SKILL 設計、AI ガバナンスリード。
 
 どのプロジェクトでもそのまま使えるモジュール。
 
-**Commands**: dev/*, test/*, security/*, docs/*, deploy/*, setup/*, performance/*, project/*, team/*
 **Agents**: 全開発系 (-pro), 全品質系 (-reviewer), 全インフラ系 (-operator), docs-pro, debug-pro
 **Skills**: prompt-engineering, prompt-management, security, performance, test, deploy, setup, docs
 **Hooks**: bash-validator, format-and-lint, session-learning-capture
+**Plugins**: dev, dev-backend, dev-frontend, quality, devops, documentation
 
 ### Tier 2: Framework (技術スタック依存) — ~10%
 
 特定フレームワーク使用時に有効。
 
-**Commands**: svelte/*, rust/*
 **Agents**: svelte-pro, svelte-storybook-pro, svelte-testing-pro, nextjs-pro, react-pro, swift-macos-pro, electron-pro
 **Hooks**: svelte-validator, component-analyzer, story-sync-check, typescript-check
 **Settings**: settings-storybook.json
+**Plugins**: svelte
 
 ### Tier 3: Domain (方法論依存) — ~7%
 
 AI-DLC 採用プロジェクトで有効。
 
-**Commands**: ai-dlc/*
 **Skills**: ticket-management, ai-dlc-ceremonies, ai-dlc-upstream, ai-dlc-estimate, ai-dlc-sier, ai-dlc-observability, github-projects-v2, linear, jira
 **Hooks**: check-spec-existence, auto-update-ticket, churn-counter, metrics-collector
 **Settings**: settings-ai-dlc.json
 **Agents**: github-board-agent, github-ticket-agent, linear-ticket-agent, ticket-sync-agent
+**Plugins**: ai-dlc, project
 
 ### Tier 4: Meta (Claude Code 拡張) — ~15%
 
 Claude Code 自体の拡張・推論強化。
 
-**Commands**: wfgy/*, reasoning/*, boundary/*, semantic/*, memory/*, orchestration/*, skills/*
-**Agents**: WFGY 系 7 agents, skill lifecycle 4 agents
-**Scripts**: 5 maintenance scripts
+**Agents**: WFGY 系 6 agents, skill lifecycle 5 agents
+**Scripts**: 2 maintenance scripts
+**Plugins**: wfgy, orchestration, skill-builder
 
 ### Tier 5: Experimental (実験的) — ~9%
 
-**Commands**: simulation/* (8 commands)
 **Skills**: simulation
 **Agents**: prompt-reviewer (multi-model review)
+**Plugins**: simulation
 
 ---
 
-## Commands Inventory (207)
+## Commands Inventory (移行済み → claude-plugins)
+
+> 以下は移行前の記録。現在は claude-plugins リポジトリで管理。
 
 ### Top-Level (4)
 
@@ -607,14 +613,12 @@ Agents: knowledge-mapper → semantic-architect に統合済み。
 
 ---
 
-## Maintenance Scripts (5)
+## Maintenance Scripts (2)
 
 | Script | Purpose | In-Place |
 |---|---|---|
-| compress_commands.py | 500 行超のコマンド圧縮 | Yes |
 | fix_agent_h1.py | Agent ファイルの H1 ヘッダー除去 | Yes |
-| fix_all_format.py | FM 生成 + H1 除去 + ノイズ除去 | Yes |
-| fix_command_format.py | Command ファイルの FM + H1 修正 | Yes |
-| remove_noise.py | Best Practices/Tips/Remember 除去 | Yes |
+| merge-hooks.sh | Hook 設定を settings.json にマージ | No (jq 必須) |
 
-**実行順序**: remove_noise → fix_command_format → fix_agent_h1 → fix_all_format → compress_commands
+> コマンド整形スクリプト 4 本 (compress_commands, fix_command_format, fix_all_format, remove_noise) は
+> Commands 移行完了に伴い削除済み。

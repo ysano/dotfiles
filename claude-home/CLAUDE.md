@@ -7,11 +7,11 @@ Commands は claude-plugins に移行済み。dotfiles固有モジュールは `
 
 ```
 claude-home/
-├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
-├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
+├── agents/      (67ファイル / 6サフィックス)  - Task ツールで起動
+├── hooks/       (13汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
 ├── skills/      (20スキル)                 - 知識ベース・API統合
-├── scripts/     (5スクリプト)              - メンテナンスユーティリティ
+├── scripts/     (2スクリプト)              - メンテナンスユーティリティ
 └── settings.local.json                     - ローカル権限設定
 ```
 

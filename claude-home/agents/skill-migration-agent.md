@@ -5,9 +5,9 @@ tools: Read, Write, Edit, Glob, Grep, Bash, LS
 model: sonnet
 ---
 
-Command → Skill マイグレーションを実行する。1 回の起動で 1 カテゴリを処理する。
+Plugin 内で Command → Skill マイグレーションを実行する。1 回の起動で 1 カテゴリを処理する。
 
-プロンプトでカテゴリ名を受け取る（例: "test カテゴリを Skill にマイグレーションしてください"）。
+プロンプトでプラグイン名とカテゴリ名を受け取る（例: "quality プラグインの test カテゴリを Skill にマイグレーションしてください"）。
 
 ## 制約
 
@@ -22,20 +22,20 @@ Command → Skill マイグレーションを実行する。1 回の起動で 1 
 
 ### Step 1: Analysis
 
-対象カテゴリの全 Command を読み込む:
+対象プラグインの全 Command を読み込む:
 
 ```
-Glob: claude-home/commands/[category]/*.md
+Glob: plugins/[plugin]/commands/*.md
 ```
 
-各 Command の内容を Read し、機能と手順を把握する。README.md は除外。
+各 Command の内容を Read し、機能と手順を把握する。
 
 ### Step 2: Agent Discovery
 
 関連する Agent を特定:
 
 ```
-Grep: "[category]" in claude-home/agents/*.md
+Grep: "[category]" in plugins/[plugin]/agents/*.md
 ```
 
 Category に直接関連する Agent（名前や description に含まれるもの）を記録。
@@ -44,18 +44,17 @@ Category に直接関連する Agent（名前や description に含まれるも�
 
 各 Command に対応する reference ファイルを作成:
 
-- パス: `claude-home/skills/[category]/references/[name].md`
+- パス: `plugins/[plugin]/skills/[category]/references/[name].md`
 - 構造: タイトル → 概要 1 行 → ステップ形式の手順（## 1. → ## 2. → ...）
 - 関連 reference へのクロスリファレンスを含める
 - 元の Command の知識をステップ構造に再編成する
 
 ### Step 4: SKILL.md Creation
 
-`claude-home/skills/[category]/SKILL.md` を作成:
+`plugins/[plugin]/skills/[category]/SKILL.md` を作成:
 
 ```yaml
 ---
-name: [category]
 description: >
   [1-2 sentence English description].
   Referenced by [agent-name] Agent.
@@ -68,23 +67,17 @@ user-invocable: true
 2. Agent 連携の blockquote（関連 Agent がある場合）
 3. リファレンスガイドテーブル（ドキュメント | 内容 | 参照タイミング）
 4. カテゴリ固有のクイックリファレンステーブル
-5. コマンドとの関係テーブル（Command | 対応リファレンス）
-6. `<constraints>` ブロック内に行動制約（3-4 項目）
+5. `<constraints>` ブロック内に行動制約（3-4 項目）
 
 ### Step 5: Command Conversion
 
-各 Command を薄いラッパー (13行以内) に変換。形式は `commands/security/security-audit.md` を参照。
+各 Command を薄いラッパー (13行以内) に変換。
 構成: FM (description) → 日本語 1 行概要 → Skill reference 参照指示 → See also。
 
 ### Step 6: Agent Update
 
 関連 Agent の冒頭付近に `**Knowledge Base**: 具体的な手順は [category] Skill の references/ を参照して実行すること。` を追加。既存の Knowledge Base 行がある場合はカテゴリ参照を追記。
 
-### Step 7: README Update
-
-`commands/[category]/README.md` を更新。形式は `commands/security/README.md` を参照。
-Knowledge Base blockquote + Available Commands + Related (Skill, Agent) セクション。
-
-### Step 8: Report
+### Step 7: Report
 
 作成/変更した全ファイル一覧と検証チェックリスト (SKILL.md 行数、reference 行数、Command 行数、reference 数 = Command 数、Quick Reference テーブル) を出力。
