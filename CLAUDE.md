@@ -23,10 +23,11 @@
 
 ## Claude Code モジュール
 
-| ディレクトリ | 用途 | 判断基準 |
-|---|---|---|
-| `.claude/` | dotfiles固有（agents/commands/skills） | Emacs/Zsh/tmux/Keyboard設定に直接関連 |
-| `claude-home/` | 汎用（agents, hooks, skills） | プロジェクト非依存。Commands は claude-plugins に移行済み |
+| ディレクトリ | 用途 |
+|---|---|
+| `.claude/` | dotfiles固有（agents/commands/skills）: Emacs/Zsh/tmux/Keyboard設定 |
+
+汎用ツール（agents, hooks, skills）は [claude-plugins](https://github.com/ysano/claude-plugins) リポジトリで管理。`/plugin install <name>@ysano-plugins` でインストール。
 
 dotfiles設定変更 → `Task: dotfiles-engineer`、検証 → `Task: dotfiles-validator`
 
@@ -35,7 +36,6 @@ dotfiles設定変更 → `Task: dotfiles-engineer`、検証 → `Task: dotfiles-
 | パス | 内容 |
 |---|---|
 | `.claude/CLAUDE.md` | dotfiles固有モジュール詳細 |
-| `claude-home/CLAUDE.md` | 汎用モジュール詳細 |
 | `docs/architecture.md` | アーキテクチャ概要 |
 | `docs/commands-reference.md` | Emacs/Zsh/tmux/Git Worktree コマンド詳細 |
 | `.claude/skills/*/SKILL.md` | 設定アーキテクチャ知識（emacs/zsh/tmux/keyboard） |

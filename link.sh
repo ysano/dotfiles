@@ -72,19 +72,7 @@ case "${OSTYPE}" in
             fi
         done
 
-        # Claude Code グローバル設定 (~/.claude/)
-        # claude-home/ の各サブディレクトリを ~/.claude/ 配下にシンボリックリンク
-        # プロジェクト固有の .claude/ とは別にグローバルツールとして展開
-        local claude_src="$HOME/$dotfiles/claude-home"
-        local claude_dst="$HOME/.claude"
-        if [[ -d "$claude_src" ]]; then
-            [[ ! -d "$claude_dst" ]] && mkdir -p "$claude_dst"
-            for item in "$claude_src"/*; do
-                local name="$(basename "$item")"
-                local dst="$claude_dst/$name"
-                backup_if_exists "$dst"
-                ln -s "$item" "$dst"
-            done
-        fi
+        # Claude Code 拡張は claude-plugins リポジトリで管理
+        # /plugin install <name>@ysano-plugins でインストール
         ;;
 esac

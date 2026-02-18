@@ -1,6 +1,6 @@
 **dotfiles固有の開発・管理モジュール**
 
-> 汎用ツールは `claude-home/` を参照。判断基準: Emacs/Zsh/tmux/Keyboard設定に直接関連 → `.claude/`
+> 汎用ツールは [claude-plugins](https://github.com/ysano/claude-plugins) で管理。dotfiles固有のもののみここに配置。
 
 ## 構成
 
