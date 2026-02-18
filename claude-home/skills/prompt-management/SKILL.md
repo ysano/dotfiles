@@ -61,6 +61,11 @@ $ARGUMENTS から操作と対象を判定。不明な場合はユーザーに確
 - [ ] XML タグが全て閉じられている
 - [ ] 呼び出し元への依存なし
 
+**Agent 追加検証**（`prompt-engineering/references/agent.md` の価値判断基準を参照）:
+- [ ] Claude ネイティブ能力を超える固有知識があるか
+- [ ] 削除して vanilla Claude に同じタスクを依頼した場合、品質が落ちるか
+- [ ] MCP 依存がある場合、公式 Marketplace プラグインで代替可能か確認済み
+
 ### 4. レビュー（任意）
 
 多角的なフィードバックが必要な場合、並列で `prompt-reviewer` を起動:

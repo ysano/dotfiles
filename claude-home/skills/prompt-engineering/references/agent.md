@@ -92,6 +92,50 @@ tools: Task(worker, researcher), Read, Bash
 
 > 詳細な選択戦略（コスト分析、NLCC、ハイブリッドルーティング）は `model-selection` Skill を参照。
 
+### Agent 価値判断基準
+
+Agent を作成・レビューする際、以下の基準で本当に必要かを判断する。
+
+**価値のある Agent（作成すべき）**:
+- ドメイン固有の決定木やワークフローがある（例: インシデント対応の Severity 判定）
+- Claude が学習データだけでは知り得ない組織固有の規約・パターンを持つ
+- 特定ツールの組み合わせや実行順序に専門性がある（例: Svelte 5 runes + Storybook CSF3）
+- 削除して vanilla Claude に依頼した場合、品質が明確に落ちる
+
+**無価値な Agent（作成すべきでない）**:
+- 本文が汎用的な「ベストプラクティス」の羅列（Claude が既知の内容）
+- description を Task プロンプトにコピーすれば同等の結果が得られる
+- 複数 Agent 間で同一の定型文ブロック（"Core Development Philosophy" 等）がコピーされている
+- 「〇〇の専門家」と名乗るだけで固有知識がない
+
+**判定テスト**: "この Agent を削除し、description の内容だけを Task プロンプトに渡して同じタスクを実行した場合、品質は落ちるか？" — No なら不要。
+
+### MCP 設定戦略
+
+Agent の `tools:` に MCP ツール（`mcp__*`）を指定する場合の設計原則。
+
+**原則: 公式 Marketplace に委譲し、固有のものだけバンドルする**
+
+1. **公式 Marketplace 確認**: `context7`, `playwright`, `atlassian`, `linear` 等の汎用 MCP は公式プラグインとして提供されている。Plugin の `.mcp.json` にバンドルしない
+2. **重複回避**: 同じ MCP サーバーを複数プラグインにバンドルすると、全プラグインインストール時に重複プロセスが起動する。同名でもプラグインスコープが別のため dedup されない可能性がある
+3. **固有 MCP のみバンドル**: 公式 Marketplace に存在しない MCP サーバーのみ `.mcp.json` に含める
+4. **認証依存の MCP**: OAuth/API Token が必要な MCP（Azure, Atlassian 等）は README でセットアップ手順を案内。プラグインに埋め込んでも認証フローが別途必要
+
+```
+# .mcp.json に含めるべき例（公式になし）
+{
+  "magic": {
+    "command": "npx",
+    "args": ["-y", "@21st-dev/magic"],
+    "env": { "API_KEY": "${TWENTYFIRST_API_KEY}" }
+  }
+}
+
+# README で案内すべき例（公式プラグインあり）
+# /plugin install context7@claude-plugins-official
+# /plugin install playwright@claude-plugins-official
+```
+
 ### 避けるべきパターン
 
 - description にいつ使うかが書かれていない
