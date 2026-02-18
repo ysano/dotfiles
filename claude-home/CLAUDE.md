@@ -1,13 +1,12 @@
 ## claude-home/ - Claude Code 汎用拡張モジュール
 
-プロジェクト非依存の再利用可能な Commands / Agents / Hooks / Skills。
-dotfiles固有モジュールは `.claude/` を参照。
+プロジェクト非依存の再利用可能な Agents / Hooks / Skills。
+Commands は claude-plugins に移行済み。dotfiles固有モジュールは `.claude/` を参照。
 
 ## ディレクトリ構造
 
 ```
 claude-home/
-├── commands/    (Absorb残留 + rust / 9カテゴリ) - Skill 経由で利用
 ├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
 ├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
@@ -18,9 +17,7 @@ claude-home/
 
 ## Commands
 
-Keep コマンド (115件) は claude-plugins に移行済み。残留は Absorb カテゴリ（Skill が同等機能を提供）と rust（保留）。
-
-残留カテゴリ: context, deploy, docs, performance, rust, security, setup, simulation, test
+全コマンドは claude-plugins リポジトリに移行済み。`/plugin install <name>@ysano-plugins` で利用。
 
 ## Agents 起動方法
 

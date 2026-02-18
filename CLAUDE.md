@@ -26,7 +26,7 @@
 | ディレクトリ | 用途 | 判断基準 |
 |---|---|---|
 | `.claude/` | dotfiles固有（agents/commands/skills） | Emacs/Zsh/tmux/Keyboard設定に直接関連 |
-| `claude-home/` | 汎用開発支援（agents, commands, skills） | プロジェクト非依存の再利用可能ツール |
+| `claude-home/` | 汎用（agents, hooks, skills） | プロジェクト非依存。Commands は claude-plugins に移行済み |
 
 dotfiles設定変更 → `Task: dotfiles-engineer`、検証 → `Task: dotfiles-validator`
 
