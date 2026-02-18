@@ -7,7 +7,7 @@ dotfiles固有モジュールは `.claude/` を参照。
 
 ```
 claude-home/
-├── commands/    (207ファイル / 22カテゴリ) - `/category:command` で実行
+├── commands/    (Absorb残留 + rust / 9カテゴリ) - Skill 経由で利用
 ├── agents/      (66ファイル / 6サフィックス)  - Task ツールで起動
 ├── hooks/       (14汎用 + svelte/3)       - イベント駆動型自動化
 ├── docs/                                  - ドキュメント
@@ -16,16 +16,11 @@ claude-home/
 └── settings.local.json                     - ローカル権限設定
 ```
 
-## Commands 実行方法
+## Commands
 
-```bash
-/dev:git-status          # カテゴリ:コマンド形式
-/test:write-tests
-/security:security-audit
-/handoff                 # 特殊コマンド（カテゴリなし）
-```
+Keep コマンド (115件) は claude-plugins に移行済み。残留は Absorb カテゴリ（Skill が同等機能を提供）と rust（保留）。
 
-主要カテゴリ: dev, test, deploy, security, docs, performance, setup, project, team, ai-dlc, orchestration, simulation, svelte, rust
+残留カテゴリ: context, deploy, docs, performance, rust, security, setup, simulation, test
 
 ## Agents 起動方法
 
