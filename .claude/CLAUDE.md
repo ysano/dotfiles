@@ -5,7 +5,7 @@
 ## 構成
 
 - **agents/**: `dotfiles-engineer`（設定変更）、`dotfiles-validator`（検証・読み取り専用）
-- **commands/dev/**: `/dev:commit`（品質チェック統合コミット）、`/dev:pull-request`（PR作成）
+- **commands/dev/**: `/dev:commit`（品質チェック統合コミット）
 - **skills/**: `emacs-config`、`zsh-config`、`tmux-config`、`keyboard-config`
 
 ## 基本ワークフロー

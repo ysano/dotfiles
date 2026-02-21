@@ -39,3 +39,4 @@ dotfiles設定変更 → `Task: dotfiles-engineer`、検証 → `Task: dotfiles-
 | `docs/architecture.md` | アーキテクチャ概要 |
 | `docs/commands-reference.md` | Emacs/Zsh/tmux/Git Worktree コマンド詳細 |
 | `.claude/skills/*/SKILL.md` | 設定アーキテクチャ知識（emacs/zsh/tmux/keyboard） |
+| `docs/dotfiles-workflows.md` | ワークフロー詳細 |
