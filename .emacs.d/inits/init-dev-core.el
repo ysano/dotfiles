@@ -63,7 +63,10 @@
   :config
   ;; ターミナルではマージンモードを使用
   (unless (display-graphic-p)
-    (diff-hl-margin-mode 1))
+    (diff-hl-margin-mode 1)
+    (set-face-foreground 'diff-hl-insert "#a3be8c")
+    (set-face-foreground 'diff-hl-delete "#e06c75")
+    (set-face-foreground 'diff-hl-change "#ecbe7b"))
   ;; diff-hl transient menu for quick access
   (transient-define-prefix transient-diff-hl ()
     "diff-hl and magit commands."
