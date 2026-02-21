@@ -84,7 +84,7 @@
   (doom-themes-enable-bold t)
   (doom-themes-enable-italic t)
   :config
-  (load-theme 'doom-one t)
+  (load-theme 'doom-dracula t)
   (doom-themes-visual-bell-config)
   ;; org-config は org-mode 使用時に遅延読み込み
   (with-eval-after-load 'org
