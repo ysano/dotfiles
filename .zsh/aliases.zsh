@@ -199,10 +199,13 @@ setup_colors() {
 
 # True color support detection
 setup_truecolor() {
-    if has_command toe && has_command emacs; then
-        if toe 2>/dev/null | grep -q "xterm-direct"; then
-            alias emacs='COLORTERM=truecolor emacs'
-        fi
+    has_command emacs || return
+    # COLORTERM が既に設定済みなら不要
+    [[ -n "$COLORTERM" ]] && return
+    # xterm-direct terminfo、または 256color ターミナルでフォールバック
+    if (has_command toe && toe 2>/dev/null | grep -q "xterm-direct") \
+       || [[ "$TERM" == *-256color ]]; then
+        export COLORTERM=truecolor
     fi
 }
 
