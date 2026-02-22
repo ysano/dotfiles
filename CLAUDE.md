@@ -36,7 +36,7 @@ dotfiles設定変更 → `Task: dotfiles-engineer`、検証 → `Task: dotfiles-
 | パス | 内容 |
 |---|---|
 | `.claude/CLAUDE.md` | dotfiles固有モジュール詳細 |
-| `docs/architecture.md` | アーキテクチャ概要 |
-| `docs/commands-reference.md` | Emacs/Zsh/tmux/Git Worktree コマンド詳細 |
 | `.claude/skills/*/SKILL.md` | 設定アーキテクチャ知識（emacs/zsh/tmux/keyboard） |
-| `docs/dotfiles-workflows.md` | ワークフロー詳細 |
+| `docs/dotfiles-workflows.md` | ワークフロー |
+| `docs/commands-reference.md` | Git Worktree/tmux コマンド |
+| `docs/managed-tools.md` | 管理ツール一覧・デプロイ方法 |

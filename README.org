@@ -1,389 +1,54 @@
-#+TITLE: Sophisticated Cross-Platform Dotfiles
+#+TITLE: Cross-Platform Dotfiles
 #+AUTHOR: Yoshiaki Sano
-#+DATE: 2025-06-27
-#+STARTUP: overview
 #+LANGUAGE: ja
 
 * 概要
 
-このリポジトリは、**AI統合**、**多言語対応**、**クロスプラットフォーム一貫性**を重視した高度なdotfiles構成です。
-Emacsを中心とした統一的なコンピューティング環境を、Windows、macOS、Linux全体で提供します。
+クロスプラットフォーム（macOS/Linux/WSL/Windows）対応の統合開発環境 dotfiles。
+Emacs 中心、AI 統合ワークフロー、日本語環境、Zsh + Zinit 構成。
 
-** 主要特徴
+** 主要コンポーネント
 
-- 🧠 *AI駆動ワークフロー*: 複数LLMプロバイダー（Ollama、GitHub Copilot）
-- ⌨️  *統一キーバインド*: 全プラットフォームでEmacsライクなナビゲーション
-- 🌏 *日英バイリンガル対応*: Mozcと最適化された入力メソッド
-- 📚 *高度ナレッジマネジメント*: Org-roamベースのZettelkasten
-- ⚡ *パフォーマンス最適化*: 遅延読み込みと起動時間最適化
+| コンポーネント | 規模 | 管理 |
+|---|---|---|
+| Emacs | ~4,800行, 12モジュール | straight.el + use-package |
+| Zsh | ~4,600行, dual-stage | Zinit |
+| tmux | ~3,800行, モジュラー | TPM |
+| Keyboard | Karabiner/skhd/yabai | OS固有 |
 
-* アーキテクチャ
+** 設計原則
 
-** Emacs設定 (~2,500行)
-#+begin_src
-.emacs.d/
-├── inits/                    # モジュラー設定
-│   ├── init-ai.el           # AI/LLM統合 (23行)
-│   ├── init-org-integrated.el # Org-roam + GTD (479行)
-│   ├── init-dev.el          # 開発環境 (271行)
-│   └── ...                  # その他14モジュール
-├── elisp/                   # カスタムLisp
-│   └── mozc-cursor-color.el # 日本語入力視覚フィードバック
-└── early-init.el           # 起動最適化
-#+end_src
-
-** クロスプラットフォームキーボード統一
-#+begin_src
-karabiner/                   # macOS (Karabiner-Elements)
-├── assets/complex_modifications/
-│   └── emacs-like.json
-keyboard-maestro/            # macOS マクロ自動化
-mayu/                       # Windows キーリマップ
-└── 104onFKB.mayu
-#+end_src
-
-** Shell設定 (Zsh + Zinit) - 🚀 最適化済み
-#+begin_src
-.zsh/
-├── utils.zsh               # 新機能: ユーティリティライブラリ
-│   ├── OS検出キャッシュ        # パフォーマンス最適化
-│   ├── コマンド存在チェック      # 重複処理削減
-│   └── PATH安全管理         # モジュラー設計
-├── zinit_setup.zsh         # 最適化されたプラグイン管理
-│   ├── エラーハンドリング強化    # 堅牢性向上
-│   ├── 遅延読み込み最適化      # 起動時間短縮
-│   └── 条件付きプラグイン読み込み # 環境適応型
-├── aliases.zsh             # 強化されたエイリアス
-│   ├── モダンツール統合        # exa, bat, fd, rg
-│   ├── フォールバック機構      # 互換性保証
-│   └── OS固有エイリアス       # プラットフォーム最適化
-├── completion.zsh          # 補完システム
-├── keybindings.zsh         # キーバインド
-└── ...                     # その他モジュール
-#+end_src
-
-** WSL最適化
-#+begin_src
-wsl/
-├── etc_fonts/local.conf    # フォントレンダリング
-├── mnt_c_opt_mozc/         # 日本語入力メソッド
-└── vcxsrv/config.xlaunch   # X11転送設定
-#+end_src
-
-* 最新の改善 (2025-06-27)
-
-** 🚀 Zsh設定の大幅リファクタリング
-
-*** パフォーマンス最適化
-- **コマンドキャッシュ機構**: 重複するコマンド存在チェックを最大90%削減
-- **OS検出キャッシュ**: システム情報の重複取得を排除
-- **遅延読み込み最適化**: Zinit設定で起動時間を約30%短縮
-- **PATH管理効率化**: 重複チェックと安全な追加機能
-
-*** モジュラー設計の改善
-#+begin_src bash
-# 新しいユーティリティライブラリ
-source ~/.zsh/utils.zsh
-
-# キャッシュ機能例
-has_command "exa"    # 初回: 実行時間 3ms
-has_command "exa"    # 2回目以降: <1ms (キャッシュ使用)
-
-# OS検出最適化
-is_macos             # セッション中1回のみ実行
-is_wsl               # 結果をキャッシュして再利用
-#+end_src
-
-*** 堅牢性とメンテナンス性
-- **エラーハンドリング強化**: 全モジュールで graceful degradation
-- **フォールバック機構**: モダンツール未導入環境での自動切り替え
-- **設定検証機能**: デバッグモードでの包括的チェック
-- **後方互換性**: 既存設定を完全保持
-
-*** クロスプラットフォーム強化
-- **統一されたAPI**: OS固有処理の抽象化
-- **条件付き機能読み込み**: 環境に応じた最適化
-- **安全なPATH管理**: 重複やシンボリックリンクを適切処理
-
-** 🔧 実装された主要機能
-
-*** ユーティリティライブラリ (~/.zsh/utils.zsh)
-#+begin_src bash
-# OS検出とキャッシュ
-is_macos()           # macOS検出 (キャッシュ済み)
-is_linux()           # Linux検出 (キャッシュ済み)  
-is_wsl()             # WSL検出 (キャッシュ済み)
-
-# コマンド存在チェック (キャッシュ機能付き)
-has_command "git"    # 高速な存在確認
-
-# PATH管理
-safe_path_append     # 重複チェック付き追加
-safe_path_prepend    # 安全な先頭追加
-cleanup_path         # 重複とデッドリンク除去
-
-# 環境セットアップ
-setup_locale         # ロケール設定の標準化
-setup_editor         # エディタ環境の最適化
-validate_zsh_config  # 設定検証機能
-#+end_src
-
-*** 最適化されたZinit設定
-- **モジュラー初期化**: 段階的なプラグイン読み込み
-- **条件付きロード**: 環境に応じたプラグイン選択
-- **エラー回復**: 失敗時の自動フォールバック
-- **パフォーマンス監視**: デバッグモードでの統計表示
-
-* 主要機能
-
-** AI統合ワークフロー
-
-*** LLMプロバイダー設定
-#+begin_src emacs-lisp
-;; 複数の専門化されたモデル
-(setq ellama-providers
-  '(("deepseek-coder-v2" . (make-llm-ollama...))  ; コーディング
-    ("mixtral" . (make-llm-ollama...))             ; 汎用
-    ("mistral" . (make-llm-ollama...))             ; 翻訳
-    ("zephyr" . (make-llm-ollama...))))            ; 軽量
-#+end_src
-
-*** GitHub Copilot統合
-- Company-modeとの統合
-- リアルタイム補完
-- コード生成ワークフロー
-
-** 高度ナレッジマネジメント
-
-*** Org-roam Zettelkasten
-- データベース駆動の知識グラフ
-- 日英バイリンガルノート
-- AI支援ノート作成
-- GTDワークフロー統合
-
-*** キーバインド (=C-c n= プレフィックス)
-- =C-c n f= : ノード検索
-- =C-c n i= : ノード挿入
-- =C-c n c= : キャプチャー
-- =C-c n g= : グラフ表示
-
-** 日本語入力最適化
-
-*** Mozc統合
-- カーソル色による状態表示
-- クロスプラットフォーム対応
-- 入力メソッド切り替えの視覚フィードバック
-
-*** WSL日本語環境
-- フォント最適化
-- 入力メソッド統合
-- X11アプリケーション対応
-
-** 開発環境
-
-*** 言語別設定
-- *PHP*: PSR-2準拠、PHPCSとの統合
-- *Go*: gofmt自動フォーマット
-- *Python*: yapf、flake8統合
-- *Ruby*: Rubocop統合
-- *JavaScript/TypeScript*: ESLint、Prettier
-
-*** 高度な機能
-- Magit (Git統合)
-- Flycheck (構文チェック)
-- Company-mode (補完)
-- Projectile (プロジェクト管理)
+- *グレースフル劣化*: モダンツール未導入時は自動フォールバック
+- *遅延読み込み*: Zinit / use-package で段階的ロード
+- *クロスプラットフォーム*: OS 固有機能は条件分岐で対応
 
 * セットアップ
 
 ** 前提条件
-- Emacs 28+ (native-compサポート推奨)
-- Zsh 5.8+
-- Git 2.25+
-- Node.js (Copilot用)
+
+- Emacs 28+, Zsh 5.8+, Git 2.25+, tmux 2.9+
 
 ** インストール
 
-*** 1. リポジトリクローン
 #+begin_src bash
-git clone https://github.com/username/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
-#+end_src
-
-*** 2. シンボリックリンク作成
-#+begin_src bash
-chmod +x link.sh
+git clone https://github.com/ysano/dotfiles.git ~/dotfiles
+cd ~/dotfiles
 ./link.sh
-
-# 設定検証 (オプション)
-ZSH_DEBUG=1 zsh -c "source ~/.zprofile && echo 'Configuration validated'"
 #+end_src
 
-*** 3. OS固有設定
+** OS 固有設定
 
-**** macOS
-#+begin_src bash
-# Karabiner-Elements設定
-cp karabiner/karabiner.json ~/.config/karabiner/
-
-# Homebrew パッケージ
-brew install emacs zsh zinit
-#+end_src
-
-**** Linux/WSL
-#+begin_src bash
-# フォント設定
-sudo cp wsl/etc_fonts/local.conf /etc/fonts/local.conf
-
-# Mozc設定 (WSL)
-sudo cp wsl/mnt_c_opt_mozc/* /mnt/c/opt/mozc/
-#+end_src
-
-**** Windows
-- Mayu設定ファイルを適用
-- Keyboard Maestroマクロをインポート
-
-** AI設定
-
-*** Ollama setup
-#+begin_src bash
-# Ollamaインストール
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# モデルダウンロード
-ollama pull llama3.1:8b-instruct-q4_K_S
-ollama pull deepseek-coder-v2:16b
-ollama pull mixtral:8x7b
-#+end_src
-
-*** GitHub Copilot
-#+begin_src bash
-# Node.js依存関係
-npm install -g copilot-node-server
-#+end_src
+- *macOS*: =cp -r karabiner ~/.config/=
+- *WSL*: =sudo cp wsl/etc_fonts/local.conf /etc/fonts/local.conf=
 
 * カスタマイズ
 
-** ローカル設定
-- =~/.zshrc.local= : ローカルZsh設定
-- =~/.emacs.d/inits/init-local.el= : ローカルEmacs設定
-- =CLAUDE.md= : AI支援コマンド履歴
+ローカル設定（git 管理外）:
+- =~/.zshrc.local= — Zsh ローカル設定
+- =~/.emacs.d/inits/init-local.el= — Emacs ローカル設定
 
-** 設定の拡張
-各モジュールは独立しており、必要に応じて個別に無効化・カスタマイズ可能です。
+* 詳細ドキュメント
 
-** OS固有の調整
-=.zprofile= のOS検出ロジックにより、プラットフォーム固有の設定が自動適用されます。
-
-* トラブルシューティング
-
-** よくある問題
-
-*** Zsh起動時エラー
-#+begin_src bash
-# Docker補完エラー
-sudo rm /usr/share/zsh/vendor-completions/_docker
-
-# Zinitキャッシュクリア
-rm -rf ~/.cache/zinit
-
-# 新機能: 設定ファイル整合性チェック
-ls -la ~/.zsh/{utils.zsh,aliases.zsh,zinit_setup.zsh}
-
-# ユーティリティライブラリの確認
-zsh -c "source ~/.zsh/utils.zsh && has_command git && echo 'Utils loaded correctly'"
-
-# 設定バックアップからの復元 (必要時)
-cp ~/.zsh/aliases.zsh.backup ~/.zsh/aliases.zsh
-cp ~/.zsh/zinit_setup.zsh.backup ~/.zsh/zinit_setup.zsh
-#+end_src
-
-*** Emacs パッケージエラー
-#+begin_src emacs-lisp
-;; パッケージリフレッシュ
-M-x package-refresh-contents
-M-x package-reinstall RET [package-name]
-#+end_src
-
-*** WSL X11問題
-#+begin_src bash
-# DISPLAY変数確認
-echo $DISPLAY
-# VcXsrv再起動が必要な場合があります
-#+end_src
-
-** パフォーマンス最適化
-
-*** Emacs起動時間
-#+begin_src emacs-lisp
-;; 起動時間測定
-M-x emacs-init-time
-
-;; 統計情報
-M-x use-package-report
-#+end_src
-
-*** Zsh起動時間とキャッシュ最適化
-#+begin_src bash
-# プロファイリング
-time zsh -i -c exit
-
-# Zinit統計
-zinit times
-
-# キャッシュ効果の確認
-ZSH_DEBUG=1 zsh -c "
-echo 'Testing command cache performance:'
-time has_command git  # 初回実行
-time has_command git  # キャッシュ使用
-
-echo 'OS detection cache status:'
-echo 'OS Type: $ZSH_OS_TYPE'
-echo 'WSL Status: $ZSH_IS_WSL'
-"
-
-# キャッシュクリア (必要時)
-unset ZSH_CMD_CACHE ZSH_OS_TYPE ZSH_IS_WSL
-#+end_src
-
-*** 新機能: 設定検証と最適化
-#+begin_src bash
-# 包括的な設定検証
-ZSH_DEBUG=1 zsh -l
-
-# 利用可能なモダンツールの確認
-zsh -c "source ~/.zsh/aliases.zsh && echo 'Modern tools check completed'"
-
-# パフォーマンステスト実行
-./test_zsh_config.zsh
-#+end_src
-
-* 貢献
-
-このdotfiles設定への改善提案やバグ報告は歓迎します。
-特に以下の分野での貢献を求めています：
-
-- AI統合ワークフローの改善
-- 新しいプラットフォーム対応
-- パフォーマンス最適化
-- ドキュメント改善
-
-* ライセンス
-
-このリポジトリは個人使用向けに設計されていますが、
-参考にしていただくことは自由です。
-
-* リンク
-
-- [[https://www.gnu.org/software/emacs/][GNU Emacs]]
-- [[https://github.com/zdharma-continuum/zinit][Zinit]]
-- [[https://github.com/org-roam/org-roam][Org-roam]]
-- [[https://ollama.ai/][Ollama]]
-- [[https://github.com/features/copilot][GitHub Copilot]]
-
----
-/最終更新: 2025-06-27 - Zsh設定リファクタリング完了/
-
-** 更新履歴
-- *2025-06-27*: Zsh設定の包括的リファクタリング (パフォーマンス最適化、モジュラー設計改善)
-- *2025-06-07*: AI統合ワークフロー強化、多言語対応改善
+- =docs/managed-tools.md= — 管理ツール一覧・デプロイ方法
+- =docs/commands-reference.md= — Git Worktree / tmux コマンド
+- =docs/dotfiles-workflows.md= — Claude Code ワークフロー

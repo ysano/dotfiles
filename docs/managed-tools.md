@@ -51,7 +51,7 @@
 | ツール | Config ファイル | デプロイ方法 | 用途 |
 |---|---|---|---|
 | **Cursor** | `.cursor/rules/*.mdc` | 手動 | AI補完エディタ |
-| **Claude Code** | `claude-home/` → `~/.claude/` | `link.sh` → `$HOME/.claude/` | AIコーディング支援 |
+| **Claude Code** | `.claude/` | プロジェクト内 | AIコーディング支援 |
 
 ---
 
