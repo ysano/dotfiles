@@ -31,7 +31,6 @@
   (magit-diff-refine-hunk t)                 ;; Show word-level diffs
   (magit-save-repository-buffers 'dontask))  ;; Auto-save buffers
 
-
 ;; GitHub/GitLab integration - Forge
 (use-package forge
   :ensure t

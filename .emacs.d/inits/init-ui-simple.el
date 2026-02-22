@@ -88,7 +88,10 @@
   (doom-themes-visual-bell-config)
   ;; org-config は org-mode 使用時に遅延読み込み
   (with-eval-after-load 'org
-    (doom-themes-org-config)))
+    (doom-themes-org-config))
+  ;; diff / magit-diff / smerge フェイスのカスタマイズ
+  ;; 現在は doom-dracula テーマのデフォルト色を使用
+  )
 
 ;; --------------------------------
 ;; Modern modeline
