@@ -6,7 +6,7 @@
 
 - **agents/**: `dotfiles-engineer`（設定変更）、`dotfiles-validator`（検証・読み取り専用）
 - **commands/dev/**: `/dev:commit`（品質チェック統合コミット）
-- **skills/**: `emacs-config`、`zsh-config`、`tmux-config`、`keyboard-config`
+- **skills/**: `emacs-config`、`zsh-config`、`tmux-config`、`keyboard-config`、`deploy-config`
 
 ## 基本ワークフロー
 
