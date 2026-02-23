@@ -39,7 +39,7 @@ ensure_parent_dir() {
 # ================================
 
 case "${OSTYPE}" in
-    msys)
+    msys|cygwin)
         for f in $files; do
             cmd <<< "mklink ${f} ${dotfiles}\\${f}"
         done
