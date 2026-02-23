@@ -48,7 +48,7 @@
          ("C-c g" . consult-git-grep)         ;; counsel-git代替
          ("C-c j" . consult-git-grep)         ;; counsel-git-grep代替
          ("C-c k" . consult-ripgrep)          ;; counsel-ag代替
-         ("C-x l" . consult-locate)           ;; counsel-locate代替
+         ("C-x l" . consult-fd)              ;; consult-locate代替 (fd使用)
          ("C-x C-r" . consult-recent-file)    ;; counsel-buffer-or-recentf代替
          ("C-x b" . consult-buffer)           ;; switch-to-buffer強化
          ("M-g g" . consult-goto-line)        ;; goto-line強化
@@ -121,6 +121,9 @@
      (magit-project-status "Magit" ?m)
      (project-eshell "Eshell" ?e)))
   :config
+  ;; xref バックエンドを ripgrep に (project-find-regexp, dired-do-find-regexp 等)
+  (setq xref-search-program 'ripgrep)
+
   ;; projectile互換キーバインド (C-c p)
   (define-key global-map (kbd "C-c p f") #'project-find-file)
   (define-key global-map (kbd "C-c p g") #'project-find-regexp)
@@ -171,7 +174,19 @@
 ;; --------------------------------
 (use-package rg
   :ensure t
-  :if (executable-find "rg"))
+  :if (executable-find "rg")
+  :bind (("C-c s r" . rg)
+         ("C-c s d" . rg-dwim)
+         ("C-c s p" . rg-project)))
+
+;; --------------------------------
+;; Grep/Find をモダンツールで高速化
+;; --------------------------------
+(with-eval-after-load 'grep
+  (when (executable-find "rg")
+    (setq grep-program "rg")
+    (setq grep-template "rg --no-heading -nH --color=auto <C> -e <R> <F>")
+    (setq grep-find-template "rg --no-heading -nH --color=auto <C> -e <R> .")))
 
 ;; --------------------------------
 ;; Interactive mode for grep results
