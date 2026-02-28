@@ -191,7 +191,6 @@
   (truncate-lines t)
   (truncate-partial-width-windows t)
   (cursor-type t)
-  (line-spacing 0.0)
   (x-stretch-cursor t)
   ;; Ediff settings
   (ediff-window-setup-function 'ediff-setup-windows-plain)

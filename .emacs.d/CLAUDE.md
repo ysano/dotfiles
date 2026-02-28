@@ -64,27 +64,14 @@
 
 - **Ellama:** `C-c e` prefix for LLM commands
 
-## Smart Font Scaling（高解像度ディスプレイ対応）
-高解像度ディスプレイ（UWQHD、4K、Retina等）での自動フォントサイズ調整システム
+## Fontset ベースフォント管理
+`init-ui-simple.el` で英数・日本語フォントを fontset ベースで一元管理。
 
-- **自動調整:**
-  - 起動時にディスプレイDPIを検出し、最適なフォントサイズを自動設定
-  - 外部ディスプレイ接続時の自動再調整
-  - ミニバッファ、モードライン含む全UI要素に対応
-
-- **手動制御:**
-  - `C-c f s` 最適スケーリングを手動適用
-  - `C-c f r` ディスプレイ情報を再取得して更新
-  - `C-c f i` 現在の設定情報を表示
-  - `C-c f m` 手動フォントサイズ設定
-  - `C-c f c` 手動設定をクリア（自動に戻す）
-
-- **現在の環境:**
-  - メインディスプレイ (3440×1440): 13pt → 21pt
-  - セカンダリ (2560×1440): 13pt → 17pt
-  - プラットフォーム最適化フォント自動選択
-
-詳細: `docs/smart-font-scaling.md`
+- **統合フォント** (Cica, Sarasa Term J, HackGen): 英数+日本語一体型、2:1 保証済み
+- **分離フォント** (Fira Code, Cascadia Code 等): 英数のみ → `set-fontset-font` で日本語フォールバック自動割当
+- `my-font-candidates` の順序で最初に見つかるフォントを自動選択
+- `M-x my-apply-font-config` で手動再適用
+- `my-ui-scale-factor` / `my-base-font-size` でスケーリング調整
 
 ## Zettelkasten（org-roam）
 - **ナビゲーション:**
