@@ -7,6 +7,8 @@
 ;; Windows & Cygwin
 ;; --------------------------------
 (when (eq system-type 'windows-nt)
+  ;; GPG path fix for MSYS2 is in init.el (before package-initialize)
+
   ;; Windows-specific settings
   (when (getenv "CYGWIN_DIR")
     ;; Cygwin integration

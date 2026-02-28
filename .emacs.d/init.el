@@ -30,6 +30,31 @@
 ;; --------------------------------
 (require 'package)
 
+;; Fix GPG path for MINGW64/MSYS2/Cygwin environment (must be before package-initialize)
+;; MSYS2's gpg cannot handle Windows-style paths (d:/...) in --homedir,
+;; treating them as relative paths. Convert to MSYS2-style (/d/...).
+(when (eq system-type 'windows-nt)
+  (defun my/windows-to-msys2-path (path)
+    "Convert Windows-style PATH (d:/...) to MSYS2-style (/d/...)."
+    (when (and path (string-match "\\`\\([a-zA-Z]\\):/" path))
+      (concat "/" (downcase (match-string 1 path))
+              (substring path 2))))
+
+  ;; Fix package-gnupghome-dir for MSYS2 gpg (must run before package-initialize)
+  (with-eval-after-load 'package
+    (when-let ((converted (my/windows-to-msys2-path package-gnupghome-dir)))
+      (setq package-gnupghome-dir converted)))
+
+  ;; Fix EPG homedir for general GPG operations
+  (defun my/epg-convert-homedir-for-msys2 (context &rest _)
+    "Convert Windows-style EPG homedir to MSYS2-style."
+    (when-let ((converted (my/windows-to-msys2-path
+                           (epg-context-home-directory context))))
+      (epg-context-set-home-directory context converted)))
+  (with-eval-after-load 'epg
+    (advice-add 'epg-verify-string :before #'my/epg-convert-homedir-for-msys2)
+    (advice-add 'epg-verify-file :before #'my/epg-convert-homedir-for-msys2)))
+
 ;; Add package repositories (early-init.elで設定済み、追加設定のみ)
 ;; early-init.elで gnu, nongnu, melpa が設定されている
 ;; ここでは必要に応じて追加のリポジトリのみ設定
