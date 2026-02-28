@@ -7,7 +7,6 @@
 [core]
 	autocrlf = input
 	quotepath = false
-	pager = delta
 [alias]
 	co = checkout
 	ci = commit
@@ -17,7 +16,7 @@
 	lg = log --oneline --decorate --graph
 	lga = log --oneline --decorate --graph --branches --tags --remotes
 [interactive]
-	diffFilter = delta --color-only
+	diffFilter = sh -c 'if command -v delta >/dev/null 2>&1; then delta --color-only; else cat; fi'
 
 [delta]
 	navigate = true

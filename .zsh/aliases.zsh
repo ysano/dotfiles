@@ -222,6 +222,12 @@ if has_command eza; then
     alias lta='eza --tree --level=3 --icons -a'
 fi
 
+# delta (git pager with syntax highlighting)
+if has_command delta; then
+    export GIT_PAGER='delta'
+    export DELTA_FEATURES='+side-by-side'
+fi
+
 # tldr (man alternative with practical examples)
 if has_command tldr; then
     alias help='tldr'
