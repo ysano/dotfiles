@@ -45,7 +45,7 @@
         (file-exists-p (expand-file-name "bin/copilot-language-server" install-dir))
         (file-exists-p (expand-file-name "lib/node_modules/@github/copilot-language-server/bin/copilot-language-server" install-dir)))))
 
-(use-package copilot
+(use-package copilot :disabled
   :quelpa (copilot :fetcher github
                    :repo "copilot-emacs/copilot.el"
                    :branch "main"

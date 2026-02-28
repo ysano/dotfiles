@@ -66,8 +66,9 @@
     (set-face-foreground 'diff-hl-insert "#a3be8c")
     (set-face-foreground 'diff-hl-delete "#e06c75")
     (set-face-foreground 'diff-hl-change "#ecbe7b"))
-  ;; diff-hl transient menu for quick access
-  (transient-define-prefix transient-diff-hl ()
+  ;; diff-hl transient menu for quick access (transient は magit 経由で遅延ロード)
+  (with-eval-after-load 'transient
+    (transient-define-prefix transient-diff-hl ()
     "diff-hl and magit commands."
     ["Magit"
      ("m" "status" magit-status)
@@ -81,7 +82,7 @@
      ("l" "last" (lambda () (interactive) (goto-char (point-max)) (diff-hl-previous-hunk)) :transient t)]
     ["Hunk Actions"
      ("r" "revert" diff-hl-revert-hunk :transient t)
-     ("u" "show" diff-hl-show-hunk :transient t)]))
+     ("u" "show" diff-hl-show-hunk :transient t)])))  ;; end transient-define-prefix, with-eval-after-load, use-package
 
 ;; --------------------------------
 ;; Password / Secret Management
@@ -117,11 +118,7 @@
 ;; --------------------------------
 ;; Documentation and Comments
 ;; --------------------------------
-;; Better comment handling
-(use-package comment-dwim-2
-  :ensure t
-  :defer t
-  :bind ("M-;" . comment-dwim-2))
+;; comment-dwim-2 は MELPA から削除済み、組み込み comment-dwim を使用
 
 ;; --------------------------------
 ;; Compilation and Build Tools
