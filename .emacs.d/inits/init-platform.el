@@ -81,6 +81,14 @@
   (setq explicit-shell-args '("--login" "-i")))
 
 ;; --------------------------------
+;; WSL browse-url via Windows browser
+;; --------------------------------
+(when (string-match-p "microsoft" (or (shell-command-to-string "uname -r") ""))
+  (setq browse-url-generic-program "/mnt/c/Windows/System32/cmd.exe")
+  (setq browse-url-generic-args '("/c" "start"))
+  (setq browse-url-browser-function #'browse-url-generic))
+
+;; --------------------------------
 ;; WSL Mozc input method
 ;; --------------------------------
 (when (file-exists-p "/mnt/c/opt/mozc/mozc_emacs_helper.sh")
