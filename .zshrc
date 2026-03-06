@@ -41,6 +41,9 @@ unalias gwt gwta gwtls gwtmv gwtrm 2>/dev/null || true
 # Some environment variables
 ########################################
 
+# Claude Code telemetry (enables token/cost data for AI-DLC Economics metrics)
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+
 # ICU4C for pkg-config (Homebrew only)
 if command -v brew >/dev/null 2>&1; then
     export PKG_CONFIG_PATH="$(brew --prefix)/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
