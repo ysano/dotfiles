@@ -176,22 +176,27 @@ Converts region between BEGIN and END, writing HTML to OUTPUT-BUF."
 
 (defun my-markdown--replace-mermaid-blocks (html)
   "Replace mermaid code blocks in HTML with <div class=\"mermaid\"> elements.
-Handles both cmark-gfm and pandoc output formats."
-  (with-temp-buffer
-    (insert html)
-    (dolist (pattern
-             '("<pre><code class=\"language-mermaid\">\\(\\(?:.\\|\n\\)*?\\)</code></pre>"
-               "<pre class=\"mermaid\"><code>\\(\\(?:.\\|\n\\)*?\\)</code></pre>"))
-      (goto-char (point-min))
-      (while (re-search-forward pattern nil t)
-        (let* ((encoded (match-string 1))
+Handles both cmark-gfm and pandoc output formats.
+Uses string operations to avoid buffer match-data corruption."
+  (dolist (pattern
+           '("<pre><code class=\"language-mermaid\">\\(\\(?:.\\|\n\\)*?\\)</code></pre>"
+             "<pre class=\"mermaid\"><code>\\(\\(?:.\\|\n\\)*?\\)</code></pre>"))
+    (let ((start 0))
+      (while (string-match pattern html start)
+        (let* ((encoded (match-string 1 html))
                (beg (match-beginning 0))
                (end (match-end 0))
-               (decoded (my-markdown--decode-html-entities encoded)))
-          (delete-region beg end)
-          (goto-char beg)
-          (insert "<div class=\"mermaid\">\n" decoded "</div>"))))
-    (buffer-string)))
+               (decoded (save-match-data
+                          (my-markdown--decode-html-entities encoded)))
+               (replacement (concat "<div class=\"mermaid\">\n" decoded "</div>")))
+          (setq html (concat (substring html 0 beg)
+                             replacement
+                             (substring html end)))
+          (setq start (+ beg (length replacement)))))))
+  html)
+
+(defvar my-markdown-preview-debug nil
+  "When non-nil, save intermediate HTML to /tmp/mermaid-debug-*.html.")
 
 (defun my-markdown-mermaid-filter (buffer)
   "Convert BUFFER content to HTML with Mermaid.js support for impatient-mode."
@@ -212,8 +217,18 @@ Handles both cmark-gfm and pandoc output formats."
                      (funcall markdown-command (point-min) (point-max) out-buf)
                      (with-current-buffer out-buf (buffer-string)))
                  (kill-buffer out-buf)))))))
+    ;; Debug: save buffer content and cmark-gfm output
+    (when my-markdown-preview-debug
+      (with-current-buffer buffer
+        (write-region (point-min) (point-max) "/tmp/mermaid-debug-buffer.md" nil 'silent))
+      (with-temp-file "/tmp/mermaid-debug-cmark.html"
+        (insert html-body)))
     ;; Mermaid blocks: decode entities in Elisp, no JS DOM manipulation needed
     (setq html-body (my-markdown--replace-mermaid-blocks html-body))
+    ;; Debug: save final output after mermaid processing
+    (when my-markdown-preview-debug
+      (with-temp-file "/tmp/mermaid-debug-final.html"
+        (insert html-body)))
     (insert
      "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<style>\n"
      "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;\n"
