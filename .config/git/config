@@ -7,7 +7,7 @@
 [core]
 	autocrlf = input
 	quotepath = false
-	pager = sh -c 'if command -v delta >/dev/null 2>&1; then if [ $(tput cols) -ge 120 ]; then delta --side-by-side; else delta; fi; else less; fi'
+	pager = ~/.config/git/pager.sh
 [alias]
 	co = checkout
 	ci = commit
@@ -17,7 +17,7 @@
 	lg = log --oneline --decorate --graph
 	lga = log --oneline --decorate --graph --branches --tags --remotes
 [interactive]
-	diffFilter = sh -c 'if command -v delta >/dev/null 2>&1; then delta --color-only; else cat; fi'
+	diffFilter = ~/.config/git/interactive-difffilter.sh
 
 [delta]
 	navigate = true
