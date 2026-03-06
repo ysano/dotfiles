@@ -113,16 +113,18 @@ setup_locale() {
 setup_editor() {
     # Don't override if already set via terminal-specific logic
     [[ -n "$EDITOR" ]] && return 0
-    
-    local editors=("emacsclient" "emacs" "vim" "vi" "nano")
-    
-    for editor in $editors; do
-        if has_command "$editor"; then
-            export EDITOR="$editor"
-            export VISUAL="$editor"
-            return 0
-        fi
-    done
+
+    if has_command emacsclient; then
+        export EDITOR='emacsclient -t -a "emacs -nw"'
+    elif has_command emacs; then
+        export EDITOR='emacs -nw'
+    elif has_command vim; then
+        export EDITOR='vim'
+    elif has_command vi; then
+        export EDITOR='vi'
+    elif has_command nano; then
+        export EDITOR='nano'
+    fi
 }
 
 # ================================

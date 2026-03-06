@@ -294,6 +294,7 @@ fi
 # ================================
 
 # Execute setup functions
+setup_editor
 setup_editor_aliases
 setup_git_aliases
 setup_colors
