@@ -7,6 +7,7 @@
 [core]
 	autocrlf = input
 	quotepath = false
+	pager = sh -c 'if command -v delta >/dev/null 2>&1; then if [ $(tput cols) -ge 120 ]; then delta --side-by-side; else delta; fi; else less; fi'
 [alias]
 	co = checkout
 	ci = commit
@@ -21,7 +22,7 @@
 [delta]
 	navigate = true
 	light = false
-	side-by-side = true
+	side-by-side = false
 	line-numbers = true
 	syntax-theme = Dracula
 

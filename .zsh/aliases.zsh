@@ -224,8 +224,13 @@ fi
 
 # delta (git pager with syntax highlighting)
 if has_command delta; then
-    export GIT_PAGER='delta'
-    export DELTA_FEATURES='+side-by-side'
+    delta() {
+        if [ $(tput cols) -ge 120 ]; then
+            command delta --side-by-side "$@"
+        else
+            command delta "$@"
+        fi
+    }
 fi
 
 # tldr (man alternative with practical examples)
