@@ -29,7 +29,7 @@
 ;; --------------------------------
 ;; Unified Font Management (fontset-based)
 ;; --------------------------------
-(defvar my-ui-scale-factor 1.0
+(defvar my-ui-scale-factor 1.5
   "Global UI scale factor for all font sizes and UI elements.")
 
 (defvar my-base-font-size 16
@@ -177,6 +177,34 @@ FONT-INFO is a plist from `my--detect-fonts'."
   (doom-modeline-buffer-file-name-style 'truncate-from-project)
   :config
   (doom-modeline-mode 1))
+
+;; --------------------------------
+;; Window divider (境界線の視認性向上)
+;; --------------------------------
+(defun my-scaled-window-divider-width ()
+  "Calculate scaled window divider width."
+  (round (* 4 my-ui-scale-factor)))
+
+(use-package emacs
+  :custom
+  (window-divider-default-places t)
+  :config
+  (setq window-divider-default-right-width (my-scaled-window-divider-width)
+        window-divider-default-bottom-width (my-scaled-window-divider-width))
+  (window-divider-mode 1))
+
+;; --------------------------------
+;; Dim inactive windows (非アクティブウィンドウを薄暗く)
+;; --------------------------------
+(use-package dimmer
+  :ensure t
+  :defer 0.5
+  :custom
+  (dimmer-fraction 0.3)
+  :config
+  (dimmer-configure-which-key)
+  (dimmer-configure-magit)
+  (dimmer-mode 1))
 
 ;; --------------------------------
 ;; Line numbers
