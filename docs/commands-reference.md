@@ -7,9 +7,12 @@
 ```bash
 # worktree 操作
 gwt create <branch-name> [base-branch]   # 新規作成
+gwt create -s <branch-name> [base-branch] # 新規作成して移動
 gwt list                                  # 一覧表示
 gwt switch                               # fzf で切り替え
 gwt remove <worktree-name>               # 削除
+gwt remove -d <worktree-name>            # ブランチも一緒に削除
+gwt remove -f <worktree-name>            # 強制削除
 gwt clean                                # クリーンアップ
 gwt help                                 # ヘルプ
 
@@ -17,7 +20,7 @@ gwt help                                 # ヘルプ
 gw       # gwt
 gwc      # gwt create
 gwl      # gwt list
-gws      # gwt switch
+gwsw     # gwt switch
 gwr      # gwt remove
 ```
 
