@@ -133,13 +133,15 @@ NOW=$(date +%s)
 aggregate_window_icon() {
     local pane_target="$1"
     local session_window="${pane_target%.*}"
+    local session="${pane_target%%:*}"
     local window_index="${session_window#*:}"
 
     # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
+    # session_window プレフィックスで厳密にマッチ（他ウィンドウの混入を防止）
+    local prefix="@claude_voice_pane_status_${session}_${window_index}_"
     local all_statuses
     all_statuses=$(tmux show-options -g 2>/dev/null \
-        | grep "^@claude_voice_pane_status_" \
-        | grep "_${window_index}_" \
+        | grep "^${prefix}" \
         | awk '{print $2}' \
         | tr -d '"')
 

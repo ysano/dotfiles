@@ -59,7 +59,8 @@ HOOKS_CONFIG=$(cat <<ENDJSON
           {
             "type": "command",
             "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 5
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -70,7 +71,8 @@ HOOKS_CONFIG=$(cat <<ENDJSON
           {
             "type": "command",
             "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 5
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -82,7 +84,8 @@ HOOKS_CONFIG=$(cat <<ENDJSON
           {
             "type": "command",
             "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 5
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -93,7 +96,8 @@ HOOKS_CONFIG=$(cat <<ENDJSON
           {
             "type": "command",
             "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 5
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -104,7 +108,8 @@ HOOKS_CONFIG=$(cat <<ENDJSON
           {
             "type": "command",
             "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 5
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -115,7 +120,8 @@ HOOKS_CONFIG=$(cat <<ENDJSON
           {
             "type": "command",
             "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 5
+            "timeout": 10,
+            "async": true
           }
         ]
       }

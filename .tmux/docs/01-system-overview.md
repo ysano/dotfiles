@@ -45,34 +45,28 @@
 
 ### 4.1. 全体アーキテクチャ
 
-システムは **Hooks 駆動（主系統）** と **ポーリング監視（副系統）** のハイブリッド構成です。
+システムは **Hooks 駆動** + **軽量 Liveness Check** の構成です。
 
 ```mermaid
 graph TD
-    subgraph "主系統: Hooks 駆動"
+    subgraph "Hooks 駆動（ステータス管理）"
         H1[Claude Code] -->|hooks イベント| H2[hooks/status-update.sh]
         H2 --> H3[ペイン状態更新]
         H3 --> H4[音声・TTS フィードバック]
         H3 --> H5[アイコン集約・更新]
     end
 
-    subgraph "副系統: ポーリング監視"
+    subgraph "Liveness Check（生存確認）"
         A[tmux status-right] -->|5秒間隔| B[polling_monitor.sh]
-        B --> B1{hooks 活性?}
-        B1 -->|30秒以内| B2[hooks 状態でアイコン更新]
-        B1 -->|30秒超過/未設定| C[capture-pane フォールバック]
-        C --> D{状態変化?}
-        D -->|Yes| F[通知処理]
-        D -->|No| G[アイコン更新のみ]
+        B --> B1[登録済みペインの pane_title 確認]
+        B1 -->|CC 終了| B2[ステータスクリア・アイコン再集約]
+        B1 -->|未登録 CC 発見| B3[Idle で自動登録]
     end
 
     subgraph OS
         H4 --> J[音声/通知エンジン]
         H4 --> K[Ollama]
         H4 --> L[デシベルパンニング]
-        F --> J
-        F --> K
-        F --> L
     end
 
     style H1 fill:#f9f,stroke:#333,stroke-width:2px
@@ -82,7 +76,7 @@ graph TD
     style L fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
-#### 主系統: Hooks 駆動
+#### Hooks 駆動（ステータス管理）
 
 1.  **イベント受信**: Claude Code が hooks イベント（`UserPromptSubmit`, `Stop`, `Notification` 等）を `hooks/status-update.sh` に送信します。
 2.  **ペイン解決**: `$TMUX_PANE` からペインターゲット（例: `0:1.1`）を解決します。
@@ -91,17 +85,17 @@ graph TD
 5.  **音声フィードバック**: 状態遷移に応じた通知音・TTS読み上げをバックグラウンドで実行します。
 6.  **アイコン集約**: ペイン単位のステータスをウィンドウレベルに集約し、アイコンを更新します。
 
-#### 副系統: ポーリング監視（フォールバック）
+#### Liveness Check（生存確認）
 
 1.  **ポーリング実行**: `tmux status-right`から5秒間隔で`polling_monitor.sh`が呼び出されます。
-2.  **hooks 活性チェック**: hooks タイムスタンプが30秒以内なら、hooks の状態を信頼して `capture-pane` をスキップします。
-3.  **フォールバック**: hooks が古い/未設定の場合、従来の `capture-pane` + 正規表現マッチングで状態を判定します。
-4.  **アイコン更新**: ウィンドウオプションに最新のステータスアイコンを保存します。
+2.  **生存確認**: 登録済みペインの `pane_title` に "Claude Code" が含まれるかチェックします。
+3.  **クリーンアップ**: CC が終了したペインの tmux option を削除し、アイコンを再集約します。
+4.  **自動登録**: Hooks 未発火の CC ペインを Idle で登録します（セーフティネット）。
 
-### 4.2. ハイブリッド方式の利点
+### 4.2. アーキテクチャの利点
 
 - **リアルタイム性**: hooks 駆動により、状態変化を即時検出します（ポーリング遅延なし）。
-- **堅牢性**: hooks が利用できない環境でもポーリングで動作を保証します。
+- **軽量性**: capture-pane を使用せず、pane_title チェックのみでリソース消費を最小化します。
 - **軽量性**: hooks 活性中は `capture-pane` をスキップし、リソース消費を最小化します。
 - **ペイン精度**: ペイン単位で状態管理し、同一ウィンドウ内の複数 Claude セッションを識別できます。
 
@@ -123,27 +117,15 @@ Claude Code の hooks イベントから直接状態を判定します。
 
 詳細な遷移テーブルは [07-hooks-state-machine.md](./07-hooks-state-machine.md) を参照。
 
-#### capture-pane フォールバック（副系統）
+#### analyze_pane_content()（診断専用）
 
-hooks が利用できない場合、画面コンテンツを解析し3つの状態を判定します。
+`polling_monitor.sh status` の診断コマンドで使用可能な `capture-pane` ベースの状態判定。
+通常運用では呼び出されない（Hooks がすべてのステータス遷移を管理）。
 
 - **状態定義**:
-  - **Busy**: Claudeが処理中またはコード生成中の状態
-  - **Waiting**: Claudeがユーザーの入力や確認を待っている状態
-  - **Idle**: 処理が完了し、待機している状態
-- **判定パターン**:
-  - **Busy状態**: `tokens.*esc to interrupt`パターンで判定
-  - **Waiting状態**: 以下のパターンで判定
-    - 確認メッセージ: `Do you want to proceed?`, `Continue?`, `Proceed?`
-    - 選択肢: `❯ 1`, `❯ 2`, `❯ 3`, `Choose an option`
-    - 質問: `tell Claude what`, `Should I`, `Would you like`
-    - 回答オプション: `Yes, and`, `No, keep`
-    - エラー: `Error:`, `Failed:`, `Exception:`
-  - **Idle状態**: BusyやWaiting以外のすべての状態
-- **判定ロジック**:
-  - 優先順位: Busy → Waiting → Idle
-  - 最初にマッチしたパターンで状態を決定
-  - パターンマッチングは大文字小文字を区別しない
+  - **Busy**: `tokens.*esc to interrupt` パターン
+  - **Waiting**: 確認・選択・エラーメッセージのパターン
+  - **Idle**: 上記以外
 
 ## 5. 実装優先順位
 

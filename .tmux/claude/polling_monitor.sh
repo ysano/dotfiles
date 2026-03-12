@@ -1,7 +1,8 @@
 #!/bin/bash
-# ファイル名: polling_monitor.sh  
-# 説明: Polling方式による軽量Claude Voice監視スクリプト
-# 用途: tmux status-right から5秒間隔で呼び出される1回実行型スクリプト
+# ファイル名: polling_monitor.sh
+# 説明: Hooks駆動 + 軽量Liveness Checkによる Claude Voice 監視スクリプト
+# 用途: tmux status-right から定期呼び出し。Hooks が全ステータス遷移を管理し、
+#       本スクリプトは登録済みペインの生存確認と古い状態のクリーンアップのみ行う。
 
 # スクリプトのディレクトリを取得
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,7 +21,11 @@ load_configuration() {
     return 0
 }
 
-# メイン処理：ポーリング監視（1回実行）
+# メイン処理：Liveness Check（1回実行）
+# Hooks が全ステータス遷移を管理するため、ポーリングは以下のみ行う:
+#   1. 登録済みペインの生存確認（pane_title チェック）
+#   2. 古い状態のクリーンアップ
+#   3. 未登録 CC ペインの自動登録（セーフティネット）
 polling_monitor_main() {
     # 設定読み込み
     if ! load_configuration; then
@@ -29,89 +34,106 @@ polling_monitor_main() {
 
     # tmuxセッションが存在するかチェック
     if ! tmux list-sessions &>/dev/null; then
-        return 0 # tmuxセッションがない場合は終了
-    fi
-
-    # Claude Codeペインを検出（ペインレベル）
-    local claude_panes
-    claude_panes=$(detect_claude_panes)
-
-    if [[ -z "$claude_panes" ]]; then
-        # Claude Codeが検出されない場合、すべてのウィンドウのアイコンをクリア
-        clear_all_claude_icons
         return 0
     fi
 
-    # 各Claudeペインを処理
-    while IFS= read -r pane_target; do
-        if [[ -n "$pane_target" ]]; then
-            process_claude_pane_polling "$pane_target"
-        fi
-    done <<< "$claude_panes"
-}
+    # 現在の全ペインのタイトルを取得（1回の tmux 呼び出しで完了）
+    local all_panes
+    all_panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_title}" 2>/dev/null)
 
-# ペインごとのポーリング処理
-process_claude_pane_polling() {
-    local pane_target="$1"
-
-    # hooks タイムスタンプが 30 秒以内なら hooks を信頼し capture-pane をスキップ
-    local pane_key="${pane_target//[:\.]/_}"
-    local hooks_ts
-    hooks_ts=$(tmux show-option -gqv "@claude_voice_hooks_ts_${pane_key}" 2>/dev/null)
-    if [[ -n "$hooks_ts" ]]; then
-        local now
-        now=$(date +%s)
-        local age=$(( now - hooks_ts ))
-        if [[ $age -lt 30 ]]; then
-            # hooks ベースの状態でアイコン更新のみ
-            local hooks_status
-            hooks_status=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
-            if [[ -n "$hooks_status" ]]; then
-                update_claude_status_icon "$pane_target" "$hooks_status"
-                log_debug "hooks 活性中（${age}秒前）、capture-pane スキップ: $pane_target ($hooks_status)"
-                return 0
+    # 現在アクティブな CC ペインをタイトルから抽出
+    local active_cc_panes=""
+    while IFS=$'\t' read -r pane_target title; do
+        [[ -z "$pane_target" ]] && continue
+        if [[ "$title" == *"Claude Code"* ]]; then
+            if [[ -z "$active_cc_panes" ]]; then
+                active_cc_panes="$pane_target"
+            else
+                active_cc_panes="${active_cc_panes}"$'\n'"${pane_target}"
             fi
         fi
+    done <<< "$all_panes"
+
+    # 登録済みペインステータスを取得
+    local registered_keys
+    registered_keys=$(tmux show-options -g 2>/dev/null | grep "^@claude_voice_pane_status_" | awk '{print $1}')
+
+    if [[ -z "$active_cc_panes" && -z "$registered_keys" ]]; then
+        # CC ペインなし、登録もなし → 何もしない
+        return 0
     fi
-    # 30秒超過 or hooks未設定 → 従来の capture-pane にフォールバック
 
-    # 現在のステータスを分析
-    local current_status
-    current_status=$(analyze_pane_content "$pane_target")
+    # --- 1. 古い登録のクリーンアップ ---
+    # 登録済みだが CC が動いていないペインをクリア
+    while IFS= read -r key; do
+        [[ -z "$key" ]] && continue
+        local pane_id="${key#@claude_voice_pane_status_}"
+        local session="${pane_id%%_*}"
+        local rest="${pane_id#*_}"
+        local window="${rest%%_*}"
+        local pane="${rest#*_}"
+        local pane_target="${session}:${window}.${pane}"
 
-    if [[ -z "$current_status" ]]; then
-        return 1
-    fi
+        if [[ -z "$active_cc_panes" ]] || ! echo "$active_cc_panes" | grep -qF "$pane_target"; then
+            # CC が動いていない → クリア
+            tmux set-option -g -u "$key" 2>/dev/null
+            tmux set-option -g -u "@claude_voice_status_${pane_id}" 2>/dev/null
+            tmux set-option -g -u "@claude_voice_hooks_ts_${pane_id}" 2>/dev/null
+            log_debug "Liveness check: ステータスクリア $pane_target"
 
-    # 前回の状態を取得
-    local previous_status
-    previous_status=$(get_previous_status "$pane_target")
+            # ウィンドウのアイコンを再集約
+            local prefix="@claude_voice_pane_status_${session}_${window}_"
+            local remaining
+            remaining=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
+            if [[ -z "$remaining" ]]; then
+                tmux set-option -g "@claude_voice_icon_${window}" "" 2>/dev/null
+            else
+                # 残りのステータスからアイコンを再計算
+                local icon="✅"
+                if echo "$remaining" | grep -q "Busy"; then icon="⚡"; fi
+                if echo "$remaining" | grep -q "Waiting"; then icon="⌛"; fi
+                tmux set-option -g "@claude_voice_icon_${window}" "$icon" 2>/dev/null
+            fi
+        fi
+    done <<< "$registered_keys"
 
-    # 状態変化検出
-    if [[ "$current_status" != "$previous_status" ]]; then
-        # 状態変化を記録
-        log_info "ステータス変化を検出: $pane_target ($previous_status -> $current_status)"
+    # --- 2. 未登録 CC ペインの自動登録（セーフティネット） ---
+    # Hooks が発火していない CC ペインを Idle で登録
+    if [[ -n "$active_cc_panes" ]]; then
+        while IFS= read -r pane_target; do
+            [[ -z "$pane_target" ]] && continue
+            local pane_key="${pane_target//[:\.]/_}"
+            local existing
+            existing=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
+            if [[ -z "$existing" ]]; then
+                # 未登録 → Idle で登録
+                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
+                log_debug "Liveness check: 未登録 CC ペインを自動登録 $pane_target (Idle)"
 
-        # 状態を保存
-        save_current_status "$pane_target" "$current_status"
-
-        # Claude Codeステータスアイコンを更新（ペインレベル → ウィンドウレベルに集約）
-        update_claude_status_icon "$pane_target" "$current_status"
-
-        # 音声フィードバック（非同期実行）
-        trigger_audio_feedback "$pane_target" "$current_status" &
-    else
-        # 状態変化なし：アイコン更新のみ（念のため）
-        update_claude_status_icon "$pane_target" "$current_status"
+                # アイコンを更新
+                local session="${pane_target%%:*}"
+                local session_window="${pane_target%.*}"
+                local window_index="${session_window#*:}"
+                local prefix="@claude_voice_pane_status_${session}_${window_index}_"
+                local all_statuses
+                all_statuses=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
+                local icon="✅"
+                if echo "$all_statuses" | grep -q "Busy"; then icon="⚡"; fi
+                if echo "$all_statuses" | grep -q "Waiting"; then icon="⌛"; fi
+                tmux set-option -g "@claude_voice_icon_${window_index}" "$icon" 2>/dev/null
+            fi
+        done <<< "$active_cc_panes"
     fi
 }
 
 # Claude Codeステータスアイコン更新（ペインレベル状態をウィンドウレベルに集約）
 # 優先度: Waiting(⌛) > Busy(⚡) > Idle(✅)
+# Note: hooks/status-update.sh の aggregate_window_icon() と同等のロジック
 update_claude_status_icon() {
     local pane_target="$1"  # session:window.pane
     local status="$2"
     local session_window="${pane_target%.*}"
+    local session="${pane_target%%:*}"
     local window_index="${session_window#*:}"
 
     # ペインごとの状態をtmux変数に保存
@@ -119,8 +141,9 @@ update_claude_status_icon() {
     tmux set-option -g "$pane_key" "$status" 2>/dev/null
 
     # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
+    local prefix="@claude_voice_pane_status_${session}_${window_index}_"
     local all_statuses
-    all_statuses=$(tmux show-options -g 2>/dev/null | grep "^@claude_voice_pane_status_" | grep "_${window_index}_" | awk '{print $2}' | tr -d '"')
+    all_statuses=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
 
     local icon="✅"
     if echo "$all_statuses" | grep -q "Busy"; then
@@ -134,43 +157,7 @@ update_claude_status_icon() {
     tmux set-option -g "@claude_voice_icon_$window_index" "$icon" 2>/dev/null
 }
 
-# すべてのウィンドウのClaudeアイコンをクリア
-clear_all_claude_icons() {
-    # すべてのウィンドウのアイコン変数をクリア
-    local windows
-    windows=$(tmux list-windows -F "#{window_index}" 2>/dev/null)
-    
-    while IFS= read -r window_index; do
-        if [[ -n "$window_index" ]]; then
-            tmux set-option -g "@claude_voice_icon_$window_index" "" 2>/dev/null
-        fi
-    done <<< "$windows"
-    
-    log_debug "すべてのClaudeアイコンをクリアしました"
-}
-
-# 音声フィードバック（バックグラウンド実行）
-trigger_audio_feedback() {
-    local pane_target="$1"
-    local status="$2"
-
-    # 音声機能有効チェック
-    local sound_enabled
-    sound_enabled=$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)
-
-    if [[ "$sound_enabled" == "true" ]]; then
-        # 音声ファイルが存在すればバックグラウンドで実行
-        if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
-            case "$status" in
-                "Busy")   "$SCRIPT_DIR/sound_utils.sh" play start >/dev/null 2>&1 & ;;
-                "Waiting") "$SCRIPT_DIR/sound_utils.sh" play waiting >/dev/null 2>&1 & ;;
-                "Idle")   "$SCRIPT_DIR/sound_utils.sh" play complete >/dev/null 2>&1 & ;;
-            esac
-        fi
-    fi
-}
-
-# 全Claude Codeペインのステータスを表示
+# 全Claude Codeペインのステータスを表示（診断用）
 show_pane_status() {
     local claude_panes
     claude_panes=$(detect_claude_panes)
@@ -181,17 +168,33 @@ show_pane_status() {
     fi
 
     echo "=== Claude Code ペインステータス ==="
+
+    # Hooks 登録状態も表示
     while IFS= read -r pane_target; do
         if [[ -n "$pane_target" ]]; then
-            local status
-            status=$(analyze_pane_content "$pane_target" 2>/dev/null || echo "Unknown")
+            local pane_key="${pane_target//[:\.]/_}"
+            local hooks_status
+            hooks_status=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
+            local hooks_ts
+            hooks_ts=$(tmux show-option -gqv "@claude_voice_hooks_ts_${pane_key}" 2>/dev/null)
+
+            local status="${hooks_status:-Unregistered}"
             local icon="?"
             case "$status" in
-                "Busy")    icon="⚡" ;;
-                "Waiting") icon="⌛" ;;
-                "Idle")    icon="✅" ;;
+                "Busy")         icon="⚡" ;;
+                "Waiting")      icon="⌛" ;;
+                "Idle")         icon="✅" ;;
+                "Unregistered") icon="❓" ;;
             esac
-            echo "  $icon $pane_target: $status"
+
+            local ts_info=""
+            if [[ -n "$hooks_ts" ]]; then
+                local now=$(date +%s)
+                local age=$(( now - hooks_ts ))
+                ts_info=" (hooks: ${age}s ago)"
+            fi
+
+            echo "  $icon $pane_target: $status$ts_info"
         fi
     done <<< "$claude_panes"
 }
