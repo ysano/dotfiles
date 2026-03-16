@@ -202,6 +202,14 @@ FONT-INFO is a plist from `my--detect-fonts'."
   :custom
   (dimmer-fraction 0.3)
   :config
+  ;; dimmer-face-color は face-foreground/face-background が文字列を返す前提だが
+  ;; 一部フェイスは 'reset シンボルを返しエラーになる (Wrong type argument: stringp, reset)
+  (defun my-dimmer-face-color-safe (orig-fn f frac)
+    "Wrap dimmer-face-color to skip faces with non-string color values."
+    (condition-case nil
+        (funcall orig-fn f frac)
+      (wrong-type-argument nil)))
+  (advice-add 'dimmer-face-color :around #'my-dimmer-face-color-safe)
   (dimmer-configure-which-key)
   (dimmer-configure-magit)
   (dimmer-mode 1))
