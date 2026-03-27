@@ -65,18 +65,6 @@ HOOKS_CONFIG=$(cat <<ENDJSON
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${STATUS_UPDATE_SCRIPT}",
-            "timeout": 10,
-            "async": true
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "matcher": "idle_prompt|permission_prompt",
@@ -172,7 +160,6 @@ echo "hooks 設定をマージしました: $SETTINGS_FILE"
 echo ""
 echo "設定されたイベント:"
 echo "  UserPromptSubmit  → ⚡ Busy"
-echo "  PreToolUse        → ⚡ Busy（タイムスタンプ更新）"
 echo "  Notification      → ⌛ Waiting（idle_prompt|permission_prompt）"
 echo "  Stop              → ✅ Idle"
 echo "  SessionStart      → ✅ Idle"

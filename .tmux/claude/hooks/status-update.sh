@@ -95,9 +95,6 @@ determine_status() {
         UserPromptSubmit)
             echo "Busy"
             ;;
-        PreToolUse)
-            echo "Busy"
-            ;;
         Notification)
             # idle_prompt または permission_prompt の場合のみ Waiting
             if [[ "$notif_type" =~ ^(idle_prompt|permission_prompt)$ ]]; then
