@@ -49,6 +49,39 @@ decode_pane_key() {
     echo "${session}:${window}.${pane}"
 }
 
+# ウィンドウレベルのアイコン集約（統一版）
+# ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
+# 優先度: Waiting(⌛) > Busy(⚡) > Idle(✅)
+# 引数: pane_target (session:window.pane)
+aggregate_window_icon() {
+    local pane_target="$1"
+    local session="${pane_target%%:*}"
+    local session_window="${pane_target%.*}"
+    local window_index="${session_window#*:}"
+
+    # session__window_ プレフィックスで厳密にマッチ
+    local prefix="@claude_voice_pane_status_${session}__${window_index}_"
+    local all_statuses
+    all_statuses=$(tmux show-options -g 2>/dev/null \
+        | grep "^${prefix}" \
+        | awk '{print $2}' \
+        | tr -d '"')
+
+    local icon=""
+    if [[ -n "$all_statuses" ]]; then
+        icon="✅"
+        if echo "$all_statuses" | grep -q "Busy"; then
+            icon="⚡"
+        fi
+        if echo "$all_statuses" | grep -q "Waiting"; then
+            icon="⌛"
+        fi
+    fi
+
+    tmux set-option -g "@claude_voice_icon_${window_index}" "$icon" 2>/dev/null
+    log_debug "アイコン集約: window=$window_index icon=$icon"
+}
+
 # Claude Codeペインの検出（プロセス + タイトルベース、ペインレベル）
 # 出力形式: session:window.pane（例: main:0.1）
 detect_claude_panes() {
