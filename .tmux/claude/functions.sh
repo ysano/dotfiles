@@ -51,7 +51,8 @@ decode_pane_key() {
 
 # ウィンドウレベルのアイコン集約（統一版）
 # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
-# 優先度: Waiting(⌛) > Busy(⚡) > Idle(✅)
+# 優先度: ⚠(Stale) > ⌛(Waiting) > ⚡(Busy) > ✅(Idle)
+# Stale 判定: Busy 状態 + hooks_ts が閾値超過
 # 引数: pane_target (session:window.pane)
 aggregate_window_icon() {
     local pane_target="$1"
@@ -59,27 +60,60 @@ aggregate_window_icon() {
     local session_window="${pane_target%.*}"
     local window_index="${session_window#*:}"
 
+    # staleness 閾値（秒）。デフォルト 600 秒 = 10 分
+    local stale_threshold
+    stale_threshold=$(tmux show-option -gqv @claude_voice_stale_threshold 2>/dev/null)
+    stale_threshold="${stale_threshold:-600}"
+
     # session__window_ プレフィックスで厳密にマッチ
     local prefix="@claude_voice_pane_status_${session}__${window_index}_"
-    local all_statuses
-    all_statuses=$(tmux show-options -g 2>/dev/null \
-        | grep "^${prefix}" \
-        | awk '{print $2}' \
-        | tr -d '"')
+    local all_keys
+    all_keys=$(tmux show-options -g 2>/dev/null | grep "^${prefix}")
 
     local icon=""
-    if [[ -n "$all_statuses" ]]; then
+    local has_stale=false
+    local now
+    now=$(date +%s)
+
+    if [[ -n "$all_keys" ]]; then
         icon="✅"
-        if echo "$all_statuses" | grep -q "Busy"; then
-            icon="⚡"
-        fi
-        if echo "$all_statuses" | grep -q "Waiting"; then
+        local has_busy=false has_waiting=false
+
+        while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            local key status
+            key=$(echo "$line" | awk '{print $1}')
+            status=$(echo "$line" | awk '{print $2}' | tr -d '"')
+            local pane_id="${key#@claude_voice_pane_status_}"
+
+            if [[ "$status" == "Busy" ]]; then
+                has_busy=true
+                # Busy ペインの staleness チェック
+                local hooks_ts
+                hooks_ts=$(tmux show-option -gqv "@claude_voice_hooks_ts_${pane_id}" 2>/dev/null)
+                if [[ -n "$hooks_ts" ]]; then
+                    local age=$(( now - hooks_ts ))
+                    if [[ $age -ge $stale_threshold ]]; then
+                        has_stale=true
+                        log_debug "Stale 検出: pane=$pane_id age=${age}s threshold=${stale_threshold}s"
+                    fi
+                fi
+            elif [[ "$status" == "Waiting" ]]; then
+                has_waiting=true
+            fi
+        done <<< "$all_keys"
+
+        if [[ "$has_stale" == true ]]; then
+            icon="⚠"
+        elif [[ "$has_waiting" == true ]]; then
             icon="⌛"
+        elif [[ "$has_busy" == true ]]; then
+            icon="⚡"
         fi
     fi
 
     tmux set-option -g "@claude_voice_icon_${window_index}" "$icon" 2>/dev/null
-    log_debug "アイコン集約: window=$window_index icon=$icon"
+    log_debug "アイコン集約: window=$window_index icon=$icon stale=$has_stale"
 }
 
 # Claude Codeペインの検出（プロセス + タイトルベース、ペインレベル）
