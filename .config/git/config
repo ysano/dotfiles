@@ -50,3 +50,5 @@
 	defaultBranch = main
 [github]
 	user = ysano
+[coderabbit]
+	machineId = cli/3c563c07b9104168915b41e4f331cd23
