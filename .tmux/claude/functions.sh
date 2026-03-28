@@ -112,8 +112,8 @@ aggregate_window_icon() {
         fi
     fi
 
-    tmux set-option -g "@claude_voice_icon_${window_index}" "$icon" 2>/dev/null
-    log_debug "アイコン集約: window=$window_index icon=$icon stale=$has_stale"
+    tmux set-option -g "@claude_voice_icon_${session}_${window_index}" "$icon" 2>/dev/null
+    log_debug "アイコン集約: session=$session window=$window_index icon=$icon stale=$has_stale"
 }
 
 # Claude Codeペインの検出（プロセス + タイトルベース、ペインレベル）
