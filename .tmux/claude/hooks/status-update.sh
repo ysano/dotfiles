@@ -20,6 +20,11 @@ _log() {
     echo "[$level] $(date '+%Y-%m-%d %H:%M:%S') [hooks] $msg" >> "$CLAUDE_VOICE_LOG_FILE"
 }
 
+# functions.sh を読み込み（encode_pane_key 等を使用）
+if [[ -f "$SCRIPT_DIR/functions.sh" ]]; then
+    source "$SCRIPT_DIR/functions.sh" 2>/dev/null || true
+fi
+
 # --- 1. stdin から JSON を読み取り ---
 INPUT=$(cat)
 if [[ -z "$INPUT" ]]; then
@@ -123,7 +128,12 @@ determine_status() {
 NEW_STATUS=$(determine_status "$HOOK_EVENT" "$NOTIFICATION_TYPE")
 
 # ステータスが空の場合はタイムスタンプだけ更新して終了
-PANE_KEY="${PANE_TARGET//[:\.]/_}"
+if command -v encode_pane_key >/dev/null 2>&1; then
+    PANE_KEY=$(encode_pane_key "$PANE_TARGET")
+else
+    # フォールバック: functions.sh 読み込み失敗時は旧形式
+    PANE_KEY="${PANE_TARGET//[:\.]/_}"
+fi
 NOW=$(date +%s)
 
 # --- 5. ウィンドウレベルのアイコン集約（他ステップから呼び出されるため先に定義） ---
@@ -134,8 +144,8 @@ aggregate_window_icon() {
     local window_index="${session_window#*:}"
 
     # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
-    # session_window プレフィックスで厳密にマッチ（他ウィンドウの混入を防止）
-    local prefix="@claude_voice_pane_status_${session}_${window_index}_"
+    # session__window_ プレフィックスで厳密にマッチ（他ウィンドウの混入を防止）
+    local prefix="@claude_voice_pane_status_${session}__${window_index}_"
     local all_statuses
     all_statuses=$(tmux show-options -g 2>/dev/null \
         | grep "^${prefix}" \

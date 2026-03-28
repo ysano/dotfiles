@@ -68,11 +68,13 @@ polling_monitor_main() {
     while IFS= read -r key; do
         [[ -z "$key" ]] && continue
         local pane_id="${key#@claude_voice_pane_status_}"
-        local session="${pane_id%%_*}"
-        local rest="${pane_id#*_}"
-        local window="${rest%%_*}"
-        local pane="${rest#*_}"
-        local pane_target="${session}:${window}.${pane}"
+
+        # decode_pane_key で安全に逆引き（アンダースコア含むセッション名対応）
+        local pane_target
+        pane_target=$(decode_pane_key "$pane_id")
+        local session="${pane_target%%:*}"
+        local session_window="${pane_target%.*}"
+        local window="${session_window#*:}"
 
         if [[ -z "$active_cc_panes" ]] || ! echo "$active_cc_panes" | grep -qF "$pane_target"; then
             # CC が動いていない → クリア
@@ -82,7 +84,7 @@ polling_monitor_main() {
             log_debug "Liveness check: ステータスクリア $pane_target"
 
             # ウィンドウのアイコンを再集約
-            local prefix="@claude_voice_pane_status_${session}_${window}_"
+            local prefix="@claude_voice_pane_status_${session}__${window}_"
             local remaining
             remaining=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
             if [[ -z "$remaining" ]]; then
@@ -102,7 +104,8 @@ polling_monitor_main() {
     if [[ -n "$active_cc_panes" ]]; then
         while IFS= read -r pane_target; do
             [[ -z "$pane_target" ]] && continue
-            local pane_key="${pane_target//[:\.]/_}"
+            local pane_key
+            pane_key=$(encode_pane_key "$pane_target")
             local existing
             existing=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
             if [[ -z "$existing" ]]; then
@@ -114,7 +117,7 @@ polling_monitor_main() {
                 local session="${pane_target%%:*}"
                 local session_window="${pane_target%.*}"
                 local window_index="${session_window#*:}"
-                local prefix="@claude_voice_pane_status_${session}_${window_index}_"
+                local prefix="@claude_voice_pane_status_${session}__${window_index}_"
                 local all_statuses
                 all_statuses=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
                 local icon="✅"
@@ -137,11 +140,11 @@ update_claude_status_icon() {
     local window_index="${session_window#*:}"
 
     # ペインごとの状態をtmux変数に保存
-    local pane_key="@claude_voice_pane_status_${pane_target//[:\.]/_}"
+    local pane_key="@claude_voice_pane_status_$(encode_pane_key "$pane_target")"
     tmux set-option -g "$pane_key" "$status" 2>/dev/null
 
     # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
-    local prefix="@claude_voice_pane_status_${session}_${window_index}_"
+    local prefix="@claude_voice_pane_status_${session}__${window_index}_"
     local all_statuses
     all_statuses=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
 
@@ -172,7 +175,8 @@ show_pane_status() {
     # Hooks 登録状態も表示
     while IFS= read -r pane_target; do
         if [[ -n "$pane_target" ]]; then
-            local pane_key="${pane_target//[:\.]/_}"
+            local pane_key
+            pane_key=$(encode_pane_key "$pane_target")
             local hooks_status
             hooks_status=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
             local hooks_ts
