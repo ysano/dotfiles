@@ -136,36 +136,9 @@ else
 fi
 NOW=$(date +%s)
 
-# --- 5. ウィンドウレベルのアイコン集約（他ステップから呼び出されるため先に定義） ---
-aggregate_window_icon() {
-    local pane_target="$1"
-    local session_window="${pane_target%.*}"
-    local session="${pane_target%%:*}"
-    local window_index="${session_window#*:}"
-
-    # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
-    # session__window_ プレフィックスで厳密にマッチ（他ウィンドウの混入を防止）
-    local prefix="@claude_voice_pane_status_${session}__${window_index}_"
-    local all_statuses
-    all_statuses=$(tmux show-options -g 2>/dev/null \
-        | grep "^${prefix}" \
-        | awk '{print $2}' \
-        | tr -d '"')
-
-    local icon=""
-    if [[ -n "$all_statuses" ]]; then
-        icon="✅"
-        if echo "$all_statuses" | grep -q "Busy"; then
-            icon="⚡"
-        fi
-        if echo "$all_statuses" | grep -q "Waiting"; then
-            icon="⌛"
-        fi
-    fi
-
-    tmux set-option -g "@claude_voice_icon_$window_index" "$icon" 2>/dev/null
-    _log "DEBUG" "アイコン集約: window=$window_index icon=$icon"
-}
+# --- 5. ウィンドウレベルのアイコン集約 ---
+# functions.sh の aggregate_window_icon() を使用（統一版）
+# フォールバック: functions.sh 未読み込み時は何もしない（タイムスタンプのみ更新）
 
 if [[ -z "$NEW_STATUS" ]]; then
     tmux set-option -g "@claude_voice_hooks_ts_${PANE_KEY}" "$NOW" 2>/dev/null

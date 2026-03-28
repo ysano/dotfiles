@@ -83,19 +83,8 @@ polling_monitor_main() {
             tmux set-option -g -u "@claude_voice_hooks_ts_${pane_id}" 2>/dev/null
             log_debug "Liveness check: ステータスクリア $pane_target"
 
-            # ウィンドウのアイコンを再集約
-            local prefix="@claude_voice_pane_status_${session}__${window}_"
-            local remaining
-            remaining=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
-            if [[ -z "$remaining" ]]; then
-                tmux set-option -g "@claude_voice_icon_${window}" "" 2>/dev/null
-            else
-                # 残りのステータスからアイコンを再計算
-                local icon="✅"
-                if echo "$remaining" | grep -q "Busy"; then icon="⚡"; fi
-                if echo "$remaining" | grep -q "Waiting"; then icon="⌛"; fi
-                tmux set-option -g "@claude_voice_icon_${window}" "$icon" 2>/dev/null
-            fi
+            # ウィンドウのアイコンを再集約（統一関数）
+            aggregate_window_icon "$pane_target"
         fi
     done <<< "$registered_keys"
 
@@ -113,51 +102,11 @@ polling_monitor_main() {
                 tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
                 log_debug "Liveness check: 未登録 CC ペインを自動登録 $pane_target (Idle)"
 
-                # アイコンを更新
-                local session="${pane_target%%:*}"
-                local session_window="${pane_target%.*}"
-                local window_index="${session_window#*:}"
-                local prefix="@claude_voice_pane_status_${session}__${window_index}_"
-                local all_statuses
-                all_statuses=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
-                local icon="✅"
-                if echo "$all_statuses" | grep -q "Busy"; then icon="⚡"; fi
-                if echo "$all_statuses" | grep -q "Waiting"; then icon="⌛"; fi
-                tmux set-option -g "@claude_voice_icon_${window_index}" "$icon" 2>/dev/null
+                # アイコンを更新（統一関数）
+                aggregate_window_icon "$pane_target"
             fi
         done <<< "$active_cc_panes"
     fi
-}
-
-# Claude Codeステータスアイコン更新（ペインレベル状態をウィンドウレベルに集約）
-# 優先度: Waiting(⌛) > Busy(⚡) > Idle(✅)
-# Note: hooks/status-update.sh の aggregate_window_icon() と同等のロジック
-update_claude_status_icon() {
-    local pane_target="$1"  # session:window.pane
-    local status="$2"
-    local session_window="${pane_target%.*}"
-    local session="${pane_target%%:*}"
-    local window_index="${session_window#*:}"
-
-    # ペインごとの状態をtmux変数に保存
-    local pane_key="@claude_voice_pane_status_$(encode_pane_key "$pane_target")"
-    tmux set-option -g "$pane_key" "$status" 2>/dev/null
-
-    # ウィンドウ内の全ペイン状態を集約して最優先アイコンを決定
-    local prefix="@claude_voice_pane_status_${session}__${window_index}_"
-    local all_statuses
-    all_statuses=$(tmux show-options -g 2>/dev/null | grep "^${prefix}" | awk '{print $2}' | tr -d '"')
-
-    local icon="✅"
-    if echo "$all_statuses" | grep -q "Busy"; then
-        icon="⚡"
-    fi
-    if echo "$all_statuses" | grep -q "Waiting"; then
-        icon="⌛"
-    fi
-
-    # tmux変数にアイコンを保存
-    tmux set-option -g "@claude_voice_icon_$window_index" "$icon" 2>/dev/null
 }
 
 # 全Claude Codeペインのステータスを表示（診断用）
