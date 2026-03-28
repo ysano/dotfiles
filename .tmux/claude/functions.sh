@@ -23,6 +23,32 @@ log_debug() {
     fi
 }
 
+# PANE_KEY エンコード: "session:window.pane" → "session__window_pane"
+# セッション名のアンダースコアを保持しつつ、区切りを区別可能にする
+# デリミタ: セッション区切り = "__" (double underscore), window/pane 区切り = "_" (single)
+encode_pane_key() {
+    local pane_target="$1"
+    # session:window.pane → session, window, pane に分解
+    local session="${pane_target%%:*}"
+    local window_pane="${pane_target#*:}"
+    local window="${window_pane%%.*}"
+    local pane="${window_pane#*.}"
+    echo "${session}__${window}_${pane}"
+}
+
+# PANE_KEY デコード: "session__window_pane" → "session:window.pane"
+# "__" でセッション名を分離し、残りを window/pane に分解
+decode_pane_key() {
+    local pane_key="$1"
+    # "__" でセッション名を分離（最初の __ で分割）
+    local session="${pane_key%%__*}"
+    local rest="${pane_key#*__}"
+    # rest = "window_pane" → 最後の "_" で分割
+    local window="${rest%_*}"
+    local pane="${rest##*_}"
+    echo "${session}:${window}.${pane}"
+}
+
 # Claude Codeペインの検出（プロセス + タイトルベース、ペインレベル）
 # 出力形式: session:window.pane（例: main:0.1）
 detect_claude_panes() {
@@ -113,8 +139,8 @@ analyze_pane_content() {
 # 前回の状態を取得
 get_previous_status() {
     local pane_target="$1"
-    local option_name="@claude_voice_status_${pane_target//[:\.]/_}"
-    
+    local option_name="@claude_voice_status_$(encode_pane_key "$pane_target")"
+
     local previous_status
     previous_status=$(tmux show-option -gqv "$option_name" 2>/dev/null)
     
@@ -129,7 +155,7 @@ get_previous_status() {
 save_current_status() {
     local pane_target="$1"
     local current_status="$2"
-    local option_name="@claude_voice_status_${pane_target//[:\.]/_}"
+    local option_name="@claude_voice_status_$(encode_pane_key "$pane_target")"
 
     if tmux set-option -g "$option_name" "$current_status" 2>/dev/null; then
         log_debug "ステータスを保存しました: $pane_target = $current_status"
