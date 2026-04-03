@@ -20,15 +20,13 @@
          "\\.handlebars\\'"
          "\\.hbs\\'"
          "\\.ejs\\'"
-         "\\.jsx\\'"
-         "\\.tsx\\'")
+         "\\.jsx\\'")
   :custom
   (web-mode-engines-alist
    '(("php"    . "\\.phtml\\'")
      ("blade"  . "\\.blade\\.php\\'")
      ("django" . "\\.djhtml\\'")
-     ("jsx"    . "\\.jsx\\'")
-     ("tsx"    . "\\.tsx\\'")))
+     ("jsx"    . "\\.jsx\\'")))
   (web-mode-markup-indent-offset 2)
   (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
@@ -37,12 +35,7 @@
   (web-mode-block-padding 0)
   (web-mode-comment-style 2)
   (web-mode-enable-current-element-highlight t)
-  (web-mode-enable-current-column-highlight t)
-  :config
-  (add-hook 'web-mode-hook
-            (lambda ()
-              (when (string-equal "tsx" (file-name-extension buffer-file-name))
-                (lsp)))))
+  (web-mode-enable-current-column-highlight t))
 
 ;; --------------------------------
 ;; HTML/CSS/SCSS

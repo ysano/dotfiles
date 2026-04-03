@@ -84,8 +84,8 @@
   :defer t
   :commands (eglot eglot-ensure)
   :hook
-  ((go-mode rust-mode python-mode typescript-mode js-mode
-    css-mode json-mode html-mode) . eglot-ensure)
+  ((go-mode rust-mode python-mode typescript-mode typescript-ts-mode
+    tsx-ts-mode js-mode css-mode json-mode html-mode) . eglot-ensure)
   :bind (:map eglot-mode-map
               ("C-c l r" . eglot-rename)
               ("C-c l a" . eglot-code-actions)

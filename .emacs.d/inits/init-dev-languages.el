@@ -74,15 +74,34 @@
 (use-package typescript-mode
   :ensure t
   :defer t
-  :mode ("\\.ts\\'" "\\.tsx\\'")
+  :mode "\\.ts\\'"
   :custom
   (typescript-indent-level 2))
+
+;; --------------------------------
+;; TypeScript/TSX (tree-sitter, Emacs 29+)
+;; --------------------------------
+(when (treesit-available-p)
+  (setq treesit-language-source-alist
+        '((tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")))
+
+  (when (treesit-language-available-p 'tsx)
+    (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode)))
+
+  (when (treesit-language-available-p 'typescript)
+    (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode)))
+
+  (add-hook 'tsx-ts-mode-hook
+            (lambda () (setq-local tab-width 2)))
+  (add-hook 'typescript-ts-mode-hook
+            (lambda () (setq-local tab-width 2))))
 
 ;; Node.js path support
 (use-package add-node-modules-path
   :ensure t
   :defer t
-  :hook ((js-mode json-mode typescript-mode) . add-node-modules-path))
+  :hook ((js-mode json-mode typescript-mode typescript-ts-mode tsx-ts-mode) . add-node-modules-path))
 
 ;; --------------------------------
 ;; Rust
