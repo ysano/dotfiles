@@ -41,6 +41,10 @@ source "$HOME/.zsh/git-worktree.zsh"
 # Claude Code telemetry (enables token/cost data for AI-DLC Economics metrics)
 export CLAUDE_CODE_ENABLE_TELEMETRY=1
 
+# Claude Code: attribution ヘッダを無効化してプロンプトキャッシュヒット率を改善
+# メッセージ内容から生成されるハッシュがセッション跨ぎのキャッシュ再利用を阻害するため
+export CLAUDE_CODE_ATTRIBUTION_HEADER=false
+
 # ICU4C for pkg-config (Homebrew only)
 if command -v brew >/dev/null 2>&1; then
     export PKG_CONFIG_PATH="$(brew --prefix)/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH:-}"

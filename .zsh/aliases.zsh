@@ -10,7 +10,7 @@
 
 # Prevent accidental operations
 alias mv='nocorrect mv'
-alias cp='nocorrect cp' 
+alias cp='nocorrect cp'
 alias mkdir='nocorrect mkdir'
 alias rm='nocorrect rm -i'
 
@@ -103,19 +103,29 @@ setup_git_aliases() {
         alias gl='git log --oneline -10'
         alias gd='git diff'
         alias gdc='git diff --cached'
-        
+
         # Branch management
         alias gb='git branch'
         alias gco='git checkout'
         alias gcb='git checkout -b'
-        
+
         # Stash operations
         alias gst='git stash'
         alias gsp='git stash pop'
         alias gsl='git stash list'
-        
+
     fi
 }
+
+# ================================
+# AI Tools
+# ================================
+
+# Claude Code: スタンドアロン・バイナリ版のセンチネル置換バグ回避のため npx 経由で起動
+# （バイナリ版はプロンプト中の識別子に反応してキャッシュ接頭辞が毎回変化する）
+if has_command claude; then
+    alias ysano-claude='CLAUDE_CONFIG_DIR=~/.claude-ysano claude'
+fi
 
 # ================================
 # Network Tools
@@ -175,7 +185,7 @@ setup_colors() {
                     alias fgrep='fgrep --color=auto'
                     alias egrep='egrep --color=auto'
                 fi
-                
+
                 # ls colors - use environment variables instead of aliases
                 if is_macos; then
                     export CLICOLOR=1
@@ -307,7 +317,7 @@ setup_truecolor
 # Load OS-specific aliases based on detected OS
 load_os_aliases() {
     local os_alias_file=""
-    
+
     if is_macos; then
         os_alias_file="aliases_darwin.zsh"
     elif is_linux; then
@@ -319,7 +329,7 @@ load_os_aliases() {
             cygwin*)  os_alias_file="aliases_cygwin.zsh" ;;
         esac
     fi
-    
+
     if [[ -n "$os_alias_file" ]] && [[ -f "${ZDOTDIR:-$HOME}/.zsh/$os_alias_file" ]]; then
         source "${ZDOTDIR:-$HOME}/.zsh/$os_alias_file"
     fi
@@ -334,7 +344,7 @@ load_os_aliases
 # Test core aliases function
 test_core_aliases() {
     echo "Testing core aliases..."
-    
+
     # Test ll alias
     if alias ll >/dev/null 2>&1; then
         echo "  ✓ ll alias defined: $(alias ll)"
@@ -346,14 +356,14 @@ test_core_aliases() {
     else
         echo "  ✗ ll alias not defined"
     fi
-    
+
     # Test la alias
     if alias la >/dev/null 2>&1; then
         echo "  ✓ la alias defined: $(alias la)"
     else
         echo "  ✗ la alias not defined"
     fi
-    
+
     # Check color settings
     if is_macos; then
         [[ -n "$CLICOLOR" ]] && echo "  ✓ CLICOLOR set" || echo "  ✗ CLICOLOR not set"
