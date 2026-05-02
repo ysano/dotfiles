@@ -202,8 +202,10 @@ setup_node() {
     fi
 }
 
-setup_ruby() {
-    # ASDF Ruby support
+setup_asdf() {
+    # ASDF runtime version manager (nodejs/python/ruby/yarn/bun/poetry/postgres ...)
+    # Must be invoked AFTER OS-specific setup so shims win over Homebrew runtimes
+    # and `.tool-versions` pins are honored.
     if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" ]]; then
         safe_path_prepend "${ASDF_DATA_DIR:-$HOME/.asdf}/shims"
     fi
@@ -266,7 +268,6 @@ setup_legacy_tools() {
 setup_go
 setup_rust
 setup_node
-setup_ruby
 setup_android
 setup_flutter
 
@@ -281,6 +282,9 @@ setup_legacy_tools
 if [[ -n "${OS_SETUP_FUNC:-}" ]]; then
     $OS_SETUP_FUNC
 fi
+
+# ASDF shims (must be after OS setup so they win over Homebrew runtimes)
+setup_asdf
 
 # Editor setup (after OS-specific config)
 setup_editor
