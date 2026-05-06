@@ -7,6 +7,8 @@
 
 クロスプラットフォーム（Windows/macOS/Linux・WSL）対応の統合開発環境dotfiles。Emacs中心、AI統合ワークフロー、日本語環境、Zsh + Zinit構成。
 
+> Brewfile・マシン構築の運用ナレッジは [ysano/machine-management](https://github.com/ysano/machine-management) で管理。
+
 ## 開発コマンド
 
 ```bash

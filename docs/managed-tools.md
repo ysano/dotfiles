@@ -35,8 +35,9 @@
 
 | ツール | Config ファイル | デプロイ方法 | 用途 |
 |---|---|---|---|
-| **Homebrew** | `.Brewfile` | `link.sh` → `$HOME` | macOS/Linuxパッケージ管理 |
 | **RPM** | `.rpmmacros` | `link.sh` → `$HOME` | Red Hat系パッケージビルド設定 |
+
+> Homebrew (`Brewfile`) およびマシン構築の運用ナレッジは外部リポ [ysano/machine-management](https://github.com/ysano/machine-management) で管理。
 
 ### プラットフォーム固有
 

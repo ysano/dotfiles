@@ -5,7 +5,7 @@
 # ================================
 
 # ホーム直下のファイル
-files=(.zshrc .zprofile .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
+files=(.zshrc .zprofile .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc)
 
 # ホーム直下のディレクトリ
 dirs=(.zsh .emacs.d .tmux)

@@ -53,7 +53,7 @@ echo ""
 echo -e "${BOLD}--- Source Files & Directories ---${NC}"
 
 # files 配列（link.sh と同期）
-files=(.zshrc .zprofile .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc .Brewfile)
+files=(.zshrc .zprofile .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .skhdrc)
 for f in "${files[@]}"; do
     if [[ -e "$DOTFILES_ROOT/$f" ]]; then
         result PASS "file: $f"
