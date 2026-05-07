@@ -133,53 +133,97 @@ go version        # ~/.tool-versions の指定と一致
 
 ### Story 1: scripts/asdf-doctor.sh を実装する
 
-**Size: M** (1 Concern: 診断ツール新設、1 ファイル + テスト fixture)
+**Size**: M (1 Concern: 診断ツール新設、1 ファイル + テスト fixture)
 
-| Element | Content |
-|---------|---------|
-| **Context** | Phase A の手動調査（プロジェクト `.tool-versions` ⇄ installed のクロスリファレンス）を再現可能なスクリプト化する。半年後の再棚卸し時、属人化した調査ロジックを誰でも実行可能にする。`Intent: code` |
-| **Current Behavior** | 棚卸し調査は手動の find / grep / awk の組み合わせで属人的。`scripts/` 配下に asdf 系スクリプトは未存在 |
-| **Expected Behavior** | `scripts/asdf-doctor.sh` を新設し、以下 4 セクションを Markdown テーブル形式で出力する: ① 未使用 versions（installed だが参照ゼロ）② 不足 versions（参照されてるが未 install）③ 健全 versions ④ 未使用 plugins。引数 `--clean-suggestions` で ① ④ を `asdf uninstall/plugin remove` コマンド形式で出力。引数 `--json` で機械可読出力。`SEARCH_DIRS` env で検索パス上書き可能（デフォルト `~/ghq:~/work`）。go.mod の toolchain 行も収集対象。`asdf` 未インストール環境では graceful skip（exit 0、stderr に "asdf not found, skip"） |
-| **Constraints** | bash 4+ または zsh 互換。POSIX 準拠ツール（find, grep, sort, awk）のみ依存。**絶対パスハードコード禁止**（CI / 他マシン互換、CLAUDE.md 規約）。`set -euo pipefail` で fail-fast。`--help` で使用方法表示（Production phase のドキュメント要件）。fixture 駆動の smoke test を含めること（unit test だけでは silent false-negative を見逃すため）。後方互換性は不要（新規スクリプト） |
-| **Verification** | 1. `bash -n scripts/asdf-doctor.sh` で構文 OK 2. `./scripts/asdf-doctor.sh` を Phase A 完了後に実行し、「未使用 versions」セクションが空に近いこと 3. `./scripts/asdf-doctor.sh --json \| jq .` で JSON valid 4. `./scripts/asdf-doctor.sh --help` で使用方法が表示される 5. fixture (`tests/fixtures/asdf-doctor/` に dummy `.tool-versions` 群を配置) で smoke test 実行、期待 4 セクションが全て出力されること 6. `command -v asdf` 不在環境で graceful skip（exit 0） 7. `SEARCH_DIRS=/tmp/empty ./scripts/asdf-doctor.sh` で検出ゼロ時もクラッシュしない |
+**Intent**: code
+
+**Context**: Phase A の手動調査（プロジェクト `.tool-versions` ⇄ installed のクロスリファレンス）を再現可能なスクリプト化する。半年後の再棚卸し時、属人化した調査ロジックを誰でも実行可能にする。
+
+**Current Behavior**: 棚卸し調査は手動の find / grep / awk の組み合わせで属人的。`scripts/` 配下に asdf 系スクリプトは未存在。
+
+**Expected Behavior**: `scripts/asdf-doctor.sh` を新設し、以下 4 セクションを Markdown テーブル形式で出力する: ① 未使用 versions（installed だが参照ゼロ）② 不足 versions（参照されてるが未 install）③ 健全 versions ④ 未使用 plugins。引数 `--clean-suggestions` で ① ④ を `asdf uninstall/plugin remove` コマンド形式で出力。引数 `--json` で機械可読出力。`SEARCH_DIRS` env で検索パス上書き可能（デフォルト `~/ghq:~/work`）。go.mod の toolchain 行も収集対象。`asdf` 未インストール環境では graceful skip（exit 0、stderr に "asdf not found, skip"）。異常系として `SEARCH_DIRS` が空ディレクトリのケースもクラッシュせず空セクション出力すること。
+
+**Constraints**: bash 4+ または zsh 互換。POSIX 準拠ツール（find, grep, sort, awk）のみ依存。**絶対パスハードコード禁止**（CI / 他マシン互換、CLAUDE.md 規約）。`set -euo pipefail` で fail-fast。`--help` で使用方法表示（Production phase のドキュメント要件）。fixture 駆動の smoke test を含めること（unit test だけでは silent false-negative を見逃すため）。後方互換性は不要（新規スクリプト）。
+
+**Verification**:
+1. `bash -n scripts/asdf-doctor.sh` で構文 OK
+2. `./scripts/asdf-doctor.sh` を Phase A 完了後に実行し「未使用 versions」セクションが空に近いこと
+3. `./scripts/asdf-doctor.sh --json | jq .` で JSON valid
+4. `./scripts/asdf-doctor.sh --help` で使用方法が表示される
+5. fixture (`tests/fixtures/asdf-doctor/` に dummy `.tool-versions` 群を配置) で smoke test 実行、期待 4 セクションが全て出力されること
+6. `command -v asdf` 不在環境で graceful skip（exit 0）
+7. `SEARCH_DIRS=/tmp/empty ./scripts/asdf-doctor.sh` で検出ゼロ時もクラッシュしない
+8. 既存テスト（`./test_zsh_config.zsh` 等）が引き続きパスする
 
 ### Story 2: asdf-doctor を Makefile / docs から公開する
 
-**Size: S** (1 Concern: 公開窓口、2 ファイル)
+**Size**: S (1 Concern: 公開窓口、2 ファイル)
+
+**Intent**: chore
 
 **Dependencies**: Story 1
 
-| Element | Content |
-|---------|---------|
-| **Context** | Story 1 の `scripts/asdf-doctor.sh` を直接実行するのではなく、`make asdf-doctor` という統一的な人間向けインタフェース経由で呼び出せるようにする。同時に `docs/managed-tools.md` に運用フローを記載し発見可能性を高める。`Intent: chore` |
-| **Current Behavior** | Makefile に asdf 系ターゲット未存在。`docs/managed-tools.md` に asdf 棚卸し運用の記述なし |
-| **Expected Behavior** | Makefile に 3 ターゲット追加: (1) `asdf-doctor` — `./scripts/asdf-doctor.sh` 実行 (2) `asdf-clean-dry` — `--clean-suggestions` 付きで実行 (3) `asdf-sync` — `asdf plugin update --all` 実行。各ターゲットに `## help_text` コメント形式の help 説明を付与。`docs/managed-tools.md` の「パッケージ管理」テーブル直下に運用 note を追記（`make asdf-doctor` で診断、削除候補は `make asdf-clean-dry` で確認後に手動実行を推奨） |
-| **Constraints** | Makefile target に `@test -x scripts/asdf-doctor.sh \|\| { echo "Error: scripts/asdf-doctor.sh not found or not executable" >&2; exit 1; }` 前提チェックを入れること。自動削除ターゲット (`asdf-clean-execute` 的なもの) は作らない（Key Decisions 参照）。既存 Makefile のスタイル（CYAN/NC カラーコード等）に合わせること |
-| **Verification** | 1. `make asdf-doctor` 実行成功（Story 1 のスクリプト経由実行） 2. `make asdf-clean-dry` で `--clean-suggestions` 出力 3. `make asdf-sync` で `asdf plugin update --all` 起動 4. `scripts/asdf-doctor.sh` を一時的に rename した状態で `make asdf-doctor` を叩き、明示的なエラーメッセージで失敗すること（前提チェック動作確認） 5. `docs/managed-tools.md` の追記が「パッケージ管理」セクション直下にあること、Markdown が破壊されていないこと |
+**Context**: Story 1 の `scripts/asdf-doctor.sh` を直接実行するのではなく、`make asdf-doctor` という統一的な人間向けインタフェース経由で呼び出せるようにする。同時に `docs/managed-tools.md` に運用フローを記載し発見可能性を高める。
+
+**Current Behavior**: Makefile に asdf 系ターゲット未存在。`docs/managed-tools.md` に asdf 棚卸し運用の記述なし。
+
+**Expected Behavior**: Makefile に 3 ターゲット追加: (1) `asdf-doctor` — `./scripts/asdf-doctor.sh` 実行 (2) `asdf-clean-dry` — `--clean-suggestions` 付きで実行 (3) `asdf-sync` — `asdf plugin update --all` 実行。各ターゲットに `## help_text` コメント形式の help 説明を付与。`docs/managed-tools.md` の「パッケージ管理」テーブル直下に運用 note を追記（`make asdf-doctor` で診断、削除候補は `make asdf-clean-dry` で確認後に手動実行を推奨）。
+
+**Constraints**: Makefile target に `@test -x scripts/asdf-doctor.sh || { echo "Error: scripts/asdf-doctor.sh not found or not executable" >&2; exit 1; }` 前提チェックを入れること。自動削除ターゲット (`asdf-clean-execute` 的なもの) は作らない（Key Decisions 参照）。既存 Makefile のスタイル（CYAN/NC カラーコード等）に合わせること。後方互換性: 既存 target に影響しないこと。
+
+**Verification**:
+1. `make asdf-doctor` 実行成功（Story 1 のスクリプト経由実行）
+2. `make asdf-clean-dry` で `--clean-suggestions` 出力
+3. `make asdf-sync` で `asdf plugin update --all` 起動
+4. `scripts/asdf-doctor.sh` を一時的に rename した状態で `make asdf-doctor` を叩き、明示的なエラーメッセージで失敗すること（前提チェック動作確認）
+5. `docs/managed-tools.md` の追記が「パッケージ管理」セクション直下にあること、Markdown が破壊されていないこと
+6. 既存 Makefile target（`make help` 等）が引き続き正常動作すること
 
 ### Story 3: zsh に plugin-index 週次自動更新フックを追加する
 
-**Size: S** (1 Concern: 起動時 lazy フック、1 ファイル)
+**Size**: S (1 Concern: 起動時 lazy フック、1 ファイル)
 
-| Element | Content |
-|---------|---------|
-| **Context** | `~/.asdf/plugin-index` の最終更新は 2025-06、約 11 ヶ月前。古い plugin-index は新規 plugin の検索・install を阻害する。zsh 起動時に sentinel ファイルで週次ガードしつつバックグラウンド更新する。`Intent: chore` |
-| **Current Behavior** | plugin-index 更新は完全に手動。ユーザーが意識しない限り永続的に古いまま放置される |
-| **Expected Behavior** | `.zsh/zinit_setup.zsh` の `setup_dev_tools()` 内に lazy フック追加。`${ASDF_DATA_DIR:-$HOME/.asdf}/.plugin-index-updated` を sentinel として、最終更新から 7 日経過していれば `( asdf plugin update --all >/dev/null 2>&1 && touch <sentinel> ) &!` をバックグラウンド実行。`stat` の BSD (`-f %m`) と GNU (`-c %Y`) フォールバックでクロスプラットフォーム対応 |
-| **Constraints** | zsh 起動時間に **1ms も影響しない** こと（`&!` で disown）。失敗時は sentinel 未更新 → 次回再試行（指数バックオフは実装しない、過剰）。asdf 未インストール環境では何もしない（既存の `[[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}" ]]` ガード内に配置）。MSYS2/Windows でも構文エラーにならないこと（OS 検出は `if [[ "$OSTYPE" != "msys" ]]` の既存パターンに従わなくてよい、stat フォールバックで対応） |
-| **Verification** | 1. `zsh -n .zsh/zinit_setup.zsh` で構文 OK 2. zsh 再起動 → 数秒後に `~/.asdf/.plugin-index-updated` が生成される 3. 即時再起動 → バックグラウンドジョブが走らない（`jobs` で確認、stamp が新しいまま） 4. sentinel を `touch -t 202501010000 ~/.asdf/.plugin-index-updated` で 7 日以上前にして再起動 → 更新が走る 5. zsh 起動時間計測（`/usr/bin/time -p zsh -i -c exit` 5 回平均）で hook 追加前後の差が ±50ms 以内 6. asdf 未インストール環境（一時的に `asdf` を PATH から外す）で zsh 起動エラーが出ないこと |
+**Intent**: chore
+
+**Context**: `~/.asdf/plugin-index` の最終更新は 2025-06、約 11 ヶ月前。古い plugin-index は新規 plugin の検索・install を阻害する。zsh 起動時に sentinel ファイルで週次ガードしつつバックグラウンド更新する。
+
+**Current Behavior**: plugin-index 更新は完全に手動。ユーザーが意識しない限り永続的に古いまま放置される。
+
+**Expected Behavior**: `.zsh/zinit_setup.zsh` の `setup_dev_tools()` 内に lazy フック追加。`${ASDF_DATA_DIR:-$HOME/.asdf}/.plugin-index-updated` を sentinel として、最終更新から 7 日経過していれば `( asdf plugin update --all >/dev/null 2>&1 && touch <sentinel> ) &!` をバックグラウンド実行。`stat` の BSD (`-f %m`) と GNU (`-c %Y`) フォールバックでクロスプラットフォーム対応。
+
+**Constraints**: zsh 起動時間に **1ms も影響しない** こと（`&!` で disown）。失敗時は sentinel 未更新 → 次回再試行（指数バックオフは実装しない、過剰）。asdf 未インストール環境では何もしない（既存の `[[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}" ]]` ガード内に配置）。MSYS2/Windows でも構文エラーにならないこと（stat フォールバックで対応）。後方互換性: 既存の `setup_dev_tools()` ロジックに影響しないこと。
+
+**Verification**:
+1. `zsh -n .zsh/zinit_setup.zsh` で構文 OK
+2. zsh 再起動 → 数秒後に `~/.asdf/.plugin-index-updated` が生成される
+3. 即時再起動 → バックグラウンドジョブが走らない（`jobs` で確認、stamp が新しいまま）
+4. sentinel を `touch -t 202501010000 ~/.asdf/.plugin-index-updated` で 7 日以上前にして再起動 → 更新が走る
+5. zsh 起動時間計測（`/usr/bin/time -p zsh -i -c exit` 5 回平均）で hook 追加前後の差が ±50ms 以内
+6. asdf 未インストール環境（一時的に `asdf` を PATH から外す）で zsh 起動エラーが出ないこと
+7. 既存テスト（`./test_zsh_config.zsh`）が引き続きパスする
 
 ### Story 4: OMZ asdf plugin の要否を検証し整理する
 
-**Size: S** (1 Concern: 形骸化設定の整理、1 ファイル)
+**Size**: S (1 Concern: 形骸化設定の整理、1 ファイル)
 
-| Element | Content |
-|---------|---------|
-| **Context** | `.zsh/zinit_setup.zsh:106-110` で `OMZP::asdf/asdf.plugin.zsh` を読み込んでいる。ただし OMZ asdf plugin は asdf 0.x の `$ASDF_DIR/asdf.sh` を `source` する設計で、asdf 0.16+ で Go バイナリ化された後は `asdf.sh` が削除されており、実質 no-op の可能性がある。直前 commit `7c7a033` でカスタム shim PATH 設定を `setup_asdf()` に実装済みのため、OMZ plugin の役割は重複・形骸化している可能性が高い。`Intent: chore` |
-| **Current Behavior** | `zinit ice wait lucid; zinit snippet OMZP::asdf/asdf.plugin.zsh` が `setup_dev_tools()` 内で常時ロードされている。zsh 起動時にエラーは出ていないが、実際に何の機能を提供しているか不明 |
-| **Expected Behavior** | 以下 4 ステップで検証 → 削除確定 or 残置: (1) `zinit_setup.zsh:106-110` をコメントアウトして zsh 再起動 (2) `asdf --version`, `asdf current`, `node --version` の動作確認 (3) `asdf <TAB>` でサブコマンド補完が動くことを確認 (4) 全て OK → snippet 行を削除して commit。NG → コメントアウトを戻し、不足機能を analysis して別実装（直接 fpath 操作等）。`.zsh/functions.zsh:22` の `fpath` 設定（completions 経路）はそのまま残すこと（asdf 自身が `${ASDF_DATA_DIR}/completions` に生成） |
-| **Constraints** | 検証ステップ (1)-(3) が完了するまで commit しない。検証で問題が見つかった場合、削除ではなく代替実装を検討すること。`functions.zsh:22` の fpath 設定には触れない（独立した補完経路） |
-| **Verification** | 1. 削除前後で `asdf --version` の出力が一致 2. 削除前後で `asdf current` の出力が一致 3. 削除前後で `which node`, `which python` 等のパスが一致（shim 経由のまま） 4. 削除後 `asdf <TAB>` で `current/install/list/plugin/...` 等のサブコマンドが補完される 5. zsh 起動時間計測で削除前後の差が ±50ms 以内（できれば短縮） 6. 検証 NG → コメントアウト復元、Spec の Status を Needs Revision に戻し、analysis 結果を Spec に追記してから再判定 |
+**Intent**: chore
+
+**Context**: `.zsh/zinit_setup.zsh:106-110` で `OMZP::asdf/asdf.plugin.zsh` を読み込んでいる。ただし OMZ asdf plugin は asdf 0.x の `$ASDF_DIR/asdf.sh` を `source` する設計で、asdf 0.16+ で Go バイナリ化された後は `asdf.sh` が削除されており、実質 no-op の可能性がある。直前 commit `7c7a033` でカスタム shim PATH 設定を `setup_asdf()` に実装済みのため、OMZ plugin の役割は重複・形骸化している可能性が高い。
+
+**Current Behavior**: `zinit ice wait lucid; zinit snippet OMZP::asdf/asdf.plugin.zsh` が `setup_dev_tools()` 内で常時ロードされている。zsh 起動時にエラーは出ていないが、実際に何の機能を提供しているか不明。
+
+**Expected Behavior**: 以下 4 ステップで検証 → 削除確定 or 残置: (1) `zinit_setup.zsh:106-110` をコメントアウトして zsh 再起動 (2) `asdf --version`, `asdf current`, `node --version` の動作確認 (3) `asdf <TAB>` でサブコマンド補完が動くことを確認 (4) 全て OK → snippet 行を削除して commit。NG → コメントアウトを戻し、不足機能を analysis して別実装（直接 fpath 操作等）。`.zsh/functions.zsh:22` の `fpath` 設定（completions 経路）はそのまま残すこと（asdf 自身が `${ASDF_DATA_DIR}/completions` に生成）。
+
+**Constraints**: 検証ステップ (1)-(3) が完了するまで commit しない。検証で問題が見つかった場合、削除ではなく代替実装を検討すること。`functions.zsh:22` の fpath 設定には触れない（独立した補完経路）。後方互換性: 既存の補完・PATH 解決を破壊しないこと（破壊的変更検出時は revert）。
+
+**Verification**:
+1. 削除前後で `asdf --version` の出力が一致
+2. 削除前後で `asdf current` の出力が一致
+3. 削除前後で `which node`, `which python` 等のパスが一致（shim 経由のまま）
+4. 削除後 `asdf <TAB>` で `current/install/list/plugin/...` 等のサブコマンドが補完される
+5. zsh 起動時間計測で削除前後の差が ±50ms 以内（できれば短縮）
+6. 検証 NG → コメントアウト復元、Spec の Status を Needs Revision に戻し、analysis 結果を Spec に追記してから再判定
+7. 既存テスト（`./test_zsh_config.zsh`）が引き続きパスする
 
 ## Agent-Ready Summary
 
