@@ -122,14 +122,28 @@ days_ago() {
     echo $(( (now - e) / 86400 ))
 }
 
-# Minimal JSON string escaping (backslash, quote, newline, tab).
+# RFC 8259 JSON string escaping. Handles all control characters U+0000-U+001F
+# in addition to the standard backslash-quote-newline-tab cases.
 json_escape() {
     local s="$1"
+    # Standard short escapes
     s="${s//\\/\\\\}"
     s="${s//\"/\\\"}"
+    s="${s//$'\b'/\\b}"
+    s="${s//$'\f'/\\f}"
     s="${s//$'\n'/\\n}"
     s="${s//$'\r'/\\r}"
     s="${s//$'\t'/\\t}"
+    # Remaining control chars U+0001-U+001F (excluding the seven above) → \u00XX
+    s="${s//$'\x01'/\\u0001}"; s="${s//$'\x02'/\\u0002}"; s="${s//$'\x03'/\\u0003}"
+    s="${s//$'\x04'/\\u0004}"; s="${s//$'\x05'/\\u0005}"; s="${s//$'\x06'/\\u0006}"
+    s="${s//$'\x07'/\\u0007}"; s="${s//$'\x0b'/\\u000b}"; s="${s//$'\x0e'/\\u000e}"
+    s="${s//$'\x0f'/\\u000f}"; s="${s//$'\x10'/\\u0010}"; s="${s//$'\x11'/\\u0011}"
+    s="${s//$'\x12'/\\u0012}"; s="${s//$'\x13'/\\u0013}"; s="${s//$'\x14'/\\u0014}"
+    s="${s//$'\x15'/\\u0015}"; s="${s//$'\x16'/\\u0016}"; s="${s//$'\x17'/\\u0017}"
+    s="${s//$'\x18'/\\u0018}"; s="${s//$'\x19'/\\u0019}"; s="${s//$'\x1a'/\\u001a}"
+    s="${s//$'\x1b'/\\u001b}"; s="${s//$'\x1c'/\\u001c}"; s="${s//$'\x1d'/\\u001d}"
+    s="${s//$'\x1e'/\\u001e}"; s="${s//$'\x1f'/\\u001f}"
     printf '%s' "$s"
 }
 
@@ -243,12 +257,14 @@ collect_referenced() {
     while IFS=$'\t' read -r p v src; do
         [[ -z "$p" || -z "$v" ]] && continue
         plugin_present["$p"]=1
-        plugin_referenced_versions["$p"]+="$v"$'\n'
         k="$p"$'\t'"$v"
+        # Append the version to plugin_referenced_versions only on first sighting
+        # of (plugin, version); accumulate sources for every sighting.
         if [[ -n "${plugin_referenced_sources[$k]:-}" ]]; then
             plugin_referenced_sources["$k"]="${plugin_referenced_sources[$k]};$src"
         else
             plugin_referenced_sources["$k"]="$src"
+            plugin_referenced_versions["$p"]+="$v"$'\n'
         fi
     done <<< "$out"
 }
@@ -461,8 +477,8 @@ format_json() {
     echo -n "  \"unused_plugins\": ["
     first=1
     local up
-    for up in "${unused_plugins[@]:-}"; do
-        [[ -z "$up" ]] && continue
+    # Use ${arr[@]+"${arr[@]}"} guard for portability with bash 4.0-4.3 + nounset
+    for up in ${unused_plugins[@]+"${unused_plugins[@]}"}; do
         if (( first )); then first=0; else echo -n ","; fi
         echo -n "\"$(json_escape "$up")\""
     done

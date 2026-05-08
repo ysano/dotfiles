@@ -12,6 +12,17 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT="$REPO_ROOT/scripts/asdf-doctor.sh"
 FIXTURE_DIR="$REPO_ROOT/tests/fixtures/asdf-doctor"
 
+# Pre-flight: fixture must exist; otherwise tests would silently pass.
+if [[ ! -d "$FIXTURE_DIR/proj_test" ]] || [[ ! -d "$FIXTURE_DIR/proj_dup" ]]; then
+    echo "Error: fixture directories missing under $FIXTURE_DIR" >&2
+    echo "       Expected: proj_test/ and proj_dup/" >&2
+    exit 1
+fi
+if [[ ! -f "$FIXTURE_DIR/proj_test/.tool-versions" ]]; then
+    echo "Error: fixture file missing: $FIXTURE_DIR/proj_test/.tool-versions" >&2
+    exit 1
+fi
+
 # Colors (only when stdout is a tty)
 if [[ -t 1 ]]; then
     RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; BOLD='\033[1m'; NC='\033[0m'
@@ -129,9 +140,26 @@ assert "still has 4 main sections" grep -q "## Healthy Versions" <<< "$empty_out
 echo
 
 # ---------------------------------------------------------------------------
-# Test 7: bad argument
+# Test 7: cross-project deduplication
+#         proj_test and proj_dup both reference python 99.99.99 — it must
+#         appear EXACTLY ONCE in the Missing section (not duplicated).
 # ---------------------------------------------------------------------------
-echo "Test 7: invalid argument"
+echo "Test 7: cross-project deduplication of (plugin, version) pairs"
+dup_count=$(grep -cE "^\| python \| 99\.99\.99 " <<< "$out" || true)
+assert "python 99.99.99 appears exactly once in missing" test "$dup_count" -eq 1
+
+if command -v jq >/dev/null 2>&1; then
+    # Same check via JSON: missing[python] must contain "99.99.99" exactly once
+    json_dup_count=$(SEARCH_DIRS="$FIXTURE_DIR" "$SCRIPT" --json 2>/dev/null \
+        | jq '[.plugins.python.missing[] | select(. == "99.99.99")] | length' 2>/dev/null)
+    assert "json: missing python 99.99.99 unique" test "$json_dup_count" -eq 1
+fi
+echo
+
+# ---------------------------------------------------------------------------
+# Test 8: bad argument
+# ---------------------------------------------------------------------------
+echo "Test 8: invalid argument"
 set +e
 "$SCRIPT" --bogus-flag >/dev/null 2>&1
 rc=$?
