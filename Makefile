@@ -1,7 +1,8 @@
 # Claude Voice Integration - Development Makefile
 # ローカル開発用の品質チェックツール
 
-.PHONY: all check lint format test security clean install-tools help
+.PHONY: all check lint format test security clean install-tools help \
+	asdf-doctor asdf-clean-dry asdf-sync
 .DEFAULT_GOAL := help
 
 # 変数定義
@@ -338,6 +339,38 @@ stats:
 	echo "  総行数: $$total_lines"
 	@total_functions=$$(find $(CLAUDE_DIR) -name "*.sh" -exec grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() *{" {} + 2>/dev/null | awk -F: '{sum+=$$2} END {print sum}'); \
 	echo "  総関数数: $$total_functions"
+
+# ============================================================================
+# asdf 棚卸し（運用ツール）
+# ============================================================================
+
+ASDF_DOCTOR_SCRIPT := scripts/asdf-doctor.sh
+
+## 🩺 asdf 診断: .tool-versions ⇄ installed の整合性チェック
+asdf-doctor:
+	@test -x $(ASDF_DOCTOR_SCRIPT) || { \
+		echo "$(RED)❌ $(ASDF_DOCTOR_SCRIPT) not found or not executable$(NC)" >&2; \
+		exit 1; \
+	}
+	@./$(ASDF_DOCTOR_SCRIPT)
+
+## 🧹 asdf 削除候補表示（dry-run、実行はしない）
+asdf-clean-dry:
+	@test -x $(ASDF_DOCTOR_SCRIPT) || { \
+		echo "$(RED)❌ $(ASDF_DOCTOR_SCRIPT) not found or not executable$(NC)" >&2; \
+		exit 1; \
+	}
+	@./$(ASDF_DOCTOR_SCRIPT) --clean-suggestions
+
+## 🔄 asdf プラグインインデックス・全プラグインを最新化
+asdf-sync:
+	@command -v asdf >/dev/null 2>&1 || { \
+		echo "$(YELLOW)⚠️  asdf not found, skip$(NC)" >&2; \
+		exit 0; \
+	}
+	@echo "$(CYAN)🔄 asdf プラグインを更新中...$(NC)"
+	@asdf plugin update --all
+	@echo "$(GREEN)✅ 完了。各プロジェクトで 'asdf install' を実行してください。$(NC)"
 
 # ============================================================================
 # ヘルプ

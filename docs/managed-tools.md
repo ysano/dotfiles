@@ -39,6 +39,8 @@
 
 > Homebrew (`Brewfile`) およびマシン構築の運用ナレッジは外部リポ [ysano/machine-management](https://github.com/ysano/machine-management) で管理。
 
+> **asdf 棚卸し**: `make asdf-doctor` で `.tool-versions` と installed の整合性チェック（読み取り専用）。削除候補は `make asdf-clean-dry` で確認後、手動 `asdf uninstall <plugin> <version>` を推奨。プラグインインデックス更新は `make asdf-sync`。
+
 ### プラットフォーム固有
 
 | ツール | Config ファイル | デプロイ方法 | 対応OS |
