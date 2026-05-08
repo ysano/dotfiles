@@ -12,12 +12,13 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT="$REPO_ROOT/scripts/asdf-doctor.sh"
 FIXTURE_DIR="$REPO_ROOT/tests/fixtures/asdf-doctor"
 
-# Pre-flight: fixture must exist; otherwise tests would silently pass.
-if [[ ! -d "$FIXTURE_DIR/proj_test" ]] || [[ ! -d "$FIXTURE_DIR/proj_dup" ]]; then
-    echo "Error: fixture directories missing under $FIXTURE_DIR" >&2
-    echo "       Expected: proj_test/ and proj_dup/" >&2
-    exit 1
-fi
+# Pre-flight: fixtures must exist; otherwise tests would silently pass.
+for sub in proj_test proj_dup proj_edge_empty proj_edge_comments; do
+    if [[ ! -d "$FIXTURE_DIR/$sub" ]]; then
+        echo "Error: fixture directory missing: $FIXTURE_DIR/$sub" >&2
+        exit 1
+    fi
+done
 if [[ ! -f "$FIXTURE_DIR/proj_test/.tool-versions" ]]; then
     echo "Error: fixture file missing: $FIXTURE_DIR/proj_test/.tool-versions" >&2
     exit 1
@@ -157,9 +158,35 @@ fi
 echo
 
 # ---------------------------------------------------------------------------
-# Test 8: bad argument
+# Test 8: edge-case .tool-versions files
+#         - proj_edge_empty/.tool-versions   : 0 bytes
+#         - proj_edge_comments/.tool-versions: only comments + blank lines
+#         Neither should crash the parser nor produce phantom references.
 # ---------------------------------------------------------------------------
-echo "Test 8: invalid argument"
+echo "Test 8: edge-case .tool-versions files (empty / comments-only)"
+edge_out=$(SEARCH_DIRS="$FIXTURE_DIR" "$SCRIPT" 2>/dev/null)
+edge_rc=$?
+assert "edge fixtures: script exits 0" test "$edge_rc" -eq 0
+assert "edge fixtures: still has 4 main sections" \
+    grep -q "## Healthy Versions" <<< "$edge_out"
+# Only-comments file must NOT inject a phantom plugin into Missing.
+# (proj_edge_comments has no version lines; if parser misreads, a stray
+#  entry like "comment" or "#" would appear in Missing.)
+assert "edge fixtures: no phantom 'comment' plugin in missing" \
+    bash -c "! grep -qE '^\| comment ' <<< \"\$edge_out\""
+
+if command -v jq >/dev/null 2>&1; then
+    edge_json_check() {
+        SEARCH_DIRS="$FIXTURE_DIR" "$SCRIPT" --json 2>/dev/null | jq -e '.' >/dev/null 2>&1
+    }
+    assert "edge fixtures: json valid" edge_json_check
+fi
+echo
+
+# ---------------------------------------------------------------------------
+# Test 9: bad argument
+# ---------------------------------------------------------------------------
+echo "Test 9: invalid argument"
 set +e
 "$SCRIPT" --bogus-flag >/dev/null 2>&1
 rc=$?

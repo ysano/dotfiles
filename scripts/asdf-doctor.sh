@@ -236,18 +236,18 @@ collect_referenced() {
         local dir
         for dir in $SEARCH_DIRS_RAW; do
             [[ -n "$dir" && -d "$dir" ]] || continue
+            # Single find call covers both .tool-versions and go.mod to avoid
+            # walking the same large directory tree twice.
             while IFS= read -r f; do
-                parse_tool_versions "$f"
-            done < <(find "$dir" -type f -name ".tool-versions" \
+                case "${f##*/}" in
+                    .tool-versions) parse_tool_versions "$f" ;;
+                    go.mod) parse_go_mod_toolchain "$f" ;;
+                esac
+            done < <(find "$dir" -type f \
+                \( -name ".tool-versions" -o -name "go.mod" \) \
                 -not -path "*/node_modules/*" \
                 -not -path "*/.git/*" \
                 -not -path "*/Library/*" \
-                2>/dev/null)
-            while IFS= read -r f; do
-                parse_go_mod_toolchain "$f"
-            done < <(find "$dir" -type f -name "go.mod" \
-                -not -path "*/node_modules/*" \
-                -not -path "*/.git/*" \
                 2>/dev/null)
         done
     )
