@@ -119,8 +119,13 @@ setup_dev_tools() {
         _asdf_comp_file="$_asdf_comp_dir/_asdf"
         if [[ -n "$_asdf_bin" ]] && \
            { [[ ! -f "$_asdf_comp_file" ]] || [[ "$_asdf_bin" -nt "$_asdf_comp_file" ]]; }; then
+            # 失敗時に空 / 部分ファイルを残さないよう一時ファイル経由で atomic に置換。
             mkdir -p "$_asdf_comp_dir"
-            "$_asdf_bin" completion zsh > "$_asdf_comp_file" 2>/dev/null
+            if "$_asdf_bin" completion zsh > "$_asdf_comp_file.tmp" 2>/dev/null; then
+                mv "$_asdf_comp_file.tmp" "$_asdf_comp_file"
+            else
+                rm -f "$_asdf_comp_file.tmp"
+            fi
         fi
 
         # plugin-index の週次自動更新（バックグラウンド・非同期）
