@@ -107,6 +107,19 @@ setup_dev_tools() {
     if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}" ]]; then
         zinit ice wait lucid
         zinit snippet OMZP::asdf/asdf.plugin.zsh
+
+        # plugin-index の週次自動更新（バックグラウンド・非同期）
+        # sentinel mtime が 7 日以上前なら 'asdf plugin update --all' を disown 起動。
+        # stat: BSD (-f %m) → GNU (-c %Y) フォールバックでクロスプラットフォーム対応。
+        local _asdf_idx_stamp="${ASDF_DATA_DIR:-$HOME/.asdf}/.plugin-index-updated"
+        local _asdf_idx_week=$((7 * 24 * 60 * 60))
+        local _asdf_idx_mtime
+        _asdf_idx_mtime=$(stat -f %m "$_asdf_idx_stamp" 2>/dev/null \
+            || stat -c %Y "$_asdf_idx_stamp" 2>/dev/null \
+            || echo 0)
+        if (( $(date +%s) - _asdf_idx_mtime > _asdf_idx_week )); then
+            ( asdf plugin update --all >/dev/null 2>&1 && touch "$_asdf_idx_stamp" ) &!
+        fi
     fi
     
     # rbenv (not on Windows)
