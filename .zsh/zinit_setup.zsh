@@ -105,8 +105,28 @@ setup_dev_tools() {
     
     # ASDF version manager
     if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}" ]]; then
-        zinit ice wait lucid
-        zinit snippet OMZP::asdf/asdf.plugin.zsh
+        # 補完ファイル ~/.asdf/completions/_asdf を遅延生成。
+        # asdf 0.16+ では asdf binary が `asdf completion zsh` を提供するが、
+        # 自動配置はされないため zsh 起動時に必要なら生成する。
+        # asdf binary が補完ファイルより新しい場合のみ再生成（アップグレード追従）。
+        # fpath への登録は .zsh/functions.zsh が担当。
+        # 旧来の OMZP::asdf/asdf.plugin.zsh は asdf 0.x の asdf.sh を source する
+        # 前提で、asdf 0.16+ では asdf.sh 自体が存在せず実質 no-op だったため除去。
+        # shim PATH は .zprofile の setup_asdf() に集約済み（commit 7c7a033）。
+        local _asdf_bin _asdf_comp_dir _asdf_comp_file
+        _asdf_bin=$(command -v asdf 2>/dev/null)
+        _asdf_comp_dir="${ASDF_DATA_DIR:-$HOME/.asdf}/completions"
+        _asdf_comp_file="$_asdf_comp_dir/_asdf"
+        if [[ -n "$_asdf_bin" ]] && \
+           { [[ ! -f "$_asdf_comp_file" ]] || [[ "$_asdf_bin" -nt "$_asdf_comp_file" ]]; }; then
+            # 失敗時に空 / 部分ファイルを残さないよう一時ファイル経由で atomic に置換。
+            mkdir -p "$_asdf_comp_dir"
+            if "$_asdf_bin" completion zsh > "$_asdf_comp_file.tmp" 2>/dev/null; then
+                mv "$_asdf_comp_file.tmp" "$_asdf_comp_file"
+            else
+                rm -f "$_asdf_comp_file.tmp"
+            fi
+        fi
 
         # plugin-index の週次自動更新（バックグラウンド・非同期）
         # sentinel mtime が 7 日以上前なら 'asdf plugin update --all' を disown 起動。
