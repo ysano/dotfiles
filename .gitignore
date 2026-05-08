@@ -213,3 +213,7 @@ __pycache__/
 *.~[0-9]*~
 
 .playwright-mcp/
+
+# tests/fixtures/ 配下の .tool-versions は意図的なテストデータなので追跡対象に戻す
+# (グローバル gitignore の .tool-versions ルールを fixture では無効化)
+!tests/fixtures/**/.tool-versions
