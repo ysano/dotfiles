@@ -13,6 +13,10 @@ dirs=(.zsh .emacs.d .tmux)
 # XDG_CONFIG_HOME配下のディレクトリ
 config_dirs=(gwt bat ripgrep git)
 
+# ~/.claude/ 配下に個別配備するファイル
+# (claude-plugins とは別管理。ホスト固有な統合スクリプト等を symlink で展開)
+claude_files=(statusline-command.sh)
+
 dotfiles=dotfiles
 
 # ================================
@@ -66,6 +70,17 @@ case "${OSTYPE}" in
                 cmd //c "mklink /D $(cygpath -w "$dst") $(cygpath -w "$src")"
             fi
         done
+
+        # ~/.claude/ 配下のファイル
+        for f in $claude_files; do
+            local src="$HOME/$dotfiles/.claude/$f"
+            local dst="$HOME/.claude/$f"
+            if [[ -e "$src" ]]; then
+                ensure_parent_dir "$dst"
+                backup_if_exists "$dst"
+                cmd //c "mklink $(cygpath -w "$dst") $(cygpath -w "$src")"
+            fi
+        done
         ;;
     *)
         # Unix系 (Linux/macOS/WSL)
@@ -88,6 +103,17 @@ case "${OSTYPE}" in
             local src="$HOME/$dotfiles/.config/$d"
             local dst="$config_home/$d"
             if [[ -d "$src" ]]; then
+                ensure_parent_dir "$dst"
+                backup_if_exists "$dst"
+                ln -s "$src" "$dst"
+            fi
+        done
+
+        # ~/.claude/ 配下のファイル
+        for f in $claude_files; do
+            local src="$HOME/$dotfiles/.claude/$f"
+            local dst="$HOME/.claude/$f"
+            if [[ -e "$src" ]]; then
                 ensure_parent_dir "$dst"
                 backup_if_exists "$dst"
                 ln -s "$src" "$dst"
