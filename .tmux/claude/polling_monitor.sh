@@ -10,6 +10,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 設定とヘルパー関数を読み込み
 source "$SCRIPT_DIR/functions.sh"
 
+# Dialog detector を source (検出関数 detect_dialogs を提供)
+[[ -f "$SCRIPT_DIR/dialog_detector.sh" ]] && source "$SCRIPT_DIR/dialog_detector.sh"
+
 # 設定読み込み（silent mode）
 load_configuration() {
     # システム有効/無効チェック
@@ -37,15 +40,17 @@ polling_monitor_main() {
         return 0
     fi
 
-    # 現在の全ペインのタイトルを取得（1回の tmux 呼び出しで完了）
+    # 現在の全ペインの current_command を取得（1回の tmux 呼び出しで完了）
+    # 注: pane_title は会話トピック名で上書きされるため CC 検出には使えない。
+    #     current_command (claude / claude.exe) で識別する。
     local all_panes
-    all_panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_title}" 2>/dev/null)
+    all_panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_current_command}" 2>/dev/null)
 
-    # 現在アクティブな CC ペインをタイトルから抽出
+    # 現在アクティブな CC ペインを抽出
     local active_cc_panes=""
-    while IFS=$'\t' read -r pane_target title; do
+    while IFS=$'\t' read -r pane_target cmd; do
         [[ -z "$pane_target" ]] && continue
-        if [[ "$title" == *"Claude Code"* ]]; then
+        if [[ "$cmd" == claude* ]]; then
             if [[ -z "$active_cc_panes" ]]; then
                 active_cc_panes="$pane_target"
             else
@@ -81,6 +86,9 @@ polling_monitor_main() {
             tmux set-option -g -u "$key" 2>/dev/null
             tmux set-option -g -u "@claude_voice_status_${pane_id}" 2>/dev/null
             tmux set-option -g -u "@claude_voice_hooks_ts_${pane_id}" 2>/dev/null
+            # ダイアログ検出状態もクリア
+            type cleanup_dialog_state_for_pane >/dev/null 2>&1 \
+                && cleanup_dialog_state_for_pane "$pane_id"
             log_debug "Liveness check: ステータスクリア $pane_target"
 
             # ウィンドウのアイコンを再集約（統一関数）
@@ -107,6 +115,9 @@ polling_monitor_main() {
             fi
         done <<< "$active_cc_panes"
     fi
+
+    # --- 3. AskUserQuestion 等ダイアログ検出 (Hooks では捕捉不可な領域) ---
+    type detect_dialogs >/dev/null 2>&1 && detect_dialogs
 }
 
 # 全Claude Codeペインのステータスを表示（診断用）
