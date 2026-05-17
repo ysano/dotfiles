@@ -3,7 +3,8 @@
 # 説明: tmux-claude-voice 基本機能関数群
 
 # 多重読み込み防止
-[[ -n "$_CLAUDE_FUNCTIONS_LOADED" ]] && return 0 2>/dev/null
+# 呼び出し側が `set -u` の場合に未定義変数で abort しないよう :- でフォールバック
+[[ -n "${_CLAUDE_FUNCTIONS_LOADED:-}" ]] && return 0 2>/dev/null
 _CLAUDE_FUNCTIONS_LOADED=1
 
 # ログ機能（ファイル出力に変更してループを防止）
@@ -18,7 +19,7 @@ log_error() {
 }
 
 log_debug() {
-    if [[ "$TMUX_CLAUDE_VOICE_DEBUG" == "1" ]]; then
+    if [[ "${TMUX_CLAUDE_VOICE_DEBUG:-}" == "1" ]]; then
         echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$CLAUDE_VOICE_LOG_FILE"
     fi
 }
