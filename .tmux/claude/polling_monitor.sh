@@ -13,6 +13,9 @@ source "$SCRIPT_DIR/functions.sh"
 # Dialog detector を source (検出関数 detect_dialogs を提供)
 [[ -f "$SCRIPT_DIR/dialog_detector.sh" ]] && source "$SCRIPT_DIR/dialog_detector.sh"
 
+# Error detector を source (検出関数 detect_error_state を提供)
+[[ -f "$SCRIPT_DIR/error_detector.sh" ]] && source "$SCRIPT_DIR/error_detector.sh"
+
 # 設定読み込み（silent mode）
 load_configuration() {
     # システム有効/無効チェック
@@ -172,6 +175,9 @@ polling_monitor_main() {
 
     # --- 2.5. pane_title による状態補正 (hook 不発セッション対策) ---
     correct_status_from_title
+
+    # --- 2.7. 継続不能エラー検出 (API障害 / Usage超過 / Policy違反) ---
+    type detect_error_state >/dev/null 2>&1 && detect_error_state
 
     # --- 3. AskUserQuestion 等ダイアログ検出 (Hooks では捕捉不可な領域) ---
     type detect_dialogs >/dev/null 2>&1 && detect_dialogs
