@@ -24,11 +24,60 @@ load_configuration() {
     return 0
 }
 
+# pane_title から Claude Code の状態を推定する (hook 不発セッション対策)
+#   Busy: 先頭が点字スピナー (U+2800-U+28FF / UTF-8 で e2a0xx-e2a3xx)
+#   Idle: 先頭が ✳ (U+2733 / UTF-8 で e29cb3)
+#   不明: それ以外 → 空文字 (呼び出し側は登録ステータスを変更しない)
+infer_state_from_title() {
+    local title="$1"
+    [[ -z "$title" ]] && return 0
+    local hex
+    hex=$(printf '%s' "$title" | head -c3 | od -An -tx1 2>/dev/null | tr -d ' \n')
+    case "$hex" in
+        e2a0??|e2a1??|e2a2??|e2a3??) echo "Busy" ;;
+        e29cb3)                       echo "Idle" ;;
+        *)                            echo "" ;;
+    esac
+}
+
+# pane_title による状態補正。
+# hook を発火しない CC セッションでもアイコンが実状態を反映するようにする。
+# - title スピナー → Busy (確実に作業中なので常に上書き)
+# - title ✳ かつ登録が Busy → Idle (古い Busy を補正。Idle/Waiting は hook 判定を尊重)
+# TMUX_CLAUDE_TITLE_DETECT_DISABLED=true で無効化可能。
+correct_status_from_title() {
+    [[ "${TMUX_CLAUDE_TITLE_DETECT_DISABLED:-false}" == "true" ]] && return 0
+    local panes
+    panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_current_command}	#{pane_title}" 2>/dev/null)
+    [[ -z "$panes" ]] && return 0
+    while IFS=$'\t' read -r pane_target cmd title; do
+        [[ -z "$pane_target" ]] && continue
+        [[ "$cmd" == claude* ]] || continue
+        local inferred
+        inferred=$(infer_state_from_title "$title")
+        [[ -z "$inferred" ]] && continue
+        local pane_key cur
+        pane_key=$(encode_pane_key "$pane_target")
+        cur=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
+        if [[ "$inferred" == "Busy" && "$cur" != "Busy" ]]; then
+            tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Busy" 2>/dev/null
+            aggregate_window_icon "$pane_target"
+            log_debug "title 補正: $pane_target ${cur:-未登録} -> Busy"
+        elif [[ "$inferred" == "Idle" && "$cur" == "Busy" ]]; then
+            tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
+            aggregate_window_icon "$pane_target"
+            log_debug "title 補正: $pane_target Busy -> Idle"
+        fi
+    done <<< "$panes"
+}
+
 # メイン処理：Liveness Check（1回実行）
-# Hooks が全ステータス遷移を管理するため、ポーリングは以下のみ行う:
-#   1. 登録済みペインの生存確認（pane_title チェック）
-#   2. 古い状態のクリーンアップ
-#   3. 未登録 CC ペインの自動登録（セーフティネット）
+# Hooks がステータス遷移の主経路だが、hook を発火しないセッションも存在するため
+# ポーリングで以下を補完する:
+#   1. 古い状態のクリーンアップ（CC 終了ペイン）
+#   2. 未登録 CC ペインの自動登録（セーフティネット）
+#   2.5. pane_title による状態補正（hook 不発セッション対策）
+#   3. AskUserQuestion 等ダイアログ検出
 polling_monitor_main() {
     # 設定読み込み
     if ! load_configuration; then
@@ -115,6 +164,9 @@ polling_monitor_main() {
             fi
         done <<< "$active_cc_panes"
     fi
+
+    # --- 2.5. pane_title による状態補正 (hook 不発セッション対策) ---
+    correct_status_from_title
 
     # --- 3. AskUserQuestion 等ダイアログ検出 (Hooks では捕捉不可な領域) ---
     type detect_dialogs >/dev/null 2>&1 && detect_dialogs
