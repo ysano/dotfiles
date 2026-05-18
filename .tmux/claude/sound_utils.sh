@@ -3,11 +3,12 @@
 # 説明: tmux-claude-voice 音声エンジン
 
 # 多重読み込み防止
-[[ -n "$_CLAUDE_SOUND_UTILS_LOADED" ]] && return 0 2>/dev/null
+# 呼び出し側が `set -u` でも abort しないよう :- でフォールバック (ADR 0002)
+[[ -n "${_CLAUDE_SOUND_UTILS_LOADED:-}" ]] && return 0 2>/dev/null
 _CLAUDE_SOUND_UTILS_LOADED=1
 
 # 依存ファイルの存在確認（他スクリプトからsource時はSCRIPT_DIRを継承）
-if [[ -z "$SCRIPT_DIR" ]]; then
+if [[ -z "${SCRIPT_DIR:-}" ]]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
@@ -70,7 +71,7 @@ apply_volume_correction() {
 # 設定値の取得（デフォルト値付き）
 get_tmux_sound_option() {
     local option="$1"
-    local default_value="$2"
+    local default_value="${2:-}"
     
     local value
     if value=$(tmux show-option -gqv "@$option" 2>/dev/null); then
@@ -195,7 +196,7 @@ get_available_windows_voices() {
 # 音声合成でテキストを読み上げ（パンニング対応）
 speak_text() {
     local text="$1"
-    local session_window="$2"  # session:window形式（オプション）
+    local session_window="${2:-}"  # session:window形式（オプション）
     local os_type=$(get_os_type)
     
     if [[ -z "$text" ]]; then
@@ -314,7 +315,7 @@ speak_text() {
 # 通知音を再生
 play_notification_sound() {
     local sound_type="$1"  # start, complete, waiting, error
-    local session_window="$2"  # セッション:ウィンドウ（オプション）
+    local session_window="${2:-}"  # セッション:ウィンドウ（オプション）
     local os_type=$(get_os_type)
     
     if [[ -z "$sound_type" ]]; then

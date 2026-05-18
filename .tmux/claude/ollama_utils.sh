@@ -3,11 +3,12 @@
 # 説明: tmux-claude-voice Ollama連携と要約機能
 
 # 多重読み込み防止
-[[ -n "$_CLAUDE_OLLAMA_UTILS_LOADED" ]] && return 0 2>/dev/null
+# 呼び出し側が `set -u` でも abort しないよう :- でフォールバック (ADR 0002)
+[[ -n "${_CLAUDE_OLLAMA_UTILS_LOADED:-}" ]] && return 0 2>/dev/null
 _CLAUDE_OLLAMA_UTILS_LOADED=1
 
 # 依存ファイルの存在確認（他スクリプトからsource時はSCRIPT_DIRを継承）
-if [[ -z "$SCRIPT_DIR" ]]; then
+if [[ -z "${SCRIPT_DIR:-}" ]]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 

@@ -4,7 +4,8 @@
 # 他のスクリプトからsourceして使用する統一ログ関数を提供
 
 # 多重読み込み防止
-[[ -n "$_CLAUDE_LOGGING_LOADED" ]] && return 0
+# 呼び出し側が `set -u` でも abort しないよう :- でフォールバック (ADR 0002)
+[[ -n "${_CLAUDE_LOGGING_LOADED:-}" ]] && return 0
 readonly _CLAUDE_LOGGING_LOADED=1
 
 # ログファイルパス

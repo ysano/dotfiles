@@ -127,7 +127,7 @@ show_notify_mode() {
 # メイン処理
 main() {
     # tmuxセッション内で実行されているかチェック
-    if [[ -z "$TMUX" ]]; then
+    if [[ -z "${TMUX:-}" ]]; then
         log_error "tmuxセッション内で実行してください"
         exit 1
     fi
