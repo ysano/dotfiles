@@ -101,13 +101,12 @@ determine_status() {
             echo "Busy"
             ;;
         Notification)
-            # idle_prompt または permission_prompt の場合のみ Waiting
-            if [[ "$notif_type" =~ ^(idle_prompt|permission_prompt)$ ]]; then
-                echo "Waiting"
-            else
-                # その他の通知はステータス変更しない（タイムスタンプのみ更新）
-                echo ""
-            fi
+            # permission_prompt = ツール承認待ち / idle_prompt = 単なるアイドル
+            case "$notif_type" in
+                permission_prompt) echo "Permission" ;;
+                idle_prompt)       echo "Idle" ;;
+                *)                 echo "" ;;  # その他はステータス変更しない
+            esac
             ;;
         Stop)
             echo "Idle"
@@ -182,9 +181,9 @@ if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
     SOUND_ENABLED=$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)
     if [[ "$SOUND_ENABLED" == "true" ]]; then
         case "$NEW_STATUS" in
-            "Busy")    "$SCRIPT_DIR/sound_utils.sh" play start   >/dev/null 2>&1 & ;;
-            "Waiting") "$SCRIPT_DIR/sound_utils.sh" play waiting >/dev/null 2>&1 & ;;
-            "Idle")    "$SCRIPT_DIR/sound_utils.sh" play complete >/dev/null 2>&1 & ;;
+            "Busy")       "$SCRIPT_DIR/sound_utils.sh" play start    >/dev/null 2>&1 & ;;
+            "Permission") "$SCRIPT_DIR/sound_utils.sh" play waiting  >/dev/null 2>&1 & ;;
+            "Idle")       "$SCRIPT_DIR/sound_utils.sh" play complete >/dev/null 2>&1 & ;;
         esac
     fi
 fi
@@ -192,15 +191,13 @@ fi
 # --- 10. TTS 読み上げフィードバック（バックグラウンド実行） ---
 if [[ "$(tmux show-option -gqv @claude_voice_summary_enabled 2>/dev/null)" == "true" ]]; then
     case "$NEW_STATUS" in
-        "Waiting")
-            # permission_prompt のみ読み上げ（idle_prompt は Stop の完了要約でカバー）
-            if [[ "$NOTIFICATION_TYPE" == "permission_prompt" ]]; then
-                (
-                    source "$SCRIPT_DIR/sound_utils.sh" 2>/dev/null
-                    speak_text "${NOTIFICATION_MSG:-ツール実行の許可を求めています}"
-                ) >/dev/null 2>&1 &
-                _log "DEBUG" "TTS: permission_prompt 読み上げ開始"
-            fi
+        "Permission")
+            # ツール承認待ちの通知メッセージを読み上げ
+            (
+                source "$SCRIPT_DIR/sound_utils.sh" 2>/dev/null
+                speak_text "${NOTIFICATION_MSG:-ツール実行の許可を求めています}"
+            ) >/dev/null 2>&1 &
+            _log "DEBUG" "TTS: permission 読み上げ開始"
             ;;
         "Idle")
             # タスク完了: ペイン内容を要約して読み上げ

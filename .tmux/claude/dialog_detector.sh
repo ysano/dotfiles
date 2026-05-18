@@ -101,13 +101,19 @@ detect_dialogs() {
                     ) >/dev/null 2>&1 &
                 fi
                 tmux set-option -g "$state_key" "true" 2>/dev/null
+                # ペイン状態を Question にしてウィンドウアイコンを ❓ に
+                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Question" 2>/dev/null
+                type aggregate_window_icon >/dev/null 2>&1 && aggregate_window_icon "$pane_target"
                 log_debug "Dialog detected: $pane_target"
             fi
         else
             # ダイアログ無し
             if [[ "$prev_state" == "true" ]]; then
-                # 消失 → 状態リセット
+                # 消失 → 状態リセット。Idle に戻す
+                # (実際に作業継続中なら correct_status_from_title が Busy に補正)
                 tmux set-option -gu "$state_key" 2>/dev/null
+                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
+                type aggregate_window_icon >/dev/null 2>&1 && aggregate_window_icon "$pane_target"
                 log_debug "Dialog dismissed: $pane_target"
             fi
         fi

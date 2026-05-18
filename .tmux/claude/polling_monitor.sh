@@ -59,6 +59,11 @@ correct_status_from_title() {
         local pane_key cur
         pane_key=$(encode_pane_key "$pane_target")
         cur=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
+        # Permission / Question / Error は専用検出 (hook / dialog_detector /
+        # エラー検出) が管理するため title 補正の対象外。Busy <-> Idle のみ扱う。
+        case "$cur" in
+            Permission|Question|Error) continue ;;
+        esac
         if [[ "$inferred" == "Busy" && "$cur" != "Busy" ]]; then
             tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Busy" 2>/dev/null
             aggregate_window_icon "$pane_target"
@@ -198,9 +203,11 @@ show_pane_status() {
             local icon="?"
             case "$status" in
                 "Busy")         icon="⚡" ;;
-                "Waiting")      icon="⌛" ;;
+                "Permission")   icon="⌛" ;;
+                "Question")     icon="❓" ;;
+                "Error")        icon="⚠" ;;
                 "Idle")         icon="✅" ;;
-                "Unregistered") icon="❓" ;;
+                "Unregistered") icon="?" ;;
             esac
 
             local ts_info=""
