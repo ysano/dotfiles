@@ -266,8 +266,19 @@ apply_panning() {
     gains=$(calculate_pan_gains "$pan_position")
     local left_gain=$(echo "$gains" | cut -d' ' -f1)
     local right_gain=$(echo "$gains" | cut -d' ' -f2)
-    
-    log_debug "適用ゲイン: left=$left_gain, right=$right_gain"
+
+    # パンニング ON/OFF の聴感差補正 (+3dB メイクアップ)
+    # equal-power パンは中央で各ch 0.707 (= 非パン afplay より -3dB) になる。
+    # 通知音はヘッドルーム十分 (Ping/Glass/Funk/Sosumi いずれも max ≤ -10.6dB)
+    # なので ×√2 して中央を非パンと同レベルへ揃える。クランプ不要のため
+    # equal-power の「パン位置間で音圧一定」性質はそのまま保持される。
+    # 注: TTS 経路 (apply_speech_panning) には掛けない。say 出力のヘッドルームが
+    #     約 2.8dB しかなく +3dB だと僅かにクリップするため。
+    local _makeup=1.41421356
+    left_gain=$(echo "scale=6; ${left_gain} * ${_makeup}" | bc 2>/dev/null || echo "$left_gain")
+    right_gain=$(echo "scale=6; ${right_gain} * ${_makeup}" | bc 2>/dev/null || echo "$right_gain")
+
+    log_debug "適用ゲイン(+3dB補正): left=$left_gain, right=$right_gain"
 
     # ffplayの存在確認
     if ! command -v ffplay >/dev/null 2>&1; then
