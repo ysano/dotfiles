@@ -71,10 +71,21 @@ correct_status_from_title() {
             tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Busy" 2>/dev/null
             aggregate_window_icon "$pane_target"
             log_debug "title 補正: $pane_target ${cur:-未登録} -> Busy"
+            # hook 不発セッションでも通知音が鳴るよう polling 側からも発火
+            # hook 駆動セッションでは hook 側が先に状態を Busy にしているため
+            # この分岐に来ず、二重発火しない
+            if [[ "$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)" == "true" ]] \
+               && [[ -x "$SCRIPT_DIR/sound_utils.sh" ]]; then
+                "$SCRIPT_DIR/sound_utils.sh" play start "$pane_target" >/dev/null 2>&1 &
+            fi
         elif [[ "$inferred" == "Idle" && "$cur" == "Busy" ]]; then
             tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
             aggregate_window_icon "$pane_target"
             log_debug "title 補正: $pane_target Busy -> Idle"
+            if [[ "$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)" == "true" ]] \
+               && [[ -x "$SCRIPT_DIR/sound_utils.sh" ]]; then
+                "$SCRIPT_DIR/sound_utils.sh" play complete "$pane_target" >/dev/null 2>&1 &
+            fi
         fi
     done <<< "$panes"
 }
