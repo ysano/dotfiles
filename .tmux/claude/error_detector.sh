@@ -31,7 +31,9 @@ readonly ERR_PAT_POLICY='unable to respond to this request'
 ERROR_STATUS_CACHE="${TMPDIR:-/tmp}/claude-anthropic-status.json"
 readonly ERROR_STATUS_CACHE_TTL=300  # 5 分
 
-# Anthropic status page の indicator を返す (none/minor/major/critical)。
+# Anthropic status page を確認し、ok/monitoring/minor/major/critical を返す。
+# Statuspage.io は「監視中」インシデントを indicator=none として扱うため、
+# indicator が none でも incidents[] が非空なら monitoring と判定する。
 # 5 分キャッシュ。取得失敗時は空文字。
 check_anthropic_status() {
     if [[ -f "$ERROR_STATUS_CACHE" ]]; then
@@ -47,7 +49,16 @@ check_anthropic_status() {
             -o "$ERROR_STATUS_CACHE" 2>/dev/null || return 1
     fi
     if command -v jq >/dev/null 2>&1; then
-        jq -r '.status.indicator // ""' "$ERROR_STATUS_CACHE" 2>/dev/null
+        local indicator incident_count
+        indicator=$(jq -r '.status.indicator // ""' "$ERROR_STATUS_CACHE" 2>/dev/null)
+        incident_count=$(jq -r '.incidents | length' "$ERROR_STATUS_CACHE" 2>/dev/null)
+        case "$indicator" in
+            minor|major|critical) echo "$indicator" ;;
+            none)
+                if [[ "${incident_count:-0}" -gt 0 ]]; then echo "monitoring"
+                else echo "ok"; fi ;;
+            *) echo "" ;;
+        esac
     else
         grep -o '"indicator":"[^"]*"' "$ERROR_STATUS_CACHE" 2>/dev/null \
             | head -1 | cut -d'"' -f4
@@ -77,8 +88,10 @@ notify_error() {
             local ind
             ind=$(check_anthropic_status)
             case "$ind" in
-                none)
+                ok)
                     msg="API 障害です。Anthropic ステータスは正常表示のため一時的な可能性があります。" ;;
+                monitoring)
+                    msg="API 障害です。Anthropic 側で監視中のインシデントがあります。" ;;
                 minor|major|critical)
                     msg="API 障害です。Anthropic 側でインシデントが発生しています。" ;;
                 *)
@@ -110,14 +123,22 @@ detect_error_state() {
         [[ -z "$pane_target" ]] && continue
         [[ "$cmd" == claude* ]] || continue
 
-        # 可視範囲の末尾 20 行をエラーパターンで検査
-        local content
-        content=$(tmux capture-pane -t "$pane_target" -p 2>/dev/null | tail -20)
+        # 可視範囲の末尾 50 行 (Claude Code ペインの典型的なエラー位置を網羅)
+        # を ANSI エスケープ付き (-e) でキャプチャし、Claude Code の赤色
+        # (38;5;211 = salmon pink) でレンダリングされた行だけにフィルタしてから
+        # エラーパターンで照合 (ハイブリッド検出)。
+        # メタ会話で「エラー」を引用しても会話側は 38;5;153 (水色 = コードブロック)
+        # 等別色なので除外され、本物のエラー表示だけを拾える。
+        local content red_lines
+        content=$(tmux capture-pane -t "$pane_target" -p -e 2>/dev/null | tail -50)
+        red_lines=$(echo "$content" | grep -F $'\033[38;5;211m')
 
         local errtype=""
-        if   echo "$content" | grep -qE "$ERR_PAT_API";   then errtype="api"
-        elif echo "$content" | grep -qE "$ERR_PAT_USAGE"; then errtype="usage"
-        elif echo "$content" | grep -qF "$ERR_PAT_POLICY"; then errtype="policy"
+        if [[ -n "$red_lines" ]]; then
+            if   echo "$red_lines" | grep -qE "$ERR_PAT_API";   then errtype="api"
+            elif echo "$red_lines" | grep -qE "$ERR_PAT_USAGE"; then errtype="usage"
+            elif echo "$red_lines" | grep -qF "$ERR_PAT_POLICY"; then errtype="policy"
+            fi
         fi
 
         local pane_key cur
