@@ -141,6 +141,26 @@ detect_error_state() {
             fi
         fi
 
+        # 復旧判定: エラー行より後に Claude の新規応答プレフィックス ⏺ (U+23FA)
+        # が見つかれば、API/利用上限から復旧して Claude が応答していると判断。
+        # ⏺ は Claude Code が応答開始時に必ず出すマーカーなので、これが
+        # 「エラーの後」に存在する = ユーザーがリトライして Claude が成功した状態。
+        # (user prompt `>` だけだとリトライ直後 (応答未着) を復旧と誤判定するため
+        #  ⏺ をシグナルに採用)
+        if [[ -n "$errtype" ]]; then
+            local last_err_lineno after_err
+            last_err_lineno=$(echo "$content" | grep -n -F $'\033[38;5;211m' \
+                | grep -E "API Error|usage limit|unable to respond" \
+                | tail -1 | cut -d: -f1)
+            if [[ -n "$last_err_lineno" ]]; then
+                after_err=$(echo "$content" | tail -n +$((last_err_lineno + 1)))
+                if echo "$after_err" | grep -qF "⏺"; then
+                    log_debug "復旧判定: $pane_target エラー行後に ⏺ 新規応答あり → Error クリア"
+                    errtype=""
+                fi
+            fi
+        fi
+
         local pane_key cur
         pane_key=$(encode_pane_key "$pane_target")
         cur=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
