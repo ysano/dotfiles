@@ -14,6 +14,10 @@ log_info() {
     echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$CLAUDE_VOICE_LOG_FILE"
 }
 
+log_warn() {
+    echo "[WARN] $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$CLAUDE_VOICE_LOG_FILE"
+}
+
 log_error() {
     echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$CLAUDE_VOICE_LOG_FILE"
 }

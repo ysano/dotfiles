@@ -27,6 +27,40 @@ load_configuration() {
     return 0
 }
 
+# ADR 0008: claude.conf の初期値と tmux runtime option のドリフトを検出。
+# トグルバインド (Prefix + v + v 等) の誤操作で機能が無音停止する事象を、
+# ログから素早く発見できるようにするための診断。
+#
+# 検出対象は機能 ON/OFF を司る 5 キーに限定 (数値チューニング系は対象外)。
+# ドリフト検出時は WARN ログを出すだけで自動修正はしない。
+# (ユーザーが意図的にトグルしたケースを尊重するため。)
+#
+# レート制限: 1 分に 1 回まで実行 (@claude_voice_drift_check_ts を使用)。
+check_config_drift() {
+    local conf="$HOME/.tmux/claude.conf"
+    [[ -f "$conf" ]] || return 0
+
+    local now last
+    now=$(date +%s)
+    last=$(tmux show-option -gqv @claude_voice_drift_check_ts 2>/dev/null)
+    if [[ -n "$last" ]] && (( now - last < 60 )); then
+        return 0
+    fi
+    tmux set-option -g @claude_voice_drift_check_ts "$now" 2>/dev/null
+
+    local keys=(enabled sound_enabled summary_enabled panning_enabled notify_mode)
+    local key conf_val runtime_val
+    for key in "${keys[@]}"; do
+        # conf から `set -g @claude_voice_<key> "<value>"` の値を抽出
+        conf_val=$(grep -E "^set -g @claude_voice_${key} " "$conf" 2>/dev/null \
+                   | sed -E 's/.*"([^"]*)".*/\1/' | head -1)
+        runtime_val=$(tmux show-option -gqv "@claude_voice_${key}" 2>/dev/null)
+        if [[ -n "$conf_val" && "$conf_val" != "$runtime_val" ]]; then
+            log_warn "config drift: ${key} conf=[${conf_val}] runtime=[${runtime_val:-unset}]"
+        fi
+    done
+}
+
 # pane_title から Claude Code の状態を推定する (hook 不発セッション対策)
 #   Busy: 先頭が点字スピナー (U+2800-U+28FF / UTF-8 で e2a0xx-e2a3xx)
 #   Idle: 先頭が ✳ (U+2733 / UTF-8 で e29cb3)
@@ -192,6 +226,9 @@ polling_monitor_main() {
 
     # --- 3. AskUserQuestion 等ダイアログ検出 (Hooks では捕捉不可な領域) ---
     type detect_dialogs >/dev/null 2>&1 && detect_dialogs
+
+    # --- 4. 設定ドリフト診断 (ADR 0008、1 分に 1 回まで) ---
+    check_config_drift
 }
 
 # 全Claude Codeペインのステータスを表示（診断用）

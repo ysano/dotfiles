@@ -189,7 +189,8 @@ if [[ -f "$SCRIPT_DIR/sound_utils.sh" ]]; then
 fi
 
 # --- 10. TTS 読み上げフィードバック（バックグラウンド実行） ---
-if [[ "$(tmux show-option -gqv @claude_voice_summary_enabled 2>/dev/null)" == "true" ]]; then
+SUMMARY_ENABLED=$(tmux show-option -gqv @claude_voice_summary_enabled 2>/dev/null)
+if [[ "$SUMMARY_ENABLED" == "true" ]]; then
     case "$NEW_STATUS" in
         "Permission")
             # ツール承認待ちの通知メッセージを読み上げ
@@ -217,6 +218,14 @@ if [[ "$(tmux show-option -gqv @claude_voice_summary_enabled 2>/dev/null)" == "t
                 fi
             ) >/dev/null 2>&1 &
             _log "DEBUG" "TTS: 完了要約読み上げ開始"
+            ;;
+    esac
+else
+    # ADR 0008: TTS が動かない原因をサイレント失敗にしないためにログを残す。
+    # Permission / Idle のみ記録 (Busy/Question 等は元々 TTS 対象外)。
+    case "$NEW_STATUS" in
+        "Permission"|"Idle")
+            _log "INFO" "TTS スキップ: summary_enabled=${SUMMARY_ENABLED:-unset} (status=$NEW_STATUS, pane=$PANE_TARGET)"
             ;;
     esac
 fi

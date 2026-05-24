@@ -42,3 +42,4 @@ dotfiles設定変更 → `Task: dotfiles-engineer`、検証 → `Task: dotfiles-
 | `docs/dotfiles-workflows.md` | ワークフロー |
 | `docs/commands-reference.md` | Git Worktree/tmux コマンド |
 | `docs/managed-tools.md` | 管理ツール一覧・デプロイ方法 |
+| `docs/tmux-claude-voice-troubleshooting.md` | tmux Claude Voice の症状別調査・復旧手順 |
