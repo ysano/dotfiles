@@ -48,6 +48,19 @@ for script in "$SCRIPT_DIR"/scripts/*.sh; do
 done
 echo ""
 
+# 3.5 Worktree launcher unit tests
+TEST_SCRIPT="$SCRIPT_DIR/claude/test_worktree_launch.sh"
+if [ -f "$TEST_SCRIPT" ]; then
+  echo "--- Worktree Launcher Tests ---"
+  if bash "$TEST_SCRIPT"; then
+    echo "[PASS] worktree launcher tests"
+  else
+    echo "[FAIL] worktree launcher tests"
+    errors=$((errors + 1))
+  fi
+  echo ""
+fi
+
 # 4. Run conflict check if available
 CONFLICT_SCRIPT="$DOTFILES_ROOT/.claude/skills/tmux-config/scripts/check_conflicts.sh"
 if [ -f "$CONFLICT_SCRIPT" ]; then
