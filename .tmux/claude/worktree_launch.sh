@@ -45,12 +45,13 @@ resolve_base() {
 # 起動する claude コマンド文字列を組み立てる。
 #   supervised   : 対話。表示名のみ。
 #   unsupervised : headless。許可は読取+編集系に厳選（Bash は既定で渡さない）。
-#   task/allowedTools は %q でエスケープし、後段の eval で単語分割・注入が起きないようにする。
+#   name/task/allowedTools は %q (bash 組み込み printf) でエスケープし、
+#   後段の eval で単語分割・注入が起きないようにする。
 build_claude_cmd() {
     local mode="$1" name="$2" task="${3:-}"
     case "$mode" in
         supervised)
-            printf 'claude -n %s' "$name"
+            printf 'claude -n %q' "$name"
             ;;
         unsupervised)
             printf 'claude -p %q --allowedTools %q' "$task" "Read Edit Write Grep Glob"
