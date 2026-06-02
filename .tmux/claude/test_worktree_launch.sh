@@ -1,0 +1,43 @@
+#!/bin/bash
+# ファイル名: test_worktree_launch.sh
+# 説明: worktree_launch.sh の純粋ヘルパと dry-run 出力を検証する単体テスト。
+# 用途: .tmux/ci.sh および手動 (bash test_worktree_launch.sh) から実行。
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=worktree_launch.sh
+source "$SCRIPT_DIR/worktree_launch.sh"
+
+fails=0
+
+assert_eq() { # $1 actual  $2 expected  $3 msg
+    if [[ "$1" == "$2" ]]; then
+        echo "[PASS] $3"
+    else
+        echo "[FAIL] $3: got '$1' want '$2'"; fails=$((fails + 1))
+    fi
+}
+assert_contains() { # $1 haystack  $2 needle  $3 msg
+    case "$1" in
+        *"$2"*) echo "[PASS] $3" ;;
+        *) echo "[FAIL] $3: '$1' に '$2' が含まれない"; fails=$((fails + 1)) ;;
+    esac
+}
+assert_rc() { # $1 actual_rc  $2 expected_rc  $3 msg
+    if [[ "$1" == "$2" ]]; then
+        echo "[PASS] $3"
+    else
+        echo "[FAIL] $3: rc=$1 want=$2"; fails=$((fails + 1))
+    fi
+}
+
+echo "=== validate_name ==="
+assert_eq "$(validate_name 'feat/login')" "feat-login" "スラッシュをハイフン化"
+assert_eq "$(validate_name 'a b')" "a-b" "空白をハイフン化"
+validate_name "" >/dev/null 2>&1; assert_rc "$?" "1" "空文字は無効"
+validate_name "   " >/dev/null 2>&1; assert_rc "$?" "1" "空白のみは無効"
+
+echo ""
+echo "=== 結果: ${fails} 失敗 ==="
+[[ "$fails" -eq 0 ]] && exit 0 || exit 1
