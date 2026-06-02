@@ -71,28 +71,30 @@ _emit() {
     fi
 }
 
-# worktree を外部配置に作成（base 既定 HEAD）。
+# worktree を外部配置に作成（base 既定 HEAD）。パス/ベースは %q でエスケープ。
 wt_create() {
     local name="$1" base path br
     base="$(resolve_base "${2:-}")"
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
-    _emit "git worktree add -b $br $path $base"
+    _emit "git worktree add -b $br $(printf '%q' "$path") $(printf '%q' "$base")"
 }
 
 # tmux window を作って claude を起動し、@cc_worktree に worktree パスを記録。
 #   supervised   : 現セッションに new-window（フォアグラウンド）
 #   unsupervised : new-window -d（detached, headless）
+# 新 window の id を -P -F で捕捉し -t で確実にその window へオプションを付ける
+# (-d 時は新 window が current にならないため -t なしでは誤った window に付く)。
 wt_spawn() {
     local mode="$1" name="$2" task="${3:-}" path cmd flags
     path="$(worktree_path "$name")"
     cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
     if [[ "$mode" == "unsupervised" ]]; then
-        flags="-d"
+        flags="-d "
     else
         flags=""
     fi
-    _emit "tmux new-window $flags -c $path -n $name $cmd ; tmux set-window-option @cc_worktree $path"
+    _emit "_wt_win=\$(tmux new-window ${flags}-c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{window_id}' $cmd) ; tmux set-window-option -t \"\$_wt_win\" @cc_worktree $(printf '%q' "$path")"
 }
 
 # worktree とブランチを削除。
@@ -100,5 +102,5 @@ wt_remove() {
     local name="$1" path br
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
-    _emit "git worktree remove $path ; git branch -D $br"
+    _emit "git worktree remove $(printf '%q' "$path") ; git branch -D $br"
 }

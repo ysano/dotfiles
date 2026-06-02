@@ -75,6 +75,8 @@ assert_contains "$(wt_create foo origin/master)" " origin/master" "create: base 
 _s="$(wt_spawn supervised login)"
 assert_contains "$_s" "new-window" "spawn: tmux new-window"
 assert_contains "$_s" "@cc_worktree" "spawn: window option で同一性を記録"
+assert_contains "$_s" "-P -F '#{window_id}'" "spawn: 新 window id を捕捉"
+assert_contains "$_s" "set-window-option -t" "spawn: @cc_worktree を対象 window へ -t 指定"
 assert_contains "$(wt_spawn unsupervised login 'fix tests')" "new-window -d" "spawn 監視なしは detached"
 assert_contains "$(wt_remove foo)" "git worktree remove" "remove: worktree 削除"
 assert_contains "$(wt_remove foo)" "git branch -D worktree-foo" "remove: ブランチ削除"
