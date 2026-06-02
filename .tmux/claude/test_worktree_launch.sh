@@ -48,5 +48,14 @@ assert_eq "$(resolve_base)" "HEAD" "base 既定は HEAD"
 assert_eq "$(resolve_base origin/master)" "origin/master" "base 上書き"
 
 echo ""
+echo "=== build_claude_cmd ==="
+assert_eq "$(build_claude_cmd supervised login)" "claude -n login" "監視ありは -n 表示名"
+_uns="$(build_claude_cmd unsupervised login 'fix tests')"
+assert_contains "$_uns" "claude -p" "監視なしは -p"
+assert_contains "$_uns" "fix tests" "監視なしは task を含む"
+assert_contains "$_uns" "--allowedTools" "監視なしは allowedTools を厳選"
+build_claude_cmd bogus x >/dev/null 2>&1; assert_rc "$?" "1" "未知 mode は rc 1"
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1
