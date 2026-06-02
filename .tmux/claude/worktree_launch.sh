@@ -116,14 +116,17 @@ _pick() {
     fi
 }
 
-# 既存 worktree 名の一覧（リポジトリ親の worktrees/<repo>- プレフィックスを剥がす）。
+# 既存 worktree 名の一覧。外部 worktrees ディレクトリの完全パス前方一致で名前を取り出す
+# (リポジトリ名を正規表現に流さないよう awk のリテラル一致を使う)。
 _list_worktrees() {
-    local root repo
+    local root parent repo prefix
     root="$(git rev-parse --show-toplevel)" || return 1
+    parent="$(dirname "$root")"
     repo="$(basename "$root")"
+    prefix="${parent}/worktrees/${repo}-"
     git worktree list --porcelain \
         | awk '/^worktree /{print $2}' \
-        | sed -n "s#.*/worktrees/${repo}-##p"
+        | awk -v p="$prefix" 'index($0, p) == 1 { print substr($0, length(p) + 1) }'
 }
 
 # 既存 worktree に対応する window があれば前面化、無ければ claude -c で継続。
