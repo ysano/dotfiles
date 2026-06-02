@@ -77,7 +77,7 @@ wt_create() {
     base="$(resolve_base "${2:-}")"
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
-    _emit "git worktree add -b $br $(printf '%q' "$path") $(printf '%q' "$base")"
+    _emit "git worktree add -b $(printf '%q' "$br") $(printf '%q' "$path") $(printf '%q' "$base")"
 }
 
 # tmux window を作って claude を起動し、@cc_worktree に worktree パスを記録。
@@ -102,7 +102,7 @@ wt_remove() {
     local name="$1" path br
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
-    _emit "git worktree remove $(printf '%q' "$path") ; git branch -D $br"
+    _emit "git worktree remove $(printf '%q' "$path") ; git branch -D $(printf '%q' "$br")"
 }
 
 # 行選択 UI。fzf があれば fzf、無ければ read にフォールバック（グレースフル劣化）。
