@@ -8,12 +8,13 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# 名前を sanitize して stdout に出す。無効（結果が空）なら rc 1。
+# 名前を sanitize して stdout に出す。無効（結果が空）なら rc 1。正常時 rc 0。
+# ロケール非依存にするため tr/sed は LC_ALL=C で実行する。
 validate_name() {
     local raw="${1:-}" s
     s="$(printf '%s' "$raw" \
-        | tr ' /' '--' \
-        | sed -E 's/[^A-Za-z0-9._-]/-/g; s/-+/-/g; s/^-+//; s/-+$//')"
+        | LC_ALL=C tr ' /' '--' \
+        | LC_ALL=C sed -E 's/[^A-Za-z0-9._-]/-/g; s/-+/-/g; s/^-+//; s/-+$//')"
     [[ -n "$s" ]] || return 1
     printf '%s' "$s"
 }
