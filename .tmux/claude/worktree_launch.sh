@@ -61,3 +61,44 @@ build_claude_cmd() {
             ;;
     esac
 }
+
+# WT_DRY_RUN が非空ならコマンド文字列を echo（テスト用）、空なら実行する。
+_emit() {
+    if [[ -n "${WT_DRY_RUN:-}" ]]; then
+        printf '%s\n' "$*"
+    else
+        eval "$*"
+    fi
+}
+
+# worktree を外部配置に作成（base 既定 HEAD）。
+wt_create() {
+    local name="$1" base path br
+    base="$(resolve_base "${2:-}")"
+    path="$(worktree_path "$name")"
+    br="$(branch_name "$name")"
+    _emit "git worktree add -b $br $path $base"
+}
+
+# tmux window を作って claude を起動し、@cc_worktree に worktree パスを記録。
+#   supervised   : 現セッションに new-window（フォアグラウンド）
+#   unsupervised : new-window -d（detached, headless）
+wt_spawn() {
+    local mode="$1" name="$2" task="${3:-}" path cmd flags
+    path="$(worktree_path "$name")"
+    cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
+    if [[ "$mode" == "unsupervised" ]]; then
+        flags="-d"
+    else
+        flags=""
+    fi
+    _emit "tmux new-window $flags -c $path -n $name $cmd ; tmux set-window-option @cc_worktree $path"
+}
+
+# worktree とブランチを削除。
+wt_remove() {
+    local name="$1" path br
+    path="$(worktree_path "$name")"
+    br="$(branch_name "$name")"
+    _emit "git worktree remove $path ; git branch -D $br"
+}

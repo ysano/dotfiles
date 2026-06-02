@@ -65,5 +65,21 @@ assert_eq "$_task_arg" "fix tests" "監視なしは task を 1 引数として�
 build_claude_cmd bogus x >/dev/null 2>&1; assert_rc "$?" "1" "未知 mode は rc 1"
 
 echo ""
+echo "=== dry-run 副作用関数 (WT_DRY_RUN=1) ==="
+export WT_DRY_RUN=1
+_c="$(wt_create foo)"
+assert_contains "$_c" "git worktree add -b worktree-foo" "create: ブランチ指定"
+assert_contains "$_c" "/worktrees/$(basename "$(git rev-parse --show-toplevel)")-foo" "create: 外部配置"
+assert_contains "$_c" " HEAD" "create: 既定 base は HEAD"
+assert_contains "$(wt_create foo origin/master)" " origin/master" "create: base 上書き"
+_s="$(wt_spawn supervised login)"
+assert_contains "$_s" "new-window" "spawn: tmux new-window"
+assert_contains "$_s" "@cc_worktree" "spawn: window option で同一性を記録"
+assert_contains "$(wt_spawn unsupervised login 'fix tests')" "new-window -d" "spawn 監視なしは detached"
+assert_contains "$(wt_remove foo)" "git worktree remove" "remove: worktree 削除"
+assert_contains "$(wt_remove foo)" "git branch -D worktree-foo" "remove: ブランチ削除"
+unset WT_DRY_RUN
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1
