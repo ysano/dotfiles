@@ -104,3 +104,80 @@ wt_remove() {
     br="$(branch_name "$name")"
     _emit "git worktree remove $(printf '%q' "$path") ; git branch -D $br"
 }
+
+# 行選択 UI。fzf があれば fzf、無ければ read にフォールバック（グレースフル劣化）。
+_pick() {
+    local prompt="$1"
+    if command -v fzf >/dev/null 2>&1; then
+        fzf --prompt="$prompt " --height=40% --reverse
+    else
+        printf '%s' "$prompt" >&2
+        local line; IFS= read -r line; printf '%s' "$line"
+    fi
+}
+
+# 既存 worktree 名の一覧（リポジトリ親の worktrees/<repo>- プレフィックスを剥がす）。
+_list_worktrees() {
+    local root repo
+    root="$(git rev-parse --show-toplevel)" || return 1
+    repo="$(basename "$root")"
+    git worktree list --porcelain \
+        | awk '/^worktree /{print $2}' \
+        | sed -n "s#.*/worktrees/${repo}-##p"
+}
+
+# 既存 worktree に対応する window があれば前面化、無ければ claude -c で継続。
+# 新規 window は id を捕捉し -t で @cc_worktree を確実に付与する。
+wt_open() {
+    local name="$1" path win
+    path="$(worktree_path "$name")"
+    win="$(tmux list-windows -a -F '#{window_id} #{@cc_worktree}' 2>/dev/null \
+        | awk -v p="$path" '$2==p{print $1; exit}')"
+    if [[ -n "$win" ]]; then
+        tmux select-window -t "$win"
+    else
+        win="$(tmux new-window -c "$path" -n "$name" -P -F '#{window_id}' 'claude -c')"
+        tmux set-window-option -t "$win" @cc_worktree "$path"
+    fi
+}
+
+# popup のメインフロー。
+cmd_popup() {
+    if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
+        echo "git リポジトリ内で実行してください"; sleep 1; return 1
+    fi
+    local choice
+    choice="$( { echo "＋ 新規作成"; _list_worktrees; } | _pick "worktree>" )"
+    [[ -n "$choice" ]] || return 0
+
+    if [[ "$choice" == "＋ 新規作成" ]]; then
+        printf 'ブランチ名: ' >&2; local raw; IFS= read -r raw
+        local name; name="$(validate_name "$raw")" || { echo "名前が不正です"; sleep 1; return 1; }
+        printf 'base ref [HEAD]: ' >&2; local base; IFS= read -r base
+        wt_create "$name" "$base" || { echo "worktree 作成に失敗"; sleep 1; return 1; }
+        local mode; mode="$(printf '%s\n' "監視あり (supervised)" "監視なし (unsupervised)" | _pick "mode>")"
+        case "$mode" in
+            *supervised*)   wt_spawn supervised "$name" ;;
+            *unsupervised*) printf 'タスク: ' >&2; local task; IFS= read -r task
+                            wt_spawn unsupervised "$name" "$task" ;;
+        esac
+    else
+        local action; action="$(printf '%s\n' "開く / 前面化" "削除" | _pick "action>")"
+        case "$action" in
+            開く*) wt_open "$choice" ;;
+            削除)  wt_remove "$choice" ;;
+        esac
+    fi
+}
+
+main() {
+    case "${1:-popup}" in
+        popup) cmd_popup ;;
+        *) echo "usage: worktree_launch.sh popup" >&2; return 2 ;;
+    esac
+}
+
+# source 時は関数定義のみ。直接実行時のみ main を呼ぶ。
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
