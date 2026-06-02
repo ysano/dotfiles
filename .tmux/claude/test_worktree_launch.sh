@@ -52,8 +52,16 @@ echo "=== build_claude_cmd ==="
 assert_eq "$(build_claude_cmd supervised login)" "claude -n login" "監視ありは -n 表示名"
 _uns="$(build_claude_cmd unsupervised login 'fix tests')"
 assert_contains "$_uns" "claude -p" "監視なしは -p"
-assert_contains "$_uns" "fix tests" "監視なしは task を含む"
 assert_contains "$_uns" "--allowedTools" "監視なしは allowedTools を厳選"
+# %q エスケープにより、task がスペース込みで 1 引数として安全に復元されることを検証
+# (eval で位置パラメータに展開し、-p の次の引数が 'fix tests' 1 個であること)
+eval "set -- $_uns"
+_task_arg=""
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "-p" ]]; then _task_arg="${2:-}"; break; fi
+    shift
+done
+assert_eq "$_task_arg" "fix tests" "監視なしは task を 1 引数として安全に保持 (%q)"
 build_claude_cmd bogus x >/dev/null 2>&1; assert_rc "$?" "1" "未知 mode は rc 1"
 
 echo ""
