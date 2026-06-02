@@ -157,9 +157,9 @@ cmd_popup() {
         wt_create "$name" "$base" || { echo "worktree 作成に失敗"; sleep 1; return 1; }
         local mode; mode="$(printf '%s\n' "監視あり (supervised)" "監視なし (unsupervised)" | _pick "mode>")"
         case "$mode" in
-            *supervised*)   wt_spawn supervised "$name" ;;
             *unsupervised*) printf 'タスク: ' >&2; local task; IFS= read -r task
                             wt_spawn unsupervised "$name" "$task" ;;
+            *supervised*)   wt_spawn supervised "$name" ;;
         esac
     else
         local action; action="$(printf '%s\n' "開く / 前面化" "削除" | _pick "action>")"
