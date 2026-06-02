@@ -18,3 +18,26 @@ validate_name() {
     [[ -n "$s" ]] || return 1
     printf '%s' "$s"
 }
+
+# worktree の配置パス（gwt と同じ外部規約）を stdout に出す。
+worktree_path() {
+    local name="$1" root parent repo
+    root="$(git rev-parse --show-toplevel)" || return 1
+    parent="$(dirname "$root")"
+    repo="$(basename "$root")"
+    printf '%s/worktrees/%s-%s' "$parent" "$repo" "$name"
+}
+
+# worktree 用ブランチ名（公式 -w に合わせ worktree- プレフィックス）。
+branch_name() {
+    printf 'worktree-%s' "$1"
+}
+
+# base ref を解決。引数なしは HEAD（手元の最新を起点に）。
+resolve_base() {
+    if [[ -n "${1:-}" ]]; then
+        printf '%s' "$1"
+    else
+        printf 'HEAD'
+    fi
+}

@@ -39,5 +39,14 @@ validate_name "" >/dev/null 2>&1; assert_rc "$?" "1" "空文字は無効"
 validate_name "   " >/dev/null 2>&1; assert_rc "$?" "1" "空白のみは無効"
 
 echo ""
+echo "=== worktree_path / branch_name / resolve_base ==="
+_root="$(git rev-parse --show-toplevel)"
+_expected="$(dirname "$_root")/worktrees/$(basename "$_root")-foo"
+assert_eq "$(worktree_path foo)" "$_expected" "外部 worktrees 配置を返す"
+assert_eq "$(branch_name foo)" "worktree-foo" "ブランチ名に worktree- を付与"
+assert_eq "$(resolve_base)" "HEAD" "base 既定は HEAD"
+assert_eq "$(resolve_base origin/master)" "origin/master" "base 上書き"
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1
