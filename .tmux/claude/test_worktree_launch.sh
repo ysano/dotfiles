@@ -24,6 +24,12 @@ assert_contains() { # $1 haystack  $2 needle  $3 msg
         *) echo "[FAIL] $3: '$1' に '$2' が含まれない"; fails=$((fails + 1)) ;;
     esac
 }
+assert_not_contains() { # $1 haystack  $2 needle  $3 msg
+    case "$1" in
+        *"$2"*) echo "[FAIL] $3: '$1' に '$2' が含まれている"; fails=$((fails + 1)) ;;
+        *) echo "[PASS] $3" ;;
+    esac
+}
 assert_rc() { # $1 actual_rc  $2 expected_rc  $3 msg
     if [[ "$1" == "$2" ]]; then
         echo "[PASS] $3"
@@ -73,11 +79,15 @@ assert_contains "$_c" "/worktrees/$(basename "$(git rev-parse --show-toplevel)")
 assert_contains "$_c" " HEAD" "create: 既定 base は HEAD"
 assert_contains "$(wt_create foo origin/master)" " origin/master" "create: base 上書き"
 _s="$(wt_spawn supervised login)"
-assert_contains "$_s" "new-window" "spawn: tmux new-window"
-assert_contains "$_s" "@cc_worktree" "spawn: window option で同一性を記録"
-assert_contains "$_s" "-P -F '#{window_id}'" "spawn: 新 window id を捕捉"
-assert_contains "$_s" "set-window-option -t" "spawn: @cc_worktree を対象 window へ -t 指定"
-assert_contains "$(wt_spawn unsupervised login 'fix tests')" "new-window -d" "spawn 監視なしは detached"
+assert_contains "$_s" "split-window" "spawn 監視あり: 現 window に pane 分割"
+assert_not_contains "$_s" "new-window" "spawn 監視あり: window は作らない"
+assert_contains "$_s" "@cc_worktree" "spawn: pane option で同一性を記録"
+assert_contains "$_s" "-P -F '#{pane_id}'" "spawn: 新 pane id を捕捉"
+assert_contains "$_s" "set-option -p -t" "spawn: @cc_worktree を対象 pane へ -p -t 指定"
+_u="$(wt_spawn unsupervised login 'fix tests')"
+assert_contains "$_u" "new-window -d" "spawn 監視なしは detached window"
+assert_contains "$_u" "-P -F '#{pane_id}'" "spawn 監視なし: 新 pane id を捕捉"
+assert_contains "$_u" "set-option -p -t" "spawn 監視なし: pane option で記録"
 assert_contains "$(wt_remove foo)" "git worktree remove" "remove: worktree 削除"
 assert_contains "$(wt_remove foo)" "git branch -D worktree-foo" "remove: ブランチ削除"
 unset WT_DRY_RUN
