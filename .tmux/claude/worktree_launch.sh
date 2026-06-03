@@ -116,6 +116,21 @@ _pick() {
     fi
 }
 
+# fzf --print-query の結果を解釈する。
+#   $1: fzf の終了コード  $2: fzf 出力 (1 行目=query, 2 行目=選択行)
+#   stdout: "select\t<name>"(既存選択) / "new\t<query>"(新規名) / "abort"(中止)
+# fzf は「選択=rc0」「該当なしで Enter=rc1(query を採用)」「ESC=rc130」を返す。
+classify_pick() {
+    local rc="$1" out="$2" query selection
+    query="$(printf '%s\n' "$out" | sed -n '1p')"
+    selection="$(printf '%s\n' "$out" | sed -n '2p')"
+    case "$rc" in
+        0) if [[ -n "$selection" ]]; then printf 'select\t%s' "$selection"; else printf 'abort'; fi ;;
+        1) if [[ -n "$query" ]]; then printf 'new\t%s' "$query"; else printf 'abort'; fi ;;
+        *) printf 'abort' ;;
+    esac
+}
+
 # 既存 worktree 名の一覧。外部 worktrees ディレクトリの完全パス前方一致で名前を取り出す
 # (リポジトリ名を正規表現に流さないよう awk のリテラル一致を使う)。
 _list_worktrees() {
@@ -149,28 +164,47 @@ cmd_popup() {
     if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
         echo "git リポジトリ内で実行してください"; sleep 1; return 1
     fi
-    local choice
-    choice="$( { echo "＋ 新規作成"; _list_worktrees; } | _pick "worktree>" )"
-    [[ -n "$choice" ]] || return 0
-
-    if [[ "$choice" == "＋ 新規作成" ]]; then
-        printf 'ブランチ名: ' >&2; local raw; IFS= read -r raw
-        local name; name="$(validate_name "$raw")" || { echo "名前が不正です"; sleep 1; return 1; }
-        printf 'base ref [HEAD]: ' >&2; local base; IFS= read -r base
-        wt_create "$name" "$base" || { echo "worktree 作成に失敗"; sleep 1; return 1; }
-        local mode; mode="$(printf '%s\n' "監視あり (supervised)" "監視なし (unsupervised)" | _pick "mode>")"
-        case "$mode" in
-            *unsupervised*) printf 'タスク: ' >&2; local task; IFS= read -r task
-                            wt_spawn unsupervised "$name" "$task" ;;
-            *supervised*)   wt_spawn supervised "$name" ;;
-        esac
+    # 既存 worktree を選ぶか、リストに無い名前を入力して新規作成するかを 1 画面で受ける。
+    # fzf: 入力語で絞り込み、該当なしで Enter ならその語を新規名として採用 (--print-query)。
+    # fzf 不在時は read 入力 → 既存名なら選択、それ以外は新規名。
+    local verb name
+    if command -v fzf >/dev/null 2>&1; then
+        local out rc decision
+        out="$(_list_worktrees | fzf --print-query --reverse --height=40% \
+            --prompt='worktree (既存を選択 / 新規名を入力)> ')"
+        rc=$?
+        decision="$(classify_pick "$rc" "$out")"
+        verb="${decision%%$'\t'*}"
+        name="${decision#*$'\t'}"
+        [[ "$verb" == "abort" ]] && return 0
     else
+        printf 'worktree (既存名 or 新規名): ' >&2
+        local raw; IFS= read -r raw || return 0
+        [[ -n "$raw" ]] || return 0
+        if _list_worktrees | grep -qxF -- "$raw"; then verb="select"; else verb="new"; fi
+        name="$raw"
+    fi
+
+    if [[ "$verb" == "select" ]]; then
         local action; action="$(printf '%s\n' "開く / 前面化" "削除" | _pick "action>")"
         case "$action" in
-            開く*) wt_open "$choice" ;;
-            削除)  wt_remove "$choice" ;;
+            開く*) wt_open "$name" ;;
+            削除)  wt_remove "$name" ;;
         esac
+        return 0
     fi
+
+    # 新規作成 (verb == new): 入力語を sanitize してブランチ名にする。
+    local branch base mode task
+    branch="$(validate_name "$name")" || { echo "名前が不正です"; sleep 1; return 1; }
+    printf 'base ref [HEAD]: ' >&2; IFS= read -r base
+    wt_create "$branch" "$base" || { echo "worktree 作成に失敗"; sleep 1; return 1; }
+    mode="$(printf '%s\n' "監視あり (supervised)" "監視なし (unsupervised)" | _pick "mode>")"
+    case "$mode" in
+        *unsupervised*) printf 'タスク: ' >&2; IFS= read -r task
+                        wt_spawn unsupervised "$branch" "$task" ;;
+        *supervised*)   wt_spawn supervised "$branch" ;;
+    esac
 }
 
 main() {
