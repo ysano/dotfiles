@@ -83,5 +83,13 @@ assert_contains "$(wt_remove foo)" "git branch -D worktree-foo" "remove: ブラ�
 unset WT_DRY_RUN
 
 echo ""
+echo "=== classify_pick (fzf --print-query の解釈) ==="
+assert_eq "$(classify_pick 0 "$(printf 'tf\nlogin')")" "$(printf 'select\tlogin')" "rc0+選択行: 既存を select"
+assert_eq "$(classify_pick 1 "$(printf 'tf')")" "$(printf 'new\ttf')" "rc1+query: 新規名として new"
+assert_eq "$(classify_pick 1 "$(printf '')")" "abort" "rc1+空 query: abort"
+assert_eq "$(classify_pick 130 "$(printf 'tf')")" "abort" "rc130(ESC): abort"
+assert_eq "$(classify_pick 0 "$(printf 'tf')")" "abort" "rc0+選択行なし: abort"
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1
