@@ -36,9 +36,9 @@ popup から起動・切替・削除できるようにする。
 |---|---|---|
 | D1 | worktree のベースは**既定 HEAD・popup で上書き可**。曖昧化を避けるため main worktree のブランチ tip もしくは明示 ref を基点とする | 公式の origin/master 基点でローカル未 push を取りこぼす問題を回避 |
 | D2 | 配置は**外部 `../worktrees/<repo>-<name>`**（`.claude/worktrees/` は使わない） | `.claude/worktrees/` は main リポジトリを汚染（実機確認）。gwt も外部配置で一致 |
-| D3 | 監視あり = **現セッションの `new-window`**。重並列向けに専用セッションを設定で選択可 | Voice は全セッション横断のため session 縛りは不要。既定は摩擦最小の現セッション |
+| D3 | 監視あり = **現 window を `split-window` した pane**（向きは tmux 既定）。監視なしは従来どおり `new-window -d`（背景・視界を奪わない） | Voice は全セッション横断のため session 縛りは不要。作業の隣に並べて見られる pane が監視ありに適する（当初の new-window から改訂） |
 | D4 | 監視なし = `new-window -d` + `claude -p`。`-p` は**完走して終了**する。引き継ぎは `claude -c`（cwd 継続）。許可は既定 `--allowedTools` 厳選、`--dangerously-skip-permissions` は明示時のみ | `-p` は live プロセスではない。acceptEdits だけでは Bash 等で停止し無人化しない |
-| D5 | 同一性は **tmux window option `@cc_worktree`=worktree パス**で担保。状態ファイルは作らない。`--session-id` は任意 | window option はほぼ無料のレジストリ。cwd 単独だと同 cwd 複数 session で `-c` が曖昧 |
+| D5 | 同一性は **tmux pane option `@cc_worktree`=worktree パス**で担保（pane 単位に統一）。状態ファイルは作らない。`--session-id` は任意 | pane option はほぼ無料のレジストリ。`wt_open` は `list-panes -a` で探索。cwd 単独だと同 cwd 複数 session で `-c` が曖昧 |
 | D6 | キーバインドは**新規 `.tmux/claude-worktree.conf`**（`.tmux.conf` から guarded source）。自動生成の `claude.conf` には触れない | 生成ファイル破壊回避・関心分離 |
 | D7 | **lifecycle（削除）を MVP に含める**。worktree + branch + 関連 window を片付ける | 作るだけで消せないと運用破綻 |
 | D8 | gwt は**配置規約のみ共有**し、ランタイム依存しない（素の `git worktree` で実装） | gwt は zsh 関数で tmux popup から呼ぶのは脆い。共有は規約に限定し自己完結・テスト可能に |

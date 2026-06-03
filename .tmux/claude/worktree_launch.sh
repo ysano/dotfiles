@@ -80,21 +80,20 @@ wt_create() {
     _emit "git worktree add -b $(printf '%q' "$br") $(printf '%q' "$path") $(printf '%q' "$base")"
 }
 
-# tmux window を作って claude を起動し、@cc_worktree に worktree パスを記録。
-#   supervised   : 現セッションに new-window（フォアグラウンド）
-#   unsupervised : new-window -d（detached, headless）
-# 新 window の id を -P -F で捕捉し -t で確実にその window へオプションを付ける
-# (-d 時は新 window が current にならないため -t なしでは誤った window に付く)。
+# claude を起動し、@cc_worktree(pane オプション)に worktree パスを記録。
+#   supervised   : 現 window を split-window で分割した pane（向きは tmux 既定）
+#   unsupervised : new-window -d（detached, headless。視界を奪わない背景実行）
+# どちらも新 pane の id を -P -F '#{pane_id}' で捕捉し、-p -t でその pane へ
+# オプションを付ける（識別は pane 単位に統一。wt_open は list-panes で探索）。
 wt_spawn() {
-    local mode="$1" name="$2" task="${3:-}" path cmd flags
+    local mode="$1" name="$2" task="${3:-}" path cmd
     path="$(worktree_path "$name")"
     cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
     if [[ "$mode" == "unsupervised" ]]; then
-        flags="-d "
+        _emit "_wt_p=\$(tmux new-window -d -c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     else
-        flags=""
+        _emit "_wt_p=\$(tmux split-window -c $(printf '%q' "$path") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     fi
-    _emit "_wt_win=\$(tmux new-window ${flags}-c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{window_id}' $cmd) ; tmux set-window-option -t \"\$_wt_win\" @cc_worktree $(printf '%q' "$path")"
 }
 
 # worktree とブランチを削除。
@@ -144,18 +143,19 @@ _list_worktrees() {
         | awk -v p="$prefix" 'index($0, p) == 1 { print substr($0, length(p) + 1) }'
 }
 
-# 既存 worktree に対応する window があれば前面化、無ければ claude -c で継続。
-# 新規 window は id を捕捉し -t で @cc_worktree を確実に付与する。
+# 既存 worktree に対応する pane があれば前面化、無ければ split-window で claude -c。
+# pane を id で捕捉し -p -t で @cc_worktree を確実に付与する。
 wt_open() {
-    local name="$1" path win
+    local name="$1" path pane
     path="$(worktree_path "$name")"
-    win="$(tmux list-windows -a -F '#{window_id} #{@cc_worktree}' 2>/dev/null \
+    pane="$(tmux list-panes -a -F '#{pane_id} #{@cc_worktree}' 2>/dev/null \
         | awk -v p="$path" '$2==p{print $1; exit}')"
-    if [[ -n "$win" ]]; then
-        tmux select-window -t "$win"
+    if [[ -n "$pane" ]]; then
+        tmux select-window -t "$pane"
+        tmux select-pane -t "$pane"
     else
-        win="$(tmux new-window -c "$path" -n "$name" -P -F '#{window_id}' 'claude -c')"
-        tmux set-window-option -t "$win" @cc_worktree "$path"
+        pane="$(tmux split-window -c "$path" -P -F '#{pane_id}' 'claude -c')"
+        tmux set-option -p -t "$pane" @cc_worktree "$path"
     fi
 }
 
