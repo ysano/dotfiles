@@ -106,12 +106,29 @@ wt_spawn() {
     fi
 }
 
-# worktree とブランチを削除。
+# worktree を安全に削除（未コミット変更があれば git が拒否）。
+# git -C <main-root> で操作するため、対象 worktree 内が cwd でも安全に消せ、
+# 削除後に cwd 消滅で次コマンドが落ちる問題も起きない。ブランチは安全側 -d
+# （未マージなら残す）。worktree 削除に失敗したら rc 1 を返す（呼び出し側が強制を提示）。
 wt_remove() {
-    local name="$1" path br
+    local name root path br
+    name="$1"
+    root="$(_repo_root)" || return 1
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
-    _emit "git worktree remove $(printf '%q' "$path") ; git branch -D $(printf '%q' "$br")"
+    _emit "git -C $(printf '%q' "$root") worktree remove $(printf '%q' "$path")" || return 1
+    _emit "git -C $(printf '%q' "$root") branch -d $(printf '%q' "$br")" || true
+}
+
+# worktree を強制削除（未コミット変更を破棄）。ブランチも強制削除 -D。
+wt_remove_force() {
+    local name root path br
+    name="$1"
+    root="$(_repo_root)" || return 1
+    path="$(worktree_path "$name")"
+    br="$(branch_name "$name")"
+    _emit "git -C $(printf '%q' "$root") worktree remove --force $(printf '%q' "$path")" || return 1
+    _emit "git -C $(printf '%q' "$root") branch -D $(printf '%q' "$br")" || true
 }
 
 # 行選択 UI。fzf があれば fzf、無ければ read にフォールバック（グレースフル劣化）。
@@ -199,7 +216,19 @@ cmd_popup() {
         local action; action="$(printf '%s\n' "開く / 前面化" "削除" | _pick "action>")"
         case "$action" in
             開く*) wt_open "$name" ;;
-            削除)  wt_remove "$name" ;;
+            削除)
+                if wt_remove "$name"; then
+                    echo "削除しました: $name"; sleep 1
+                else
+                    echo "削除できません（未コミット/未追跡の変更がある可能性）" >&2
+                    printf '強制削除しますか？ 変更は失われます [y/N]: ' >&2
+                    local yn; IFS= read -r yn
+                    case "$yn" in
+                        [yY]*) if wt_remove_force "$name"; then echo "強制削除しました: $name"; else echo "強制削除に失敗しました"; fi; sleep 2 ;;
+                        *) echo "中止しました"; sleep 1 ;;
+                    esac
+                fi
+                ;;
         esac
         return 0
     fi
