@@ -101,5 +101,18 @@ assert_eq "$(classify_pick 130 "$(printf 'tf')")" "abort" "rc130(ESC): abort"
 assert_eq "$(classify_pick 0 "$(printf 'tf')")" "abort" "rc0+選択行なし: abort"
 
 echo ""
+echo "=== worktree_path: リンク worktree 内から呼んでも main 基準で配置 ==="
+_mroot="$(git rev-parse --show-toplevel)"
+_probe="$(dirname "$_mroot")/worktrees/$(basename "$_mroot")-_axisprobe"
+if git worktree add -q "$_probe" -b _axisprobe HEAD 2>/dev/null; then
+    _got="$(cd "$_probe" && worktree_path foo)"
+    git worktree remove --force "$_probe" >/dev/null 2>&1
+    git branch -D _axisprobe >/dev/null 2>&1
+    assert_eq "$_got" "$(dirname "$_mroot")/worktrees/$(basename "$_mroot")-foo" "別 worktree 内からでも main 基準で配置（ネストしない）"
+else
+    echo "[SKIP] worktree 作成不可のためスキップ"
+fi
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1

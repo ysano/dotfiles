@@ -19,10 +19,20 @@ validate_name() {
     printf '%s' "$s"
 }
 
-# worktree の配置パス（gwt と同じ外部規約）を stdout に出す。
+# メインリポジトリのルートを stdout に出す（リンク worktree 内から呼んでも一定）。
+# 共有 .git (git-common-dir) の親 = メイン作業ツリーのルート。show-toplevel だと
+# リンク worktree 内では worktree 自身を指し、配置が worktrees/ にネストしてしまう。
+_repo_root() {
+    local cdir
+    cdir="$(git rev-parse --git-common-dir 2>/dev/null)" || return 1
+    cdir="$(cd "$cdir" && pwd -P)" || return 1
+    dirname "$cdir"
+}
+
+# worktree の配置パス（gwt と同じ外部規約）を stdout に出す。配置は常にメイン基準。
 worktree_path() {
     local name="$1" root parent repo
-    root="$(git rev-parse --show-toplevel)" || return 1
+    root="$(_repo_root)" || return 1
     parent="$(dirname "$root")"
     repo="$(basename "$root")"
     printf '%s/worktrees/%s-%s' "$parent" "$repo" "$name"
@@ -134,7 +144,7 @@ classify_pick() {
 # (リポジトリ名を正規表現に流さないよう awk のリテラル一致を使う)。
 _list_worktrees() {
     local root parent repo prefix
-    root="$(git rev-parse --show-toplevel)" || return 1
+    root="$(_repo_root)" || return 1
     parent="$(dirname "$root")"
     repo="$(basename "$root")"
     prefix="${parent}/worktrees/${repo}-"
