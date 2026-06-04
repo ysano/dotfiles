@@ -120,5 +120,22 @@ else
 fi
 
 echo ""
+echo "=== _copy_local_files (*.local.md を再帰複製・生成物は除外) ==="
+_csrc="$(mktemp -d)"; _cdst="$(mktemp -d)"
+mkdir -p "$_csrc/sub" "$_csrc/node_modules/pkg" "$_csrc/.git"
+echo a > "$_csrc/a.local.md"
+echo b > "$_csrc/sub/b.local.md"
+echo n > "$_csrc/normal.md"
+echo j > "$_csrc/node_modules/pkg/junk.local.md"
+echo g > "$_csrc/.git/x.local.md"
+_copy_local_files "$_csrc" "$_cdst"
+[ -f "$_cdst/a.local.md" ];                     assert_rc "$?" "0" "copy: ルートの *.local.md"
+[ -f "$_cdst/sub/b.local.md" ];                 assert_rc "$?" "0" "copy: サブ階層も再帰複製（相対パス維持）"
+[ -f "$_cdst/normal.md" ];                      assert_rc "$?" "1" "copy: *.local.md 以外は複製しない"
+[ -f "$_cdst/node_modules/pkg/junk.local.md" ]; assert_rc "$?" "1" "copy: node_modules は除外"
+[ -f "$_cdst/.git/x.local.md" ];                assert_rc "$?" "1" "copy: .git は除外"
+rm -rf "$_csrc" "$_cdst"
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1
