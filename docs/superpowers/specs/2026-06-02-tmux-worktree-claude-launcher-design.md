@@ -53,10 +53,10 @@ popup から起動・切替・削除できるようにする。
   - `build_claude_cmd <mode> <name> [task] [perm]` — 起動コマンド文字列を組立
 - 副作用関数（`--dry-run` でコマンド出力のみ）:
   - worktree 作成: `git worktree add -b worktree-<name> <path> <base>`。作成後、現作業ツリーの `*.local.md`（git 管理外のローカルメモ等）を `.git`/`node_modules` を除き再帰複製して引き継ぐ
-  - 起動（監視あり）: `tmux new-window -c <path> -n <name> "<claude cmd>"` + `set-window-option @cc_worktree <path>`
-  - 起動（監視なし）: `tmux new-window -d -c <path> -n <name> "<claude -p cmd>"` + `@cc_worktree`
-  - 切替/前面化: `@cc_worktree` 一致 window があれば `select-window`、無ければ `new-window "claude -c"`
-  - 削除: `git worktree remove <path>` + `git branch -D worktree-<name>` + 関連 window `kill-window`
+  - 起動（監視あり）: `tmux split-window -c <path> "<claude cmd> ; exec $SHELL"` で現 window に pane 分割。新 pane id を `-P -F '#{pane_id}'` で捕捉し `set-option -p -t <pane> @cc_worktree <path>`。claude 終了後はシェルに落ちて pane が残る（オプション付け直し再起動用）
+  - 起動（監視なし）: `tmux new-window -d -c <path> -n <name> "<claude -p cmd>"` + pane option `@cc_worktree`
+  - 切替/前面化: `@cc_worktree` 一致 pane があれば `select-window`+`select-pane`、無ければ `split-window "claude -c ; exec $SHELL"`
+  - 削除: メインルートから `git -C <root> worktree remove <path>`（安全・失敗時は確認付きで `--force`）+ ブランチ `-d`（強制時 `-D`）
 - フォールバック: fzf/uuidgen 不在時は tmux `command-prompt` / `read` に劣化
 
 ### 4.2 `.tmux/claude-worktree.conf`（front-end）

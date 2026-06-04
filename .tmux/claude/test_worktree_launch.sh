@@ -84,6 +84,7 @@ assert_not_contains "$_s" "new-window" "spawn 監視あり: window は作らな�
 assert_contains "$_s" "@cc_worktree" "spawn: pane option で同一性を記録"
 assert_contains "$_s" "-P -F '#{pane_id}'" "spawn: 新 pane id を捕捉"
 assert_contains "$_s" "set-option -p -t" "spawn: @cc_worktree を対象 pane へ -p -t 指定"
+assert_contains "$_s" "exec" "spawn 監視あり: claude 終了後はシェルに落ちて pane を残す"
 _u="$(wt_spawn unsupervised login 'fix tests')"
 assert_contains "$_u" "new-window -d" "spawn 監視なしは detached window"
 assert_contains "$_u" "-P -F '#{pane_id}'" "spawn 監視なし: 新 pane id を捕捉"
