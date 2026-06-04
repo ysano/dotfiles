@@ -113,13 +113,17 @@ wt_create() {
 # どちらも新 pane の id を -P -F '#{pane_id}' で捕捉し、-p -t でその pane へ
 # オプションを付ける（識別は pane 単位に統一。wt_open は list-panes で探索）。
 wt_spawn() {
-    local mode="$1" name="$2" task="${3:-}" path cmd
+    local mode="$1" name="$2" task="${3:-}" path cmd panecmd
     path="$(worktree_path "$name")"
     cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
     if [[ "$mode" == "unsupervised" ]]; then
         _emit "_wt_p=\$(tmux new-window -d -c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     else
-        _emit "_wt_p=\$(tmux split-window -c $(printf '%q' "$path") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
+        # claude 終了後は worktree の cwd でシェルに落として pane を残す
+        # （オプションを付け直して claude -c で再起動できるように）。
+        # pane コマンド全体を 1 トークンとして tmux に渡し sh -c 実行させる。
+        panecmd="$cmd ; exec $(printf '%q' "${SHELL:-/bin/sh}")"
+        _emit "_wt_p=\$(tmux split-window -c $(printf '%q' "$path") -P -F '#{pane_id}' $(printf '%q' "$panecmd")) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     fi
 }
 
@@ -198,7 +202,7 @@ wt_open() {
         tmux select-window -t "$pane"
         tmux select-pane -t "$pane"
     else
-        pane="$(tmux split-window -c "$path" -P -F '#{pane_id}' 'claude -c')"
+        pane="$(tmux split-window -c "$path" -P -F '#{pane_id}' "claude -c ; exec ${SHELL:-/bin/sh}")"
         tmux set-option -p -t "$pane" @cc_worktree "$path"
     fi
 }
