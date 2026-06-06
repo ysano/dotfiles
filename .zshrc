@@ -10,6 +10,15 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Locale fallback for non-login interactive shells (e.g. tmux panes).
+# .zprofile (login専用) が setup_locale を呼ぶが、tmux の `default-command zsh` は
+# 非loginのため .zprofile を読まず、ペインは LANG=C を継承してマルチバイトが壊れる
+# （tmux 内で Nerd Font 化け）。LANG が UTF-8 でない時のみ自己修復する。
+if [[ "${LANG}" != *[Uu][Tt][Ff]* ]]; then
+  [[ -f "$HOME/.zsh/utils.zsh" ]] && source "$HOME/.zsh/utils.zsh"
+  (( $+functions[setup_locale] )) && setup_locale
+fi
+
 # 1. Core Settings
 source "$HOME/.zsh/core_settings.zsh"
 
