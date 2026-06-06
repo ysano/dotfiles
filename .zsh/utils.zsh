@@ -91,8 +91,11 @@ has_command() {
 
 # Set up locale with fallbacks
 setup_locale() {
-    # Try Japanese UTF-8 (both formats), fall back to English UTF-8, then C
-    local locales=("ja_JP.UTF-8" "ja_JP.utf8" "en_US.UTF-8" "en_US.utf8" "C.UTF-8" "C")
+    # Try Japanese UTF-8 (both formats), fall back to English UTF-8, then C.
+    # C.UTF-8/C.utf8 の両綴りを含める: glibc 系は `C.utf8`、一部環境は `C.UTF-8`。
+    # これが無いと「UTF-8ロケールはあるが綴り違いで一致せず C に落ちる」事故になり、
+    # tmux が非UTF-8モードで起動して Nerd Font 等のマルチバイト文字が壊れる。
+    local locales=("ja_JP.UTF-8" "ja_JP.utf8" "en_US.UTF-8" "en_US.utf8" "C.UTF-8" "C.utf8" "C")
     
     for locale in $locales; do
         if locale -a 2>/dev/null | grep -q "^${locale}$"; then
