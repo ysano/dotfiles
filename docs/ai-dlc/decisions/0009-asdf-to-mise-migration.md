@@ -68,7 +68,8 @@ Status: accepted
    `MISE_PYTHON_GITHUB_ATTESTATIONS=false mise install python@3.11.9` で回避（当該バージョンのみ）。
 4. **エイリアスは自動解決**。`.tool-versions` の `golang`/`nodejs` は mise が `go`/`node` として
    解決するため改名不要。ただし `mise registry nodejs` のような直接参照はエラーになる。
-5. `~/.asdf` の実体削除はベークイン期間後の残タスク（`rm -rf ~/.asdf`）。postgres 等の再ビルドが必要になる点に留意。
+5. **移行前に起動した長命プロセス（Claude Code 等）は古い PATH（`~/.asdf/shims` を含む）を保持**するため、停止フック等が壊れた asdf shim（`exec asdf` で失敗）を踏む。新ログインシェルはクリーン。対処として壊れた shim（`~/.asdf/shims` 291個・1.1MB）は削除済み（ロールバック価値ゼロ）。削除後は古い PATH でも dir 消失でスキップされ homebrew python3 等にフォールスルーする。
+6. `~/.asdf/installs`（9.1GB）の削除はベークイン期間後の残タスク（`rm -rf ~/.asdf`）。postgres 等の再ビルドが必要になる点に留意。
 
 ## 設定の所在
 
