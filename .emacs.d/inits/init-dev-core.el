@@ -38,7 +38,7 @@
   :custom
   (forge-topic-list-limit '(60 . 0))  ;; 60 open, 0 closed
   :config
-  (setq auth-sources '("~/.netrc" "~/.authinfo.gpg" "~/.authinfo")))
+  (setq auth-sources '(macos-keychain-internet macos-keychain-generic)))
 
 ;; diff-hl - Git差分をフリンジに表示 (git-gutter代替、より軽量)
 (use-package diff-hl
