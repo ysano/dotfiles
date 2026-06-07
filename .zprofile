@@ -202,12 +202,12 @@ setup_node() {
     fi
 }
 
-setup_asdf() {
-    # ASDF runtime version manager (nodejs/python/ruby/yarn/bun/poetry/postgres ...)
-    # Must be invoked AFTER OS-specific setup so shims win over Homebrew runtimes
-    # and `.tool-versions` pins are honored.
-    if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" ]]; then
-        safe_path_prepend "${ASDF_DATA_DIR:-$HOME/.asdf}/shims"
+setup_mise() {
+    # mise runtime version manager (旧 asdf; nodejs/python/ruby/yarn/bun/poetry/postgres ...)
+    # shims は自己完結バイナリなので、非対話環境 (brew bundle 等) でも解決できる。
+    # OS 固有 setup の後に呼び、Homebrew ランタイムより優先かつ `.tool-versions` を尊重。
+    if [[ -d "${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims" ]]; then
+        safe_path_prepend "${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims"
     fi
 }
 
@@ -283,8 +283,8 @@ if [[ -n "${OS_SETUP_FUNC:-}" ]]; then
     $OS_SETUP_FUNC
 fi
 
-# ASDF shims (must be after OS setup so they win over Homebrew runtimes)
-setup_asdf
+# mise shims (must be after OS setup so they win over Homebrew runtimes)
+setup_mise
 
 # Editor setup (after OS-specific config)
 setup_editor

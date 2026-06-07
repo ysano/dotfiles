@@ -103,42 +103,21 @@ setup_dev_tools() {
         zinit wait lucid for OMZP::composer/composer.plugin.zsh
     fi
     
-    # ASDF version manager
-    if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}" ]]; then
-        # 補完ファイル ~/.asdf/completions/_asdf を遅延生成。
-        # asdf 0.16+ では asdf binary が `asdf completion zsh` を提供するが、
-        # 自動配置はされないため zsh 起動時に必要なら生成する。
-        # asdf binary が補完ファイルより新しい場合のみ再生成（アップグレード追従）。
-        # fpath への登録は .zsh/functions.zsh が担当。
-        # 旧来の OMZP::asdf/asdf.plugin.zsh は asdf 0.x の asdf.sh を source する
-        # 前提で、asdf 0.16+ では asdf.sh 自体が存在せず実質 no-op だったため除去。
-        # shim PATH は .zprofile の setup_asdf() に集約済み（commit 7c7a033）。
-        local _asdf_bin _asdf_comp_dir _asdf_comp_file
-        _asdf_bin=$(command -v asdf 2>/dev/null)
-        _asdf_comp_dir="${ASDF_DATA_DIR:-$HOME/.asdf}/completions"
-        _asdf_comp_file="$_asdf_comp_dir/_asdf"
-        if [[ -n "$_asdf_bin" ]] && \
-           { [[ ! -f "$_asdf_comp_file" ]] || [[ "$_asdf_bin" -nt "$_asdf_comp_file" ]]; }; then
-            # 失敗時に空 / 部分ファイルを残さないよう一時ファイル経由で atomic に置換。
-            mkdir -p "$_asdf_comp_dir"
-            if "$_asdf_bin" completion zsh > "$_asdf_comp_file.tmp" 2>/dev/null; then
-                mv "$_asdf_comp_file.tmp" "$_asdf_comp_file"
-            else
-                rm -f "$_asdf_comp_file.tmp"
-            fi
-        fi
-
-        # plugin-index の週次自動更新（バックグラウンド・非同期）
-        # sentinel mtime が 7 日以上前なら 'asdf plugin update --all' を disown 起動。
+    # mise version manager (旧 asdf)
+    # 補完は Homebrew が site-functions に配置済み（fpath 経由でロード）のため自前生成不要。
+    # shim PATH は .zprofile の setup_mise() に集約済み。
+    if [[ -d "${MISE_DATA_DIR:-$HOME/.local/share/mise}" ]] && command -v mise >/dev/null 2>&1; then
+        # プラグイン（vfox/asdf backend: yarn/poetry/postgres 等）の週次自動更新。
+        # sentinel mtime が 7 日以上前なら 'mise plugins update' を disown 起動。
         # stat: BSD (-f %m) → GNU (-c %Y) フォールバックでクロスプラットフォーム対応。
-        local _asdf_idx_stamp="${ASDF_DATA_DIR:-$HOME/.asdf}/.plugin-index-updated"
-        local _asdf_idx_week=$((7 * 24 * 60 * 60))
-        local _asdf_idx_mtime
-        _asdf_idx_mtime=$(stat -f %m "$_asdf_idx_stamp" 2>/dev/null \
-            || stat -c %Y "$_asdf_idx_stamp" 2>/dev/null \
+        local _mise_stamp="${MISE_DATA_DIR:-$HOME/.local/share/mise}/.plugins-updated"
+        local _mise_week=$((7 * 24 * 60 * 60))
+        local _mise_mtime
+        _mise_mtime=$(stat -f %m "$_mise_stamp" 2>/dev/null \
+            || stat -c %Y "$_mise_stamp" 2>/dev/null \
             || echo 0)
-        if (( $(date +%s) - _asdf_idx_mtime > _asdf_idx_week )); then
-            ( asdf plugin update --all >/dev/null 2>&1 && touch "$_asdf_idx_stamp" ) &!
+        if (( $(date +%s) - _mise_mtime > _mise_week )); then
+            ( mise plugins update >/dev/null 2>&1 && touch "$_mise_stamp" ) &!
         fi
     fi
     

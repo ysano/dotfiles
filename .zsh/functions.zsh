@@ -18,8 +18,7 @@ typeset -U path cdpath fpath manpath
 # Where to look for autoloaded function definitions
 fpath=($fpath ~/.zfunc)
 
-# Append completions to fpath
-fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
+# mise の補完は Homebrew が site-functions に配置済み（fpath 経由でロード）。
 
 # Autoload all shell functions from all directories in $fpath (following
 # symlinks) that have the executable bit on (the executable bit is not

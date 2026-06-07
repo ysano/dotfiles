@@ -39,7 +39,33 @@
 
 > Homebrew (`Brewfile`) およびマシン構築の運用ナレッジは外部リポ [ysano/machine-management](https://github.com/ysano/machine-management) で管理。
 
-> **asdf 棚卸し**: `make asdf-doctor` で `.tool-versions` と installed の整合性チェック（読み取り専用）。削除候補は `make asdf-clean-dry` で確認後、手動 `asdf uninstall <plugin> <version>` を推奨。プラグインインデックス更新は `make asdf-sync`。
+#### mise（言語ランタイム）
+
+asdf から移行済み（→ `docs/ai-dlc/decisions/0009-asdf-to-mise-migration.md`）。
+設定は `~/.tool-versions`（$HOME 直置き、mise がネイティブに読む）。
+shell 統合は `.zprofile` の `setup_mise()`（shims を PATH prepend）。
+mise パッケージ本体は machine-management の Brewfile（`brew "mise"`）が管理。
+
+| 操作 | コマンド |
+|---|---|
+| インストール | `mise install <tool>@<version>` |
+| グローバル既定に設定 | `mise use -g <tool>@<version>`（`~/.tool-versions` に書込） |
+| プロジェクト用に設定 | `mise use <tool>@<version>`（カレントの `.tool-versions` に書込） |
+| 一括導入 | `mise install`（カレントの `.tool-versions` を解決） |
+| 一覧・診断 | `mise ls` / `mise doctor` / `mise current` |
+| 削除 | `mise uninstall <tool>@<version>` |
+
+棚卸し（Makefile 経由）:
+
+- `make mise-doctor` — `.tool-versions` ⇄ installed の整合性チェック（読み取り専用）
+- `make mise-prune` — 未使用バージョンの削除候補（dry-run）
+- `make mise-sync` — プラグイン更新（`mise plugins update`）
+
+落とし穴（詳細は decision 0009）:
+
+- `mise prune` は trust 前だと現役ツールまで削除候補にする → 先に `mise trust ~/.tool-versions`
+- 古い python は attestation 検証で失敗しうる → `MISE_PYTHON_GITHUB_ATTESTATIONS=false mise install python@<ver>`
+- グローバル npm CLI は `~/.default-npm-packages` 経由で node 導入時に自動インストールされる
 
 ### プラットフォーム固有
 

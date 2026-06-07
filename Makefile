@@ -2,7 +2,7 @@
 # ローカル開発用の品質チェックツール
 
 .PHONY: all check lint format test security clean install-tools help \
-	asdf-doctor asdf-clean-dry asdf-sync
+	mise-doctor mise-prune mise-sync
 .DEFAULT_GOAL := help
 
 # 変数定義
@@ -341,36 +341,35 @@ stats:
 	echo "  総関数数: $$total_functions"
 
 # ============================================================================
-# asdf 棚卸し（運用ツール）
+# mise 棚卸し（運用ツール）
 # ============================================================================
 
-ASDF_DOCTOR_SCRIPT := scripts/asdf-doctor.sh
-
-## 🩺 asdf 診断: .tool-versions ⇄ installed の整合性チェック
-asdf-doctor:
-	@test -x $(ASDF_DOCTOR_SCRIPT) || { \
-		echo "$(RED)❌ $(ASDF_DOCTOR_SCRIPT) not found or not executable$(NC)" >&2; \
+## 🩺 mise 診断: .tool-versions ⇄ installed の整合性チェック
+mise-doctor:
+	@command -v mise >/dev/null 2>&1 || { \
+		echo "$(RED)❌ mise not found$(NC)" >&2; \
 		exit 1; \
 	}
-	@./$(ASDF_DOCTOR_SCRIPT)
+	@mise doctor
+	@mise ls
 
-## 🧹 asdf 削除候補表示（dry-run、実行はしない）
-asdf-clean-dry:
-	@test -x $(ASDF_DOCTOR_SCRIPT) || { \
-		echo "$(RED)❌ $(ASDF_DOCTOR_SCRIPT) not found or not executable$(NC)" >&2; \
+## 🧹 mise 未使用バージョン削除候補表示（dry-run、実行はしない）
+mise-prune:
+	@command -v mise >/dev/null 2>&1 || { \
+		echo "$(RED)❌ mise not found$(NC)" >&2; \
 		exit 1; \
 	}
-	@./$(ASDF_DOCTOR_SCRIPT) --clean-suggestions
+	@mise prune --dry-run
 
-## 🔄 asdf プラグインインデックス・全プラグインを最新化
-asdf-sync:
-	@command -v asdf >/dev/null 2>&1 || { \
-		echo "$(YELLOW)⚠️  asdf not found, skip$(NC)" >&2; \
+## 🔄 mise ツール・プラグインを最新化
+mise-sync:
+	@command -v mise >/dev/null 2>&1 || { \
+		echo "$(YELLOW)⚠️  mise not found, skip$(NC)" >&2; \
 		exit 0; \
 	}
-	@echo "$(CYAN)🔄 asdf プラグインを更新中...$(NC)"
-	@asdf plugin update --all
-	@echo "$(GREEN)✅ 完了。各プロジェクトで 'asdf install' を実行してください。$(NC)"
+	@echo "$(CYAN)🔄 mise プラグインを更新中...$(NC)"
+	@mise plugins update
+	@echo "$(GREEN)✅ 完了。'mise install' で .tool-versions のバージョンを揃えてください。$(NC)"
 
 # ============================================================================
 # ヘルプ
