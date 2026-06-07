@@ -75,4 +75,6 @@ fi
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="/Users/yoshiaki_sano/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
-eval "$(~/.local/bin/mise activate zsh)"
+### mise: 対話シェル用 activate（非対話/IDE 用 shims は .zprofile setup_mise）
+# インストール場所非依存・未導入時はスキップ（brew / standalone どちらでも動く）
+command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
