@@ -38,7 +38,13 @@
   :custom
   (forge-topic-list-limit '(60 . 0))  ;; 60 open, 0 closed
   :config
-  (setq auth-sources '(macos-keychain-internet macos-keychain-generic)))
+  ;; 認証情報の保管先を OS 別に切替（macOS=Keychain / 他=GPG暗号化 authinfo）
+  (setq auth-sources
+        (cond
+         ((eq system-type 'darwin)
+          '(macos-keychain-internet macos-keychain-generic "~/.authinfo.gpg"))
+         (t
+          '("~/.authinfo.gpg" "~/.authinfo")))))
 
 ;; diff-hl - Git差分をフリンジに表示 (git-gutter代替、より軽量)
 (use-package diff-hl
