@@ -81,9 +81,10 @@ _emit() {
     fi
 }
 
-# src 作業ツリーの *.local.md を相対パスを保って dest へ再帰複製する。
-# git 管理外のローカルメモ等を新 worktree に引き継ぐ用途。.git と node_modules は
-# 除外（生成物を拾わない）。BSD/GNU 両 find 対応の構文を使う。
+# src 作業ツリーの *.local.md / *.local.json を相対パスを保って dest へ再帰複製する。
+# git 管理外のローカルメモやローカル設定（.claude/settings.local.json 等）を新 worktree に
+# 引き継ぐ用途。.git と node_modules は除外（生成物を拾わない）。
+# BSD/GNU 両 find 対応の構文を使う。
 _copy_local_files() {
     local src="$1" dest="$2" f rel
     while IFS= read -r -d '' f; do
@@ -91,11 +92,11 @@ _copy_local_files() {
         mkdir -p "$dest/$(dirname "$rel")"
         cp -p "$f" "$dest/$rel"
     done < <(find "$src" \( -name .git -o -name node_modules \) -prune \
-        -o -type f -name '*.local.md' -print0 2>/dev/null)
+        -o -type f \( -name '*.local.md' -o -name '*.local.json' \) -print0 2>/dev/null)
 }
 
 # worktree を外部配置に作成（base 既定 HEAD）。パス/ベースは %q でエスケープ。
-# 作成後、現作業ツリーの *.local.md を新 worktree に複製（dry-run では行わない）。
+# 作成後、現作業ツリーの *.local.md / *.local.json を新 worktree に複製（dry-run では行わない）。
 wt_create() {
     local name="$1" base path br src
     base="$(resolve_base "${2:-}")"
