@@ -31,7 +31,7 @@ ADHD 特性への対策として、Issue/PR 番号を決定論的に 2 つの絵
    - `j = (次の 2 hex を 10 進化, 0–255) % 64`
    - 256 は 64 の倍数のため剰余に偏りなし（各索引が等確率）
 4. **パレット参照**: 固定パレット `P`（64 種）から `P[i]` と `P[j]` を連結
-5. **出力**: `P[i]P[j]`（例 `🦊🍇`）。改行なしで stdout に出す。
+5. **出力**: `P[i]P[j]`（例 `#1234 → 🦁🔑`）。stdout に出力（末尾改行あり）。
 
 ### 衝突特性
 
@@ -57,7 +57,7 @@ ADHD 特性への対策として、Issue/PR 番号を決定論的に 2 つの絵
 
 ### スクリプト
 
-- 配置: `bin/emoji-id`（新設のユーザーコマンド用ディレクトリ。管理用 `scripts/` とは役割分離）。実行可能・拡張子なし。手元で `emoji-id` として叩けるよう `.zsh` で既存ヘルパ `safe_path_append "$DOTFILES/bin"`（存在ガード付き＝グレースフル劣化）で PATH 追加。Claude は `bash bin/emoji-id …` で直接呼ぶ
+- 配置: `bin/emoji-id`（新設のユーザーコマンド用ディレクトリ。管理用 `scripts/` とは役割分離）。実行可能・拡張子なし。手元で `emoji-id` として叩けるよう `.zshrc` で存在ガード付き PATH 追加（`[[ -d "$HOME/dotfiles/bin" ]] && export PATH="$HOME/dotfiles/bin:$PATH"`、既存 `.rd/bin` と同スタイル）。Claude は `bash bin/emoji-id …` で直接呼ぶ
 - 言語: bash（`shasum` は macOS/Linux 共通。Linux で無ければ `sha256sum` にフォールバック）
 - インターフェース:
   - `emoji-id 1234` → `🦊🍇`（番号のみ）
@@ -86,4 +86,4 @@ ADHD 特性への対策として、Issue/PR 番号を決定論的に 2 つの絵
 
 - `emoji-id` が上記インターフェースで動作し、全テストが PASS する。
 - spec 記載のパレット・アルゴリズムと実装が一致する（既知値テストで担保）。
-- `.zsh` の `safe_path_append` で `bin/` が PATH に入り、手元で `emoji-id` が叩ける。テストは CI（`.tmux/ci.sh` 等の既存テストランナー）で回せる。
+- `.zshrc` の存在ガード付き PATH 追加で `bin/` が入り、手元で `emoji-id` が叩ける。テストは `bash test_emoji_id.sh`（ローカル）および `.github/workflows/shell-tests.yml`（CI）で回せる。

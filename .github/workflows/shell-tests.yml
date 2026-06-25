@@ -1,0 +1,14 @@
+name: shell-tests
+
+on:
+  push:
+    paths: [ 'bin/**', 'test_*.sh' ]
+  pull_request:
+    paths: [ 'bin/**', 'test_*.sh' ]
+
+jobs:
+  emoji-id:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - run: bash test_emoji_id.sh

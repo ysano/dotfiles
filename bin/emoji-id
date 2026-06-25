@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# ファイル名: emoji-id
+# 説明: Issue/PR 番号を決定論的に 2 絵文字へ変換する（ADHD 向けの視覚識別補助）。
+#       SHA-256 の雪崩効果で似た番号を散らし、連番でも一目で判別できる。
+# 使い方:
+#   emoji-id <number>          番号のみ（例: emoji-id 1234）
+#   emoji-id <repo> <number>   リポジトリ名 + 番号（跨ぎの混同を防ぐ）
+# 出力: 2 絵文字（末尾改行あり）。引数不正は usage を stderr、rc 1。
+# 設計: docs/superpowers/specs/2026-06-25-issue-pr-emoji-id-design.md
+# 注: source 可能（BASH_SOURCE ガード）。テストは emoji_id 関数を直接呼ぶ。
+
+set -uo pipefail
+
+# 64 種パレット（索引 0-63）。順序がアルゴリズムの一部のため変更不可。
+# spec のパレットと完全一致させること。単一コードポイントの具象絵文字のみ。
+PALETTE=(
+  🐙 🦊 🐢 🦁 🐧 🦋 🐬 🦉
+  🐝 🐳 🦒 🦔 🐡 🦩 🐌 🦦
+  🍣 🍕 🍇 🍓 🍔 🍩 🌮 🍑
+  🥝 🍍 🌽 🥐 🧀 🍮 🍫 🥑
+  🌵 🌻 🍄 🌴 🍁 🌷 🌊 🔥
+  🌙 ⭐ 🌈 🍀 🔑 🎈 🎸 🧲
+  ⚓ 🔔 💎 🪁 🧭 🔮 🧸 🛼
+  🚀 🚲 ⛵ 🎡 🎢 🏰 🎯 🎁
+)
+
+# 番号（および任意の repo）から 2 絵文字を stdout に出す。
+#   引数 1 個: key=<number> / 引数 2 個: key=<repo>#<number>
+# SHA-256 先頭 2 hex ずつ（0-255）を %64（256 は 64 の倍数で偏りなし）。
+emoji_id() {
+    local key hash i j
+    case $# in
+        1) key="$1" ;;
+        2) key="$1#$2" ;;
+        *) echo "usage: emoji-id <number> | emoji-id <repo> <number>" >&2; return 1 ;;
+    esac
+    [[ -n "$key" ]] || { echo "usage: emoji-id <number> | emoji-id <repo> <number>" >&2; return 1; }
+
+    # macOS は shasum、Linux は sha256sum（グレースフル劣化）
+    if command -v shasum >/dev/null 2>&1; then
+        hash="$(printf '%s' "$key" | shasum -a 256)"
+    elif command -v sha256sum >/dev/null 2>&1; then
+        hash="$(printf '%s' "$key" | sha256sum)"
+    else
+        echo "emoji-id: shasum / sha256sum が見つかりません" >&2; return 1
+    fi
+    hash="${hash%% *}"   # 先頭のダイジェスト部分のみ（ファイル名や '-' を除去）
+
+    i=$(( 16#${hash:0:2} % 64 ))
+    j=$(( 16#${hash:2:2} % 64 ))
+    printf '%s%s\n' "${PALETTE[i]}" "${PALETTE[j]}"
+}
+
+# 直接実行時のみ main 相当を呼ぶ（source 時は関数定義のみ）。
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    emoji_id "$@"
+fi
