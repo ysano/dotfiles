@@ -28,8 +28,11 @@ log_error() {
 
 # DEBUGレベルログ（TMUX_CLAUDE_VOICE_DEBUG=1のときのみ出力）
 log_debug() {
-    [[ "$TMUX_CLAUDE_VOICE_DEBUG" == "1" ]] && \
+    # if 文で書く（`[[ ]] && echo` だと DEBUG 無効時に rc 1 を返し、
+    # 呼び出し側の set -e で中断してしまうため。functions.sh と同型）。
+    if [[ "${TMUX_CLAUDE_VOICE_DEBUG:-}" == "1" ]]; then
         echo "[DEBUG] $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$CLAUDE_VOICE_LOG_FILE"
+    fi
 }
 
 # ログファイルのローテーション（サイズ制限）

@@ -61,6 +61,19 @@ if [ -f "$TEST_SCRIPT" ]; then
   echo ""
 fi
 
+# 3.6 Logging utils set -u/-e 互換性テスト（ADR 0002 回帰防止）
+LOG_TEST_SCRIPT="$SCRIPT_DIR/claude/test_logging_utils.sh"
+if [ -f "$LOG_TEST_SCRIPT" ]; then
+  echo "--- Logging Utils Tests ---"
+  if bash "$LOG_TEST_SCRIPT"; then
+    echo "[PASS] logging utils tests"
+  else
+    echo "[FAIL] logging utils tests"
+    errors=$((errors + 1))
+  fi
+  echo ""
+fi
+
 # 4. Run conflict check if available
 CONFLICT_SCRIPT="$DOTFILES_ROOT/.claude/skills/tmux-config/scripts/check_conflicts.sh"
 if [ -f "$CONFLICT_SCRIPT" ]; then
