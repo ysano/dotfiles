@@ -264,10 +264,23 @@ speak_text() {
                     return 1
                 fi
             else
-                # パンニング無効時: 直接再生
-                say -v "$voice_name" -r "$speech_rate" "$text" 2>/dev/null &
-                local say_pid=$!
-                log_debug "音声再生開始 (PID: $say_pid)"
+                # パンニング無効時: 一時ファイルに出力し afplay -v で音量を適用して再生。
+                # say 自体には音量オプションが無く、直接再生だとシステム音量のままになるため
+                # （@claude_voice_volume_macos が効かない）。afplay -v で 0.0〜1.0 を反映する。
+                local direct_temp direct_volume
+                direct_temp="/tmp/claude_speech_direct_$$.aiff"
+                direct_volume=$(get_normalized_volume)
+                say -v "$voice_name" -r "$speech_rate" "$text" -o "$direct_temp" 2>/dev/null
+                if [[ -f "$direct_temp" ]]; then
+                    afplay -v "$direct_volume" "$direct_temp" &
+                    local afplay_pid=$!
+                    log_debug "音声再生開始 音量=$direct_volume (PID: $afplay_pid)"
+                    (sleep 10 && rm -f "$direct_temp") &
+                else
+                    # フォールバック: ファイル生成に失敗したら従来どおり直接 say
+                    say -v "$voice_name" -r "$speech_rate" "$text" 2>/dev/null &
+                    log_debug "音声再生開始 (直接say フォールバック)"
+                fi
             fi
         else
             log_error "sayコマンドが見つかりません"
