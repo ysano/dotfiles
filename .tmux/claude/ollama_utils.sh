@@ -28,7 +28,7 @@ if ! command -v get_os_type >/dev/null 2>&1; then
 fi
 
 # モデル優先順位リスト（ハードコード）
-readonly OLLAMA_MODEL_PRIORITY=("gemma3:1b" "gemma2:2b" "phi4-mini:latest" "orca-mini:latest")
+readonly OLLAMA_MODEL_PRIORITY=("gemma4:e2b-it-qat" "gemma3:4b" "gemma3:1b" "gemma2:2b" "phi4-mini:latest" "orca-mini:latest")
 
 # 設定値取得（デフォルト値付き）
 get_tmux_ollama_option() {
@@ -182,6 +182,20 @@ select_optimal_ollama_model() {
     return 1
 }
 
+# 要約を読み上げ向けに整形する（ollama 非依存の純関数）。
+# Markdown/装飾記号を除去し、改行を畳み込み、最初の一文だけ採用（途中でぶつ切りしない）。
+sanitize_summary_for_speech() {
+    local text="$1"
+    text=$(printf '%s' "$text" \
+        | tr '\n' ' ' \
+        | sed -E 's/[*`#>|_~]+//g' \
+        | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
+    case "$text" in
+        *。*) text="${text%%。*}。" ;;
+    esac
+    printf '%s' "$text"
+}
+
 # 画面テキストを要約する関数
 summarize_with_ollama() {
     local pane_content="$1"
@@ -192,7 +206,9 @@ summarize_with_ollama() {
     fi
     
     local connection=$(get_ollama_connection)
-    local timeout=$(get_tmux_ollama_option "claude_voice_ollama_timeout" "10")
+    # 既定 30 秒: モデルの初回コールドスタート（実測 ~18 秒）で timeout 失敗しないよう余裕を持たせる。
+    # ウォーム時は 1〜2 秒で返るため timeout は上限としてのみ効く。
+    local timeout=$(get_tmux_ollama_option "claude_voice_ollama_timeout" "30")
     local model
     model=$(select_optimal_ollama_model)
     local summary_lines="20"
@@ -224,8 +240,8 @@ summarize_with_ollama() {
     
     log_debug "分析対象テキスト（最後の${summary_lines}行、最初の100文字）: ${recent_content:0:100}..."
 
-    # プロンプトの構築
-    local prompt="以下のテキストはAIアシスタントの出力です。現在の「問い合わせ内容」について、状況を30文字以内で具体的に要約してください。特に最後の行を重視してください。
+    # プロンプトの構築（読み上げ向け: 記号なし・一文・簡潔）
+    local prompt="以下は AI アシスタントの作業ログです。今どういう状況かを日本語の一文・30文字以内で要約してください。Markdown や記号は使わず、話し言葉として自然にしてください。特に最後の行を重視してください。
 
 $recent_content"
 
@@ -259,6 +275,7 @@ $recent_content"
             model: $model,
             prompt: $prompt,
             stream: false,
+            think: false,
             options: {
                 temperature: $temperature,
                 top_p: 0.9,
@@ -289,9 +306,9 @@ $recent_content"
         summary=$(echo "$response" | jq -r '.response' 2>/dev/null)
         
         if [[ $? -eq 0 && -n "$summary" && "$summary" != "null" ]]; then
-            # 改行を除去し、最初の30文字を取得
+            # 読み上げ向けに整形（記号除去・改行畳み込み・一文化。cut のぶつ切りを廃止）
             local clean_summary
-            clean_summary=$(echo "$summary" | tr -d '\n' | cut -c1-30)
+            clean_summary=$(sanitize_summary_for_speech "$summary")
             
             if [[ -n "$clean_summary" ]]; then
                 log_debug "要約生成成功: $clean_summary"

@@ -74,6 +74,19 @@ if [ -f "$LOG_TEST_SCRIPT" ]; then
   echo ""
 fi
 
+# 3.7 Ollama 要約整形（sanitize_summary_for_speech）テスト
+OLLAMA_TEST_SCRIPT="$SCRIPT_DIR/claude/test_ollama_utils.sh"
+if [ -f "$OLLAMA_TEST_SCRIPT" ]; then
+  echo "--- Ollama Utils Tests ---"
+  if bash "$OLLAMA_TEST_SCRIPT"; then
+    echo "[PASS] ollama utils tests"
+  else
+    echo "[FAIL] ollama utils tests"
+    errors=$((errors + 1))
+  fi
+  echo ""
+fi
+
 # 4. Run conflict check if available
 CONFLICT_SCRIPT="$DOTFILES_ROOT/.claude/skills/tmux-config/scripts/check_conflicts.sh"
 if [ -f "$CONFLICT_SCRIPT" ]; then
