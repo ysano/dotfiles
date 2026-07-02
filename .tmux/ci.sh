@@ -87,6 +87,19 @@ if [ -f "$OLLAMA_TEST_SCRIPT" ]; then
   echo ""
 fi
 
+# 3.8 共通関数（format_pane_label 等）テスト
+FUNC_TEST_SCRIPT="$SCRIPT_DIR/claude/test_functions.sh"
+if [ -f "$FUNC_TEST_SCRIPT" ]; then
+  echo "--- Functions Tests ---"
+  if bash "$FUNC_TEST_SCRIPT"; then
+    echo "[PASS] functions tests"
+  else
+    echo "[FAIL] functions tests"
+    errors=$((errors + 1))
+  fi
+  echo ""
+fi
+
 # 4. Run conflict check if available
 CONFLICT_SCRIPT="$DOTFILES_ROOT/.claude/skills/tmux-config/scripts/check_conflicts.sh"
 if [ -f "$CONFLICT_SCRIPT" ]; then

@@ -346,6 +346,30 @@ validate_config() {
     return 0
 }
 
+# 読み上げ用ペイン識別ラベルを書式化する（純関数・テスト対象）。
+# window 名のみ。複数 pane の window は pane 番号を付加。window 名が空ならラベルなし。
+# 注: `[[ ]] && cmd` は条件 false 時に rc 1 を返し呼び出し側の set -e で中断するため if 文で書く。
+format_pane_label() {
+    local win_name="$1" pane_count="$2" pane_idx="$3"
+    if [[ -z "$win_name" ]]; then
+        return 0
+    fi
+    if [[ "${pane_count:-1}" -gt 1 ]]; then
+        printf '%s ペイン%s' "$win_name" "$pane_idx"
+    else
+        printf '%s' "$win_name"
+    fi
+}
+
+# PANE_TARGET (session:window.pane) から読み上げ用ラベルを返す（tmux 取得 + format_pane_label）。
+pane_speech_label() {
+    local target="$1" win_name pane_count pane_idx
+    win_name=$(tmux display-message -p -t "$target" '#{window_name}' 2>/dev/null)
+    pane_count=$(tmux list-panes -t "${target%.*}" 2>/dev/null | wc -l | tr -d ' ')
+    pane_idx=$(tmux display-message -p -t "$target" '#{pane_index}' 2>/dev/null)
+    format_pane_label "$win_name" "$pane_count" "$pane_idx"
+}
+
 # スクリプト実行時の処理
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     case "$1" in

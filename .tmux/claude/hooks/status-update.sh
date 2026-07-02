@@ -204,6 +204,8 @@ if [[ "$SUMMARY_ENABLED" == "true" ]]; then
             # タスク完了: ペイン内容を要約して読み上げ
             (
                 source "$SCRIPT_DIR/sound_utils.sh" 2>/dev/null
+                # 読み上げ冒頭にどの window/pane か分かるラベルを付ける（複数pane時のみpane番号）
+                label=$(pane_speech_label "$PANE_TARGET")
                 pane_content=$(tmux capture-pane -t "$PANE_TARGET" -p -S -30 2>/dev/null)
                 if [[ -n "$pane_content" ]]; then
                     # Ollama で要約を試行
@@ -212,9 +214,9 @@ if [[ "$SUMMARY_ENABLED" == "true" ]]; then
                         source "$SCRIPT_DIR/ollama_utils.sh" 2>/dev/null
                         summary=$(summarize_with_ollama "$pane_content" 2>/dev/null) || summary=""
                     fi
-                    speak_text "${summary:-タスクが完了しました}"
+                    speak_text "${label:+${label}、}${summary:-タスクが完了しました}"
                 else
-                    speak_text "タスクが完了しました"
+                    speak_text "${label:+${label}、}タスクが完了しました"
                 fi
             ) >/dev/null 2>&1 &
             _log "DEBUG" "TTS: 完了要約読み上げ開始"
