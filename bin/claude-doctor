@@ -42,19 +42,43 @@ fi
 
 # --- 2. 長期セッション（日単位で走りっぱなしの claude CLI）---
 section "2. 長期セッション (etime 1日超)"
+# 自セッション判定: 親チェーンに claude CLI がいればその PID を self とする
+# （プロセス寿命 ≠ 会話寿命。pane 開きっぱなしの「自分自身」を畳む候補に出さない）
+self_claude=""
+_p=$$
+for _ in 1 2 3 4 5 6 7 8; do
+    _p=$(/bin/ps -p "$_p" -o ppid= 2>/dev/null | tr -d ' ')
+    [[ -z "$_p" || "$_p" -le 1 ]] && break
+    if /bin/ps -p "$_p" -o args= 2>/dev/null | grep -q '^claude'; then
+        self_claude=$_p
+        break
+    fi
+done
 # 実 CLI セッションのみ: args が claude で始まり Claude.app (デスクトップ) を含まない
-long_sessions=$(/bin/ps -eo pid,etime,rss,args | /usr/bin/awk '
-    $4 == "claude" && $2 ~ /-/ && $0 !~ /Claude\.app/ {
-        cmd = ""; for (i = 4; i <= NF && i < 9; i++) cmd = cmd " " $i
-        printf "%s|%s|%dMB|%s\n", $1, $2, $3 / 1024, cmd
+long_sessions=$(/bin/ps -eo pid,tty,etime,rss,args | /usr/bin/awk '
+    $5 == "claude" && $3 ~ /-/ && $0 !~ /Claude\.app/ {
+        cmd = ""; for (i = 5; i <= NF && i < 10; i++) cmd = cmd " " $i
+        printf "%s|%s|%s|%dMB|%s\n", $1, $2, $3, $4 / 1024, cmd
     }')
 if [[ -z "$long_sessions" ]]; then
     ok "1日超のセッションなし"
 else
-    while IFS='|' read -r pid etime rss cmd; do
-        warn "PID $pid  up=$etime  $rss $cmd"
+    others_found=0
+    while IFS='|' read -r pid tty etime rss cmd; do
+        pane=""
+        if command -v tmux >/dev/null 2>&1; then
+            pane=$(tmux list-panes -a -F '#{pane_tty} #{session_name}:#{window_index}.#{pane_index}' 2>/dev/null \
+                | grep "/dev/${tty} " | /usr/bin/awk '{print $2}')
+        fi
+        label="PID $pid  up=$etime  $rss ${pane:+pane=$pane }$cmd"
+        if [[ "$pid" == "$self_claude" ]]; then
+            ok "$label ← 自セッション（診断実行元・対象外）"
+        else
+            warn "$label"
+            others_found=1
+        fi
     done <<< "$long_sessions"
-    hint "pane の作業残を確認して畳む（長期セッションはデーモン再起動をまたぐと配送障害の温床）"
+    (( others_found )) && hint "pane の作業残を確認して畳む（長期セッションはデーモン再起動をまたぐと配送障害の温床）"
 fi
 
 # --- 3. 孤児プロセス（ppid=1 の node/claude 系）---
