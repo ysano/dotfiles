@@ -83,8 +83,9 @@ fi
 
 # --- 3. 孤児プロセス（ppid=1 の node/claude 系）---
 section "3. 孤児プロセス (ppid=1)"
+# bg-pty-host / bg-spare は cc-daemon 本体（ppid=1 は daemon の仕様）なので除外
 orphans=$(/bin/ps -eo pid,ppid,etime,rss,args | /usr/bin/awk '
-    $2 == 1 && $5 ~ /node$|claude/ && $0 !~ /Claude\.app|Electron/ && $0 ~ /claude|@anthropic/ {
+    $2 == 1 && $5 ~ /node$|claude/ && $0 !~ /Claude\.app|Electron|bg-pty-host|bg-spare/ && $0 ~ /claude|@anthropic/ {
         printf "%s|%s|%dMB\n", $1, $3, $4 / 1024
     }')
 if [[ -z "$orphans" ]]; then
@@ -175,7 +176,8 @@ else
     while IFS='|' read -r pid esec; do
         [[ -z "$pid" ]] && continue
         start=$(( now - esec ))
-        if (( start < pkg_mtime )); then
+        # 1h 未満の差は install 群の mtime 揺れ（複数 node 版に散在）の範囲 = 同世代扱い
+        if (( start + 3600 < pkg_mtime )); then
             skew_found=1
             behind_h=$(( (pkg_mtime - start) / 3600 ))
             warn "PID $pid: 起動後にディスク実体が更新済み (disk=v${disk_ver}, 世代差 ~${behind_h}h)"
@@ -189,7 +191,7 @@ else
             if (n == 2) return d * 86400 + hms[1] * 60 + hms[2]
             return 0
         }
-        $3 == "claude" && $0 !~ /Claude\.app/ { printf "%s|%d\n", $1, etime2sec($2) }')
+        $3 == "claude" && $0 !~ /Claude\.app|bg-pty-host|bg-spare/ { printf "%s|%d\n", $1, etime2sec($2) }')
     if (( skew_found )); then
         hint "区切りで /exit → claude -c で再起動（会話は resume で戻る。version skew は配送障害の温床）"
     else
