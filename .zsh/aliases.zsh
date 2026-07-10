@@ -338,6 +338,20 @@ load_os_aliases() {
 load_os_aliases
 
 # ================================
+# Claude Code Bash ツール対応
+# ================================
+
+# Claude Code の Bash ツールは本設定のスナップショットを source して実行される。
+# 出力を整形するツール(eza/bat/procs 等)や確認プロンプトを挟む破壊的 alias
+# (rm -i 等)は、非対話・非 tty のツール実行では出力破壊やサイレント失敗を招く。
+# CLAUDECODE はスナップショット生成シェル(Claude Code 子プロセス)にも継承されるため、
+# ここで標準コマンドへ戻せば snapshot にも焼き込まれない。通常の対話シェルは影響を受けない。
+# NOTE: 既存セッションのスナップショットには反映されない。新規セッションで再生成される。
+if [[ -n "$CLAUDECODE" ]]; then
+    unalias ls ll la lt lta cat rm cp mv mkdir du df top ps grep fgrep egrep help 2>/dev/null
+fi
+
+# ================================
 # Validation and Testing
 # ================================
 
