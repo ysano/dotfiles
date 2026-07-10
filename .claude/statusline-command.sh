@@ -17,6 +17,7 @@ agent_name=$(echo "$input" | jq -r '.agent.name // ""')
 worktree_name=$(echo "$input" | jq -r '.worktree.name // ""')
 worktree_branch=$(echo "$input" | jq -r '.worktree.branch // ""')
 git_worktree=$(echo "$input" | jq -r '.workspace.git_worktree // ""')
+cc_version=$(echo "$input" | jq -r '.version // ""')
 
 # Powerlevel10k Rainbow 色定義（ANSI 256色）
 # 背景色
@@ -83,8 +84,22 @@ if [ -n "$current_dir" ] && [ -d "$current_dir" ]; then
     fi
 fi
 
-# 時刻表示（P10k の TIME_FORMAT に合わせて HH:MM:SS）
-current_time=$(date +%H:%M:%S)
+# Claude Code バージョン差異（最新版は6hキャッシュ＋バックグラウンド更新）
+# 描画のたびに実行されるため npm view は直接呼ばず、キャッシュを読むだけにする
+version_display=""
+if [ -n "$cc_version" ]; then
+    _cc_cache="$HOME/.claude/.cc-latest-version"
+    # 6時間より古い or 無ければバックグラウンドで更新（描画はブロックしない）
+    if [ -z "$(find "$_cc_cache" -mmin -360 2>/dev/null)" ]; then
+        ( npm view @anthropic-ai/claude-code version 2>/dev/null > "$_cc_cache.tmp" \
+            && mv "$_cc_cache.tmp" "$_cc_cache" ) >/dev/null 2>&1 &
+    fi
+    _cc_latest=$(cat "$_cc_cache" 2>/dev/null)
+    # 古い時だけ警告表示（最新なら何も出さない）
+    if [ -n "$_cc_latest" ] && [ "$cc_version" != "$_cc_latest" ]; then
+        version_display="⚠v${cc_version}->${_cc_latest}"
+    fi
+fi
 
 # コンテキスト残量の表示
 context_display=""
@@ -165,41 +180,49 @@ if [ -n "$worktree_display" ]; then
     status_line+=$(printf '%b' "${FG_MAGENTA}${SEP_RIGHT_HARD}${C_RESET}")
 fi
 
-# 右側要素の組み立て（スペースで区切り）
+# 1行目右側: Agent名
 right_elements=""
 
-# Agent名
 if [ -n "$agent_display" ]; then
     right_elements+=$(printf '%b' " ${FG_MAGENTA}${agent_display}${C_RESET}")
 fi
 
-# Output style（デフォルト以外）
-if [ -n "$output_style" ] && [ "$output_style" != "default" ]; then
-    right_elements+=$(printf '%b' " ${FG_MAGENTA}[${output_style}]${C_RESET}")
-fi
-
-# Vim mode
-if [ -n "$vim_display" ]; then
-    right_elements+=$(printf '%b' " ${vim_color}${vim_display}${C_RESET}")
-fi
-
-# Context残量
-if [ -n "$context_display" ]; then
-    right_elements+=$(printf '%b' " ${context_color}${context_display}${C_RESET}")
-fi
-
-# Model
-if [ -n "$model" ]; then
-    right_elements+=$(printf '%b' " ${FG_BLUE}${model}${C_RESET}")
-fi
-
-# Time
-right_elements+=$(printf '%b' " ${FG_GREY}${current_time}${C_RESET}")
-
-# 右側要素を追加（区切り文字付き）
 if [ -n "$right_elements" ]; then
     status_line+=$(printf '%b' " ${FG_GREY}│${C_RESET}${right_elements}")
 fi
 
-# 出力（$status_line は既に解釈済みの ANSI escape を含むため %s で素通し）
-printf '%s' "$status_line"
+# 2行目: モデル / context残量 / output style / vim mode
+line2=""
+
+# Output style（デフォルト以外）
+if [ -n "$output_style" ] && [ "$output_style" != "default" ]; then
+    line2+=$(printf '%b' "${FG_MAGENTA}[${output_style}]${C_RESET} ")
+fi
+
+# Vim mode
+if [ -n "$vim_display" ]; then
+    line2+=$(printf '%b' "${vim_color}${vim_display}${C_RESET} ")
+fi
+
+# Model
+if [ -n "$model" ]; then
+    line2+=$(printf '%b' "${FG_BLUE}${model}${C_RESET}")
+fi
+
+# Context残量
+if [ -n "$context_display" ]; then
+    line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${context_color}${context_display}${C_RESET}")
+fi
+
+# Claude Code バージョン差異（古い時だけ警告・赤）
+if [ -n "$version_display" ]; then
+    line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${FG_RED}${version_display}${C_RESET}")
+fi
+
+# 2行目を改行で追加
+if [ -n "$line2" ]; then
+    status_line+="\n${line2}"
+fi
+
+# 出力
+printf '%b' "$status_line"
