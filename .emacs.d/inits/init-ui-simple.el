@@ -29,7 +29,7 @@
 ;; --------------------------------
 ;; Unified Font Management (fontset-based)
 ;; --------------------------------
-(defvar my-ui-scale-factor 1.5
+(defvar my-ui-scale-factor 1.0
   "Global UI scale factor for all font sizes and UI elements.")
 
 (defvar my-base-font-size 16
@@ -51,7 +51,8 @@
 ;; integrated = 英数+日本語一体型 (2:1 guaranteed)
 ;; ascii-only = 英数のみ → Layer 2 で日本語フォントを fontset 割当
 (defvar my-font-candidates
-  '((:name "Cica"             :type integrated)
+  '((:name "UDEV Gothic 35"   :type integrated)
+    (:name "Cica"             :type integrated)
     (:name "Sarasa Term J"    :type integrated)
     (:name "HackGen"          :type integrated)
     (:name "Fira Code"        :type ascii-only)
