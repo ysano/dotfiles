@@ -95,9 +95,13 @@ if [ -n "$cc_version" ]; then
             && mv "$_cc_cache.tmp" "$_cc_cache" ) >/dev/null 2>&1 &
     fi
     _cc_latest=$(cat "$_cc_cache" 2>/dev/null)
-    # 古い時だけ警告表示（最新なら何も出さない）
+    # ローカルが公開最新版より「古い時だけ」警告（新しい/同一なら何も出さない）
+    # 文字列比較では新旧を区別できないため sort -V で古い方を判定する
     if [ -n "$_cc_latest" ] && [ "$cc_version" != "$_cc_latest" ]; then
-        version_display="⚠v${cc_version}->${_cc_latest}"
+        _cc_older=$(printf '%s\n%s\n' "$cc_version" "$_cc_latest" | sort -V | head -n1)
+        if [ "$_cc_older" = "$cc_version" ]; then
+            version_display="⚠v${cc_version}->${_cc_latest}"
+        fi
     fi
 fi
 
