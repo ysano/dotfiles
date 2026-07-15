@@ -35,6 +35,9 @@
 (defvar my-base-font-size 16
   "Base font size in points (before scaling).")
 
+(defconst my-base-font-size-default my-base-font-size
+  "Default base font size, used by `my-font-size-reset'.")
+
 (defun my-scaled-font-size ()
   "Calculate scaled font size in Emacs height units (1/10 point)."
   (round (* my-base-font-size my-ui-scale-factor 10)))
@@ -131,6 +134,38 @@ FONT-INFO is a plist from `my--detect-fonts'."
       (my--setup-fontset font-info)                   ; Layer 2
       (message "Font: %s (%s), %dpt"
                font-name (plist-get font-info :type) (/ font-height 10)))))
+
+;; ---- Zoom: macOS 風 Cmd +/- で UI 全体のフォントを拡大縮小 ----
+;; per-buffer の text-scale ではなく my-base-font-size を増減し
+;; my-apply-font-config を再適用することで modeline 等も含め全体を連動させる。
+(defcustom my-font-size-step 1
+  "Point step for `my-font-size-increase' / `my-font-size-decrease'."
+  :type 'integer
+  :group 'faces)
+
+(defun my-font-size-increase ()
+  "Increase the global base font size by `my-font-size-step'."
+  (interactive)
+  (setq my-base-font-size (+ my-base-font-size my-font-size-step))
+  (my-apply-font-config))
+
+(defun my-font-size-decrease ()
+  "Decrease the global base font size by `my-font-size-step' (min 6pt)."
+  (interactive)
+  (setq my-base-font-size (max 6 (- my-base-font-size my-font-size-step)))
+  (my-apply-font-config))
+
+(defun my-font-size-reset ()
+  "Reset the global base font size to `my-base-font-size-default'."
+  (interactive)
+  (setq my-base-font-size my-base-font-size-default)
+  (my-apply-font-config))
+
+;; macOS: Command は super。Cmd-= と Cmd-+ 両方を拡大に割当（macOS 標準に合わせる）
+(global-set-key (kbd "s-=") #'my-font-size-increase)
+(global-set-key (kbd "s-+") #'my-font-size-increase)
+(global-set-key (kbd "s--") #'my-font-size-decrease)
+(global-set-key (kbd "s-0") #'my-font-size-reset)
 
 ;; Apply on startup + 1s timer (frame may not be ready at load time)
 (when (display-graphic-p)

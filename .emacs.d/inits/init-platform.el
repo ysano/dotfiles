@@ -46,9 +46,13 @@
 ;; macOS
 ;; --------------------------------
 (when (eq system-type 'darwin)
-  ;; macOS Option key as Meta
+  ;; macOS Option key as Meta / Command key as Super
+  ;; emacs-mac ポートは mac-command-modifier 既定が meta のため、
+  ;; 明示的に super へ割当てて Option=Meta / Command=Super の慣例配置にする
+  ;; (Cmd +/- 等の macOS ネイティブなキーバインドを super で受けるため)
   (when window-system
-    (setq mac-option-modifier 'meta))
+    (setq mac-option-modifier 'meta)
+    (setq mac-command-modifier 'super))
   
   ;; Terminal mode Meta/Alt key support
   (unless window-system
