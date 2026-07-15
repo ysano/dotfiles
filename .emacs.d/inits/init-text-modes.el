@@ -245,8 +245,18 @@ Uses string operations to avoid buffer match-data corruption."
      ".mermaid { text-align: center; }\n"
      "</style>\n</head>\n<body>\n"
      html-body
-     "\n<script src=\"https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js\"></script>\n"
-     "<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>\n"
+     ;; impatient-mode は iframe への document.write + doc.close() で配信するため、
+     ;; CDN の非同期読込前に DOMContentLoaded が発火し startOnLoad が取り逃す。
+     ;; イベント非依存に window.mermaid をポーリングし run() を明示呼び出しする。
+     "\n<script src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script>\n"
+     "<script>\n"
+     "(function run(){\n"
+     "  if (window.mermaid && mermaid.run) {\n"
+     "    mermaid.initialize({ startOnLoad: false, theme: 'default' });\n"
+     "    mermaid.run();\n"
+     "  } else { setTimeout(run, 50); }\n"
+     "})();\n"
+     "</script>\n"
      "</body>\n</html>")))
 
 (defun my-markdown-preview-start ()
