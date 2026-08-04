@@ -18,6 +18,7 @@ worktree_name=$(echo "$input" | jq -r '.worktree.name // ""')
 worktree_branch=$(echo "$input" | jq -r '.worktree.branch // ""')
 git_worktree=$(echo "$input" | jq -r '.workspace.git_worktree // ""')
 cc_version=$(echo "$input" | jq -r '.version // ""')
+effort_level=$(echo "$input" | jq -r '.effort.level // ""')
 
 # Powerlevel10k Rainbow 色定義（ANSI 256色）
 # 背景色
@@ -211,6 +212,11 @@ fi
 # Model
 if [ -n "$model" ]; then
     line2+=$(printf '%b' "${FG_BLUE}${model}${C_RESET}")
+fi
+
+# Effort level（モデルの隣に表示）
+if [ -n "$effort_level" ]; then
+    line2+=$(printf '%b' " ${FG_GREY}(${effort_level})${C_RESET}")
 fi
 
 # Context残量
