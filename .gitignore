@@ -196,6 +196,9 @@ __pycache__/
 # ステアリングドキュメント（ローカル専用）
 .steering/
 
+# ローカル専用ドキュメント（handoff メモ・議事メモなど、共有しない作業記録）
+*.local.md
+
 # Don't index SpecStory auto-save files, but allow explicit context inclusion via @ references
 .specstory/**
 
