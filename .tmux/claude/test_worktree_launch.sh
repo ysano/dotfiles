@@ -85,6 +85,10 @@ assert_contains "$_s" "@cc_worktree" "spawn: pane option で同一性を記録"
 assert_contains "$_s" "-P -F '#{pane_id}'" "spawn: 新 pane id を捕捉"
 assert_contains "$_s" "set-option -p -t" "spawn: @cc_worktree を対象 pane へ -p -t 指定"
 assert_contains "$_s" "exec" "spawn 監視あり: claude 終了後はシェルに落ちて pane を残す"
+export TMUX_WORKTREE_ORIGIN=%42
+_origin_spawn="$(wt_spawn supervised login)"
+assert_contains "$_origin_spawn" "split-window -t %42" "spawn: 渡されたorigin paneを明示targetにする"
+unset TMUX_WORKTREE_ORIGIN
 _u="$(wt_spawn unsupervised login 'fix tests')"
 assert_contains "$_u" "new-window -d" "spawn 監視なしは detached window"
 assert_contains "$_u" "-P -F '#{pane_id}'" "spawn 監視なし: 新 pane id を捕捉"

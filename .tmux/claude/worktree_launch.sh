@@ -114,9 +114,13 @@ wt_create() {
 # どちらも新 pane の id を -P -F '#{pane_id}' で捕捉し、-p -t でその pane へ
 # オプションを付ける（識別は pane 単位に統一。wt_open は list-panes で探索）。
 wt_spawn() {
-    local mode="$1" name="$2" task="${3:-}" path cmd panecmd
+    local mode="$1" name="$2" task="${3:-}" path cmd panecmd target=""
     path="$(worktree_path "$name")"
     cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
+    if [[ -n "${TMUX_WORKTREE_ORIGIN:-}" ]]; then
+        [[ "$TMUX_WORKTREE_ORIGIN" =~ ^%[0-9]+$ ]] || return 1
+        target="-t $(printf '%q' "$TMUX_WORKTREE_ORIGIN")"
+    fi
     if [[ "$mode" == "unsupervised" ]]; then
         _emit "_wt_p=\$(tmux new-window -d -c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     else
@@ -124,7 +128,7 @@ wt_spawn() {
         # （オプションを付け直して claude -c で再起動できるように）。
         # pane コマンド全体を 1 トークンとして tmux に渡し sh -c 実行させる。
         panecmd="$cmd ; exec $(printf '%q' "${SHELL:-/bin/sh}")"
-        _emit "_wt_p=\$(tmux split-window -c $(printf '%q' "$path") -P -F '#{pane_id}' $(printf '%q' "$panecmd")) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
+        _emit "_wt_p=\$(tmux split-window $target -c $(printf '%q' "$path") -P -F '#{pane_id}' $(printf '%q' "$panecmd")) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     fi
 }
 
@@ -196,14 +200,19 @@ _list_worktrees() {
 # pane を id で捕捉し -p -t で @cc_worktree を確実に付与する。
 wt_open() {
     local name="$1" path pane
+    local -a target=()
     path="$(worktree_path "$name")"
+    if [[ -n "${TMUX_WORKTREE_ORIGIN:-}" ]]; then
+        [[ "$TMUX_WORKTREE_ORIGIN" =~ ^%[0-9]+$ ]] || return 1
+        target=(-t "$TMUX_WORKTREE_ORIGIN")
+    fi
     pane="$(tmux list-panes -a -F '#{pane_id} #{@cc_worktree}' 2>/dev/null \
         | awk -v p="$path" '$2==p{print $1; exit}')"
     if [[ -n "$pane" ]]; then
         tmux select-window -t "$pane"
         tmux select-pane -t "$pane"
     else
-        pane="$(tmux split-window -c "$path" -P -F '#{pane_id}' "claude -c ; exec ${SHELL:-/bin/sh}")"
+        pane="$(tmux split-window "${target[@]}" -c "$path" -P -F '#{pane_id}' "claude -c ; exec ${SHELL:-/bin/sh}")"
         tmux set-option -p -t "$pane" @cc_worktree "$path"
     fi
 }

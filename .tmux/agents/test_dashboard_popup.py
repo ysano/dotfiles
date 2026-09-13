@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 
 
 class PopupHelperTests(unittest.TestCase):
-    def test_helper_targets_explicit_origin_and_keeps_session_id_literal(self):
+    def run_helper(self, path):
         with tempfile.TemporaryDirectory(prefix="dashboard-popup-test-") as directory:
             root = Path(directory)
             log = root / "tmux.log"
@@ -27,21 +27,32 @@ class PopupHelperTests(unittest.TestCase):
             )
             fake_tmux.chmod(fake_tmux.stat().st_mode | stat.S_IXUSR)
             env = dict(os.environ,
-                       PATH=str(root) + os.pathsep + os.environ.get("PATH", ""),
+                       PATH=path(root),
                        TMUX_POPUP_LOG=str(log))
             subprocess.run(
                 [str(HERE / "dashboard_popup.sh"), "$1", "%2", "/dev/ttys000"],
                 env=env, check=True, capture_output=True, text=True,
             )
-            calls = [line.split("\t") for line in log.read_text().splitlines()]
-            message, popup = calls
-            self.assertEqual(message[:4], ["display-message", "-p", "-t", "%2"])
-            self.assertEqual(popup[:5], ["display-popup", "-c", "/dev/ttys000", "-t", "%2"])
-            self.assertIn("-d", popup)
-            self.assertIn("/tmp/repo with spaces", popup)
-            command = popup[-1]
-            self.assertIn("--session '$1'", command)
-            self.assertIn("--pane '%2'", command)
+            return [line.split("\t") for line in log.read_text().splitlines()]
+
+    def test_helper_targets_explicit_origin_and_keeps_session_id_literal(self):
+        calls = self.run_helper(lambda root: str(root) + os.pathsep + os.environ.get("PATH", ""))
+        message, popup = calls
+        self.assertEqual(message[:4], ["display-message", "-p", "-t", "%2"])
+        self.assertEqual(popup[:5], ["display-popup", "-c", "/dev/ttys000", "-t", "%2"])
+        self.assertIn("-d", popup)
+        self.assertIn("/tmp/repo with spaces", popup)
+        command = popup[-1]
+        self.assertIn("--session '$1'", command)
+        self.assertIn("--pane '%2'", command)
+
+    def test_helper_passes_origin_to_legacy_fallback_without_python(self):
+        calls = self.run_helper(lambda root: str(root))
+        message, popup = calls
+        self.assertEqual(message[:4], ["display-message", "-p", "-t", "%2"])
+        self.assertEqual(popup[:7], ["display-popup", "-c", "/dev/ttys000", "-t", "%2",
+                                     "-e", "TMUX_WORKTREE_ORIGIN=%2"])
+        self.assertEqual(popup[-1], "~/.tmux/claude/worktree_launch.sh popup")
 
 
 if __name__ == "__main__":
