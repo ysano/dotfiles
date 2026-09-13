@@ -10,6 +10,18 @@ dashboard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(dashboard)
 
 
+class PopupBindingTests(unittest.TestCase):
+    def test_dashboard_command_resolves_session_from_popup_context(self):
+        """run-shell expands origin formats before invoking the popup helper."""
+        config = (HERE.parent / "claude-worktree.conf").read_text()
+        binding = next(line for line in config.splitlines()
+                       if line.startswith("bind-key w run-shell"))
+        self.assertIn("~/.tmux/agents/dashboard_popup.sh", binding)
+        self.assertIn("'#{session_id}'", binding)
+        self.assertIn("'#{pane_id}'", binding)
+        self.assertIn("'#{client_tty}'", binding)
+
+
 def snapshot():
     return {
         "session_id": "$1",

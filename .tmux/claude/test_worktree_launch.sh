@@ -85,6 +85,10 @@ assert_contains "$_s" "@cc_worktree" "spawn: pane option で同一性を記録"
 assert_contains "$_s" "-P -F '#{pane_id}'" "spawn: 新 pane id を捕捉"
 assert_contains "$_s" "set-option -p -t" "spawn: @cc_worktree を対象 pane へ -p -t 指定"
 assert_contains "$_s" "exec" "spawn 監視あり: claude 終了後はシェルに落ちて pane を残す"
+export TMUX_WORKTREE_ORIGIN=%42
+_origin_spawn="$(wt_spawn supervised login)"
+assert_contains "$_origin_spawn" "split-window -t %42" "spawn: 渡されたorigin paneを明示targetにする"
+unset TMUX_WORKTREE_ORIGIN
 _u="$(wt_spawn unsupervised login 'fix tests')"
 assert_contains "$_u" "new-window -d" "spawn 監視なしは detached window"
 assert_contains "$_u" "-P -F '#{pane_id}'" "spawn 監視なし: 新 pane id を捕捉"
@@ -98,6 +102,21 @@ _rf="$(wt_remove_force foo)"
 assert_contains "$_rf" "worktree remove --force" "force: worktree を強制削除"
 assert_contains "$_rf" "branch -D worktree-foo" "force: ブランチも強制削除 -D"
 unset WT_DRY_RUN
+
+echo ""
+echo "=== wt_open: popup origin target ==="
+_open_tmp="$(mktemp -d)"
+_open_log="$_open_tmp/tmux.log"
+cat > "$_open_tmp/tmux" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@" >> "$WT_OPEN_LOG"
+if [ "$1" = "split-window" ]; then printf '%%99\n'; fi
+EOF
+chmod +x "$_open_tmp/tmux"
+PATH="$_open_tmp:$PATH" WT_OPEN_LOG="$_open_log" TMUX_WORKTREE_ORIGIN=%42 wt_open login
+_open_call="$(tr '\n' ' ' < "$_open_log")"
+assert_contains "$_open_call" "split-window -t %42" "open: 渡されたorigin paneを明示targetにする"
+rm -rf "$_open_tmp"
 
 echo ""
 echo "=== classify_pick (fzf --print-query の解釈) ==="
