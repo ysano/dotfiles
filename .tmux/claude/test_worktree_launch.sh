@@ -104,6 +104,21 @@ assert_contains "$_rf" "branch -D worktree-foo" "force: ブランチも強制削
 unset WT_DRY_RUN
 
 echo ""
+echo "=== wt_open: popup origin target ==="
+_open_tmp="$(mktemp -d)"
+_open_log="$_open_tmp/tmux.log"
+cat > "$_open_tmp/tmux" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@" >> "$WT_OPEN_LOG"
+if [ "$1" = "split-window" ]; then printf '%%99\n'; fi
+EOF
+chmod +x "$_open_tmp/tmux"
+PATH="$_open_tmp:$PATH" WT_OPEN_LOG="$_open_log" TMUX_WORKTREE_ORIGIN=%42 wt_open login
+_open_call="$(tr '\n' ' ' < "$_open_log")"
+assert_contains "$_open_call" "split-window -t %42" "open: 渡されたorigin paneを明示targetにする"
+rm -rf "$_open_tmp"
+
+echo ""
 echo "=== classify_pick (fzf --print-query の解釈) ==="
 assert_eq "$(classify_pick 0 "$(printf 'tf\nlogin')")" "$(printf 'select\tlogin')" "rc0+選択行: 既存を select"
 assert_eq "$(classify_pick 1 "$(printf 'tf')")" "$(printf 'new\ttf')" "rc1+query: 新規名として new"
