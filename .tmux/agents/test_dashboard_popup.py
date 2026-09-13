@@ -26,12 +26,13 @@ class PopupHelperTests(unittest.TestCase):
                        PATH=str(root) + os.pathsep + os.environ.get("PATH", ""),
                        TMUX_POPUP_LOG=str(log))
             subprocess.run(
-                [str(HERE / "dashboard_popup.sh"), "$1", "%2"],
+                [str(HERE / "dashboard_popup.sh"), "$1", "%2", "/dev/ttys000"],
                 env=env, check=True, capture_output=True, text=True,
             )
             values = log.read_text().splitlines()
             self.assertIn("-t", values)
             self.assertIn("%2", values)
+            self.assertIn("/dev/ttys000", values)
             self.assertIn("-d", values)
             self.assertIn("/tmp/repo with spaces", values)
             command = values[-1]

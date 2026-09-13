@@ -19,6 +19,7 @@ class PopupBindingTests(unittest.TestCase):
         self.assertIn("~/.tmux/agents/dashboard_popup.sh", binding)
         self.assertIn("'#{session_id}'", binding)
         self.assertIn("'#{pane_id}'", binding)
+        self.assertIn("'#{client_tty}'", binding)
 
 
 def snapshot():
