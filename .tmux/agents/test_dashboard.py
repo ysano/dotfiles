@@ -10,6 +10,19 @@ dashboard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(dashboard)
 
 
+class PopupBindingTests(unittest.TestCase):
+    def test_dashboard_command_resolves_session_from_popup_context(self):
+        """display-popup does not expand formats embedded in its shell command."""
+        config = (HERE.parent / "claude-worktree.conf").read_text()
+        binding = next(line for line in config.splitlines()
+                       if line.startswith("bind-key w display-popup"))
+        command = binding.split("dashboard.py", 1)[1]
+        self.assertNotIn("#{", command)
+        self.assertIn("python3 ~/.tmux/agents/dashboard.py", binding)
+        self.assertNotIn("--session", binding)
+        self.assertNotIn("--pane", binding)
+
+
 def snapshot():
     return {
         "session_id": "$1",
