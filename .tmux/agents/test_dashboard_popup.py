@@ -39,7 +39,8 @@ class PopupHelperTests(unittest.TestCase):
         calls = self.run_helper(lambda root: str(root) + os.pathsep + os.environ.get("PATH", ""))
         message, popup = calls
         self.assertEqual(message[:4], ["display-message", "-p", "-t", "%2"])
-        self.assertEqual(popup[:5], ["display-popup", "-c", "/dev/ttys000", "-t", "%2"])
+        self.assertEqual(popup[:7], ["display-popup", "-c", "/dev/ttys000", "-t", "%2",
+                                     "-e", "TMUX_WORKTREE_ORIGIN=%2"])
         self.assertIn("-d", popup)
         self.assertIn("/tmp/repo with spaces", popup)
         command = popup[-1]
