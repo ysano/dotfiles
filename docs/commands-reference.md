@@ -26,14 +26,28 @@ gwr      # gwt remove
 
 テスト: `./test_git_worktree.zsh`
 
-## tmux Claude Worktree ランチャー (prefix + w)
+## tmux エージェントツリー (prefix + w)
+
+現在のtmuxセッションを対象に、リポジトリ → 親エージェント → 子エージェントを表示する。
+Claude CodeとCodexの作業中・対応待ち状態、cwd、表示先を確認できる。
+`Tab` でエージェントのいないworktreeも一覧に表示する。
+
+- `↑↓` で選択、`←→` で開閉、`Enter` で既存paneへ移動または詳細表示。
+- `p` で子の親paneへ移動。`s/c/x` でシェル/Claude Code/Codexを明示的に開く。
+- `n` でworktree作成、`d` で安全削除（確認あり）。
+- `a` でセッション単位の自動シェルpane生成を切替（既定OFF、最大1pane、フォーカス維持）。
+- `l` で従来のランチャーへ移る。`Esc` で閉じる。
+
+セットアップと自動生成の条件: [エージェント連携ガイド](../.tmux/agents/README.md)
+
+### 従来のClaude Worktreeランチャー (prefix + w → l)
 
 tmux 上で worktree を作り、その中で Claude Code を並列起動・切替・削除する popup ランチャー。
 `gwt`（シェルの worktree 管理）と配置規約（`../worktrees/<repo>-<name>`）を共有しつつ、
 Claude の起動まで一気通貫で行う。
 
 ```text
-prefix + w                      # popup を開く
+prefix + w → l                  # 旧ランチャーを開く
   ├─ 名前を入力して Enter        # その名前で新規 worktree を作成
   │    ├─ base ref [HEAD]       # 空 Enter で現 pane のリポジトリの HEAD を基点
   │    └─ モード選択

@@ -100,6 +100,14 @@ if [ -f "$FUNC_TEST_SCRIPT" ]; then
   echo ""
 fi
 
+# Agent lifecycle, workspace UI, worktree operations and setup (no API access)
+echo "--- Agent Workspace Tests ---"
+if python3 -m unittest discover -s "$SCRIPT_DIR/agents" -p 'test_*.py'; then
+  echo "[PASS] Agent workspace tests"
+else
+  errors=$((errors + 1))
+fi
+
 # 4. Run conflict check if available
 CONFLICT_SCRIPT="$DOTFILES_ROOT/.claude/skills/tmux-config/scripts/check_conflicts.sh"
 if [ -f "$CONFLICT_SCRIPT" ]; then

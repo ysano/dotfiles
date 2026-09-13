@@ -2,7 +2,7 @@
 # ファイル名: polling_monitor.sh
 # 説明: Hooks駆動 + 軽量Liveness Checkによる Claude Voice 監視スクリプト
 # 用途: tmux status-right から定期呼び出し。Hooks が全ステータス遷移を管理し、
-#       本スクリプトは登録済みペインの生存確認と古い状態のクリーンアップのみ行う。
+#       本スクリプトは生存確認とタイトル・画面による補助検出を行う。
 
 # スクリプトのディレクトリを取得
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -77,51 +77,29 @@ infer_state_from_title() {
     esac
 }
 
-# pane_title による状態補正。
-# hook を発火しない CC セッションでもアイコンが実状態を反映するようにする。
-# - title スピナー → Busy (確実に作業中なので常に上書き)
-# - title ✳ かつ登録が Busy → Idle (古い Busy を補正。Idle/Waiting は hook 判定を尊重)
+# Hook未登録のpaneだけタイトルで補完する。登録済み状態は上書きしない。
 # TMUX_CLAUDE_TITLE_DETECT_DISABLED=true で無効化可能。
 correct_status_from_title() {
     [[ "${TMUX_CLAUDE_TITLE_DETECT_DISABLED:-false}" == "true" ]] && return 0
-    local panes
-    panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_current_command}	#{pane_title}" 2>/dev/null)
-    [[ -z "$panes" ]] && return 0
-    while IFS=$'\t' read -r pane_target cmd title; do
+    local pane_target title inferred previous changed sound
+    while IFS= read -r pane_target; do
         [[ -z "$pane_target" ]] && continue
-        [[ "$cmd" == claude* ]] || continue
-        local inferred
+        # Titles are a fallback only; registered hook state is authoritative.
+        [[ -n "$(tmux show-option -pqv -t "$pane_target" @claude_state)" ]] && continue
+        title=$(tmux display-message -p -t "$pane_target" '#{pane_title}')
         inferred=$(infer_state_from_title "$title")
         [[ -z "$inferred" ]] && continue
-        local pane_key cur
-        pane_key=$(encode_pane_key "$pane_target")
-        cur=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
-        # Permission / Question / Error は専用検出 (hook / dialog_detector /
-        # エラー検出) が管理するため title 補正の対象外。Busy <-> Idle のみ扱う。
-        case "$cur" in
-            Permission|Question|Error) continue ;;
-        esac
-        if [[ "$inferred" == "Busy" && "$cur" != "Busy" ]]; then
-            tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Busy" 2>/dev/null
-            aggregate_window_icon "$pane_target"
-            log_debug "title 補正: $pane_target ${cur:-未登録} -> Busy"
-            # hook 不発セッションでも通知音が鳴るよう polling 側からも発火
-            # hook 駆動セッションでは hook 側が先に状態を Busy にしているため
-            # この分岐に来ず、二重発火しない
-            if [[ "$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)" == "true" ]] \
-               && [[ -x "$SCRIPT_DIR/sound_utils.sh" ]]; then
-                "$SCRIPT_DIR/sound_utils.sh" play start "$pane_target" >/dev/null 2>&1 &
-            fi
-        elif [[ "$inferred" == "Idle" && "$cur" == "Busy" ]]; then
-            tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
-            aggregate_window_icon "$pane_target"
-            log_debug "title 補正: $pane_target Busy -> Idle"
-            if [[ "$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)" == "true" ]] \
-               && [[ -x "$SCRIPT_DIR/sound_utils.sh" ]]; then
-                "$SCRIPT_DIR/sound_utils.sh" play complete "$pane_target" >/dev/null 2>&1 &
-            fi
+        previous=$(tmux show-option -pqv -t "$pane_target" @claude_status)
+        changed=$(update_claude_evidence "$pane_target" title "$inferred")
+        sound=""
+        if [[ "$changed" == "changed" ]]; then
+            [[ "$inferred" == "Busy" ]] && sound="start"
+            [[ "$inferred" == "Idle" && "$previous" == "Busy" ]] && sound="complete"
         fi
-    done <<< "$panes"
+        if [[ -n "$sound" && "$(tmux show-option -gqv @claude_voice_sound_enabled)" == "true" ]] && claude_notifications_enabled; then
+            "$SCRIPT_DIR/sound_utils.sh" play "$sound" "$pane_target" >/dev/null 2>&1 &
+        fi
+    done < <(detect_claude_panes)
 }
 
 # メイン処理：Liveness Check（1回実行）
@@ -132,102 +110,15 @@ correct_status_from_title() {
 #   2.5. pane_title による状態補正（hook 不発セッション対策）
 #   3. AskUserQuestion 等ダイアログ検出
 polling_monitor_main() {
-    # 設定読み込み
-    if ! load_configuration; then
-        return 0 # システム無効時は静かに終了
+    tmux list-sessions &>/dev/null || return 0
+    command -v python3 >/dev/null 2>&1 || return 0
+    # A caller that already ran the native poll may request supplements only.
+    if [[ "${1:-}" != "supplement" ]]; then
+        python3 "$SCRIPT_DIR/../agents/claude_status.py" poll
     fi
-
-    # tmuxセッションが存在するかチェック
-    if ! tmux list-sessions &>/dev/null; then
-        return 0
-    fi
-
-    # 現在の全ペインの current_command を取得（1回の tmux 呼び出しで完了）
-    # 注: pane_title は会話トピック名で上書きされるため CC 検出には使えない。
-    #     current_command (claude / claude.exe) で識別する。
-    local all_panes
-    all_panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_current_command}" 2>/dev/null)
-
-    # 現在アクティブな CC ペインを抽出
-    local active_cc_panes=""
-    while IFS=$'\t' read -r pane_target cmd; do
-        [[ -z "$pane_target" ]] && continue
-        if [[ "$cmd" == claude* ]]; then
-            if [[ -z "$active_cc_panes" ]]; then
-                active_cc_panes="$pane_target"
-            else
-                active_cc_panes="${active_cc_panes}"$'\n'"${pane_target}"
-            fi
-        fi
-    done <<< "$all_panes"
-
-    # 登録済みペインステータスを取得
-    local registered_keys
-    registered_keys=$(tmux show-options -g 2>/dev/null | grep "^@claude_voice_pane_status_" | awk '{print $1}')
-
-    if [[ -z "$active_cc_panes" && -z "$registered_keys" ]]; then
-        # CC ペインなし、登録もなし → 何もしない
-        return 0
-    fi
-
-    # --- 1. 古い登録のクリーンアップ ---
-    # 登録済みだが CC が動いていないペインをクリア
-    while IFS= read -r key; do
-        [[ -z "$key" ]] && continue
-        local pane_id="${key#@claude_voice_pane_status_}"
-
-        # decode_pane_key で安全に逆引き（アンダースコア含むセッション名対応）
-        local pane_target
-        pane_target=$(decode_pane_key "$pane_id")
-        local session="${pane_target%%:*}"
-        local session_window="${pane_target%.*}"
-        local window="${session_window#*:}"
-
-        if [[ -z "$active_cc_panes" ]] || ! echo "$active_cc_panes" | grep -qF "$pane_target"; then
-            # CC が動いていない → クリア
-            tmux set-option -g -u "$key" 2>/dev/null
-            tmux set-option -g -u "@claude_voice_status_${pane_id}" 2>/dev/null
-            tmux set-option -g -u "@claude_voice_hooks_ts_${pane_id}" 2>/dev/null
-            # ダイアログ検出状態もクリア
-            type cleanup_dialog_state_for_pane >/dev/null 2>&1 \
-                && cleanup_dialog_state_for_pane "$pane_id"
-            log_debug "Liveness check: ステータスクリア $pane_target"
-
-            # ウィンドウのアイコンを再集約（統一関数）
-            aggregate_window_icon "$pane_target"
-        fi
-    done <<< "$registered_keys"
-
-    # --- 2. 未登録 CC ペインの自動登録（セーフティネット） ---
-    # Hooks が発火していない CC ペインを Idle で登録
-    if [[ -n "$active_cc_panes" ]]; then
-        while IFS= read -r pane_target; do
-            [[ -z "$pane_target" ]] && continue
-            local pane_key
-            pane_key=$(encode_pane_key "$pane_target")
-            local existing
-            existing=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
-            if [[ -z "$existing" ]]; then
-                # 未登録 → Idle で登録
-                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
-                log_debug "Liveness check: 未登録 CC ペインを自動登録 $pane_target (Idle)"
-
-                # アイコンを更新（統一関数）
-                aggregate_window_icon "$pane_target"
-            fi
-        done <<< "$active_cc_panes"
-    fi
-
-    # --- 2.5. pane_title による状態補正 (hook 不発セッション対策) ---
     correct_status_from_title
-
-    # --- 2.7. 継続不能エラー検出 (API障害 / Usage超過 / Policy違反) ---
     type detect_error_state >/dev/null 2>&1 && detect_error_state
-
-    # --- 3. AskUserQuestion 等ダイアログ検出 (Hooks では捕捉不可な領域) ---
     type detect_dialogs >/dev/null 2>&1 && detect_dialogs
-
-    # --- 4. 設定ドリフト診断 (ADR 0008、1 分に 1 回まで) ---
     check_config_drift
 }
 
@@ -284,7 +175,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             ;;
         *)
             # 一回だけ実行してサイレント終了
-            polling_monitor_main 2>/dev/null
+            polling_monitor_main "${1:-}" 2>/dev/null
             ;;
     esac
 fi

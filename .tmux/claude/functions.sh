@@ -28,6 +28,13 @@ log_debug() {
     fi
 }
 
+# The global voice switch gates feedback only. Monitoring keeps running so
+# disabling notifications never hides a question or a busy child. Unset keeps
+# the historic enabled default, and no stored preference is changed here.
+claude_notifications_enabled() {
+    [[ "$(tmux show-option -gqv @claude_voice_enabled 2>/dev/null)" != "false" ]]
+}
+
 # PANE_KEY エンコード: "session:window.pane" → "session__window_pane"
 # セッション名のアンダースコアを保持しつつ、区切りを区別可能にする
 # デリミタ: セッション区切り = "__" (double underscore), window/pane 区切り = "_" (single)
@@ -106,51 +113,13 @@ aggregate_window_icon() {
 # Claude Codeペインの検出（プロセス + タイトルベース、ペインレベル）
 # 出力形式: session:window.pane（例: main:0.1）
 detect_claude_panes() {
-    log_debug "Claude Codeプロセスを検索中..."
+    python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")/../agents" && pwd)/claude_status.py" detect
+}
 
-    # すべてのペインを調査してClaude Codeの実行を検出
-    local claude_panes=""
-    local panes_list
-    # タブ区切りでタイトル（スペース含む）を安全にパース
-    panes_list=$(tmux list-panes -a -F "#{session_name}:#{window_index}:#{pane_index}	#{pane_current_command}	#{pane_pid}	#{pane_title}" 2>/dev/null)
-
-    while IFS=$'\t' read -r pane_info cmd pid title; do
-        if [[ -z "$pane_info" ]]; then
-            continue
-        fi
-
-        local session=$(echo "$pane_info" | cut -d':' -f1)
-        local window=$(echo "$pane_info" | cut -d':' -f2)
-        local pane=$(echo "$pane_info" | cut -d':' -f3)
-        local pane_target="${session}:${window}.${pane}"
-
-        # Claude Code プロセスの検出（優先順位順）
-        # 1. pane_title に "Claude Code" を含む（最も確実、バージョン番号問題を回避）
-        # 2. コマンド名が "claude" なら即検出
-        if [[ "$title" == *"Claude Code"* ]]; then
-            log_debug "Claude Codeを検出(title): $pane_target (title=$title, pid=$pid)"
-            if [[ -z "$claude_panes" ]]; then
-                claude_panes="$pane_target"
-            else
-                claude_panes="$claude_panes\n$pane_target"
-            fi
-        elif [[ "$cmd" == "claude" ]]; then
-            log_debug "Claude Codeを検出(cmd): $pane_target (cmd=$cmd, pid=$pid)"
-            if [[ -z "$claude_panes" ]]; then
-                claude_panes="$pane_target"
-            else
-                claude_panes="$claude_panes\n$pane_target"
-            fi
-        fi
-    done <<< "$panes_list"
-
-    if [[ -n "$claude_panes" ]]; then
-        log_debug "検出されたClaude Codeペイン: $claude_panes"
-        echo -e "$claude_panes" | sort -u
-    else
-        log_debug "Claude Codeプロセスが見つかりません"
-        echo ""
-    fi
+# Supplementary terminal evidence is serialized with hook state. The reducer
+# preserves authoritative actor state and restores it when the evidence clears.
+update_claude_evidence() {
+    python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")/../agents" && pwd)/claude_status.py" evidence "$1" "$2" "$3"
 }
 
 # 後方互換ラッパー: ウィンドウレベルに集約して返す

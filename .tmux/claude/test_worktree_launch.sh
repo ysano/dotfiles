@@ -46,7 +46,7 @@ validate_name "   " >/dev/null 2>&1; assert_rc "$?" "1" "空白のみは無効"
 
 echo ""
 echo "=== worktree_path / branch_name / resolve_base ==="
-_root="$(git rev-parse --show-toplevel)"
+_root="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
 _expected="$(dirname "$_root")/worktrees/$(basename "$_root")-foo"
 assert_eq "$(worktree_path foo)" "$_expected" "外部 worktrees 配置を返す"
 assert_eq "$(branch_name foo)" "worktree-foo" "ブランチ名に worktree- を付与"
@@ -75,7 +75,7 @@ echo "=== dry-run 副作用関数 (WT_DRY_RUN=1) ==="
 export WT_DRY_RUN=1
 _c="$(wt_create foo)"
 assert_contains "$_c" "git worktree add -b worktree-foo" "create: ブランチ指定"
-assert_contains "$_c" "/worktrees/$(basename "$(git rev-parse --show-toplevel)")-foo" "create: 外部配置"
+assert_contains "$_c" "$_expected" "create: 外部配置"
 assert_contains "$_c" " HEAD" "create: 既定 base は HEAD"
 assert_contains "$(wt_create foo origin/master)" " origin/master" "create: base 上書き"
 _s="$(wt_spawn supervised login)"
@@ -109,7 +109,7 @@ assert_eq "$(classify_pick 0 "$(printf 'tf')")" "abort" "rc0+選択行なし: ab
 
 echo ""
 echo "=== worktree_path: リンク worktree 内から呼んでも main 基準で配置 ==="
-_mroot="$(git rev-parse --show-toplevel)"
+_mroot="$_root"
 _probe="$(dirname "$_mroot")/worktrees/$(basename "$_mroot")-_axisprobe"
 if git worktree add -q "$_probe" -b _axisprobe HEAD 2>/dev/null; then
     _got="$(cd "$_probe" && worktree_path foo)"
