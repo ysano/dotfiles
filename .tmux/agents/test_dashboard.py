@@ -12,15 +12,13 @@ spec.loader.exec_module(dashboard)
 
 class PopupBindingTests(unittest.TestCase):
     def test_dashboard_command_resolves_session_from_popup_context(self):
-        """display-popup does not expand formats embedded in its shell command."""
+        """run-shell expands origin formats before invoking the popup helper."""
         config = (HERE.parent / "claude-worktree.conf").read_text()
         binding = next(line for line in config.splitlines()
-                       if line.startswith("bind-key w display-popup"))
-        command = binding.split("dashboard.py", 1)[1]
-        self.assertNotIn("#{", command)
-        self.assertIn("python3 ~/.tmux/agents/dashboard.py", binding)
-        self.assertNotIn("--session", binding)
-        self.assertNotIn("--pane", binding)
+                       if line.startswith("bind-key w run-shell"))
+        self.assertIn("~/.tmux/agents/dashboard_popup.sh", binding)
+        self.assertIn("'#{session_id}'", binding)
+        self.assertIn("'#{pane_id}'", binding)
 
 
 def snapshot():
