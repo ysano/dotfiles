@@ -68,6 +68,7 @@ check_anthropic_status() {
 # エラー検出時の通知 (音 + TTS)。バックグラウンド実行前提。
 # 引数: pane_target, errtype (api/usage/policy)
 notify_error() {
+    claude_notifications_enabled || return 0
     local pane_target="$1" errtype="$2"
 
     # エラー音 (Sosumi)
@@ -111,17 +112,16 @@ notify_error() {
 
 # 全 Claude Code ペインの継続不能エラーを検出。
 # - エラー検出 → ペイン状態を Error に、新規検出時は notify_error
-# - エラー解消 → Error だったら Idle に戻す (title/hook 補正に委ねる)
+# - エラー解消 → 保存していた hook/title の状態を復元する
 detect_error_state() {
     [[ "${TMUX_CLAUDE_ERROR_DETECT_DISABLED:-false}" == "true" ]] && return 0
 
     local panes
-    panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_current_command}" 2>/dev/null)
+    panes=$(detect_claude_panes)
     [[ -z "$panes" ]] && return 0
 
-    while IFS=$'\t' read -r pane_target cmd; do
+    while IFS= read -r pane_target; do
         [[ -z "$pane_target" ]] && continue
-        [[ "$cmd" == claude* ]] || continue
 
         # 可視範囲の末尾 50 行 (Claude Code ペインの典型的なエラー位置を網羅)
         # を ANSI エスケープ付き (-e) でキャプチャし、Claude Code の赤色
@@ -161,23 +161,11 @@ detect_error_state() {
             fi
         fi
 
-        local pane_key cur
-        pane_key=$(encode_pane_key "$pane_target")
-        cur=$(tmux show-option -gqv "@claude_voice_pane_status_${pane_key}" 2>/dev/null)
-
-        if [[ -n "$errtype" ]]; then
-            if [[ "$cur" != "Error" ]]; then
-                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Error" 2>/dev/null
-                aggregate_window_icon "$pane_target"
-                log_debug "エラー検出: $pane_target ($errtype) ${cur:-未登録} -> Error"
-                notify_error "$pane_target" "$errtype" &
-            fi
-        else
-            if [[ "$cur" == "Error" ]]; then
-                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
-                aggregate_window_icon "$pane_target"
-                log_debug "エラー解消: $pane_target Error -> Idle"
-            fi
+        local changed
+        changed=$(update_claude_evidence "$pane_target" error "$errtype")
+        if [[ -n "$errtype" && "$changed" == "changed" ]]; then
+            log_debug "エラー検出: $pane_target ($errtype)"
+            notify_error "$pane_target" "$errtype" &
         fi
     done <<< "$panes"
 }

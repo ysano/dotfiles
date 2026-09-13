@@ -26,6 +26,15 @@ class StateTests(unittest.TestCase):
         self.state = module.reduce_event(self.state, event(name, **extra))
         return module.status(self.state)
 
+    def test_actor_metadata_preserves_child_cwd(self):
+        self.send("UserPromptSubmit", cwd="/repo")
+        self.send("SubagentStart", agent_id="child", turn="child-turn", cwd="/child", agent_name="review")
+        self.send("Stop", cwd="/repo")
+        self.assertEqual(self.state.get("provider"), "codex")
+        self.assertEqual(self.state.get("cwd"), "/repo")
+        self.assertEqual(self.state["actors"]["child"].get("cwd"), "/child")
+        self.assertEqual(self.state["actors"]["child"].get("name"), "review")
+
     def test_normal_turn_and_session_end(self):
         self.assertEqual(self.send("SessionStart"), "Idle")
         self.assertEqual(self.send("UserPromptSubmit"), "Busy")

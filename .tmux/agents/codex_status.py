@@ -20,7 +20,7 @@ ICONS = {"Permission": "⌛", "Busy": "⚡", "Unknown": "?", "Idle": "✅"}
 HERE = Path(__file__).resolve().parent
 
 
-def reduce_event(previous, event):
+def _reduce_event(previous, event):
     """Keep separate turns for root and each child; ignore obsolete completions."""
     name, sid = event.get("hook_event_name"), event.get("session_id")
     if name not in EVENTS or not isinstance(sid, str) or not sid:
@@ -71,6 +71,50 @@ def reduce_event(previous, event):
         key = event.get("tool_name", "unknown")
         actor["pending"] = [x for x in actor["pending"] if x != key]
     return state
+
+
+def actor_metadata(state, event, provider):
+    """Metadata belongs to the emitting actor; child cwd never replaces root cwd."""
+    state["provider"] = provider
+    child = event.get("agent_id")
+    cwd = event.get("cwd")
+    if not child and isinstance(cwd, str) and cwd:
+        state["cwd"] = cwd
+    state.setdefault("cwd", "")
+    actors = state.setdefault("actors", {})
+    actors.setdefault("root", {"turn_id": "", "active": False, "pending": []})
+    for key, actor in actors.items():
+        actor.setdefault("name", provider if key == "root" else key)
+        actor.setdefault("cwd", state["cwd"] if key == "root" else "")
+    actor = actors.get(child or "root")
+    if actor:
+        if isinstance(cwd, str) and cwd:
+            # Parent-emitted child lifecycle hooks often repeat the parent cwd.
+            # Keep a previously observed independent child location in that case.
+            if not (child and cwd == state["cwd"] and actor.get("cwd")):
+                actor["cwd"] = cwd
+        name = event.get("agent_name") or event.get("agent_type")
+        if isinstance(name, str) and name:
+            actor["name"] = name
+    return state
+
+
+def reduce_event(previous, event):
+    state = _reduce_event(previous, event)
+    if not state or state is previous:
+        return state
+    return actor_metadata(state, event, "codex")
+
+
+def observe_hook(event, pane):
+    # Worktree attribution is advisory and must neither hold the state lock nor
+    # prevent an agent hook from returning successfully.
+    try:
+        import worktrees
+        worktrees.observe_hook(event, pane)
+    except (ImportError, AttributeError, OSError, ValueError, RuntimeError,
+            subprocess.SubprocessError):
+        pass
 
 
 def status(state):
@@ -138,7 +182,7 @@ def server_lock():
         yield
 
 
-def process_hook(event):
+def _process_hook(event):
     pane = os.environ.get("TMUX_PANE", "")
     if not os.environ.get("TMUX") or not re.fullmatch(r"%[0-9]+", pane):
         return
@@ -164,10 +208,17 @@ def process_hook(event):
                              stderr=subprocess.DEVNULL, start_new_session=True)
 
 
-def is_codex_process(pane_pid, processes):
+def process_hook(event):
+    _process_hook(event)
+    pane = os.environ.get("TMUX_PANE", "")
+    if os.environ.get("TMUX") and re.fullmatch(r"%[0-9]+", pane):
+        observe_hook(event, pane)
+
+
+def is_agent_process(pane_pid, processes, provider):
     """npm's node wrapper may be foreground; inspect descendants by executable."""
     for pid, (_, executable) in processes.items():
-        if Path(executable).name not in {"codex", "codex.exe"}:
+        if Path(executable).name not in {provider, provider + ".exe"}:
             continue
         seen = set()
         while pid in processes and pid not in seen:
@@ -176,6 +227,10 @@ def is_codex_process(pane_pid, processes):
             seen.add(pid)
             pid = processes[pid][0]
     return False
+
+
+def is_codex_process(pane_pid, processes):
+    return is_agent_process(pane_pid, processes, "codex")
 
 
 def process_table():

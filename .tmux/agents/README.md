@@ -1,8 +1,46 @@
-# Codex の tmux ステータス連携
+# tmux のエージェント・worktree連携
 
 Codex CLI の hooks を受け取り、window に `Codex:⚡`（作業中）、
 `Codex:⌛`（承認待ち）、`Codex:✅`（待機中）、`Codex:?`（hook 未登録）を表示する。
-Claude Code のアイコンと併存する。pane の自動生成は行わない。
+Claude Code のアイコンと併存する。ステータスバーには現在のtmuxセッションの
+作業中・対応待ち件数を表示する。paneの自動生成は既定OFF。
+
+## ツリーとworktree操作
+
+`Prefix+w`（既定は `Ctrl+z` → `w`）で現在のtmuxセッションのツリーを開く。
+リポジトリ → 親エージェント → 子エージェントの順に、状態・作業ディレクトリ・表示先を確認できる。
+子が親と同じpaneで動く場合も別の行になる。独立paneを持つTeamsメンバーは、
+明示的な親子情報がなければ独立したセッションとして表示する。
+
+| キー | 操作 |
+|---|---|
+| ↑↓ / ←→ | 選択 / 展開・折りたたみ |
+| Tab | エージェントツリーとworktree一覧の切替 |
+| Enter | 既存paneへ移動、paneがなければ詳細を表示 |
+| p | 子エージェントの親paneへ移動 |
+| s / c / x | 選択先でシェル / Claude Code / Codexを明示的に開く |
+| n / d | worktree作成 / 削除（確認あり） |
+| a | このtmuxセッションの自動pane生成を切替 |
+| l | 従来のworktreeランチャー |
+| Esc | 閉じる |
+
+更新しても選択と展開を維持する。折りたたんだ子の対応待ち件数は親に表示する。
+Enterでエージェントを自動起動することはない。
+
+自動生成をONにすると、それ以降にこのUIまたは帰属を確認できる親のhook経由で
+作成されたworktreeにシェルpaneを開く。ON時点の既存worktree、作成元不明、
+子エージェントの一時worktreeは自動生成対象にしない。
+hookからの作成元判定は、成功を確認できる単独の `git worktree add` に限定する。
+複合シェルコマンドやバックグラウンド実行は一覧のみの扱いになる。
+既存paneがあれば重複生成せず、現在のフォーカスを維持する。
+自動管理paneはセッション内で最大1つ。手動で閉じたworktreeは自動で開き直さない。
+分割後に各paneが80列×16行を確保できない場合は一覧に理由を表示する。
+
+Codex CLI 0.154.0の実測hooksには実行コマンド・結果が含まれないため、
+Codexがツールで作成したworktreeの帰属は確認できず、自動生成せず一覧に表示する。
+Codex利用中に自動生成を試す場合は、このUIの `n` で作成する。
+新UIの削除は未コミット変更・利用中pane・稼働中の子エージェントを確認し、
+強制削除やブランチ削除は行わない。従来の操作が必要な場合は `l` で旧ランチャーへ移る。
 
 ## セットアップ
 
@@ -11,6 +49,8 @@ macOS / Codex CLI 0.154.0 で確認。Linux/WSL は同じプロセス確認方�
 
 ```sh
 python3 ~/.tmux/agents/setup_codex_hooks.py
+bash ~/.tmux/claude/hooks/setup-hooks.sh
+tmux source-file ~/.tmux/claude-worktree.conf
 tmux source-file ~/.tmux/status.conf
 tmux source-file ~/.tmux/plugin-config/resurrect.conf
 ```
@@ -24,12 +64,15 @@ tmux source-file ~/.tmux/plugin-config/resurrect.conf
 通知音は既存の `@claude_voice_sound_enabled` と音源・音量設定を共有する。
 起動時の Idle や中断では完了音を鳴らさず、状態遷移ごとに通知する。
 既存の Codex `notify` 設定は保持するため、両方を有効にすると通知が重なる場合がある。
-この初期対応は状態表示と通知音を対象とし、読み上げ・画面からの質問／エラー検出は含まない。
+Codex側は状態表示と通知音を対象とし、読み上げ・画面からの質問／エラー検出は含まない。
+Claude側の既存の通知・読み上げ設定は維持する。
 
 ## 状態の扱い
 
 - `TMUX` でサーバー、`TMUX_PANE` で pane を特定する。tmux 外の hooks は何もしない。
 - pane option `@codex_state` に session ID と各 actor の turn ID・状態を保存する。
+- Claudeは `@claude_state` を正とし、画面からの質問・エラーは別の補助情報として保持する。
+  登録済みhookのBusyをタイトルだけでIdleに変更しない。
 - 親の `Stop` / `Interrupt` で子の状態を消さない。子が作業中なら Busy を維持する。
 - 子は `agent_id` で区別し、子の `SubagentStop` はその子だけを待機状態にする。
 - 古いターンの完了・終了イベントで、新しい作業を上書きしない。
@@ -47,6 +90,7 @@ tmux source-file ~/.tmux/plugin-config/resurrect.conf
 
 ```sh
 python3 ~/.tmux/agents/codex_status.py status
+python3 ~/.tmux/agents/dashboard.py --dump
 tmux set-option -g @codex_enabled false
 ```
 

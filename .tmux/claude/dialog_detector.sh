@@ -56,36 +56,33 @@ extract_dialog_question() {
 detect_dialogs() {
     [[ "${TMUX_CLAUDE_DIALOG_DETECT_DISABLED:-false}" == "true" ]] && return 0
 
-    # 音も読み上げも無効ならスキップ (CPU 節約)
+    # 表示の検出は通知設定とは独立して行う。
     local sound_enabled summary_enabled
     sound_enabled=$(tmux show-option -gqv @claude_voice_sound_enabled 2>/dev/null)
     summary_enabled=$(tmux show-option -gqv @claude_voice_summary_enabled 2>/dev/null)
-    [[ "$sound_enabled" != "true" && "$summary_enabled" != "true" ]] && return 0
 
-    # 全 Claude Code ペインを列挙 (current_command で検出。title は会話トピックで
-    # 上書きされるため信頼できない)
+    # プロセス親子関係から node wrapper / claude.exe を含めて列挙。
     local all_panes
-    all_panes=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index}	#{pane_current_command}" 2>/dev/null)
+    all_panes=$(detect_claude_panes)
     [[ -z "$all_panes" ]] && return 0
 
-    while IFS=$'\t' read -r pane_target cmd; do
+    while IFS= read -r pane_target; do
         [[ -z "$pane_target" ]] && continue
-        # claude / claude.exe (macOS Ghostty 上は claude.exe で起動される)
-        [[ "$cmd" != claude* ]] && continue
 
         # 現在 visible なペイン内容のみ確認 (-S なしで visible buffer)
         local content
         content=$(tmux capture-pane -t "$pane_target" -p 2>/dev/null)
 
-        local pane_key
-        pane_key=$(encode_pane_key "$pane_target")
-        local state_key="@claude_voice_dialog_active_${pane_key}"
+        local state_key="@claude_dialog_active"
         local prev_state
-        prev_state=$(tmux show-option -gqv "$state_key" 2>/dev/null)
+        prev_state=$(tmux show-option -pqv -t "$pane_target" "$state_key" 2>/dev/null)
 
         if echo "$content" | grep -qF "$DIALOG_FOOTER_PATTERN"; then
             # ダイアログ表示中
-            if [[ "$prev_state" != "true" ]]; then
+            local changed
+            changed=$(update_claude_evidence "$pane_target" dialog "Enter to select")
+            tmux set-option -p -t "$pane_target" "$state_key" "true" 2>/dev/null
+            if [[ "$prev_state" != "true" && "$changed" == "changed" ]] && claude_notifications_enabled; then
                 # 新規出現 → フィードバック発火
                 # (1) Funk 音 (waiting)
                 if [[ "$sound_enabled" == "true" && -x "$DIALOG_DETECTOR_DIR/sound_utils.sh" ]]; then
@@ -100,20 +97,16 @@ detect_dialogs() {
                         speak_text "質問です。${question:-クロードが選択を求めています}" "$pane_target"
                     ) >/dev/null 2>&1 &
                 fi
-                tmux set-option -g "$state_key" "true" 2>/dev/null
                 # ペイン状態を Question にしてウィンドウアイコンを ❓ に
-                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Question" 2>/dev/null
-                type aggregate_window_icon >/dev/null 2>&1 && aggregate_window_icon "$pane_target"
+                # Native status and legacy icon were updated atomically above.
                 log_debug "Dialog detected: $pane_target"
             fi
         else
             # ダイアログ無し
             if [[ "$prev_state" == "true" ]]; then
-                # 消失 → 状態リセット。Idle に戻す
-                # (実際に作業継続中なら correct_status_from_title が Busy に補正)
-                tmux set-option -gu "$state_key" 2>/dev/null
-                tmux set-option -g "@claude_voice_pane_status_${pane_key}" "Idle" 2>/dev/null
-                type aggregate_window_icon >/dev/null 2>&1 && aggregate_window_icon "$pane_target"
+                # 消失 → authoritative hook の状態を復元。
+                tmux set-option -pu -t "$pane_target" "$state_key" 2>/dev/null
+                update_claude_evidence "$pane_target" dialog "" >/dev/null
                 log_debug "Dialog dismissed: $pane_target"
             fi
         fi

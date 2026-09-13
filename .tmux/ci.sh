@@ -100,10 +100,10 @@ if [ -f "$FUNC_TEST_SCRIPT" ]; then
   echo ""
 fi
 
-# Codex lifecycle state and non-destructive setup tests (no API access)
-echo "--- Codex Status Tests ---"
+# Agent lifecycle, workspace UI, worktree operations and setup (no API access)
+echo "--- Agent Workspace Tests ---"
 if python3 -m unittest discover -s "$SCRIPT_DIR/agents" -p 'test_*.py'; then
-  echo "[PASS] Codex status tests"
+  echo "[PASS] Agent workspace tests"
 else
   errors=$((errors + 1))
 fi
