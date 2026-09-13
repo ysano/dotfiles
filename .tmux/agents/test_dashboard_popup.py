@@ -18,8 +18,12 @@ class PopupHelperTests(unittest.TestCase):
             fake_tmux = root / "tmux"
             fake_tmux.write_text(
                 "#!/bin/sh\n"
-                "printf '%s\\n' \"$@\" >> \"$TMUX_POPUP_LOG\"\n"
-                "if [ \"$1\" = display-message ]; then printf '/tmp/repo with spaces\\n'; fi\n"
+                "command=$1\n"
+                "printf '%s' \"$1\" >> \"$TMUX_POPUP_LOG\"\n"
+                "shift\n"
+                "for value in \"$@\"; do printf '\\t%s' \"$value\" >> \"$TMUX_POPUP_LOG\"; done\n"
+                "printf '\\n' >> \"$TMUX_POPUP_LOG\"\n"
+                "if [ \"$command\" = display-message ]; then printf '/tmp/repo with spaces\\n'; fi\n"
             )
             fake_tmux.chmod(fake_tmux.stat().st_mode | stat.S_IXUSR)
             env = dict(os.environ,
@@ -29,13 +33,13 @@ class PopupHelperTests(unittest.TestCase):
                 [str(HERE / "dashboard_popup.sh"), "$1", "%2", "/dev/ttys000"],
                 env=env, check=True, capture_output=True, text=True,
             )
-            values = log.read_text().splitlines()
-            self.assertIn("-t", values)
-            self.assertIn("%2", values)
-            self.assertIn("/dev/ttys000", values)
-            self.assertIn("-d", values)
-            self.assertIn("/tmp/repo with spaces", values)
-            command = values[-1]
+            calls = [line.split("\t") for line in log.read_text().splitlines()]
+            message, popup = calls
+            self.assertEqual(message[:4], ["display-message", "-p", "-t", "%2"])
+            self.assertEqual(popup[:5], ["display-popup", "-c", "/dev/ttys000", "-t", "%2"])
+            self.assertIn("-d", popup)
+            self.assertIn("/tmp/repo with spaces", popup)
+            command = popup[-1]
             self.assertIn("--session '$1'", command)
             self.assertIn("--pane '%2'", command)
 

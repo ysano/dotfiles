@@ -24,9 +24,9 @@ esac
 cwd=$(tmux display-message -p -t "$origin" '#{pane_current_path}') || exit 1
 
 if command -v python3 >/dev/null 2>&1; then
-    exec tmux display-popup -t "$client" -E -w 90% -h 80% -d "$cwd" \
+    exec tmux display-popup -c "$client" -t "$origin" -E -w 90% -h 80% -d "$cwd" \
         "python3 ~/.tmux/agents/dashboard.py --session '$session' --pane '$origin'"
 fi
 
-exec tmux display-popup -t "$client" -E -w 90% -h 80% -d "$cwd" \
+exec tmux display-popup -c "$client" -t "$origin" -E -w 90% -h 80% -d "$cwd" \
     "~/.tmux/claude/worktree_launch.sh popup"
