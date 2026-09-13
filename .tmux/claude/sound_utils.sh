@@ -320,7 +320,7 @@ speak_text() {
         else
             # フォールバック: 通知音で代替
             log_debug "WSL音声合成: PowerShellが見つからないため通知音で代替"
-            play_notification_sound "complete"
+            play_notification_sound "complete" "$session_window"
         fi
     fi
 }
@@ -586,7 +586,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             speak_text "${2:-テストメッセージです}" "${3:-}"
             ;;
         "play")
-            play_notification_sound "${2:-complete}"
+            play_notification_sound "${2:-complete}" "${3:-}"
             ;;
         *)
             echo "使用方法: $0 [test|test-platform|test-voices|test-sounds|test-playback|deps|speak|play]"
@@ -597,7 +597,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             echo "  test-playback - 音声再生テスト（実際に音声が再生されます）"
             echo "  deps          - 依存関係チェック"
             echo "  speak <text> [<session:window>] - テキストを音声合成（パンニング対応）"
-            echo "  play <type>   - 通知音を再生"
+            echo "  play <type> [<pane>] - 通知音を再生（パンニング対応）"
             exit 1
             ;;
     esac

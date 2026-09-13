@@ -1,4 +1,5 @@
 """Observed hook sequences and isolated tmux integration; no API calls."""
+from contextlib import contextmanager
 import importlib.util
 import json
 import os
@@ -7,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("codex_status", HERE / "codex_status.py")
@@ -144,6 +146,56 @@ class TmuxTests(unittest.TestCase):
         self.assertEqual(self.tmux("show-option", "-wqv", "-t", "%0", "@codex_icon"), "✅")
         self.hook("SessionEnd")
         self.assertEqual(self.tmux("show-option", "-wqv", "-t", "%0", "@codex_icon"), "")
+
+    def test_unchanged_tool_event_is_observed_outside_state_lock(self):
+        self.hook("UserPromptSubmit")
+        before = self.tmux("show-option", "-pqv", "-t", "%0", "@codex_state")
+        locked, observed = [], []
+        original_lock = module.server_lock
+
+        @contextmanager
+        def tracked_lock():
+            with original_lock():
+                locked.append(True)
+                try:
+                    yield
+                finally:
+                    locked.pop()
+
+        def observe(payload, pane):
+            self.assertFalse(locked)
+            observed.append((payload["hook_event_name"], pane))
+
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(module, "server_lock", tracked_lock), \
+                mock.patch.object(module, "observe_hook", observe):
+            module.process_hook(event("PostToolUse", tool_name="exec_command"))
+        self.assertEqual(self.tmux("show-option", "-pqv", "-t", "%0", "@codex_state"), before)
+        self.assertEqual(observed, [("PostToolUse", "%0")])
+
+    def test_codex_notification_forwards_origin_pane(self):
+        self.tmux("set-option", "-g", "@claude_voice_sound_enabled", "true")
+        calls = []
+        original_popen = subprocess.Popen
+
+        def popen(argv, *args, **kwargs):
+            if len(argv) > 1 and str(argv[1]).endswith("/sound_utils.sh"):
+                calls.append(argv)
+                return None  # Stub notification backend: never play real audio.
+            return original_popen(argv, *args, **kwargs)
+
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(module.subprocess, "Popen", popen):
+            module.process_hook(event("UserPromptSubmit"))
+        self.assertEqual(calls[0][-3:], ["play", "start", "%0"])
+
+    def test_legacy_hook_integration_fixture_contract(self):
+        self.tmux("set-option", "-g", "@claude_voice_sound_enabled", "false")
+        self.tmux("set-option", "-g", "@claude_voice_summary_enabled", "false")
+        result = subprocess.run(["bash", "-c", 'source "$1"; test_hooks_status_update; [[ "${#FAILED_TESTS[@]}" -eq 0 ]]',
+                                 "bash", str(HERE.parent / "claude/integration_test.sh")],
+                                env=self.env, text=True, capture_output=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("UserPromptSubmit → Busy: 成功", result.stdout)
+        self.assertIn("SessionEnd → クリア: 成功", result.stdout)
 
     def test_poll_clears_exited_process(self):
         self.hook("UserPromptSubmit")

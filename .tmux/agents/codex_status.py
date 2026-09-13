@@ -203,7 +203,7 @@ def _process_hook(event):
         sound = sound_for(before, after, event.get("hook_event_name"))
         script = HERE.parent / "claude" / "sound_utils.sh"
         if sound and script.exists() and tmux("show-option", "-gqv", "@claude_voice_sound_enabled") == "true":
-            subprocess.Popen(["bash", str(script), "play", sound],
+            subprocess.Popen(["bash", str(script), "play", sound, pane],
                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, start_new_session=True)
 

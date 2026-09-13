@@ -92,6 +92,37 @@ def _is_temporary(path):
     )
 
 
+def _state_actor_locations(value):
+    if isinstance(value, str):
+        try:
+            value = json.loads(value) if value else {}
+        except json.JSONDecodeError:
+            return []
+    if not isinstance(value, dict):
+        return []
+    actors = value.get("actors", {})
+    if not isinstance(actors, dict):
+        return []
+    locations = []
+    for actor in actors.values():
+        if not isinstance(actor, dict) or actor.get("active") is not True:
+            continue
+        cwd = actor.get("cwd") or value.get("cwd")
+        if isinstance(cwd, str) and cwd:
+            locations.append(cwd)
+    return locations
+
+
+def _pane_locations(pane):
+    locations = []
+    cwd = pane.get("cwd")
+    if isinstance(cwd, str) and cwd:
+        locations.append(cwd)
+    for provider in ("claude", "codex"):
+        locations.extend(_state_actor_locations(pane.get(provider + "_state")))
+    return list(dict.fromkeys(locations))
+
+
 def _inventory(roots, panes):
     repos = []
     seen_repos = set()
@@ -139,12 +170,15 @@ def _inventory(roots, panes):
     # Match the deepest registered worktree, so a nested worktree never gets
     # attributed to a parent checkout that happens to contain it.
     for pane in panes:
-        pane_id, cwd = pane.get("pane_id"), pane.get("cwd")
-        if not isinstance(pane_id, str) or not isinstance(cwd, str) or not cwd:
+        pane_id = pane.get("pane_id")
+        if not isinstance(pane_id, str):
             continue
-        matches = [row for row in repos if _inside(cwd, row["path"])]
-        if matches:
-            max(matches, key=lambda row: len(Path(row["path"]).parts))["panes"].append(pane_id)
+        for cwd in _pane_locations(pane):
+            matches = [row for row in repos if _inside(cwd, row["path"])]
+            if matches:
+                match = max(matches, key=lambda row: len(Path(row["path"]).parts))
+                if pane_id not in match["panes"]:
+                    match["panes"].append(pane_id)
 
     for row in repos:
         row["panes"].sort()
@@ -334,7 +368,20 @@ def poll_session(session: str, panes: list[dict]) -> None:
         for path, candidate in list(state["candidates"].items()):
             row = by_path.get(path)
             if row is None:
-                state["reasons"][path] = "candidate is not a registered worktree"
+                # Attribution is for one concrete creation. Once that
+                # registration disappears, the same canonical path must not
+                # inherit authority if it is reused by a later operation.
+                state["candidates"].pop(path, None)
+                state["reasons"].pop(path, None)
+                continue
+            candidate_root = candidate.get("root") if isinstance(candidate, dict) else None
+            try:
+                candidate_repo = _common_git_dir(candidate_root) if candidate_root else ""
+            except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                candidate_repo = ""
+            if candidate_repo != row["repo"]:
+                state["candidates"].pop(path, None)
+                state["reasons"].pop(path, None)
                 continue
             if row["temporary"]:
                 state["reasons"][path] = "temporary agent worktree; automatic opening excluded"
@@ -478,9 +525,9 @@ def _worktree_add_path(command, cwd):
         if token.startswith("-"):
             position += 1
             continue
-        return _canonical(token, base=git_cwd)
+        return _canonical(token, base=git_cwd), _canonical(git_cwd)
     if position < len(tokens) and tokens[position] not in operators:
-        return _canonical(tokens[position], base=git_cwd)
+        return _canonical(tokens[position], base=git_cwd), _canonical(git_cwd)
     return None
 
 
@@ -512,10 +559,11 @@ def observe_hook(event: dict, pane: str) -> None:
         session, cwd = identity.split("\t", 1)
     except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
         return
-    path = _worktree_add_path(command, cwd)
-    if path is None:
+    parsed = _worktree_add_path(command, cwd)
+    if parsed is None:
         return
-    _record_candidate(session, path, pane, cwd, "hook")
+    path, git_cwd = parsed
+    _record_candidate(session, path, pane, git_cwd, "hook")
 
 
 def create_worktree(root: str, name: str, base: str, session: str, origin: str) -> str:
@@ -552,36 +600,17 @@ def create_worktree(root: str, name: str, base: str, session: str, origin: str) 
 
 
 def _all_tmux_locations():
-    try:
-        output = _tmux(
-            "list-panes", "-a", "-F",
-            "#{pane_id}\t#{pane_current_path}\t#{@claude_state}\t#{@codex_state}",
-        )
-    except (OSError, RuntimeError, subprocess.TimeoutExpired):
-        return []
+    output = _tmux(
+        "list-panes", "-a", "-F",
+        "#{pane_id}\t#{pane_current_path}\t#{@claude_state}\t#{@codex_state}",
+    )
     locations = []
     for line in output.splitlines():
         values = line.split("\t", 3)
         values += [""] * (4 - len(values))
         pane_id, cwd, claude_raw, codex_raw = values
-        if cwd:
-            locations.append((pane_id, cwd))
-        for raw in (claude_raw, codex_raw):
-            try:
-                state = json.loads(raw) if raw else {}
-            except (TypeError, json.JSONDecodeError):
-                continue
-            if not isinstance(state, dict):
-                continue
-            actors = state.get("actors", {})
-            if not isinstance(actors, dict):
-                continue
-            for actor in actors.values():
-                if not isinstance(actor, dict) or actor.get("active") is not True:
-                    continue
-                actor_cwd = actor.get("cwd") or state.get("cwd")
-                if isinstance(actor_cwd, str) and actor_cwd:
-                    locations.append((pane_id, actor_cwd))
+        pane = {"cwd": cwd, "claude_state": claude_raw, "codex_state": codex_raw}
+        locations.extend((pane_id, path) for path in _pane_locations(pane))
     return locations
 
 
@@ -609,13 +638,16 @@ def remove_worktree(path: str) -> None:
 def _session_panes(session):
     output = _tmux(
         "list-panes", "-s", "-t", session, "-F",
-        "#{pane_id}\t#{session_id}\t#{pane_current_path}",
+        "#{pane_id}\t#{session_id}\t#{pane_current_path}\t#{@claude_state}\t#{@codex_state}",
     )
     panes = []
     for line in output.splitlines():
-        parts = line.split("\t", 2)
-        if len(parts) == 3:
-            panes.append({"pane_id": parts[0], "session_id": parts[1], "cwd": parts[2]})
+        parts = line.split("\t", 4)
+        parts += [""] * (5 - len(parts))
+        panes.append({
+            "pane_id": parts[0], "session_id": parts[1], "cwd": parts[2],
+            "claude_state": parts[3], "codex_state": parts[4],
+        })
     return panes
 
 

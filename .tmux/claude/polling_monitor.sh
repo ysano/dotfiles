@@ -111,7 +111,8 @@ correct_status_from_title() {
 #   3. AskUserQuestion 等ダイアログ検出
 polling_monitor_main() {
     tmux list-sessions &>/dev/null || return 0
-    # registry already runs the native poll before asking for supplements.
+    command -v python3 >/dev/null 2>&1 || return 0
+    # A caller that already ran the native poll may request supplements only.
     if [[ "${1:-}" != "supplement" ]]; then
         python3 "$SCRIPT_DIR/../agents/claude_status.py" poll
     fi

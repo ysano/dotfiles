@@ -216,6 +216,25 @@ class TmuxAutoPaneTests(unittest.TestCase):
         row = next(row for row in module.list_worktrees([str(self.repo)], self.panes()) if row["path"] == created)
         self.assertIn("closed", row["auto_reason"].lower())
 
+    def test_disappeared_candidate_is_invalidated_before_path_is_reused(self):
+        module.set_auto(self.session, True, self.panes())
+        linked = self.add_manual("stale-old", self.base / "reused candidate")
+        command = "git worktree add " + __import__("shlex").quote(str(linked))
+        module.observe_hook({
+            "hook_event_name": "PostToolUse", "tool_name": "Bash",
+            "tool_input": {"command": command},
+            "tool_response": {"stdout": "", "stderr": "", "interrupted": False, "isImage": False},
+        }, self.origin)
+        self.git("worktree", "remove", str(linked))
+
+        module.poll_session(self.session, self.panes())
+        raw = self.tmux("show-options", "-qv", "-t", self.session, module.STATE_OPTION)
+        self.assertNotIn(str(linked), json.loads(raw)["candidates"])
+
+        self.add_manual("stale-new", linked)
+        module.poll_session(self.session, self.panes())
+        self.assertFalse(any(Path(row["cwd"]).resolve() == linked for row in self.panes()))
+
     def test_unknown_and_temporary_worktrees_never_auto_open(self):
         module.set_auto(self.session, True, self.panes())
         unknown = self.add_manual("unknown")
@@ -348,9 +367,42 @@ class TmuxAutoPaneTests(unittest.TestCase):
             "tool_input": {"cmd": command},
             "tool_response": {"exit_code": 0},
         }, hook_pane)
+        raw = self.tmux("show-options", "-qv", "-t", self.session, module.STATE_OPTION)
+        candidate = json.loads(raw)["candidates"][str(linked.resolve())]
+        self.assertEqual(candidate["root"], str(self.repo.resolve()))
         module.poll_session(self.session, self.panes())
 
         self.assertTrue(any(Path(row["cwd"]).resolve() == linked.resolve() for row in self.panes()))
+
+    def test_candidate_is_rejected_when_path_is_reused_by_another_repository(self):
+        module.set_auto(self.session, True, self.panes())
+        linked = self.add_manual("original-candidate", self.base / "cross-repo reuse")
+        command = "git worktree add " + __import__("shlex").quote(str(linked))
+        module.observe_hook({
+            "hook_event_name": "PostToolUse", "tool_name": "Bash",
+            "tool_input": {"command": command},
+            "tool_response": {"stdout": "", "stderr": "", "interrupted": False, "isImage": False},
+        }, self.origin)
+        self.git("worktree", "remove", str(linked))
+
+        other = self.base / "other repository"
+        other.mkdir()
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=other, check=True)
+        subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=other, check=True)
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=other, check=True)
+        (other / "tracked.txt").write_text("other\n")
+        subprocess.run(["git", "add", "tracked.txt"], cwd=other, check=True)
+        subprocess.run(["git", "commit", "-qm", "initial"], cwd=other, check=True)
+        subprocess.run(
+            ["git", "worktree", "add", "-qb", "replacement", str(linked), "HEAD"],
+            cwd=other, check=True,
+        )
+
+        module.poll_session(self.session, self.panes())
+
+        self.assertFalse(any(Path(row["cwd"]).resolve() == linked for row in self.panes()))
+        raw = self.tmux("show-options", "-qv", "-t", self.session, module.STATE_OPTION)
+        self.assertNotIn(str(linked), json.loads(raw)["candidates"])
 
     def test_list_keeps_disabled_candidate_from_repo_absent_in_panes(self):
         hook_pane = self.tmux(
@@ -495,6 +547,50 @@ class TmuxAutoPaneTests(unittest.TestCase):
             module.remove_worktree(str(linked))
 
         self.assertTrue(linked.exists())
+
+    def test_remove_fails_closed_when_tmux_inventory_cannot_be_read(self):
+        linked = self.add_manual("tmux-check-fails")
+
+        with mock.patch.object(module, "_tmux", side_effect=RuntimeError("tmux unavailable")):
+            with self.assertRaisesRegex(RuntimeError, "tmux unavailable"):
+                module.remove_worktree(str(linked))
+
+        self.assertTrue(linked.exists())
+
+    def test_active_actor_cwd_marks_worktree_open_and_suppresses_auto_duplicate(self):
+        module.set_auto(self.session, True, self.panes())
+        linked = self.add_manual("actor-visible")
+        actor_state = {
+            "session_id": "claude-session", "cwd": str(self.repo), "provider": "claude",
+            "actors": {"child": {"active": True, "cwd": str(linked)}},
+        }
+        panes = self.panes()
+        panes[0]["claude_state"] = actor_state
+        command = "git worktree add " + __import__("shlex").quote(str(linked))
+        module.observe_hook({
+            "hook_event_name": "PostToolUse", "tool_name": "Bash",
+            "tool_input": {"command": command},
+            "tool_response": {"stdout": "", "stderr": "", "interrupted": False, "isImage": False},
+        }, self.origin)
+
+        rows = module.list_worktrees([str(self.repo)], panes)
+        linked_row = next(row for row in rows if row["path"] == str(linked))
+        self.assertEqual(linked_row["panes"], [self.origin])
+        module.poll_session(self.session, panes)
+        self.assertEqual(len(self.panes()), 1)
+
+    def test_open_shell_reuses_pane_with_active_actor_in_target_worktree(self):
+        linked = self.add_manual("actor-shell-reuse")
+        state = json.dumps({
+            "session_id": "codex-session", "cwd": str(self.repo), "provider": "codex",
+            "actors": {"child": {"active": True, "cwd": str(linked)}},
+        })
+        self.tmux("set-option", "-p", "-t", self.origin, "@codex_state", state)
+
+        opened = module.open_worktree(str(linked), self.session, self.origin, "shell")
+
+        self.assertEqual(opened, self.origin)
+        self.assertEqual(len(self.panes()), 1)
 
 
 if __name__ == "__main__":

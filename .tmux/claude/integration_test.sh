@@ -274,18 +274,10 @@ test_hooks_status_update() {
         return 0
     fi
 
-    # テスト用ペインキーを生成（現在の $TMUX_PANE を使用）
-    local test_pane_key=""
-    if [[ -n "${TMUX_PANE:-}" ]]; then
-        local pane_info
-        pane_info=$(tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_id}" 2>/dev/null \
-            | grep " ${TMUX_PANE}$" \
-            | head -1 \
-            | awk '{print $1}')
-        test_pane_key="${pane_info//[:\.]/_}"
-    fi
-
-    if [[ -z "$test_pane_key" ]]; then
+    # Native pane options follow the pane even when its window position changes.
+    local test_pane
+    test_pane=$(tmux display-message -p -t "${TMUX_PANE:-}" '#{pane_id}' 2>/dev/null)
+    if [[ -z "${TMUX_PANE:-}" || "$test_pane" != "$TMUX_PANE" ]]; then
         echo "⚠ TMUX_PANE が解決できません。hooks シミュレートテストをスキップ"
         record_test_result "Hooks: simulate events" "✓ (skipped - no TMUX_PANE)"
         return 0
@@ -293,9 +285,9 @@ test_hooks_status_update() {
 
     # UserPromptSubmit → Busy テスト
     echo "hooks シミュレート: UserPromptSubmit → Busy..."
-    echo '{"hook_event_name":"UserPromptSubmit"}' | "$status_update_script" 2>/dev/null
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"UserPromptSubmit"}' | "$status_update_script" 2>/dev/null
     local busy_status
-    busy_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    busy_status=$(tmux show-option -pqv -t "$test_pane" @claude_status 2>/dev/null)
     if [[ "$busy_status" == "Busy" ]]; then
         echo "✓ UserPromptSubmit → Busy: 成功"
         record_test_result "Hooks: UserPromptSubmit→Busy" "✓"
@@ -306,9 +298,9 @@ test_hooks_status_update() {
 
     # Stop → Idle テスト
     echo "hooks シミュレート: Stop → Idle..."
-    echo '{"hook_event_name":"Stop"}' | "$status_update_script" 2>/dev/null
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"Stop"}' | "$status_update_script" 2>/dev/null
     local idle_status
-    idle_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    idle_status=$(tmux show-option -pqv -t "$test_pane" @claude_status 2>/dev/null)
     if [[ "$idle_status" == "Idle" ]]; then
         echo "✓ Stop → Idle: 成功"
         record_test_result "Hooks: Stop→Idle" "✓"
@@ -317,22 +309,41 @@ test_hooks_status_update() {
         record_test_result "Hooks: Stop→Idle" "✗"
     fi
 
-    # Notification(idle_prompt) → Waiting テスト
-    echo "hooks シミュレート: Notification(idle_prompt) → Waiting..."
-    echo '{"hook_event_name":"Notification","notification_type":"idle_prompt"}' | "$status_update_script" 2>/dev/null
+    # Notification(idle_prompt) → Idle テスト
+    echo "hooks シミュレート: Notification(idle_prompt) → Idle..."
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"Notification","notification_type":"idle_prompt"}' | "$status_update_script" 2>/dev/null
     local waiting_status
-    waiting_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
-    if [[ "$waiting_status" == "Waiting" ]]; then
-        echo "✓ Notification(idle_prompt) → Waiting: 成功"
-        record_test_result "Hooks: Notification→Waiting" "✓"
+    waiting_status=$(tmux show-option -pqv -t "$test_pane" @claude_status 2>/dev/null)
+    if [[ "$waiting_status" == "Idle" ]]; then
+        echo "✓ Notification(idle_prompt) → Idle: 成功"
+        record_test_result "Hooks: Notification→Idle" "✓"
     else
-        echo "✗ Notification(idle_prompt) → Waiting: 失敗 (実際: ${waiting_status:-empty})"
-        record_test_result "Hooks: Notification→Waiting" "✗"
+        echo "✗ Notification(idle_prompt) → Idle: 失敗 (実際: ${waiting_status:-empty})"
+        record_test_result "Hooks: Notification→Idle" "✗"
+    fi
+
+    # A permission notification marks an active actor as waiting; a tool result
+    # resumes that same actor without needing another user prompt.
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"UserPromptSubmit"}' | "$status_update_script" 2>/dev/null
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"Notification","notification_type":"permission_prompt"}' | "$status_update_script" 2>/dev/null
+    local permission_status resumed_status
+    permission_status=$(tmux show-option -pqv -t "$test_pane" @claude_status)
+    if [[ "$permission_status" == "Permission" ]]; then
+        record_test_result "Hooks: Permission" "✓"
+    else
+        record_test_result "Hooks: Permission" "✗"
+    fi
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"PostToolUse","tool_name":"Bash"}' | "$status_update_script" 2>/dev/null
+    resumed_status=$(tmux show-option -pqv -t "$test_pane" @claude_status)
+    if [[ "$resumed_status" == "Busy" ]]; then
+        record_test_result "Hooks: Permission→Busy" "✓"
+    else
+        record_test_result "Hooks: Permission→Busy" "✗"
     fi
 
     # タイムスタンプ更新チェック
     local hooks_ts
-    hooks_ts=$(tmux show-option -gqv "@claude_voice_hooks_ts_${test_pane_key}" 2>/dev/null)
+    hooks_ts=$(tmux show-option -pqv -t "$test_pane" @claude_updated 2>/dev/null)
     if [[ -n "$hooks_ts" ]]; then
         local now
         now=$(date +%s)
@@ -351,9 +362,9 @@ test_hooks_status_update() {
 
     # SessionEnd → クリアテスト
     echo "hooks シミュレート: SessionEnd → クリア..."
-    echo '{"hook_event_name":"SessionEnd"}' | "$status_update_script" 2>/dev/null
+    echo '{"session_id":"tmux-integration-test","hook_event_name":"SessionEnd"}' | "$status_update_script" 2>/dev/null
     local cleared_status
-    cleared_status=$(tmux show-option -gqv "@claude_voice_pane_status_${test_pane_key}" 2>/dev/null)
+    cleared_status=$(tmux show-option -pqv -t "$test_pane" @claude_status 2>/dev/null)
     if [[ -z "$cleared_status" ]]; then
         echo "✓ SessionEnd → クリア: 成功"
         record_test_result "Hooks: SessionEnd→Clear" "✓"

@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from codex_status import tmux
+from codex_status import tmux, is_agent_process, process_table
 
 HERE = Path(__file__).resolve().parent
 PROVIDERS = {"claude": "Claude Code", "codex": "Codex"}
@@ -41,9 +41,11 @@ def _json(value):
 def read_panes(session=None):
     columns = ["pane_id", "session_id", "pane_current_path", "pane_current_command",
                "pane_width", "pane_height", "pane_active", "pane_title",
-               "@claude_state", "@claude_status", "@codex_state", "@codex_status"]
+               "@claude_state", "@claude_status", "@codex_state", "@codex_status", "pane_pid"]
     args = ["list-panes", "-s", "-t", session] if session else ["list-panes", "-a"]
     result = tmux(*args, "-F", "\t".join("#{" + x + "}" for x in columns))
+    processes = process_table()
+    enabled = {"claude": True, "codex": tmux("show-option", "-gqv", "@codex_enabled") != "false"}
     rows = []
     for line in result.splitlines():
         values = line.split("\t")
@@ -53,6 +55,8 @@ def read_panes(session=None):
                      "cwd": row["pane_current_path"], "command": row["pane_current_command"],
                      "width": int(row["pane_width"]), "height": int(row["pane_height"]),
                      "active": row["pane_active"] == "1", "title": row["pane_title"],
+                     **{p + "_enabled": enabled[p] for p in PROVIDERS},
+                     **{p + "_detected": is_agent_process(int(row["pane_pid"]), processes, p) for p in PROVIDERS},
                      **{p + "_state": _json(row["@" + p + "_state"]) for p in PROVIDERS},
                      **{p + "_status": row["@" + p + "_status"] for p in PROVIDERS}})
     return rows
@@ -78,9 +82,11 @@ def build_snapshot(session_id, origin_pane, panes, repo_map, worktree_rows, auto
         if repo:
             repos[repo["id"]] = repo
         for provider, label in PROVIDERS.items():
+            if not pane.get(provider + "_enabled", True):
+                continue
             state = pane.get(provider + "_state", {})
             visible = pane.get(provider + "_status", "")
-            native = pane["command"] in {provider, provider + ".exe"}
+            native = pane.get(provider + "_detected", False) or pane["command"] in {provider, provider + ".exe"}
             if not state and not visible and not native:
                 continue
             agent_cwd = state.get("cwd") or cwd
@@ -104,6 +110,8 @@ def build_snapshot(session_id, origin_pane, panes, repo_map, worktree_rows, auto
             for actor_id, actor in actors.items():
                 if actor_id == "root":
                     continue
+                # Proven conversation membership, not inferred spawn ancestry.
+                # Independent team conversations remain separate pane/session roots.
                 value = actor_status(actor)
                 agents.append({"id": root_id + ":" + actor_id, "parent_id": root_id,
                                "repo_id": agent_repo["id"], "name": actor.get("name") or actor.get("agent_type") or actor_id,
