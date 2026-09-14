@@ -153,6 +153,13 @@ class WorktreeViewTests(unittest.TestCase):
 
 
 class NavigationTests(unittest.TestCase):
+    def test_emacs_navigation_keys_have_the_same_actions_as_arrow_keys(self):
+        self.assertEqual(dashboard.navigation_action("\x0e"), "down")  # C-n
+        self.assertEqual(dashboard.navigation_action("\x10"), "up")    # C-p
+        self.assertEqual(dashboard.navigation_action("\x06"), "right") # C-f
+        self.assertEqual(dashboard.navigation_action("\x02"), "left")  # C-b
+        self.assertEqual(dashboard.navigation_action("\x07"), "close") # C-g
+
     def test_escape_from_get_wch_closes_for_string_and_integer_forms(self):
         self.assertTrue(dashboard.is_close_key("\x1b"))
         self.assertTrue(dashboard.is_close_key(27))
@@ -242,6 +249,62 @@ class NavigationTests(unittest.TestCase):
 
 
 class RenderingTests(unittest.TestCase):
+    def test_agent_columns_use_its_deepest_containing_worktree(self):
+        data = snapshot()
+        data["worktrees"] = [
+            {"id": "/repo/a", "path": "/repo/a", "repo": "/repo/a/.git",
+             "branch": "main", "temporary": False, "panes": [],
+             "status": "open", "auto_reason": ""},
+            {"id": "/repo/a/wt", "path": "/repo/a/wt", "repo": "/repo/a/.git",
+             "branch": "feature/dashboard", "temporary": False, "panes": [],
+             "status": "available", "auto_reason": ""},
+        ]
+        model = dashboard.DashboardModel(data)
+        agent = next(row for row in model.rows if row.id == "agent:child-a")
+
+        self.assertEqual(dashboard.row_columns(agent, data), {
+            "repo": "repo-a", "branch": "feature/dashboard", "worktree": "wt",
+        })
+
+    def test_worktree_row_has_branch_name_and_worktree_kind_marker(self):
+        data = snapshot()
+        data["worktrees"] = [
+            {"id": "/repo/a/wt", "path": "/repo/a/wt", "repo": "/repo/a/.git",
+             "branch": "fix/popup", "temporary": False, "panes": [],
+             "status": "available", "auto_reason": ""},
+        ]
+        model = dashboard.DashboardModel(data)
+        model.toggle_view()
+        row = next(item for item in model.rows if item.kind == "worktree")
+
+        self.assertEqual(dashboard.row_columns(row, data), {
+            "repo": "repo-a", "branch": "fix/popup", "worktree": "wt",
+        })
+        self.assertEqual(dashboard.row_marker(row), "⌘")
+
+    def test_status_and_branch_have_semantic_color_categories(self):
+        self.assertEqual(dashboard.status_color_key("Busy"), "busy")
+        self.assertEqual(dashboard.status_color_key("Permission"), "waiting")
+        self.assertEqual(dashboard.branch_color_key("main"), "base")
+        self.assertEqual(dashboard.branch_color_key("feature/dashboard"), "feature")
+        self.assertEqual(dashboard.branch_color_key("fix/popup"), "fix")
+
+    def test_medium_width_row_never_overflows_when_worktree_column_is_hidden(self):
+        data = snapshot()
+        data["worktrees"] = [
+            {"id": "/repo/a/wt", "path": "/repo/a/wt", "repo": "/repo/a/.git",
+             "branch": "feature/dashboard", "temporary": False, "panes": [],
+             "status": "available", "auto_reason": ""},
+        ]
+        model = dashboard.DashboardModel(data)
+        row = next(item for item in model.rows if item.id == "agent:child-a")
+
+        rendered = dashboard.format_row(row, 64, model.expanded, data)
+
+        self.assertLessEqual(dashboard.cell_width(rendered), 64)
+        self.assertIn("feature/dashboard", rendered)
+        self.assertNotIn(" /repo/a/wt", rendered)
+
     def test_tree_markers_distinguish_collapsed_nodes_and_leaves(self):
         model = dashboard.DashboardModel(snapshot())
         repo = model.rows[0]

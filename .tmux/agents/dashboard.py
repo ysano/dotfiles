@@ -374,6 +374,90 @@ def _row_location(row):
     return "-"
 
 
+def _repository_name(repo_id, snapshot):
+    for repo in snapshot.get("repos", []):
+        if repo.get("id") == repo_id:
+            return repo.get("name") or repo.get("path") or repo_id
+    return repo_id or "-"
+
+
+def _worktree_for_path(path, snapshot):
+    """path を含む最も深い worktree を返す。"""
+    if not path:
+        return None
+    matches = []
+    for worktree in snapshot.get("worktrees", []):
+        worktree_path = worktree.get("path")
+        if not worktree_path:
+            continue
+        try:
+            Path(path).resolve(strict=False).relative_to(Path(worktree_path).resolve(strict=False))
+            matches.append(worktree)
+        except ValueError:
+            continue
+    return max(matches, key=lambda item: len(item.get("path", "")), default=None)
+
+
+def row_columns(row, snapshot):
+    """一覧に出すリポジトリ、branch、worktreeの構造化値。"""
+    if row.kind == "repo":
+        repo_id = row.data.get("id", "")
+        worktree = _worktree_for_path(row.data.get("path", ""), snapshot)
+    elif row.kind == "worktree":
+        repo_id = row.data.get("repo", "")
+        worktree = row.data
+    else:
+        repo_id = row.data.get("repo_id", "")
+        worktree = _worktree_for_path(row.data.get("cwd", ""), snapshot)
+    return {
+        "repo": _repository_name(repo_id, snapshot),
+        "branch": (worktree or {}).get("branch", "-") or "-",
+        "worktree": (Path((worktree or {}).get("path", "")).name or "-"),
+    }
+
+
+def row_marker(row, snapshot=None):
+    if row.kind == "repo":
+        return "◆"
+    if row.kind == "agent":
+        return "●"
+    if row.data.get("auto_reason") == "opened automatically":
+        return "⚙"
+    if snapshot:
+        for repo in snapshot.get("repos", []):
+            if repo.get("path") == row.data.get("path"):
+                return "⌂"
+    return "⌘"
+
+
+def status_color_key(value):
+    status = str(value or "").strip().lower()
+    if status in {"permission", "waiting", "question", "approval", "承認待ち", "質問待ち"}:
+        return "waiting"
+    if status in {"busy", "open", "available", "prunable", "locked"}:
+        return "busy"
+    if status == "error":
+        return "error"
+    if status in COMPLETED_STATES:
+        return "idle"
+    return "default"
+
+
+def branch_color_key(branch):
+    value = str(branch or "").lower()
+    if value in {"main", "master", "trunk", "develop", "development"}:
+        return "base"
+    if value.startswith(("feature/", "feat/")):
+        return "feature"
+    if value.startswith(("fix/", "bugfix/")):
+        return "fix"
+    if value.startswith("hotfix/"):
+        return "hotfix"
+    if value.startswith("release/"):
+        return "release"
+    return "default"
+
+
 def _reason_label(value):
     reasons = {
         "temporary agent worktree; automatic opening excluded": "一時領域（自動対象外）",
@@ -393,33 +477,59 @@ def _reason_label(value):
     return reasons.get(text, text)
 
 
-def format_row(row, width, expanded):
-    """1行を端末幅内に収める。幅があれば状態・cwd・表示先を順に加える。"""
+def _pad_text(text, width):
+    value = clip_text(text, width)
+    return value + " " * max(0, width - cell_width(value))
+
+
+def row_segments(row, width, expanded, snapshot=None):
+    """幅に応じた一覧の列（値、セル幅、色カテゴリ）を返す。"""
     if width <= 0:
-        return ""
-    branch = (("▾ " if row.id in expanded else "▸ ")
-              if row.expandable else "• ")
-    prefix = "  " * row.depth + branch
-    name = _row_name(row)
+        return []
+    tree = (("▾ " if row.id in expanded else "▸ ")
+            if row.expandable else "• ")
+    target = "  " * row.depth + tree + row_marker(row, snapshot) + " " + _row_name(row)
     waiting = " 待ち{}".format(row.waiting) if row.waiting else ""
-    state = _status_label(row.data.get("status", ""))
-    fields = [prefix + name + waiting, state, _row_cwd(row), _row_location(row)]
-    if width < 28:
-        return clip_text(fields[0], width)
-    first_width = max(8, min(28, width // 4))
-    state_width = 8
-    location_width = 10
-    cwd_width = max(1, width - first_width - state_width - location_width - 6)
-    rendered = "{:<{}}  {:<{}}  {}  {}".format(
-        clip_text(fields[0], first_width), first_width,
-        clip_text(fields[1], state_width), state_width,
-        clip_text(fields[2], cwd_width), clip_text(fields[3], location_width))
-    # Python の文字列幅指定は日本語セル幅を考慮しないため、最後に必ず切る。
-    return clip_text(rendered, width)
+    status = "● " + _status_label(row.data.get("status", "")) + waiting
+    if width < 36:
+        return [(target, width, "default")]
+    if width < 55:
+        return [(target, width - 10, "repo"), (status, 8, status_color_key(row.data.get("status", "")))]
+    columns = row_columns(row, snapshot or {})
+    if width < 71:
+        target_width = max(14, width - 42)
+        return [
+            (target, target_width, "repo"),
+            (status, 8, status_color_key(row.data.get("status", ""))),
+            (columns["repo"], 11, "repo"),
+            (columns["branch"], 17, branch_color_key(columns["branch"])),
+        ]
+    include_location = width >= 94
+    fixed = 8 + 11 + 16 + 14 + (12 if include_location else 0)
+    target_width = max(14, width - fixed - (10 if include_location else 8))
+    segments = [
+        (target, target_width, "repo"),
+        (status, 8, status_color_key(row.data.get("status", ""))),
+        (columns["repo"], 11, "repo"),
+        (columns["branch"], 16, branch_color_key(columns["branch"])),
+        (columns["worktree"], 14, "worktree"),
+    ]
+    if include_location:
+        segments.append((_row_location(row), 12, "default"))
+    return segments
+
+
+def format_row(row, width, expanded, snapshot=None):
+    """1行を端末幅内に収める。cwdではなく構造化した列を表示する。"""
+    segments = row_segments(row, width, expanded, snapshot)
+    if not segments:
+        return ""
+    return clip_text("  ".join(_pad_text(text, field_width)
+                               for text, field_width, _ in segments), width)
 
 
 def render_lines(model, width):
-    return [format_row(row, width, model.expanded) for row in model.rows]
+    return [format_row(row, width, model.expanded, model.snapshot) for row in model.rows]
 
 
 def dump_text(snapshot, width=120):
@@ -428,7 +538,7 @@ def dump_text(snapshot, width=120):
 
 
 def footer_text(row, auto):
-    actions = ["↑↓:選択", "←→:開閉", "Tab:表示", "Enter:移動/詳細"]
+    actions = ["C-n/p:選択", "C-f/b:開閉", "Tab:表示", "Enter:移動/詳細"]
     if row:
         actions.extend(["s:シェル", "c:Claude", "x:Codex"])
         if row.kind == "agent" and row.data.get("agent_id"):
@@ -436,7 +546,7 @@ def footer_text(row, auto):
         if row.kind == "worktree":
             actions.append("d:削除")
     actions.extend(["n:作成", "a:自動{}".format("ON" if auto else "OFF"),
-                    "l:旧ランチャー", "Esc:閉じる"])
+                    "l:旧ランチャー", "C-g:閉じる"])
     return "  ".join(actions)
 
 
@@ -462,6 +572,16 @@ def focus_pane(pane, session, tmux_fn=tmux):
 
 def is_close_key(key):
     return key in {27, "\x1b", "q"}
+
+
+def navigation_action(key):
+    return {
+        "\x0e": "down",  # C-n
+        "\x10": "up",    # C-p
+        "\x06": "right", # C-f
+        "\x02": "left",  # C-b
+        "\x07": "close", # C-g
+    }.get(key, "")
 
 
 def tmux_panes(session, tmux_fn=tmux):
@@ -566,7 +686,33 @@ def _safe_addstr(screen, y, x, value, attribute=0):
             raise
 
 
-def _draw(screen, model, message, offset):
+def _color_styles(curses):
+    """端末の既定背景を保ったまま、意味ごとの色属性を作る。"""
+    try:
+        if not curses.has_colors():
+            return {}
+        curses.start_color()
+        curses.use_default_colors()
+        palette = {
+            "busy": curses.COLOR_YELLOW, "waiting": curses.COLOR_YELLOW,
+            "error": curses.COLOR_RED, "idle": curses.COLOR_WHITE,
+            "repo": curses.COLOR_BLUE, "worktree": curses.COLOR_CYAN,
+            "base": curses.COLOR_GREEN, "feature": curses.COLOR_CYAN,
+            "fix": curses.COLOR_YELLOW, "hotfix": curses.COLOR_RED,
+            "release": curses.COLOR_MAGENTA,
+        }
+        styles = {}
+        for index, (name, color) in enumerate(palette.items(), start=1):
+            curses.init_pair(index, color, -1)
+            styles[name] = curses.color_pair(index)
+        styles["waiting"] |= curses.A_BOLD
+        styles["error"] |= curses.A_BOLD
+        return styles
+    except curses.error:
+        return {}
+
+
+def _draw(screen, model, message, offset, styles=None):
     import curses
     try:
         screen.erase()
@@ -580,7 +726,7 @@ def _draw(screen, model, message, offset):
         "ON" if model.snapshot.get("auto") else "OFF")
     _safe_addstr(screen, 0, 0, title, curses.A_BOLD)
     if height >= 3:
-        _safe_addstr(screen, 1, 0, "名前 / 状態 / cwd / 表示先", curses.A_DIM)
+        _safe_addstr(screen, 1, 0, "対象 / 状態 / リポジトリ / ブランチ / worktree / pane", curses.A_DIM)
     top = 2 if height >= 4 else 1
     bottom = max(top, height - 2)
     capacity = max(0, bottom - top)
@@ -593,7 +739,12 @@ def _draw(screen, model, message, offset):
     offset = max(0, min(offset, max(0, len(model.rows) - capacity)))
     for y, row in enumerate(model.rows[offset:offset + capacity], start=top):
         attribute = curses.A_REVERSE if row.id == model.selected_id else curses.A_NORMAL
-        _safe_addstr(screen, y, 0, format_row(row, max(1, width - 1), model.expanded), attribute)
+        x = 0
+        for value, field_width, color_key in row_segments(
+                row, max(1, width - 1), model.expanded, model.snapshot):
+            color = (styles or {}).get(color_key, 0)
+            _safe_addstr(screen, y, x, _pad_text(value, field_width), attribute | color)
+            x += field_width + 2
     if height >= 2:
         footer = message or footer_text(model.selected_row(), bool(model.snapshot.get("auto")))
         _safe_addstr(screen, height - 1, 0, footer, curses.A_BOLD if message else curses.A_DIM)
@@ -703,6 +854,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
         curses.set_escdelay(25)
     model = DashboardModel(initial)
     loader = SnapshotLoader(lambda: registry.snapshot(session, origin))
+    styles = _color_styles(curses)
     screen.keypad(True)
     screen.timeout(100)
     try:
@@ -729,25 +881,26 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
             next_refresh = now + 1.0
         if message and now >= message_until:
             message = ""
-        offset = _draw(screen, model, message, offset)
+        offset = _draw(screen, model, message, offset, styles)
         try:
             key = screen.get_wch()
         except curses.error:
             continue
 
-        if is_close_key(key):
+        action = navigation_action(key)
+        if is_close_key(key) or action == "close":
             try:
                 focus_pane(origin, session)
             except (OSError, RuntimeError, subprocess.SubprocessError):
                 pass
             return
-        if key == curses.KEY_UP or key == "k":
+        if key == curses.KEY_UP or action == "up":
             model.move(-1)
-        elif key == curses.KEY_DOWN or key == "j":
+        elif key == curses.KEY_DOWN or action == "down":
             model.move(1)
-        elif key == curses.KEY_LEFT or key == "h":
+        elif key == curses.KEY_LEFT or action == "left":
             model.left()
-        elif key == curses.KEY_RIGHT:
+        elif key == curses.KEY_RIGHT or action == "right":
             model.right()
         elif key == "\t":
             model.toggle_view()
