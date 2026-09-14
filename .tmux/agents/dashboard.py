@@ -538,7 +538,7 @@ def dump_text(snapshot, width=120):
 
 
 def footer_text(row, auto):
-    actions = ["C-n/p:選択", "C-f/b:開閉", "Tab:表示", "Enter:移動/詳細"]
+    actions = ["C-n/p:選択", "C-f/b:開閉", "C-l:再表示", "Tab:表示", "Enter:移動/詳細"]
     if row:
         actions.extend(["s:シェル", "c:Claude", "x:Codex"])
         if row.kind == "agent" and row.data.get("agent_id"):
@@ -581,6 +581,7 @@ def navigation_action(key):
         "\x06": "right", # C-f
         "\x02": "left",  # C-b
         "\x07": "close", # C-g
+        "\x0c": "redraw", # C-l
     }.get(key, "")
 
 
@@ -894,7 +895,12 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
             except (OSError, RuntimeError, subprocess.SubprocessError):
                 pass
             return
-        if key == curses.KEY_UP or action == "up":
+        if action == "redraw":
+            try:
+                screen.clearok(True)
+            except curses.error:
+                pass
+        elif key == curses.KEY_UP or action == "up":
             model.move(-1)
         elif key == curses.KEY_DOWN or action == "down":
             model.move(1)

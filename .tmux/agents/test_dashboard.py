@@ -159,6 +159,7 @@ class NavigationTests(unittest.TestCase):
         self.assertEqual(dashboard.navigation_action("\x06"), "right") # C-f
         self.assertEqual(dashboard.navigation_action("\x02"), "left")  # C-b
         self.assertEqual(dashboard.navigation_action("\x07"), "close") # C-g
+        self.assertEqual(dashboard.navigation_action("\x0c"), "redraw") # C-l
 
     def test_escape_from_get_wch_closes_for_string_and_integer_forms(self):
         self.assertTrue(dashboard.is_close_key("\x1b"))
