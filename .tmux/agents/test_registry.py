@@ -32,6 +32,17 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual([a["provider"] for a in value["agents"]], ["codex"])
         self.assertEqual(value["agents"][0]["status"], "Unknown")
 
+    def test_snapshot_maps_panes_to_window_and_pane_index(self):
+        columns = ["%1", "$1", "/repo", "zsh", "100", "30", "1", "title",
+                   "", "", "", "", "7", "2", "editor", "3"]
+        def tmux(*args):
+            return "\t".join(columns) if args[0] == "list-panes" else ""
+        with mock.patch.object(registry, "tmux", tmux), \
+                mock.patch.object(registry, "process_table", return_value={}):
+            panes = registry.read_panes("$1")
+        value = registry.build_snapshot("$1", "%1", panes, {}, [], False)
+        self.assertEqual(value["pane_locations"], {"%1": {"window": "2:editor", "pane": "3"}})
+
     def test_unregistered_fallback_status_is_counted(self):
         panes = [{"pane_id": "%1", "session_id": "$1", "cwd": "/repo", "command": "claude",
                   "claude_status": "Busy"},

@@ -364,14 +364,30 @@ def _row_cwd(row):
     return row.data.get("cwd") or row.data.get("path", "-")
 
 
-def _row_location(row):
+def _row_pane_ids(row):
     if row.kind == "agent":
-        return row.data.get("pane_id") or row.data.get("parent_pane") or "詳細"
+        pane = row.data.get("pane_id") or row.data.get("parent_pane")
+        return [pane] if pane else []
     if row.kind == "worktree":
-        panes = _pane_ids(row.data.get("panes", []))
-        return (",".join(value for value in panes if value) or
-                _reason_label(row.data.get("auto_reason")) or "-")
-    return "-"
+        return [value for value in _pane_ids(row.data.get("panes", [])) if value]
+    return []
+
+
+def row_location(row, snapshot=None):
+    """行が表示されている tmux の (window, pane) 表記を返す。"""
+    panes = _row_pane_ids(row)
+    locations = (snapshot or {}).get("pane_locations", {})
+    known = [locations[pane] for pane in panes if pane in locations]
+    if known:
+        windows = list(dict.fromkeys(item["window"] for item in known))
+        return ",".join(windows), ",".join(item["pane"] for item in known)
+    if panes:
+        return "-", ",".join(panes)
+    if row.kind == "agent":
+        return "-", "詳細"
+    if row.kind == "worktree":
+        return "-", _reason_label(row.data.get("auto_reason")) or "-"
+    return "-", "-"
 
 
 def _repository_name(repo_id, snapshot):
@@ -482,54 +498,119 @@ def _pad_text(text, width):
     return value + " " * max(0, width - cell_width(value))
 
 
-def row_segments(row, width, expanded, snapshot=None):
-    """幅に応じた一覧の列（値、セル幅、色カテゴリ）を返す。"""
-    if width <= 0:
-        return []
+class Layout(NamedTuple):
+    columns: tuple
+    values: dict
+
+
+# (列キー, 見出し, 最小幅, 最大幅)。最大幅 None は内容幅まで広げる。
+COLUMN_SPECS = (
+    ("target", "対象", 14, None),
+    ("status", "状態", 8, None),
+    ("window", "window", 6, 20),
+    ("pane", "pane", 4, 12),
+    ("repo", "リポジトリ", 8, 24),
+    ("branch", "ブランチ", 12, 40),
+    ("worktree", "worktree", 8, 24),
+)
+# 幅が足りないとき、この順に列を隠す。repo は親行、worktree は branch と重複
+# しやすいため、他列を切り詰める前に隠す。
+COLUMN_DROP_ORDER = ("worktree", "repo", "pane", "window", "branch", "status")
+OPTIONAL_COLUMNS = ("worktree", "repo")
+COLUMN_GAP = 2
+
+
+def _row_values(row, expanded, snapshot):
     tree = (("▾ " if row.id in expanded else "▸ ")
             if row.expandable else "• ")
-    target = "  " * row.depth + tree + row_marker(row, snapshot) + " " + _row_name(row)
     waiting = " 待ち{}".format(row.waiting) if row.waiting else ""
-    status = "● " + _status_label(row.data.get("status", "")) + waiting
-    if width < 36:
-        return [(target, width, "default")]
-    if width < 55:
-        return [(target, width - 10, "repo"), (status, 8, status_color_key(row.data.get("status", "")))]
-    columns = row_columns(row, snapshot or {})
-    if width < 71:
-        target_width = max(14, width - 42)
-        return [
-            (target, target_width, "repo"),
-            (status, 8, status_color_key(row.data.get("status", ""))),
-            (columns["repo"], 11, "repo"),
-            (columns["branch"], 17, branch_color_key(columns["branch"])),
-        ]
-    include_location = width >= 94
-    fixed = 8 + 11 + 16 + 14 + (12 if include_location else 0)
-    target_width = max(14, width - fixed - (10 if include_location else 8))
-    segments = [
-        (target, target_width, "repo"),
-        (status, 8, status_color_key(row.data.get("status", ""))),
-        (columns["repo"], 11, "repo"),
-        (columns["branch"], 16, branch_color_key(columns["branch"])),
-        (columns["worktree"], 14, "worktree"),
-    ]
-    if include_location:
-        segments.append((_row_location(row), 12, "default"))
-    return segments
+    values = {
+        "target": "  " * row.depth + tree + row_marker(row, snapshot) + " " + _row_name(row),
+        "status": "● " + _status_label(row.data.get("status", "")) + waiting,
+    }
+    values["window"], values["pane"] = row_location(row, snapshot)
+    values.update(row_columns(row, snapshot or {}))
+    return values
 
 
-def format_row(row, width, expanded, snapshot=None):
+def column_layout(rows, width, expanded, snapshot=None):
+    """全行の内容幅から列幅を決め、行間で揃った列配置を返す。"""
+    values = {row.id: _row_values(row, expanded, snapshot) for row in rows}
+    specs = {key: (label, minimum, cap) for key, label, minimum, cap in COLUMN_SPECS}
+    natural = {}
+    for key, (label, minimum, cap) in specs.items():
+        content = max([cell_width(item[key]) for item in values.values()] + [cell_width(label)])
+        natural[key] = min(content, cap) if cap else content
+    lower = {key: min(natural[key], specs[key][1]) for key in specs}
+
+    def total(keys, widths):
+        return sum(widths[key] for key in keys) + COLUMN_GAP * (len(keys) - 1)
+
+    keys = [key for key, *_ in COLUMN_SPECS]
+    if width >= 36:
+        for key in OPTIONAL_COLUMNS:
+            if total(keys, natural) > width:
+                keys.remove(key)
+        for key in COLUMN_DROP_ORDER:
+            if key not in keys:
+                continue
+            if total(keys, lower) <= width:
+                break
+            keys.remove(key)
+    if width < 36 or keys == ["target"]:
+        return Layout((("target", max(0, width)),), values)
+
+    widths = {key: natural[key] for key in keys}
+    excess = total(keys, widths) - width
+    while excess > 0:
+        key = max((key for key in keys if widths[key] > lower[key]),
+                  key=lambda item: widths[item] - lower[item], default="")
+        if not key:
+            break
+        widths[key] -= 1
+        excess -= 1
+    return Layout(tuple((key, widths[key]) for key in keys), values)
+
+
+def header_text(layout):
+    labels = {key: label for key, label, *_ in COLUMN_SPECS}
+    return (" " * COLUMN_GAP).join(
+        _pad_text(labels[key], field_width) for key, field_width in layout.columns).rstrip()
+
+
+def _column_color(key, row, value):
+    if key == "status":
+        return status_color_key(row.data.get("status", ""))
+    if key == "branch":
+        return branch_color_key(value)
+    return {"target": "repo", "repo": "repo", "worktree": "worktree"}.get(key, "default")
+
+
+def row_segments(row, width, expanded, snapshot=None, layout=None):
+    """列配置に沿った一覧の列（値、セル幅、色カテゴリ）を返す。"""
+    if width <= 0:
+        return []
+    layout = layout or column_layout([row], width, expanded, snapshot)
+    values = layout.values.get(row.id) or _row_values(row, expanded, snapshot)
+    if len(layout.columns) == 1:
+        return [(values["target"], layout.columns[0][1], "default")]
+    return [(values[key], field_width, _column_color(key, row, values[key]))
+            for key, field_width in layout.columns]
+
+
+def format_row(row, width, expanded, snapshot=None, layout=None):
     """1行を端末幅内に収める。cwdではなく構造化した列を表示する。"""
-    segments = row_segments(row, width, expanded, snapshot)
+    segments = row_segments(row, width, expanded, snapshot, layout)
     if not segments:
         return ""
-    return clip_text("  ".join(_pad_text(text, field_width)
-                               for text, field_width, _ in segments), width)
+    return clip_text((" " * COLUMN_GAP).join(_pad_text(text, field_width)
+                                             for text, field_width, _ in segments), width)
 
 
 def render_lines(model, width):
-    return [format_row(row, width, model.expanded, model.snapshot) for row in model.rows]
+    layout = column_layout(model.rows, width, model.expanded, model.snapshot)
+    return [format_row(row, width, model.expanded, model.snapshot, layout)
+            for row in model.rows]
 
 
 def dump_text(snapshot, width=120):
@@ -726,8 +807,9 @@ def _draw(screen, model, message, offset, styles=None):
         view, summary.get("busy", 0), summary.get("waiting", 0),
         "ON" if model.snapshot.get("auto") else "OFF")
     _safe_addstr(screen, 0, 0, title, curses.A_BOLD)
+    layout = column_layout(model.rows, max(1, width - 1), model.expanded, model.snapshot)
     if height >= 3:
-        _safe_addstr(screen, 1, 0, "対象 / 状態 / リポジトリ / ブランチ / worktree / pane", curses.A_DIM)
+        _safe_addstr(screen, 1, 0, header_text(layout), curses.A_DIM)
     top = 2 if height >= 4 else 1
     bottom = max(top, height - 2)
     capacity = max(0, bottom - top)
@@ -742,10 +824,10 @@ def _draw(screen, model, message, offset, styles=None):
         attribute = curses.A_REVERSE if row.id == model.selected_id else curses.A_NORMAL
         x = 0
         for value, field_width, color_key in row_segments(
-                row, max(1, width - 1), model.expanded, model.snapshot):
+                row, max(1, width - 1), model.expanded, model.snapshot, layout):
             color = (styles or {}).get(color_key, 0)
             _safe_addstr(screen, y, x, _pad_text(value, field_width), attribute | color)
-            x += field_width + 2
+            x += field_width + COLUMN_GAP
     if height >= 2:
         footer = message or footer_text(model.selected_row(), bool(model.snapshot.get("auto")))
         _safe_addstr(screen, height - 1, 0, footer, curses.A_BOLD if message else curses.A_DIM)
@@ -805,7 +887,7 @@ def _confirm(screen, text):
     return key in {"y", "Y"}
 
 
-def _details(screen, row):
+def _details(screen, row, snapshot=None):
     import curses
     height, _ = screen.getmaxyx()
     try:
@@ -814,7 +896,8 @@ def _details(screen, row):
         pass
     _safe_addstr(screen, 0, 0, "詳細: " + _row_name(row), curses.A_BOLD)
     details = [("種類", row.kind), ("状態", _status_label(row.data.get("status", ""))),
-               ("cwd", _row_cwd(row)), ("表示先", _row_location(row)),
+               ("cwd", _row_cwd(row)),
+               ("表示先", "window {} / pane {}".format(*row_location(row, snapshot))),
                ("待ち", str(row.waiting))]
     if row.data.get("auto_reason"):
         details.append(("自動表示", _reason_label(row.data["auto_reason"])))
@@ -921,7 +1004,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                     message = "移動失敗: " + str(exc)
                     message_until = now + 4
             elif decision.kind == "details" and model.selected_row():
-                _details(screen, model.selected_row())
+                _details(screen, model.selected_row(), model.snapshot)
         elif key == "p":
             decision = model.parent_action()
             if decision.kind == "focus":
