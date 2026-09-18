@@ -170,6 +170,17 @@ class SnapshotGitTests(unittest.TestCase):
         self.assertEqual(registry.repository(str(self.linked), inventory), expected)
         self.assertIsNone(registry.repository(str(self.plain), inventory))
 
+    def test_repository_keeps_undecodable_path_bytes_like_before(self):
+        porcelain = "worktree /srv/caf\udce9\0HEAD abc\0branch refs/heads/main\0\0"
+
+        def fake_git(root, *args, **kwargs):
+            return "/srv/caf\udce9/.git\n" if args[0] == "rev-parse" else porcelain
+
+        with mock.patch.object(worktrees, "_git", side_effect=fake_git):
+            value = registry.repository("/srv/caf\udce9")
+        self.assertIsNotNone(value)
+        self.assertEqual(value["name"], "caf\udce9")
+
     def test_one_failing_directory_does_not_hide_other_repositories(self):
         calls = []
         missing = str(Path(self.temp.name) / "gone")

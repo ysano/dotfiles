@@ -163,6 +163,76 @@ class GitInventoryTests(unittest.TestCase):
         self.assertEqual(module._worker_count(3), 3)
         self.assertEqual(module._worker_count(20), 8)
 
+    def test_prefetch_caps_pool_size_and_skips_pool_when_nothing_is_pending(self):
+        roots = ["/repo%d" % i for i in range(20)]
+        real_executor = module.ThreadPoolExecutor
+        sizes = []
+
+        def recording_executor(*args, **kwargs):
+            sizes.append(kwargs.get("max_workers", args[0] if args else None))
+            return real_executor(*args, **kwargs)
+
+        def fake_git(root, *args, **kwargs):
+            return str(root) + "/.git\n" if args[0] == "rev-parse" else \
+                "worktree " + str(root) + "\0HEAD abc\0branch refs/heads/main\0\0"
+
+        with mock.patch.object(module, "_git", side_effect=fake_git), \
+                mock.patch.object(module, "ThreadPoolExecutor", recording_executor):
+            inventory = module.GitInventory()
+            inventory.prefetch(roots)
+            self.assertTrue(sizes and max(sizes) <= 8, sizes)
+            sizes.clear()
+            inventory.prefetch(roots)
+            inventory.prefetch([])
+        self.assertEqual(sizes, [])
+
+    def test_unresolvable_root_is_skipped_without_hiding_other_roots(self):
+        real_resolve = Path.resolve
+
+        def fake_resolve(self, strict=False):
+            if "loop" in str(self):
+                raise RuntimeError("Symlink loop from " + str(self))
+            return real_resolve(self, strict=strict)
+
+        def fake_git(root, *args, **kwargs):
+            return "/repo/.git\n" if args[0] == "rev-parse" else \
+                "worktree /repo\0HEAD abc\0branch refs/heads/main\0\0"
+
+        with mock.patch.object(Path, "resolve", fake_resolve), \
+                mock.patch.object(module, "_git", side_effect=fake_git):
+            inventory = module.GitInventory()
+            inventory.prefetch(["/loop/a", "/repo"])
+            with self.assertRaises(RuntimeError):
+                inventory.common_git_dir("/loop/a")
+            self.assertEqual(inventory.worktree_records("/repo")[0]["worktree"], "/repo")
+            rows = module._inventory(["/loop/a", "/repo"], [], inventory)
+        self.assertEqual([row["path"] for row in rows], ["/repo"])
+
+    def test_inventory_git_timeout_stays_short_for_the_dashboard(self):
+        with mock.patch.object(module, "_git", return_value="/repo/.git\n") as git:
+            module.GitInventory().common_git_dir("/repo")
+        self.assertLessEqual(git.call_args.kwargs.get("timeout", 15), 5)
+
+    def test_git_output_with_undecodable_bytes_is_kept_not_fatal(self):
+        completed = subprocess.CompletedProcess(["git"], 0, stdout="worktree /repo/caf\udce9\0\0",
+                                                stderr="")
+        with mock.patch.object(module.subprocess, "run", return_value=completed) as run:
+            output = module._run(["git", "worktree", "list"])
+        self.assertEqual(run.call_args.kwargs.get("errors"), "surrogateescape")
+        self.assertIn("\udce9", output)
+
+    def test_memoized_failure_is_raised_as_a_fresh_instance_each_time(self):
+        with mock.patch.object(module, "_git", side_effect=RuntimeError("git: fatal")):
+            inventory = module.GitInventory()
+            raised = []
+            for _ in range(2):
+                try:
+                    inventory.common_git_dir("/nowhere")
+                except RuntimeError as exc:
+                    raised.append(exc)
+        self.assertEqual([str(e) for e in raised], ["git: fatal", "git: fatal"])
+        self.assertIsNot(raised[0], raised[1])
+
 
 @unittest.skipUnless(shutil.which("git") and shutil.which("tmux"), "git and tmux required")
 class TmuxAutoPaneTests(unittest.TestCase):

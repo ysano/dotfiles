@@ -2,6 +2,7 @@
 """Git worktree inventory and session-scoped tmux pane management."""
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+import copy
 import hashlib
 import json
 import os
@@ -26,12 +27,16 @@ PROVIDERS = {"shell", "claude", "codex"}
 SUCCESS_EVENTS = {"posttooluse", "aftertooluse", "toolcompleted"}
 SHELL_TOOLS = {"bash", "execcommand"}
 MAX_GIT_WORKERS = 8
+# dashboard の応答性のため、snapshot 内の git は短い timeout で打ち切る。
+GIT_INVENTORY_TIMEOUT = 5
 GIT_ERRORS = (OSError, RuntimeError, subprocess.SubprocessError, ValueError)
 
 
 def _run(argv, *, cwd=None, timeout=10):
+    # UTF-8 で表せないパスも落とさず保持する（registry の旧 bytes 経路と同じ）。
     result = subprocess.run(
-        argv, cwd=cwd, text=True, capture_output=True, timeout=timeout,
+        argv, cwd=cwd, text=True, errors="surrogateescape", capture_output=True,
+        timeout=timeout,
     )
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip() or "command failed"
@@ -62,9 +67,9 @@ def _inside(child, parent):
         return False
 
 
-def _common_git_dir(root):
+def _common_git_dir(root, timeout=15):
     root_path = Path(root).expanduser().resolve(strict=False)
-    output = _git(root_path, "rev-parse", "--git-common-dir").strip()
+    output = _git(root_path, "rev-parse", "--git-common-dir", timeout=timeout).strip()
     common = Path(output)
     if not common.is_absolute():
         common = root_path / common
@@ -81,14 +86,19 @@ class GitInventory:
     寿命は呼び出し 1 回分に限る（モジュールに持ち越さない）。失敗も記憶し、
     どの呼び出し元にも同じ例外を返す。"""
 
-    def __init__(self):
+    def __init__(self, timeout=GIT_INVENTORY_TIMEOUT):
+        self.timeout = timeout
         self._common = {}
         self._records = {}
         self._lock = threading.Lock()
 
     @staticmethod
     def _key(root):
-        return str(Path(root).expanduser().resolve(strict=False))
+        value = Path(root).expanduser()
+        try:
+            return str(value.resolve(strict=False))
+        except GIT_ERRORS:  # symlink loop 等。解決できない root も 1 件として扱う。
+            return str(value)
 
     def _memo(self, table, key, compute):
         with self._lock:
@@ -103,16 +113,17 @@ class GitInventory:
         with self._lock:
             value = table[key]
         if isinstance(value, BaseException):
-            raise value
+            raise copy.copy(value)  # traceback を呼び出し元間で共有しない
         return value
 
     def common_git_dir(self, root):
-        return self._memo(self._common, self._key(root), lambda: _common_git_dir(root))
+        return self._memo(self._common, self._key(root),
+                          lambda: _common_git_dir(root, timeout=self.timeout))
 
     def worktree_records(self, root):
         common = self.common_git_dir(root)
         return self._memo(self._records, common, lambda: _parse_porcelain_z(
-            _git(root, "worktree", "list", "--porcelain", "-z")))
+            _git(root, "worktree", "list", "--porcelain", "-z", timeout=self.timeout)))
 
     def _quiet(self, method, root):
         try:
