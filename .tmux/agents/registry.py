@@ -13,20 +13,18 @@ PROVIDERS = {"claude": "Claude Code", "codex": "Codex"}
 WAITING = {"Permission", "Question"}
 
 
-def repository(cwd):
+def repository(cwd, inventory=None):
+    """cwd の属するリポジトリ。inventory を渡すと同じ snapshot 内で git 問い合わせを共有する。"""
+    import worktrees
+    inventory = inventory or worktrees.GitInventory()
     try:
-        result = subprocess.run(["git", "-C", cwd, "rev-parse", "--git-common-dir"],
-                                text=True, capture_output=True, check=True, timeout=2)
-        common = Path(result.stdout.strip())
-        if not common.is_absolute():
-            common = Path(cwd) / common
-        common = common.resolve()
-        listing = subprocess.run(["git", "-C", cwd, "worktree", "list", "--porcelain", "-z"],
-                                 capture_output=True, check=True, timeout=2).stdout
-        first = next(x[9:] for x in listing.split(b"\0") if x.startswith(b"worktree "))
-        root = Path(first.decode("utf-8", errors="surrogateescape")).resolve()
-        return {"id": str(common), "name": root.name, "path": str(root)}
-    except (OSError, StopIteration, subprocess.SubprocessError):
+        common = inventory.common_git_dir(cwd)
+        records = inventory.worktree_records(cwd)
+        first = next(record["worktree"] for record in records
+                     if isinstance(record.get("worktree"), str) and record["worktree"])
+        root = Path(first).resolve()
+        return {"id": common, "name": root.name, "path": str(root)}
+    except (StopIteration, *worktrees.GIT_ERRORS):
         return None
 
 
@@ -137,13 +135,15 @@ def snapshot(session_id, origin_pane):
             for actor in state.get("actors", {}).values():
                 if actor.get("cwd"):
                     paths.add(actor["cwd"])
-    repo_map = {cwd: repository(cwd) for cwd in sorted(paths)}
+    inventory = worktrees.GitInventory()
+    inventory.prefetch(sorted(paths))
+    repo_map = {cwd: repository(cwd, inventory) for cwd in sorted(paths)}
     repo_map = {k: v for k, v in repo_map.items() if v}
-    rows = worktrees.list_worktrees(sorted(paths), panes)
+    rows = worktrees.list_worktrees(sorted(paths), panes, inventory)
     known = {repo["id"] for repo in repo_map.values()}
     for row in rows:
         if row["repo"] not in known:
-            repo = repository(row["path"])
+            repo = repository(row["path"], inventory)
             if repo:
                 repo_map[row["path"]] = repo
                 known.add(repo["id"])

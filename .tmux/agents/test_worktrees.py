@@ -109,6 +109,61 @@ class GitWorktreeTests(unittest.TestCase):
                 self.assertFalse(expected.exists())
 
 
+
+class GitInventoryTests(unittest.TestCase):
+    """snapshot 1 回分の git 問い合わせメモ。"""
+
+    def test_common_git_dir_is_asked_once_per_root(self):
+        with mock.patch.object(module, "_git", return_value="/repo/.git\n") as git:
+            inventory = module.GitInventory()
+            first = inventory.common_git_dir("/repo/a")
+            second = inventory.common_git_dir("/repo/a")
+        self.assertEqual(first, second)
+        self.assertEqual(git.call_count, 1)
+
+    def test_failure_is_remembered_and_raised_to_every_caller(self):
+        with mock.patch.object(module, "_git", side_effect=RuntimeError("git: fatal")) as git:
+            inventory = module.GitInventory()
+            for _ in range(2):
+                with self.assertRaises(RuntimeError):
+                    inventory.common_git_dir("/nowhere")
+        self.assertEqual(git.call_count, 1)
+
+    def test_worktree_records_are_shared_between_roots_of_one_repository(self):
+        porcelain = "worktree /repo\0HEAD abc\0branch refs/heads/main\0\0"
+
+        def fake_git(root, *args, **kwargs):
+            return "/repo/.git\n" if args[0] == "rev-parse" else porcelain
+
+        with mock.patch.object(module, "_git", side_effect=fake_git) as git:
+            inventory = module.GitInventory()
+            first = inventory.worktree_records("/repo")
+            second = inventory.worktree_records("/repo/src")
+        self.assertEqual(first, second)
+        self.assertEqual(first[0]["worktree"], "/repo")
+        listing = [c for c in git.call_args_list if c.args[1] == "worktree"]
+        self.assertEqual(len(listing), 1)
+
+    def test_prefetch_populates_every_root_and_caps_workers(self):
+        roots = ["/repo%d" % i for i in range(20)]
+
+        def fake_git(root, *args, **kwargs):
+            return str(root) + "/.git\n" if args[0] == "rev-parse" else \
+                "worktree " + str(root) + "\0HEAD abc\0branch refs/heads/main\0\0"
+
+        with mock.patch.object(module, "_git", side_effect=fake_git) as git:
+            inventory = module.GitInventory()
+            inventory.prefetch(roots)
+            fetched = git.call_count
+            for root in roots:
+                inventory.worktree_records(root)
+        self.assertEqual(git.call_count, fetched)
+        self.assertEqual(fetched, 40)
+        self.assertEqual(module._worker_count(0), 1)
+        self.assertEqual(module._worker_count(3), 3)
+        self.assertEqual(module._worker_count(20), 8)
+
+
 @unittest.skipUnless(shutil.which("git") and shutil.which("tmux"), "git and tmux required")
 class TmuxAutoPaneTests(unittest.TestCase):
     def setUp(self):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Git worktree inventory and session-scoped tmux pane management."""
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import hashlib
 import json
@@ -10,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import threading
 
 try:
     import fcntl
@@ -23,6 +25,8 @@ MIN_HEIGHT = 16
 PROVIDERS = {"shell", "claude", "codex"}
 SUCCESS_EVENTS = {"posttooluse", "aftertooluse", "toolcompleted"}
 SHELL_TOOLS = {"bash", "execcommand"}
+MAX_GIT_WORKERS = 8
+GIT_ERRORS = (OSError, RuntimeError, subprocess.SubprocessError, ValueError)
 
 
 def _run(argv, *, cwd=None, timeout=10):
@@ -65,6 +69,76 @@ def _common_git_dir(root):
     if not common.is_absolute():
         common = root_path / common
     return str(common.resolve(strict=False))
+
+
+def _worker_count(jobs):
+    return max(1, min(MAX_GIT_WORKERS, jobs))
+
+
+class GitInventory:
+    """1 回の snapshot 内で git の問い合わせ結果を registry と共有するメモ。
+
+    寿命は呼び出し 1 回分に限る（モジュールに持ち越さない）。失敗も記憶し、
+    どの呼び出し元にも同じ例外を返す。"""
+
+    def __init__(self):
+        self._common = {}
+        self._records = {}
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _key(root):
+        return str(Path(root).expanduser().resolve(strict=False))
+
+    def _memo(self, table, key, compute):
+        with self._lock:
+            known = key in table
+        if not known:
+            try:
+                value = compute()
+            except GIT_ERRORS as exc:
+                value = exc
+            with self._lock:
+                table.setdefault(key, value)
+        with self._lock:
+            value = table[key]
+        if isinstance(value, BaseException):
+            raise value
+        return value
+
+    def common_git_dir(self, root):
+        return self._memo(self._common, self._key(root), lambda: _common_git_dir(root))
+
+    def worktree_records(self, root):
+        common = self.common_git_dir(root)
+        return self._memo(self._records, common, lambda: _parse_porcelain_z(
+            _git(root, "worktree", "list", "--porcelain", "-z")))
+
+    def _quiet(self, method, root):
+        try:
+            method(root)
+        except GIT_ERRORS:
+            pass
+
+    def prefetch(self, roots):
+        """未知の root の問い合わせを並列で先に済ませる。"""
+        roots = [r for r in dict.fromkeys(roots) if isinstance(r, str) and r]
+        with self._lock:
+            pending = [r for r in roots if self._key(r) not in self._common]
+        if pending:
+            with ThreadPoolExecutor(max_workers=_worker_count(len(pending))) as pool:
+                list(pool.map(self._quiet, [self.common_git_dir] * len(pending), pending))
+        by_common = {}
+        for root in roots:
+            try:
+                by_common.setdefault(self.common_git_dir(root), root)
+            except GIT_ERRORS:
+                continue
+        with self._lock:
+            pending = [root for common, root in by_common.items() if common not in self._records]
+        if pending:
+            with ThreadPoolExecutor(max_workers=_worker_count(len(pending))) as pool:
+                list(pool.map(self._quiet, [self.worktree_records] * len(pending), pending))
 
 
 def _parse_porcelain_z(output):
@@ -123,21 +197,22 @@ def _pane_locations(pane):
     return list(dict.fromkeys(locations))
 
 
-def _inventory(roots, panes):
+def _inventory(roots, panes, inventory=None):
+    inventory = inventory or GitInventory()
+    inventory.prefetch(roots)
     repos = []
     seen_repos = set()
     for root in roots:
         if not isinstance(root, str) or not root:
             continue
         try:
-            common = _common_git_dir(root)
-        except (OSError, RuntimeError, subprocess.TimeoutExpired):
-            continue
-        if common in seen_repos:
+            common = inventory.common_git_dir(root)
+            if common in seen_repos:
+                continue
+            records = inventory.worktree_records(root)
+        except GIT_ERRORS:
             continue
         seen_repos.add(common)
-        raw = _git(root, "worktree", "list", "--porcelain", "-z")
-        records = _parse_porcelain_z(raw)
         repo_rows = []
         for record in records:
             path = record.get("worktree")
@@ -285,13 +360,13 @@ def _state_roots(state):
     return roots
 
 
-def list_worktrees(roots: list[str], panes: list[dict]) -> list[dict]:
+def list_worktrees(roots: list[str], panes: list[dict], inventory=None) -> list[dict]:
     """List unique repositories' worktrees using canonical, stable paths."""
     states = _states_for_panes(panes)
     discovery_roots = list(roots)
     for state in states:
         discovery_roots.extend(_state_roots(state))
-    rows = _inventory(discovery_roots, panes)
+    rows = _inventory(discovery_roots, panes, inventory)
     for row in rows:
         path = row["path"]
         if row["temporary"]:
