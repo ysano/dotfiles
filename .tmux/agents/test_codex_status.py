@@ -116,6 +116,37 @@ class StateTests(unittest.TestCase):
         self.assertFalse(module.is_codex_process(20, processes))
         self.assertFalse(module.is_codex_process(30, processes))
 
+    def test_agent_in_another_pane_subtree_is_not_attributed(self):
+        processes = {10: (1, "zsh"), 20: (1, "zsh"), 21: (20, "/opt/bin/claude.exe")}
+        self.assertFalse(module.is_agent_process(10, processes, "claude"))
+        self.assertTrue(module.is_agent_process(20, processes, "claude"))
+        self.assertTrue(module.is_agent_process(21, processes, "claude"))
+        self.assertFalse(module.is_agent_process(20, processes, "codex"))
+
+    def test_cyclic_parent_links_terminate(self):
+        processes = {10: (12, "zsh"), 11: (10, "node"), 12: (11, "codex"),
+                     20: (21, "zsh"), 21: (20, "node")}
+        self.assertTrue(module.is_agent_process(10, processes, "codex"))
+        self.assertFalse(module.is_agent_process(20, processes, "codex"))
+        self.assertFalse(module.is_agent_process(99, processes, "codex"))
+
+    def test_ancestor_index_is_built_once_per_process_table(self):
+        processes = {10: (1, "zsh"), 11: (10, "node"), 12: (11, "/opt/bin/codex")}
+        with mock.patch.object(module, "_agent_ancestors",
+                               wraps=module._agent_ancestors) as build:
+            for _ in range(16):
+                self.assertTrue(module.is_agent_process(10, processes, "codex"))
+                self.assertFalse(module.is_agent_process(10, processes, "claude"))
+        self.assertEqual(build.call_count, 2)  # provider ごとに 1 回
+
+    def test_new_process_table_does_not_reuse_a_stale_index(self):
+        before = {10: (1, "zsh"), 11: (10, "codex")}
+        after = {10: (1, "zsh")}
+        self.assertTrue(module.is_agent_process(10, before, "codex"))
+        self.assertFalse(module.is_agent_process(10, after, "codex"))
+        after[11] = (10, "codex")  # 同じ表への追記も古い索引で判定しない
+        self.assertTrue(module.is_agent_process(10, after, "codex"))
+
 
 @unittest.skipUnless(shutil.which("tmux"), "tmux required for isolated server tests")
 class TmuxTests(unittest.TestCase):
