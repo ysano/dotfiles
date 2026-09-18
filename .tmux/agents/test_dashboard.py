@@ -1,7 +1,9 @@
 """dashboard の行構築と操作判断を、tmux/curses なしで検証する。"""
+import copy
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest import mock
 
 
 HERE = Path(__file__).resolve().parent
@@ -445,6 +447,94 @@ class RenderingTests(unittest.TestCase):
         self.assertIn("d:削除", dashboard.footer_text(model.selected_row(), False))
         self.assertIn("s:シェル", dashboard.footer_text(model.selected_row(), False))
         self.assertIn("a:自動OFF", dashboard.footer_text(model.selected_row(), False))
+
+
+def cached_snapshot():
+    data = snapshot()
+    data["worktrees"] = [
+        {"id": "/repo/a", "path": "/repo/a", "repo": "/repo/a/.git",
+         "branch": "main", "temporary": False, "panes": ["%1"],
+         "status": "open", "auto_reason": ""},
+        {"id": "/repo/a/wt", "path": "/repo/a/wt", "repo": "/repo/a/.git",
+         "branch": "docs/design-information", "temporary": False, "panes": [],
+         "status": "available", "auto_reason": ""},
+    ]
+    data["pane_locations"] = {"%1": {"window": "1:main", "pane": "0"}}
+    return data
+
+
+class RenderCacheTests(unittest.TestCase):
+    """列の値は _rebuild で 1 回だけ求め、描画ではパス解決をしない。"""
+
+    def test_render_after_rebuild_resolves_no_paths(self):
+        model = dashboard.DashboardModel(cached_snapshot())
+        with mock.patch.object(dashboard.Path, "resolve",
+                               side_effect=AssertionError("Path.resolve during render")):
+            for _ in range(5):
+                lines = dashboard.render_lines(model, 140)
+                layout = dashboard.column_layout(model.rows, 140, model.expanded,
+                                                 model.snapshot, model.values)
+        text = "\n".join(lines)
+        self.assertIn("docs/design-information", text)
+        self.assertIn("1:main", text)
+        self.assertEqual(set(layout.values), {row.id for row in model.rows})
+
+    def test_values_follow_refresh_and_expansion_changes(self):
+        model = dashboard.DashboardModel(cached_snapshot())
+        self.assertIn("docs/design-information", "\n".join(dashboard.render_lines(model, 140)))
+
+        changed = cached_snapshot()
+        changed["worktrees"][1]["branch"] = "feature/renamed"
+        model.refresh(changed)
+        self.assertIn("feature/renamed", "\n".join(dashboard.render_lines(model, 140)))
+        self.assertNotIn("docs/design-information", "\n".join(dashboard.render_lines(model, 140)))
+
+        model.selected_id = "agent:root-a"
+        model.left()  # 折りたたみ → ツリー記号が ▸ に変わる
+        self.assertTrue(any(line.lstrip().startswith("▸") for line in
+                            dashboard.render_lines(model, 140)[1:]))
+
+    def test_frame_key_is_stable_until_something_visible_changes(self):
+        model = dashboard.DashboardModel(cached_snapshot())
+        base = dashboard.frame_key(model, "", 0, (40, 120))
+        self.assertEqual(dashboard.frame_key(model, "", 0, (40, 120)), base)
+        self.assertFalse(dashboard.should_redraw(base, base))
+        self.assertTrue(dashboard.should_redraw(None, base))
+        self.assertTrue(dashboard.should_redraw(base, base, force=True))
+
+        model.refresh(copy.deepcopy(cached_snapshot()))  # 同じ内容の再取得
+        self.assertEqual(dashboard.frame_key(model, "", 0, (40, 120)), base)
+
+        self.assertNotEqual(dashboard.frame_key(model, "更新失敗", 0, (40, 120)), base)
+        self.assertNotEqual(dashboard.frame_key(model, "", 1, (40, 120)), base)
+        self.assertNotEqual(dashboard.frame_key(model, "", 0, (41, 120)), base)
+
+        model.move(1)
+        moved = dashboard.frame_key(model, "", 0, (40, 120))
+        self.assertNotEqual(moved, base)
+        model.left()
+        self.assertNotEqual(dashboard.frame_key(model, "", 0, (40, 120)), moved)
+        model.toggle_view()
+        self.assertNotEqual(dashboard.frame_key(model, "", 0, (40, 120)), moved)
+
+        busy = cached_snapshot()
+        busy["agents"][2]["status"] = "Busy"
+        busy["summary"] = {"busy": 2, "waiting": 1}
+        fresh = dashboard.DashboardModel(cached_snapshot())
+        before = dashboard.frame_key(fresh, "", 0, (40, 120))
+        fresh.refresh(busy)
+        self.assertNotEqual(dashboard.frame_key(fresh, "", 0, (40, 120)), before)
+
+
+class BenchScriptTests(unittest.TestCase):
+    def test_measure_render_reports_milliseconds_without_tmux(self):
+        spec_ = importlib.util.spec_from_file_location("bench_dashboard", HERE / "bench_dashboard.py")
+        bench = importlib.util.module_from_spec(spec_)
+        spec_.loader.exec_module(bench)
+        value = bench.measure_render(cached_snapshot(), width=100, repeat=3)
+        self.assertIsInstance(value, float)
+        self.assertGreaterEqual(value, 0.0)
+        self.assertNotIn("/Users/", (HERE / "bench_dashboard.py").read_text())
 
 
 if __name__ == "__main__":

@@ -117,6 +117,8 @@ python3 -m unittest discover -s .tmux/agents -p 'test_*.py'
 bash .tmux/ci.sh
 ```
 
+`python3 bench_dashboard.py` で起動時間・snapshot 1 回の所要と外部コマンド数・描画 1 回の所要を同じ手順で測れる（表示速度の回帰確認用）。
+
 API を呼ばない状態遷移テストと、一時 tmux サーバーを使う結合テスト。
 tmux のない環境では結合テストを skip する。CI は tmux をインストールして実行する。
 
