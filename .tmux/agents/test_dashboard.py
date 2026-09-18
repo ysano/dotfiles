@@ -306,6 +306,107 @@ class RenderingTests(unittest.TestCase):
         self.assertIn("feature/dashboard", rendered)
         self.assertNotIn(" /repo/a/wt", rendered)
 
+    def _wide_snapshot(self):
+        data = snapshot()
+        data["repos"][0]["name"] = "karin-internal"
+        data["worktrees"] = [
+            {"id": "/repo/a/wt", "path": "/repo/a/wt", "repo": "/repo/a/.git",
+             "branch": "docs/design-information", "temporary": False, "panes": [],
+             "status": "available", "auto_reason": ""},
+        ]
+        return data
+
+    def test_wide_layout_fits_columns_to_content_without_clipping(self):
+        text = dashboard.dump_text(self._wide_snapshot(), width=140)
+
+        self.assertIn("karin-internal", text)
+        self.assertIn("docs/design-information", text)
+        self.assertNotIn("…", text)
+        for line in text.splitlines():
+            self.assertLessEqual(dashboard.cell_width(line), 140)
+
+    def test_target_column_does_not_absorb_all_slack(self):
+        lines = dashboard.dump_text(snapshot(), width=200).splitlines()
+
+        self.assertTrue(lines[0].startswith("▾ ◆ repo-a"))
+        self.assertLess(lines[0].index("●"), 40)
+
+    def test_columns_align_across_rows(self):
+        model = dashboard.DashboardModel(self._wide_snapshot())
+        layout = dashboard.column_layout(model.rows, 120, model.expanded, model.snapshot)
+        widths = {tuple(width for _, width, _ in dashboard.row_segments(
+            row, 120, model.expanded, model.snapshot, layout)) for row in model.rows}
+        self.assertEqual(len(widths), 1)
+
+    def test_waiting_status_is_not_clipped_when_space_allows(self):
+        data = snapshot()
+        data["agents"].append(dict(data["agents"][1], id="child-b", name="調査2"))
+        text = dashboard.dump_text(data, width=100)
+
+        self.assertIn("要対応", text)
+        self.assertIn("待ち2", text)
+
+    def test_header_labels_follow_visible_columns(self):
+        model = dashboard.DashboardModel(self._wide_snapshot())
+        wide = dashboard.column_layout(model.rows, 140, model.expanded, model.snapshot)
+        narrow = dashboard.column_layout(model.rows, 30, model.expanded, model.snapshot)
+
+        wide_header = dashboard.header_text(wide)
+        self.assertIn("ブランチ", wide_header)
+        line = dashboard.format_row(model.rows[0], 140, model.expanded,
+                                    model.snapshot, wide)
+        self.assertEqual(dashboard.cell_width(wide_header[:wide_header.index("状態")]),
+                         dashboard.cell_width(line[:line.index("●", 4)]))
+        self.assertNotIn("ブランチ", dashboard.header_text(narrow))
+
+    def test_window_and_pane_columns_show_tmux_location(self):
+        data = snapshot()
+        data["pane_locations"] = {"%1": {"window": "1:main", "pane": "0"},
+                                  "%2": {"window": "3:review", "pane": "2"}}
+        model = dashboard.DashboardModel(data)
+        layout = dashboard.column_layout(model.rows, 140, model.expanded, data)
+        lines = {row.id: dashboard.format_row(row, 140, model.expanded, data, layout)
+                 for row in model.rows}
+
+        self.assertIn("window", dashboard.header_text(layout))
+        self.assertIn("pane", dashboard.header_text(layout))
+        self.assertIn("3:review  2", lines["agent:root-b"])
+        # 子agentは親paneの位置を示す。
+        self.assertIn("1:main    0", lines["agent:child-a"])
+
+    def test_worktree_row_lists_all_pane_locations(self):
+        data = snapshot()
+        data["pane_locations"] = {"%1": {"window": "1:main", "pane": "0"},
+                                  "%2": {"window": "1:main", "pane": "1"}}
+        data["worktrees"] = [
+            {"id": "/repo/a", "path": "/repo/a", "repo": "/repo/a/.git",
+             "branch": "main", "temporary": False, "panes": ["%1", "%2"],
+             "status": "open", "auto_reason": ""},
+        ]
+        model = dashboard.DashboardModel(data)
+        model.toggle_view()
+        row = next(item for item in model.rows if item.kind == "worktree")
+
+        self.assertEqual(dashboard.row_location(row, data), ("1:main", "0,1"))
+
+    def test_location_falls_back_to_reason_without_tmux_mapping(self):
+        data = snapshot()
+        model = dashboard.DashboardModel(data)
+        row = next(item for item in model.rows if item.id == "agent:root-b")
+
+        self.assertEqual(dashboard.row_location(row, data), ("-", "%2"))
+
+    def test_narrow_layout_shrinks_long_columns_before_hiding(self):
+        data = self._wide_snapshot()
+        data["agents"][1]["cwd"] = "/repo/a/wt"
+        model = dashboard.DashboardModel(data)
+        row = next(item for item in model.rows if item.id == "agent:child-a")
+
+        rendered = dashboard.format_row(row, 64, model.expanded, data)
+
+        self.assertLessEqual(dashboard.cell_width(rendered), 64)
+        self.assertIn("docs/design", rendered)
+
     def test_tree_markers_distinguish_collapsed_nodes_and_leaves(self):
         model = dashboard.DashboardModel(snapshot())
         repo = model.rows[0]

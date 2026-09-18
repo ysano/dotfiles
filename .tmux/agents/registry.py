@@ -41,7 +41,8 @@ def _json(value):
 def read_panes(session=None):
     columns = ["pane_id", "session_id", "pane_current_path", "pane_current_command",
                "pane_width", "pane_height", "pane_active", "pane_title",
-               "@claude_state", "@claude_status", "@codex_state", "@codex_status", "pane_pid"]
+               "@claude_state", "@claude_status", "@codex_state", "@codex_status", "pane_pid",
+               "window_index", "window_name", "pane_index"]
     args = ["list-panes", "-s", "-t", session] if session else ["list-panes", "-a"]
     result = tmux(*args, "-F", "\t".join("#{" + x + "}" for x in columns))
     processes = process_table()
@@ -49,12 +50,20 @@ def read_panes(session=None):
     rows = []
     for line in result.splitlines():
         values = line.split("\t")
+        # cwd 等に TAB があると列がずれる。1 行の破損で snapshot 全体を落とさない。
+        if len(values) > len(columns):
+            continue
         values += [""] * (len(columns) - len(values))
         row = dict(zip(columns, values))
+        if not (row["pane_width"].isdigit() and row["pane_height"].isdigit()
+                and row["pane_pid"].isdigit()):
+            continue
         rows.append({"pane_id": row["pane_id"], "session_id": row["session_id"],
                      "cwd": row["pane_current_path"], "command": row["pane_current_command"],
                      "width": int(row["pane_width"]), "height": int(row["pane_height"]),
                      "active": row["pane_active"] == "1", "title": row["pane_title"],
+                     "window_index": row["window_index"], "window_name": row["window_name"],
+                     "pane_index": row["pane_index"],
                      **{p + "_enabled": enabled[p] for p in PROVIDERS},
                      **{p + "_detected": is_agent_process(int(row["pane_pid"]), processes, p) for p in PROVIDERS},
                      **{p + "_state": _json(row["@" + p + "_state"]) for p in PROVIDERS},
@@ -121,8 +130,13 @@ def build_snapshot(session_id, origin_pane, panes, repo_map, worktree_rows, auto
     summary = {"busy": sum(x["own_status"] == "Busy" for x in agents),
                "waiting": sum(x["own_status"] in WAITING for x in agents),
                "errors": sum(x["own_status"] == "Error" for x in agents)}
+    # dashboard が pane ID ではなく tmux 上で見える window/pane 番号を表示するため。
+    locations = {pane["pane_id"]: {"window": pane["window_index"] + ":" + pane.get("window_name", ""),
+                                   "pane": pane.get("pane_index", "")}
+                 for pane in panes if pane.get("window_index")}
     return {"session_id": session_id, "origin_pane": origin_pane, "repos": list(repos.values()),
-            "agents": agents, "worktrees": worktree_rows, "summary": summary, "auto": auto}
+            "agents": agents, "worktrees": worktree_rows, "summary": summary, "auto": auto,
+            "pane_locations": locations}
 
 
 def snapshot(session_id, origin_pane):
