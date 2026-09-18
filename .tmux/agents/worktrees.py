@@ -135,7 +135,12 @@ class GitInventory:
         """未知の root の問い合わせを並列で先に済ませる。"""
         roots = [r for r in dict.fromkeys(roots) if isinstance(r, str) and r]
         with self._lock:
-            pending = [r for r in roots if self._key(r) not in self._common]
+            unique = {}
+            for root in roots:
+                key = self._key(root)
+                if key not in self._common:
+                    unique.setdefault(key, root)
+            pending = list(unique.values())
         if pending:
             with ThreadPoolExecutor(max_workers=_worker_count(len(pending))) as pool:
                 list(pool.map(self._quiet, [self.common_git_dir] * len(pending), pending))
@@ -218,12 +223,14 @@ def _inventory(roots, panes, inventory=None):
             continue
         try:
             common = inventory.common_git_dir(root)
-            if common in seen_repos:
-                continue
-            records = inventory.worktree_records(root)
         except GIT_ERRORS:
             continue
+        if common in seen_repos:
+            continue
         seen_repos.add(common)
+        # worktree list の失敗は従来どおり伝播させる。部分的な一覧で
+        # poll_session/set_auto が候補を「消えた」と誤認しないため。
+        records = inventory.worktree_records(root)
         repo_rows = []
         for record in records:
             path = record.get("worktree")

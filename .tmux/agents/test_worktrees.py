@@ -154,10 +154,10 @@ class GitInventoryTests(unittest.TestCase):
         with mock.patch.object(module, "_git", side_effect=fake_git) as git:
             inventory = module.GitInventory()
             inventory.prefetch(roots)
-            fetched = git.call_count
+            fetched = len(git.call_args_list)  # call_count はスレッド間で取りこぼす
             for root in roots:
                 inventory.worktree_records(root)
-        self.assertEqual(git.call_count, fetched)
+        self.assertEqual(len(git.call_args_list), fetched)
         self.assertEqual(fetched, 40)
         self.assertEqual(module._worker_count(0), 1)
         self.assertEqual(module._worker_count(3), 3)
@@ -207,6 +207,27 @@ class GitInventoryTests(unittest.TestCase):
             self.assertEqual(inventory.worktree_records("/repo")[0]["worktree"], "/repo")
             rows = module._inventory(["/loop/a", "/repo"], [], inventory)
         self.assertEqual([row["path"] for row in rows], ["/repo"])
+
+    def test_worktree_list_failure_still_propagates_so_state_is_not_saved_on_partial_data(self):
+        # poll_session/set_auto は例外で中断されることで候補を誤って消さない（旧挙動）。
+        def fake_git(root, *args, **kwargs):
+            if args[0] == "rev-parse":
+                return str(root) + "/.git\n"
+            raise RuntimeError("git: worktree list failed")
+
+        with mock.patch.object(module, "_git", side_effect=fake_git):
+            with self.assertRaises(RuntimeError):
+                module._inventory(["/repo"], [], module.GitInventory())
+
+    def test_prefetch_dedups_roots_that_normalise_to_one_path(self):
+        def fake_git(root, *args, **kwargs):
+            return "/repo/.git\n" if args[0] == "rev-parse" else \
+                "worktree /repo\0HEAD abc\0branch refs/heads/main\0\0"
+
+        with mock.patch.object(module, "_git", side_effect=fake_git) as git:
+            module.GitInventory().prefetch(["/repo", "/repo/", "/repo/.", "/repo/../repo"])
+        rev_parse = [c for c in git.call_args_list if c.args[1] == "rev-parse"]
+        self.assertEqual(len(rev_parse), 1)
 
     def test_inventory_git_timeout_stays_short_for_the_dashboard(self):
         with mock.patch.object(module, "_git", return_value="/repo/.git\n") as git:

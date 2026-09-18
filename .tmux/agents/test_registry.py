@@ -155,8 +155,8 @@ class SnapshotGitTests(unittest.TestCase):
         listing = [c for c in calls if "worktree" in c and "list" in c]
         rev_parse = [c for c in calls if "rev-parse" in c]
         self.assertEqual(len(listing), 1, calls)
-        self.assertLessEqual(len(rev_parse), len(cwds), calls)
-        self.assertEqual(len(value["repos"]), 1)
+        self.assertEqual(len(rev_parse), len(cwds), calls)
+        self.assertEqual([repo["name"] for repo in value["repos"]], ["repo"])
         self.assertEqual({Path(row["path"]).name for row in value["worktrees"]},
                          {"repo", "linked"})
 
@@ -180,6 +180,15 @@ class SnapshotGitTests(unittest.TestCase):
             value = registry.repository("/srv/caf\udce9")
         self.assertIsNotNone(value)
         self.assertEqual(value["name"], "caf\udce9")
+
+    def test_repository_is_none_when_worktree_list_fails(self):
+        def fake_git(root, *args, **kwargs):
+            if args[0] == "rev-parse":
+                return "/repo/.git\n"
+            raise RuntimeError("git: worktree list failed")
+
+        with mock.patch.object(worktrees, "_git", side_effect=fake_git):
+            self.assertIsNone(registry.repository("/repo"))
 
     def test_one_failing_directory_does_not_hide_other_repositories(self):
         calls = []
