@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Git worktree inventory and session-scoped tmux pane management."""
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+import copy
 import hashlib
 import json
 import os
@@ -10,6 +12,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import threading
 
 try:
     import fcntl
@@ -23,11 +26,17 @@ MIN_HEIGHT = 16
 PROVIDERS = {"shell", "claude", "codex"}
 SUCCESS_EVENTS = {"posttooluse", "aftertooluse", "toolcompleted"}
 SHELL_TOOLS = {"bash", "execcommand"}
+MAX_GIT_WORKERS = 8
+# dashboard の応答性のため、snapshot 内の git は短い timeout で打ち切る。
+GIT_INVENTORY_TIMEOUT = 5
+GIT_ERRORS = (OSError, RuntimeError, subprocess.SubprocessError, ValueError)
 
 
 def _run(argv, *, cwd=None, timeout=10):
+    # UTF-8 で表せないパスも落とさず保持する（registry の旧 bytes 経路と同じ）。
     result = subprocess.run(
-        argv, cwd=cwd, text=True, capture_output=True, timeout=timeout,
+        argv, cwd=cwd, text=True, errors="surrogateescape", capture_output=True,
+        timeout=timeout,
     )
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip() or "command failed"
@@ -58,13 +67,94 @@ def _inside(child, parent):
         return False
 
 
-def _common_git_dir(root):
+def _common_git_dir(root, timeout=15):
     root_path = Path(root).expanduser().resolve(strict=False)
-    output = _git(root_path, "rev-parse", "--git-common-dir").strip()
+    output = _git(root_path, "rev-parse", "--git-common-dir", timeout=timeout).strip()
     common = Path(output)
     if not common.is_absolute():
         common = root_path / common
     return str(common.resolve(strict=False))
+
+
+def _worker_count(jobs):
+    return max(1, min(MAX_GIT_WORKERS, jobs))
+
+
+class GitInventory:
+    """1 回の snapshot 内で git の問い合わせ結果を registry と共有するメモ。
+
+    寿命は呼び出し 1 回分に限る（モジュールに持ち越さない）。失敗も記憶し、
+    どの呼び出し元にも同じ例外を返す。"""
+
+    def __init__(self, timeout=GIT_INVENTORY_TIMEOUT):
+        self.timeout = timeout
+        self._common = {}
+        self._records = {}
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _key(root):
+        value = Path(root).expanduser()
+        try:
+            return str(value.resolve(strict=False))
+        except GIT_ERRORS:  # symlink loop 等。解決できない root も 1 件として扱う。
+            return str(value)
+
+    def _memo(self, table, key, compute):
+        with self._lock:
+            known = key in table
+        if not known:
+            try:
+                value = compute()
+            except GIT_ERRORS as exc:
+                value = exc
+            with self._lock:
+                table.setdefault(key, value)
+        with self._lock:
+            value = table[key]
+        if isinstance(value, BaseException):
+            raise copy.copy(value)  # traceback を呼び出し元間で共有しない
+        return value
+
+    def common_git_dir(self, root):
+        return self._memo(self._common, self._key(root),
+                          lambda: _common_git_dir(root, timeout=self.timeout))
+
+    def worktree_records(self, root):
+        common = self.common_git_dir(root)
+        return self._memo(self._records, common, lambda: _parse_porcelain_z(
+            _git(root, "worktree", "list", "--porcelain", "-z", timeout=self.timeout)))
+
+    def _quiet(self, method, root):
+        try:
+            method(root)
+        except GIT_ERRORS:
+            pass
+
+    def prefetch(self, roots):
+        """未知の root の問い合わせを並列で先に済ませる。"""
+        roots = [r for r in dict.fromkeys(roots) if isinstance(r, str) and r]
+        with self._lock:
+            unique = {}
+            for root in roots:
+                key = self._key(root)
+                if key not in self._common:
+                    unique.setdefault(key, root)
+            pending = list(unique.values())
+        if pending:
+            with ThreadPoolExecutor(max_workers=_worker_count(len(pending))) as pool:
+                list(pool.map(self._quiet, [self.common_git_dir] * len(pending), pending))
+        by_common = {}
+        for root in roots:
+            try:
+                by_common.setdefault(self.common_git_dir(root), root)
+            except GIT_ERRORS:
+                continue
+        with self._lock:
+            pending = [root for common, root in by_common.items() if common not in self._records]
+        if pending:
+            with ThreadPoolExecutor(max_workers=_worker_count(len(pending))) as pool:
+                list(pool.map(self._quiet, [self.worktree_records] * len(pending), pending))
 
 
 def _parse_porcelain_z(output):
@@ -123,21 +213,24 @@ def _pane_locations(pane):
     return list(dict.fromkeys(locations))
 
 
-def _inventory(roots, panes):
+def _inventory(roots, panes, inventory=None):
+    inventory = inventory or GitInventory()
+    inventory.prefetch(roots)
     repos = []
     seen_repos = set()
     for root in roots:
         if not isinstance(root, str) or not root:
             continue
         try:
-            common = _common_git_dir(root)
-        except (OSError, RuntimeError, subprocess.TimeoutExpired):
+            common = inventory.common_git_dir(root)
+        except GIT_ERRORS:
             continue
         if common in seen_repos:
             continue
         seen_repos.add(common)
-        raw = _git(root, "worktree", "list", "--porcelain", "-z")
-        records = _parse_porcelain_z(raw)
+        # worktree list の失敗は従来どおり伝播させる。部分的な一覧で
+        # poll_session/set_auto が候補を「消えた」と誤認しないため。
+        records = inventory.worktree_records(root)
         repo_rows = []
         for record in records:
             path = record.get("worktree")
@@ -285,13 +378,13 @@ def _state_roots(state):
     return roots
 
 
-def list_worktrees(roots: list[str], panes: list[dict]) -> list[dict]:
+def list_worktrees(roots: list[str], panes: list[dict], inventory=None) -> list[dict]:
     """List unique repositories' worktrees using canonical, stable paths."""
     states = _states_for_panes(panes)
     discovery_roots = list(roots)
     for state in states:
         discovery_roots.extend(_state_roots(state))
-    rows = _inventory(discovery_roots, panes)
+    rows = _inventory(discovery_roots, panes, inventory)
     for row in rows:
         path = row["path"]
         if row["temporary"]:

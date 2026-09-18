@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+import worktrees
+
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("registry", HERE / "registry.py")
 registry = importlib.util.module_from_spec(spec)
@@ -124,6 +126,115 @@ class RepositoryTests(unittest.TestCase):
             linked = Path(folder) / "linked worktree"
             subprocess.run(["git", "-C", str(root), "worktree", "add", "-qb", "test", str(linked)], check=True)
             self.assertEqual(registry.repository(str(root))["id"], registry.repository(str(linked))["id"])
+
+
+class SnapshotGitTests(unittest.TestCase):
+    """1 回の snapshot 内で git 問い合わせを registry と worktrees が共有する。"""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="registry git test ")
+        base = Path(self.temp.name)
+        self.root = base / "repo"
+        subprocess.run(["git", "init", "-q", "-b", "main", str(self.root)], check=True)
+        subprocess.run(["git", "-C", str(self.root), "-c", "user.name=Test",
+                        "-c", "user.email=t@example.invalid", "commit", "--allow-empty",
+                        "-qm", "initial"], check=True, capture_output=True)
+        self.sub = self.root / "src" / "deep"
+        self.sub.mkdir(parents=True)
+        self.linked = base / "linked"
+        subprocess.run(["git", "-C", str(self.root), "worktree", "add", "-qb", "topic",
+                        str(self.linked)], check=True, capture_output=True)
+        self.plain = base / "not a repo"
+        self.plain.mkdir()
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def snapshot(self, cwds, calls):
+        panes = [{"pane_id": "%" + str(i), "session_id": "$1", "cwd": cwd, "command": "zsh",
+                  "width": 100, "height": 30, "active": i == 0, "title": "",
+                  "window_index": "1", "window_name": "w", "pane_index": str(i),
+                  "claude_enabled": True, "codex_enabled": True,
+                  "claude_detected": False, "codex_detected": False,
+                  "claude_state": {}, "codex_state": {}, "claude_status": "", "codex_status": ""}
+                 for i, cwd in enumerate(cwds)]
+        real_run = subprocess.run
+
+        def counting_run(argv, *args, **kwargs):
+            if argv and argv[0] == "git":
+                calls.append(tuple(str(x) for x in argv))
+            return real_run(argv, *args, **kwargs)
+
+        with mock.patch.object(registry, "read_panes", return_value=panes), \
+                mock.patch.object(registry, "tmux", return_value=""), \
+                mock.patch.object(worktrees, "_states_for_panes", return_value=[]), \
+                mock.patch.object(subprocess, "run", counting_run):
+            return registry.snapshot("$1", "%0")
+
+    def test_worktree_list_runs_once_per_repository_and_rev_parse_once_per_cwd(self):
+        calls = []
+        cwds = [str(self.root), str(self.sub), str(self.linked)]
+
+        value = self.snapshot(cwds, calls)
+
+        listing = [c for c in calls if "worktree" in c and "list" in c]
+        rev_parse = [c for c in calls if "rev-parse" in c]
+        self.assertEqual(len(listing), 1, calls)
+        self.assertEqual(len(rev_parse), len(cwds), calls)
+        self.assertEqual([repo["name"] for repo in value["repos"]], ["repo"])
+        self.assertEqual({Path(row["path"]).name for row in value["worktrees"]},
+                         {"repo", "linked"})
+
+    def test_repository_result_is_unchanged_by_sharing(self):
+        expected = {"id": str((self.root / ".git").resolve()),
+                    "name": "repo", "path": str(self.root.resolve())}
+        self.assertEqual(registry.repository(str(self.sub)), expected)
+        self.assertEqual(registry.repository(str(self.linked)), expected)
+        inventory = worktrees.GitInventory()
+        self.assertEqual(registry.repository(str(self.sub), inventory), expected)
+        self.assertEqual(registry.repository(str(self.linked), inventory), expected)
+        self.assertIsNone(registry.repository(str(self.plain), inventory))
+
+    def test_repository_keeps_undecodable_path_bytes_like_before(self):
+        porcelain = "worktree /srv/caf\udce9\0HEAD abc\0branch refs/heads/main\0\0"
+
+        def fake_git(root, *args, **kwargs):
+            return "/srv/caf\udce9/.git\n" if args[0] == "rev-parse" else porcelain
+
+        with mock.patch.object(worktrees, "_git", side_effect=fake_git):
+            value = registry.repository("/srv/caf\udce9")
+        self.assertIsNotNone(value)
+        self.assertEqual(value["name"], "caf\udce9")
+
+    def test_repository_is_none_when_worktree_list_fails(self):
+        def fake_git(root, *args, **kwargs):
+            if args[0] == "rev-parse":
+                return "/repo/.git\n"
+            raise RuntimeError("git: worktree list failed")
+
+        with mock.patch.object(worktrees, "_git", side_effect=fake_git):
+            self.assertIsNone(registry.repository("/repo"))
+
+    def test_one_failing_directory_does_not_hide_other_repositories(self):
+        calls = []
+        missing = str(Path(self.temp.name) / "gone")
+
+        value = self.snapshot([str(self.plain), missing, str(self.root)], calls)
+
+        self.assertEqual([repo["name"] for repo in value["repos"]], ["repo"])
+        self.assertEqual(len(value["worktrees"]), 2)
+
+    def test_git_timeout_in_one_repository_is_skipped_not_fatal(self):
+        real_git = worktrees._git
+
+        def flaky(root, *args, **kwargs):
+            if str(root).endswith("linked"):
+                raise subprocess.TimeoutExpired(["git"], 2)
+            return real_git(root, *args, **kwargs)
+
+        with mock.patch.object(worktrees, "_git", flaky):
+            value = self.snapshot([str(self.linked), str(self.root)], [])
+        self.assertEqual([repo["name"] for repo in value["repos"]], ["repo"])
 
 
 if __name__ == "__main__":
