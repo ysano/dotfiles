@@ -43,6 +43,20 @@ class SnapshotTests(unittest.TestCase):
         value = registry.build_snapshot("$1", "%1", panes, {}, [], False)
         self.assertEqual(value["pane_locations"], {"%1": {"window": "2:editor", "pane": "3"}})
 
+    def test_pane_line_shifted_by_tab_in_a_field_is_skipped_not_fatal(self):
+        good = ["%1", "$1", "/repo", "zsh", "100", "30", "1", "title",
+                "", "", "", "", "7", "2", "editor", "3"]
+        shifted = ["%2", "$1", "/re", "po", "zsh", "100", "30", "1", "title",
+                   "", "", "", "", "8", "2", "editor", "4"]
+        def tmux(*args):
+            if args[0] != "list-panes":
+                return ""
+            return "\n".join("\t".join(line) for line in (shifted, good))
+        with mock.patch.object(registry, "tmux", tmux), \
+                mock.patch.object(registry, "process_table", return_value={}):
+            panes = registry.read_panes("$1")
+        self.assertEqual([pane["pane_id"] for pane in panes], ["%1"])
+
     def test_unregistered_fallback_status_is_counted(self):
         panes = [{"pane_id": "%1", "session_id": "$1", "cwd": "/repo", "command": "claude",
                   "claude_status": "Busy"},

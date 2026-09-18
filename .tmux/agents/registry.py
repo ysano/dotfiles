@@ -50,8 +50,14 @@ def read_panes(session=None):
     rows = []
     for line in result.splitlines():
         values = line.split("\t")
+        # cwd 等に TAB があると列がずれる。1 行の破損で snapshot 全体を落とさない。
+        if len(values) > len(columns):
+            continue
         values += [""] * (len(columns) - len(values))
         row = dict(zip(columns, values))
+        if not (row["pane_width"].isdigit() and row["pane_height"].isdigit()
+                and row["pane_pid"].isdigit()):
+            continue
         rows.append({"pane_id": row["pane_id"], "session_id": row["session_id"],
                      "cwd": row["pane_current_path"], "command": row["pane_current_command"],
                      "width": int(row["pane_width"]), "height": int(row["pane_height"]),
