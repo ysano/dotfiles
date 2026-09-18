@@ -147,6 +147,43 @@ class StateTests(unittest.TestCase):
         after[11] = (10, "codex")  # 同じ表への追記も古い索引で判定しない
         self.assertTrue(module.is_agent_process(10, after, "codex"))
 
+    def test_results_match_the_per_call_scan_on_random_process_tables(self):
+        def scan(pane_pid, processes, provider):  # 索引化前の実装
+            for pid, (_, executable) in processes.items():
+                if Path(executable).name not in {provider, provider + ".exe"}:
+                    continue
+                seen = set()
+                while pid in processes and pid not in seen:
+                    if pid == pane_pid:
+                        return True
+                    seen.add(pid)
+                    pid = processes[pid][0]
+            return False
+
+        import random
+        rng = random.Random(61)
+        names = ["zsh", "node", "codex", "/opt/bin/codex", "claude.exe",
+                 "/usr/local/bin/claude", "codex-helper", "bin/", ""]
+        for _ in range(200):
+            size = rng.randint(1, 12)
+            # 親は表の外 (0, 99) や自分自身・循環も含む
+            processes = {pid: (rng.choice([0, 99] + list(range(1, size + 1))),
+                               rng.choice(names)) for pid in range(1, size + 1)}
+            for pane_pid in range(0, size + 2):
+                for provider in ("claude", "codex"):
+                    self.assertEqual(
+                        module.is_agent_process(pane_pid, processes, provider),
+                        scan(pane_pid, processes, provider),
+                        (pane_pid, provider, processes))
+
+    def test_same_length_in_place_change_is_not_answered_from_a_stale_index(self):
+        processes = {10: (1, "zsh"), 11: (10, "node")}
+        self.assertFalse(module.is_agent_process(10, processes, "codex"))
+        processes[11] = (10, "codex")
+        self.assertTrue(module.is_agent_process(10, processes, "codex"))
+        processes[11] = (1, "codex")
+        self.assertFalse(module.is_agent_process(10, processes, "codex"))
+
 
 @unittest.skipUnless(shutil.which("tmux"), "tmux required for isolated server tests")
 class TmuxTests(unittest.TestCase):

@@ -228,15 +228,16 @@ def _agent_ancestors(processes, provider):
     return ancestors
 
 
-# 直近のプロセス表 1 つ分だけ保持する。表を強参照して id の再利用を防ぐ。
-_ancestor_cache = {"table": None, "size": -1, "sets": {}}
+# 直近のプロセス表 1 つ分だけ保持する。同一性でなく内容の複製と比較するので、
+# 同じ dict の書き換えや id の再利用でも古い索引を返さない。
+_ancestor_cache = {"table": None, "sets": {}}
 
 
 def is_agent_process(pane_pid, processes, provider):
     """npm's node wrapper may be foreground; inspect descendants by executable."""
     cache = _ancestor_cache
-    if cache["table"] is not processes or cache["size"] != len(processes):
-        cache.update(table=processes, size=len(processes), sets={})
+    if cache["table"] != processes:
+        cache.update(table=dict(processes), sets={})
     if provider not in cache["sets"]:
         cache["sets"][provider] = _agent_ancestors(processes, provider)
     return pane_pid in cache["sets"][provider]
