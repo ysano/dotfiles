@@ -215,18 +215,32 @@ def process_hook(event):
         observe_hook(event, pane)
 
 
+def _agent_ancestors(processes, provider):
+    """provider 実行ファイルとその祖先の pid 集合。"""
+    names = {provider, provider + ".exe"}
+    ancestors = set()
+    for pid, (_, executable) in processes.items():
+        if executable.rstrip("/").rpartition("/")[2] not in names:
+            continue
+        while pid in processes and pid not in ancestors:
+            ancestors.add(pid)
+            pid = processes[pid][0]
+    return ancestors
+
+
+# 直近のプロセス表 1 つ分だけ保持する。同一性でなく内容の複製と比較するので、
+# 同じ dict の書き換えや id の再利用でも古い索引を返さない。
+_ancestor_cache = {"table": None, "sets": {}}
+
+
 def is_agent_process(pane_pid, processes, provider):
     """npm's node wrapper may be foreground; inspect descendants by executable."""
-    for pid, (_, executable) in processes.items():
-        if Path(executable).name not in {provider, provider + ".exe"}:
-            continue
-        seen = set()
-        while pid in processes and pid not in seen:
-            if pid == pane_pid:
-                return True
-            seen.add(pid)
-            pid = processes[pid][0]
-    return False
+    cache = _ancestor_cache
+    if cache["table"] != processes:
+        cache.update(table=dict(processes), sets={})
+    if provider not in cache["sets"]:
+        cache["sets"][provider] = _agent_ancestors(processes, provider)
+    return pane_pid in cache["sets"][provider]
 
 
 def is_codex_process(pane_pid, processes):
