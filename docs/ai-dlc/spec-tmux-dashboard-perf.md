@@ -1,7 +1,7 @@
 ---
 type: ai-dlc-quick-spec
 version: "1.0"
-status: draft
+status: review
 created: 2026-09-19
 story-count: 4
 phase: MLP
@@ -27,13 +27,13 @@ phase: MLP
 
 ### Success Criteria
 
-- [ ] `dashboard.py --dump` の実行時間（同等規模の session）が 1.5 秒 → **0.5 秒以下**
-- [ ] `render_lines` 1 回あたりが 65ms → **5ms 以下**（同一 snapshot、幅 160）
-- [ ] `_rebuild` 後の描画で `Path.resolve` の呼び出しが **0 回**
-- [ ] キー入力も snapshot 更新もないループでは `_draw` が呼ばれない
-- [ ] 1 回の `registry.snapshot` で `git worktree list` が **リポジトリごとに 1 回**、`git rev-parse` が **cwd ごとに 1 回**（現状はどちらも 2〜3 倍）
-- [ ] 開いている間の外部コマンド実行が 約 40 回/秒 → **定常 5 回/秒 以下**
-- [ ] 既存の全テスト（`python3 -m unittest`、現在 112 件）が通り、表示結果（`--dump` 出力）が変更前後で一致する
+- [x] `dashboard.py --dump` の実行時間（同等規模の session）が 1.5 秒 → **0.5 秒以下** — 実測 0.32〜0.37 秒（#63 / #64）
+- [x] `render_lines` 1 回あたりが 65ms → **5ms 以下**（同一 snapshot、幅 160） — 実測 1.4〜1.5ms（#65）
+- [x] `_rebuild` 後の描画で `Path.resolve` の呼び出しが **0 回**（#65）
+- [x] キー入力も snapshot 更新もないループでは `_draw` が呼ばれない（#65）
+- [x] 1 回の `registry.snapshot` で `git worktree list` が **リポジトリごとに 1 回**、`git rev-parse` が **cwd ごとに 1 回**（現状はどちらも 2〜3 倍） — git 66 → 23 回（#64）
+- [ ] 開いている間の外部コマンド実行が 約 40 回/秒 → **定常 5 回/秒 以下** — **未達**: 周期 1 秒 / 5 秒で実測 7.4 回/秒・CPU 12.7%（変更前 26.6 回/秒・CPU 41.1%）。2 秒 / 10 秒なら 4.5 回/秒・CPU 7.9% で達成するが、agent の状態の反映が最大 1 秒遅くなる。速い取得 1 回が 5 コマンド（tmux 4 + ps 1）かかるため、1 秒周期ではこの目標と両立しない（#62 で判断）
+- [x] 既存の全テスト（`python3 -m unittest`、現在 112 件）が通り、表示結果（`--dump` 出力）が変更前後で一致する — 161 件、幅 60/100/160 で一致
 
 ## Solution Overview
 
