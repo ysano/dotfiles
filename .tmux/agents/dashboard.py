@@ -55,6 +55,9 @@ class DashboardModel:
         self._selected = {"agents": "", "worktrees": ""}
         self.selected_id = ""
         self.rows = []
+        self.values = {}
+        self._rows_signature = ()
+        self._worktree_index = _worktree_index(snapshot)
         self._rebuild(initial=True)
 
     @property
@@ -211,6 +214,23 @@ class DashboardModel:
             wanted = self._initial_selection()
         self.selected_id = wanted
         self._selected[self.view] = wanted
+        # 列の値はここで 1 回だけ求める。描画はこれを読むだけにする。
+        self.values = {row.id: _row_values(row, self.expanded, self.snapshot,
+                                           self._worktree_index)
+                       for row in self.rows}
+        self._rows_signature = tuple(
+            (row.id, row.depth, row.waiting, row.expandable,
+             bool(row.data.get("agent_id")), str(row.data.get("status", "")),  # 色の元
+             tuple(sorted(self.values[row.id].items())))
+            for row in self.rows)
+
+    @property
+    def signature(self):
+        """描画結果を決めるモデル側の入力。同じなら画面は変わらない。"""
+        summary = self.snapshot.get("summary", {})
+        return (self.view, self._rows_signature, self.selected_id,
+                summary.get("busy", 0), summary.get("waiting", 0),
+                bool(self.snapshot.get("auto")))
 
     def _initial_selection(self):
         origin = self.snapshot.get("origin_pane", "")
@@ -224,6 +244,7 @@ class DashboardModel:
     def refresh(self, snapshot):
         self._selected[self.view] = self.selected_id
         self.snapshot = snapshot
+        self._worktree_index = _worktree_index(snapshot)
         self._rebuild()
 
     def toggle_view(self):
@@ -397,34 +418,51 @@ def _repository_name(repo_id, snapshot):
     return repo_id or "-"
 
 
-def _worktree_for_path(path, snapshot):
+def _worktree_index(snapshot):
+    """worktree のパスを 1 回だけ正規化した (解決済みパス, worktree) の一覧。"""
+    index = []
+    for worktree in (snapshot or {}).get("worktrees", []):
+        path = worktree.get("path")
+        if not path:
+            continue
+        try:
+            index.append((Path(path).resolve(strict=False), worktree))
+        except (OSError, RuntimeError, ValueError):  # symlink loop 等はその1件だけ除く
+            continue
+    return index
+
+
+def _worktree_for_path(path, snapshot, index=None):
     """path を含む最も深い worktree を返す。"""
     if not path:
         return None
+    if index is None:
+        index = _worktree_index(snapshot)
+    try:
+        target = Path(path).resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return None
     matches = []
-    for worktree in snapshot.get("worktrees", []):
-        worktree_path = worktree.get("path")
-        if not worktree_path:
-            continue
+    for resolved, worktree in index:
         try:
-            Path(path).resolve(strict=False).relative_to(Path(worktree_path).resolve(strict=False))
-            matches.append(worktree)
+            target.relative_to(resolved)  # 文字列上の比較のみ。ファイルシステムは見ない
         except ValueError:
             continue
+        matches.append(worktree)
     return max(matches, key=lambda item: len(item.get("path", "")), default=None)
 
 
-def row_columns(row, snapshot):
+def row_columns(row, snapshot, index=None):
     """一覧に出すリポジトリ、branch、worktreeの構造化値。"""
     if row.kind == "repo":
         repo_id = row.data.get("id", "")
-        worktree = _worktree_for_path(row.data.get("path", ""), snapshot)
+        worktree = _worktree_for_path(row.data.get("path", ""), snapshot, index)
     elif row.kind == "worktree":
         repo_id = row.data.get("repo", "")
         worktree = row.data
     else:
         repo_id = row.data.get("repo_id", "")
-        worktree = _worktree_for_path(row.data.get("cwd", ""), snapshot)
+        worktree = _worktree_for_path(row.data.get("cwd", ""), snapshot, index)
     return {
         "repo": _repository_name(repo_id, snapshot),
         "branch": (worktree or {}).get("branch", "-") or "-",
@@ -520,7 +558,7 @@ OPTIONAL_COLUMNS = ("worktree", "repo")
 COLUMN_GAP = 2
 
 
-def _row_values(row, expanded, snapshot):
+def _row_values(row, expanded, snapshot, index=None):
     tree = (("▾ " if row.id in expanded else "▸ ")
             if row.expandable else "• ")
     waiting = " 待ち{}".format(row.waiting) if row.waiting else ""
@@ -529,13 +567,18 @@ def _row_values(row, expanded, snapshot):
         "status": "● " + _status_label(row.data.get("status", "")) + waiting,
     }
     values["window"], values["pane"] = row_location(row, snapshot)
-    values.update(row_columns(row, snapshot or {}))
+    values.update(row_columns(row, snapshot or {}, index))
     return values
 
 
-def column_layout(rows, width, expanded, snapshot=None):
-    """全行の内容幅から列幅を決め、行間で揃った列配置を返す。"""
-    values = {row.id: _row_values(row, expanded, snapshot) for row in rows}
+def column_layout(rows, width, expanded, snapshot=None, values=None):
+    """全行の内容幅から列幅を決め、行間で揃った列配置を返す。
+
+    values に DashboardModel.values を渡すと列の値を計算し直さない。"""
+    values = dict(values or {})
+    for row in rows:
+        if row.id not in values:
+            values[row.id] = _row_values(row, expanded, snapshot)
     specs = {key: (label, minimum, cap) for key, label, minimum, cap in COLUMN_SPECS}
     natural = {}
     for key, (label, minimum, cap) in specs.items():
@@ -608,9 +651,18 @@ def format_row(row, width, expanded, snapshot=None, layout=None):
 
 
 def render_lines(model, width):
-    layout = column_layout(model.rows, width, model.expanded, model.snapshot)
+    layout = column_layout(model.rows, width, model.expanded, model.snapshot, model.values)
     return [format_row(row, width, model.expanded, model.snapshot, layout)
             for row in model.rows]
+
+
+def frame_key(model, message, offset, size):
+    """描画結果を決める入力の組。前回と同じなら再描画しない。"""
+    return (model.signature, message, offset, tuple(size))
+
+
+def should_redraw(previous, current, force=False):
+    return force or previous is None or current != previous
 
 
 def dump_text(snapshot, width=120):
@@ -807,7 +859,8 @@ def _draw(screen, model, message, offset, styles=None):
         view, summary.get("busy", 0), summary.get("waiting", 0),
         "ON" if model.snapshot.get("auto") else "OFF")
     _safe_addstr(screen, 0, 0, title, curses.A_BOLD)
-    layout = column_layout(model.rows, max(1, width - 1), model.expanded, model.snapshot)
+    layout = column_layout(model.rows, max(1, width - 1), model.expanded,
+                           model.snapshot, model.values)
     if height >= 3:
         _safe_addstr(screen, 1, 0, header_text(layout), curses.A_DIM)
     top = 2 if height >= 4 else 1
@@ -949,6 +1002,8 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
     message = ""
     message_until = 0.0
     next_refresh = time.monotonic() + 1.0
+    last_frame = None
+    force_draw = False
 
     while True:
         loaded = loader.poll()
@@ -965,7 +1020,11 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
             next_refresh = now + 1.0
         if message and now >= message_until:
             message = ""
-        offset = _draw(screen, model, message, offset, styles)
+        frame = frame_key(model, message, offset, screen.getmaxyx())
+        if should_redraw(last_frame, frame, force_draw):
+            offset = _draw(screen, model, message, offset, styles)
+            last_frame = frame_key(model, message, offset, screen.getmaxyx())
+            force_draw = False
         try:
             key = screen.get_wch()
         except curses.error:
@@ -983,6 +1042,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                 screen.clearok(True)
             except curses.error:
                 pass
+            force_draw = True
         elif key == curses.KEY_UP or action == "up":
             model.move(-1)
         elif key == curses.KEY_DOWN or action == "down":
@@ -1005,6 +1065,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                     message_until = now + 4
             elif decision.kind == "details" and model.selected_row():
                 _details(screen, model.selected_row(), model.snapshot)
+                force_draw = True
         elif key == "p":
             decision = model.parent_action()
             if decision.kind == "focus":
@@ -1034,6 +1095,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                 message = "作成先リポジトリを選択してください"
                 message_until = now + 4
                 continue
+            force_draw = True  # プロンプトが footer を上書きする
             name = _prompt(screen, "worktree名")
             if not name:
                 continue
@@ -1053,6 +1115,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
             if not row or row.kind != "worktree":
                 continue
             path = row.data.get("path", "")
+            force_draw = True
             if not _confirm(screen, "{} を安全に削除しますか？".format(path)):
                 message = "削除を中止しました"
                 message_until = time.monotonic() + 2
@@ -1079,6 +1142,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
         elif key == "l":
             cwd = _row_cwd(model.selected_row()) if model.selected_row() else os.getcwd()
             _suspend_for_legacy(screen, cwd if Path(cwd).is_dir() else os.getcwd())
+            force_draw = True
             loader.request()
 
 
