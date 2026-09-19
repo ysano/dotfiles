@@ -1,3 +1,4 @@
+import contextlib
 import importlib.util
 import json
 from pathlib import Path
@@ -170,6 +171,106 @@ class SnapshotGitTests(unittest.TestCase):
                 mock.patch.object(worktrees, "_states_for_panes", return_value=[]), \
                 mock.patch.object(subprocess, "run", counting_run):
             return registry.snapshot("$1", "%0")
+
+    def panes_for(self, cwds, **override):
+        panes = [{"pane_id": "%" + str(i), "session_id": "$1", "cwd": cwd, "command": "zsh",
+                  "width": 100, "height": 30, "active": i == 0, "title": "",
+                  "window_index": "1", "window_name": "w", "pane_index": str(i),
+                  "claude_enabled": True, "codex_enabled": True,
+                  "claude_detected": False, "codex_detected": False,
+                  "claude_state": {}, "codex_state": {}, "claude_status": "", "codex_status": ""}
+                 for i, cwd in enumerate(cwds)]
+        for index, values in override.items():
+            panes[int(index[1:])].update(values)
+        return panes
+
+    @contextlib.contextmanager
+    def tmux_free(self, panes_box, calls):
+        """read_panes/tmux を差し替え、git の実行だけ本物のまま数える。"""
+        real_run = subprocess.run
+
+        def counting_run(argv, *args, **kwargs):
+            if argv and argv[0] == "git":
+                calls.append(tuple(str(x) for x in argv))
+            return real_run(argv, *args, **kwargs)
+
+        with mock.patch.object(registry, "read_panes", side_effect=lambda *_: panes_box[0]), \
+                mock.patch.object(registry, "tmux", return_value=""), \
+                mock.patch.object(worktrees, "_states_for_panes", return_value=[]), \
+                mock.patch.object(subprocess, "run", counting_run):
+            yield
+
+    def test_fast_refresh_runs_no_git_and_matches_a_full_snapshot(self):
+        calls, box = [], [self.panes_for([str(self.root), str(self.linked)])]
+        with self.tmux_free(box, calls):
+            source = registry.SnapshotSource("$1", "%0")
+            slow = source.slow()
+            self.assertTrue(calls)
+            calls.clear()
+            fast = source.fast()
+            self.assertEqual(source.last_kind, "fast")
+        self.assertEqual(calls, [])
+        self.assertEqual(fast, slow)
+
+    def test_fast_refresh_reflects_new_status_and_moved_pane_without_git(self):
+        calls, box = [], [self.panes_for([str(self.root), str(self.linked)])]
+        with self.tmux_free(box, calls):
+            source = registry.SnapshotSource("$1", "%0")
+            before = source.slow()
+            calls.clear()
+            box[0] = self.panes_for([str(self.linked), str(self.linked)],
+                                    p0={"command": "claude", "claude_status": "Permission"})
+            after = source.fast()
+        self.assertEqual(calls, [])
+        self.assertEqual(before["agents"], [])
+        self.assertEqual([a["status"] for a in after["agents"]], ["Permission"])
+        panes = {Path(row["path"]).name: row["panes"] for row in after["worktrees"]}
+        self.assertEqual(panes, {"repo": [], "linked": ["%0", "%1"]})
+        status = {Path(row["path"]).name: row["status"] for row in after["worktrees"]}
+        self.assertEqual(status, {"repo": "available", "linked": "open"})
+        # 前回の結果を書き換えていない（UI スレッドが保持している）
+        self.assertEqual({Path(r["path"]).name: r["panes"] for r in before["worktrees"]},
+                         {"repo": ["%0"], "linked": ["%1"]})
+
+    def test_fast_refresh_switches_to_slow_when_a_pane_shows_an_unknown_cwd(self):
+        other = Path(self.temp.name) / "other"
+        subprocess.run(["git", "init", "-q", "-b", "main", str(other)], check=True)
+        calls, box = [], [self.panes_for([str(self.root)])]
+        with self.tmux_free(box, calls):
+            source = registry.SnapshotSource("$1", "%0")
+            source.slow()
+            calls.clear()
+            box[0] = self.panes_for([str(self.root), str(other)])
+            value = source.fast()
+            self.assertTrue(calls)  # 遅い取得に切り替わった
+            self.assertEqual(source.last_kind, "slow")
+            calls.clear()
+            source.fast()
+        self.assertEqual(sorted(repo["name"] for repo in value["repos"]), ["other", "repo"])
+        self.assertEqual(calls, [])  # 切り替え後は新しい cwd も既知
+
+    def test_fast_refresh_switches_to_slow_for_a_new_worktree_of_a_known_repository(self):
+        calls, box = [], [self.panes_for([str(self.root)])]
+        with self.tmux_free(box, calls):
+            source = registry.SnapshotSource("$1", "%0")
+            source.slow()
+            fresh = Path(self.temp.name) / "fresh"
+            subprocess.run(["git", "-C", str(self.root), "worktree", "add", "-qb", "fresh",
+                            str(fresh)], check=True, capture_output=True)
+            calls.clear()
+            box[0] = self.panes_for([str(self.root), str(fresh)])
+            value = source.fast()
+        self.assertTrue(calls)  # 親の checkout に黙って割り当てず、読み直す
+        panes = {Path(row["path"]).name: row["panes"] for row in value["worktrees"]}
+        self.assertEqual(panes["fresh"], ["%1"])
+        self.assertEqual(panes["repo"], ["%0"])
+
+    def test_fast_without_a_prior_slow_fetch_does_a_slow_one(self):
+        calls, box = [], [self.panes_for([str(self.root)])]
+        with self.tmux_free(box, calls):
+            value = registry.SnapshotSource("$1", "%0").fast()
+        self.assertTrue(calls)
+        self.assertEqual([repo["name"] for repo in value["repos"]], ["repo"])
 
     def test_worktree_list_runs_once_per_repository_and_rev_parse_once_per_cwd(self):
         calls = []

@@ -229,6 +229,49 @@ class GitInventoryTests(unittest.TestCase):
         rev_parse = [c for c in git.call_args_list if c.args[1] == "rev-parse"]
         self.assertEqual(len(rev_parse), 1)
 
+    def test_frozen_inventory_answers_known_roots_without_git_and_flags_unknown_ones(self):
+        def fake_git(root, *args, **kwargs):
+            return "/repo/.git\n" if args[0] == "rev-parse" else \
+                "worktree /repo\0HEAD abc\0branch refs/heads/main\0\0"
+
+        with mock.patch.object(module, "_git", side_effect=fake_git):
+            inventory = module.GitInventory()
+            inventory.prefetch(["/repo"])
+        inventory.freeze()
+        with mock.patch.object(module, "_git", side_effect=AssertionError("git on frozen inventory")):
+            inventory.prefetch(["/repo"])
+            self.assertEqual(inventory.worktree_records("/repo")[0]["worktree"], "/repo")
+            with self.assertRaises(module.StaleInventory):
+                inventory.common_git_dir("/elsewhere")
+            with self.assertRaises(module.StaleInventory):
+                inventory.prefetch(["/repo", "/elsewhere"])
+            # skip 対象の例外に紛れて握りつぶされてはならない
+            with self.assertRaises(module.StaleInventory):
+                module._inventory(["/elsewhere", "/repo"], [], inventory)
+        self.assertFalse(issubclass(module.StaleInventory, module.GIT_ERRORS))
+
+    def test_pane_matching_resolves_each_location_once_and_keeps_deepest_match(self):
+        rows = [{"path": "/repo", "panes": [], "temporary": False, "status": "available",
+                 "_locked": False, "_prunable": False},
+                {"path": "/repo/nested", "panes": [], "temporary": False, "status": "available",
+                 "_locked": False, "_prunable": False},
+                {"path": "/other", "panes": [], "temporary": False, "status": "available",
+                 "_locked": True, "_prunable": False}]
+        panes = [{"pane_id": "%2", "cwd": "/repo/nested/src"}, {"pane_id": "%1", "cwd": "/repo"},
+                 {"pane_id": "%3", "cwd": "/repo/nested/src"}]
+        real_resolve = Path.resolve
+        resolved = []
+
+        def counting_resolve(self, strict=False):
+            resolved.append(str(self))
+            return real_resolve(self, strict=strict)
+
+        with mock.patch.object(Path, "resolve", counting_resolve):
+            module._match_panes(rows, panes)
+        self.assertEqual([row["panes"] for row in rows], [["%1"], ["%2", "%3"], []])
+        self.assertEqual([row["status"] for row in rows], ["open", "open", "locked"])
+        self.assertLessEqual(len(resolved), 2, resolved)  # 異なる cwd の数だけ
+
     def test_inventory_git_timeout_stays_short_for_the_dashboard(self):
         with mock.patch.object(module, "_git", return_value="/repo/.git\n") as git:
             module.GitInventory().common_git_dir("/repo")

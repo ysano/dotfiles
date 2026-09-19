@@ -45,6 +45,61 @@ def measure_snapshot(session, origin):
     return snapshot, elapsed, calls
 
 
+def measure_steady(session, origin, seconds=10.0, fast=None, slow=None):
+    """dashboard を開いたままにしたときの外部コマンド実行数（回/秒）と取得回数。
+
+    curses を使わず、本番と同じ RefreshSchedule / SnapshotLoader / SnapshotSource を
+    実時間で回す。"""
+    import dashboard
+    import registry
+    calls = Counter()
+    kinds = Counter()
+    real_run = subprocess.run
+
+    def counting_run(argv, *args, **kwargs):
+        calls[str(argv[0])] += 1
+        return real_run(argv, *args, **kwargs)
+
+    source = registry.SnapshotSource(session, origin)
+    source.slow()  # 起動時の取得は定常状態に含めない
+    loader = dashboard.SnapshotLoader(
+        lambda kind: source.fast() if kind == "fast" else source.slow())
+    subprocess.run = counting_run
+    try:
+        cpu_before = _cpu_seconds()
+        start = time.monotonic()
+        schedule = dashboard.RefreshSchedule(start, fast or dashboard.FAST_REFRESH_SECONDS,
+                                             slow or dashboard.SLOW_REFRESH_SECONDS)
+        while time.monotonic() - start < seconds:
+            loaded = loader.poll()
+            if loaded:
+                schedule.finished(time.monotonic(), ok=loaded[1] is None, kind=source.last_kind)
+            kind = schedule.due(time.monotonic())
+            if kind and loader.request(kind):
+                schedule.started(kind)
+                kinds[kind] += 1
+            time.sleep(0.1)  # get_wch の timeout(100) に相当
+        if loader.worker is not None:
+            loader.worker.join(10)
+        cpu = (_cpu_seconds() - cpu_before) / seconds * 100
+    finally:
+        subprocess.run = real_run
+    return sum(calls.values()) / seconds, calls, kinds, cpu
+
+
+def _cpu_seconds():
+    """自プロセスと、終了済みの子プロセス（git / tmux / ps）の CPU 秒。"""
+    try:
+        import resource
+    except ImportError:  # POSIX 以外では CPU は測らない
+        return 0.0
+    total = 0.0
+    for who in (resource.RUSAGE_SELF, resource.RUSAGE_CHILDREN):
+        usage = resource.getrusage(who)
+        total += usage.ru_utime + usage.ru_stime
+    return total
+
+
 def measure_startup(session, origin, runs=3):
     """--dump が終わるまでの秒数（popup を開いて最初の描画までに相当）。"""
     times = []
@@ -63,6 +118,10 @@ def main(argv=None):
     parser.add_argument("--pane", help="起点 pane ID")
     parser.add_argument("--width", type=int, default=160, help="描画計測の端末幅")
     parser.add_argument("--runs", type=int, default=3, help="起動時間の計測回数")
+    parser.add_argument("--steady", type=float, default=0.0, metavar="SECONDS",
+                        help="開いたままにしたときの外部コマンド数を SECONDS 秒計測する")
+    parser.add_argument("--fast", type=float, help="--steady の速い周期（既定は本番の定数）")
+    parser.add_argument("--slow", type=float, help="--steady の遅い周期（既定は本番の定数）")
     args = parser.parse_args(argv)
     import dashboard
     session = args.session or dashboard.tmux("display-message", "-p", "#{session_id}")
@@ -78,6 +137,10 @@ def main(argv=None):
     print("snapshot 1 回: {:.0f} ms / 外部コマンド {} 回 {}".format(
         snapshot_ms, sum(calls.values()), dict(calls)))
     print("描画 1 回 (幅 {}): {:.2f} ms".format(args.width, measure_render(snapshot, args.width)))
+    if args.steady > 0:
+        rate, steady_calls, kinds, cpu = measure_steady(session, origin, args.steady, args.fast, args.slow)
+        print("定常 ({:.0f} 秒): {:.1f} 回/秒 {} / 取得 {} / CPU {:.1f}% (1 コア比)".format(
+            args.steady, rate, dict(steady_calls), dict(kinds), cpu))
     return 0
 
 

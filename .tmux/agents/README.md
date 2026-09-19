@@ -117,7 +117,9 @@ python3 -m unittest discover -s .tmux/agents -p 'test_*.py'
 bash .tmux/ci.sh
 ```
 
-`python3 bench_dashboard.py` で起動時間・snapshot 1 回の所要と外部コマンド数・描画 1 回の所要を同じ手順で測れる（表示速度の回帰確認用）。
+`python3 bench_dashboard.py` で起動時間・snapshot 1 回の所要と外部コマンド数・描画 1 回の所要を同じ手順で測れる（表示速度の回帰確認用）。`--steady 60` を付けると、開いたままにしたときの外部コマンド数（回/秒）と CPU 使用率も測る（`--fast` / `--slow` で周期を変えて比較できる）。
+
+開いている間の再取得は 2 段。速い取得（`FAST_REFRESH_SECONDS`）は tmux と ps だけを見て agent の状態と pane の位置を更新し、git は直近の遅い取得の結果を使う。遅い取得（`SLOW_REFRESH_SECONDS`）は git を読み直す。worktree の作成・削除・起動・自動表示の切替の直後と、未知のディレクトリにいる pane が現れたときは、周期を待たず遅い取得を行う。
 
 API を呼ばない状態遷移テストと、一時 tmux サーバーを使う結合テスト。
 tmux のない環境では結合テストを skip する。CI は tmux をインストールして実行する。

@@ -76,6 +76,12 @@ def _common_git_dir(root, timeout=15):
     return str(common.resolve(strict=False))
 
 
+class StaleInventory(Exception):
+    """凍結した GitInventory に未知の root が来た。git を含む取得のやり直しが要る。
+
+    GIT_ERRORS には含めない（root 単位の skip に紛れて握りつぶされないため）。"""
+
+
 def _worker_count(jobs):
     return max(1, min(MAX_GIT_WORKERS, jobs))
 
@@ -91,6 +97,11 @@ class GitInventory:
         self._common = {}
         self._records = {}
         self._lock = threading.Lock()
+        self._frozen = False
+
+    def freeze(self):
+        """以後は記憶済みの結果だけを返し、未知の root には StaleInventory を送出する。"""
+        self._frozen = True
 
     @staticmethod
     def _key(root):
@@ -103,6 +114,8 @@ class GitInventory:
     def _memo(self, table, key, compute):
         with self._lock:
             known = key in table
+        if not known and self._frozen:
+            raise StaleInventory(key)
         if not known:
             try:
                 value = compute()
@@ -141,6 +154,8 @@ class GitInventory:
                 if key not in self._common:
                     unique.setdefault(key, root)
             pending = list(unique.values())
+        if pending and self._frozen:
+            raise StaleInventory(pending[0])
         if pending:
             with ThreadPoolExecutor(max_workers=_worker_count(len(pending))) as pool:
                 list(pool.map(self._quiet, [self.common_git_dir] * len(pending), pending))
@@ -260,6 +275,15 @@ def _inventory(roots, panes, inventory=None):
             })
         repos.extend(repo_rows)
 
+    return _match_panes(repos, panes)
+
+
+def _match_panes(rows, panes):
+    """pane の位置を最も深い worktree に割り当て、status を決める。
+
+    row の path は正規化済み。cwd は 1 つにつき 1 回だけ解決し、組ごとには解決しない。"""
+    row_parts = [(Path(row["path"]).parts, row) for row in rows]
+    resolved = {}
     # Match the deepest registered worktree, so a nested worktree never gets
     # attributed to a parent checkout that happens to contain it.
     for pane in panes:
@@ -267,13 +291,22 @@ def _inventory(roots, panes, inventory=None):
         if not isinstance(pane_id, str):
             continue
         for cwd in _pane_locations(pane):
-            matches = [row for row in repos if _inside(cwd, row["path"])]
+            if cwd not in resolved:
+                try:
+                    resolved[cwd] = Path(cwd).resolve(strict=False).parts
+                except GIT_ERRORS:
+                    resolved[cwd] = None
+            target = resolved[cwd]
+            if target is None:
+                continue
+            matches = [(len(parts), row) for parts, row in row_parts
+                       if target[:len(parts)] == parts]
             if matches:
-                match = max(matches, key=lambda row: len(Path(row["path"]).parts))
+                match = max(matches, key=lambda item: item[0])[1]
                 if pane_id not in match["panes"]:
                     match["panes"].append(pane_id)
 
-    for row in repos:
+    for row in rows:
         row["panes"].sort()
         if row["temporary"]:
             row["status"] = "temporary"
@@ -283,7 +316,7 @@ def _inventory(roots, panes, inventory=None):
             row["status"] = "locked"
         elif row["panes"]:
             row["status"] = "open"
-    return repos
+    return rows
 
 
 def _empty_state():
