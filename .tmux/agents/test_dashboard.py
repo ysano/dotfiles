@@ -1,6 +1,7 @@
 """dashboard の行構築と操作判断を、tmux/curses なしで検証する。"""
 import copy
 import importlib.util
+import threading
 from pathlib import Path
 import unittest
 from unittest import mock
@@ -555,6 +556,154 @@ class RenderCacheRobustnessTests(unittest.TestCase):
         same_label["agents"][0]["status"] = "作業中"  # 表示は Busy と同じ、色は default
         model.refresh(same_label)
         self.assertNotEqual(model.signature, before)
+
+
+class RefreshScheduleTests(unittest.TestCase):
+    """再取得の種類と時刻。時刻は注入し、実時間を待たない。"""
+
+    def setUp(self):
+        self.fast = dashboard.FAST_REFRESH_SECONDS
+        self.slow = dashboard.SLOW_REFRESH_SECONDS
+        self.assertLess(self.fast, self.slow)
+
+    def test_next_fetch_is_counted_from_completion_not_from_the_request(self):
+        schedule = dashboard.RefreshSchedule(now=100.0)
+        self.assertEqual(schedule.due(100.0 + self.fast - 0.01), "")
+        start = 100.0 + self.fast
+        self.assertEqual(schedule.due(start), "fast")
+        schedule.started("fast")
+        self.assertEqual(schedule.due(start + 1.0), "")  # 取得中は次を始めない
+        done = start + 1.5                                # 取得に 1.5 秒かかった
+        schedule.finished(done)
+        self.assertEqual(schedule.due(done + self.fast - 0.01), "")
+        self.assertEqual(schedule.due(done + self.fast), "fast")
+
+    def test_slow_fetch_comes_round_on_its_own_period(self):
+        schedule = dashboard.RefreshSchedule(now=0.0)
+        starts = []
+        for tick in range(int(self.slow * 30) + 1):  # 0.1 秒刻み。誤差をためないよう整数で進める
+            now = tick / 10
+            kind = schedule.due(now)
+            if kind:
+                starts.append((kind, now))
+                schedule.started(kind)
+                schedule.finished(now + 0.05)
+        slow = [now for kind, now in starts if kind == "slow"]
+        self.assertGreaterEqual(len(slow), 2)
+        self.assertEqual(starts[0][0], "fast")
+        for earlier, later in zip(slow, slow[1:]):
+            self.assertGreaterEqual(later - earlier, self.slow)
+            between = [k for k, now in starts if earlier < now < later]
+            self.assertTrue(between and set(between) == {"fast"})
+
+    def test_requested_slow_fetch_runs_at_once_and_survives_a_running_fast_fetch(self):
+        schedule = dashboard.RefreshSchedule(now=0.0)
+        schedule.request_slow(0.1)
+        self.assertEqual(schedule.due(0.1), "slow")
+
+        schedule = dashboard.RefreshSchedule(now=0.0)
+        schedule.started("fast")
+        schedule.request_slow(0.2)        # worktree 作成などの操作
+        self.assertEqual(schedule.due(0.2), "")
+        schedule.finished(0.3)
+        self.assertEqual(schedule.due(0.3), "slow")
+        schedule.started("slow")
+        schedule.finished(0.6)
+        self.assertEqual(schedule.due(0.6 + self.fast), "fast")
+
+    def test_failed_slow_fetch_is_retried_after_the_fast_period(self):
+        schedule = dashboard.RefreshSchedule(now=0.0)
+        schedule.request_slow(0.0)
+        schedule.started("slow")
+        schedule.finished(0.5, ok=False)
+        self.assertEqual(schedule.due(0.5), "")
+        self.assertEqual(schedule.due(0.5 + self.fast), "slow")
+
+
+class SnapshotLoaderTests(unittest.TestCase):
+    def test_request_passes_the_kind_and_reports_whether_it_started(self):
+        release, seen = threading.Event(), []
+
+        def fetch(kind):
+            seen.append(kind)
+            release.wait(5)
+            return {"kind": kind}
+
+        loader = dashboard.SnapshotLoader(fetch)
+        self.assertTrue(loader.request("fast"))
+        self.assertFalse(loader.request("slow"))  # 取得中は始めない（呼び出し側が再試行する）
+        release.set()
+        loader.worker.join(5)
+        self.assertEqual(loader.poll(), ({"kind": "fast"}, None))
+        self.assertEqual(seen, ["fast"])
+
+
+class FakeScreen:
+    def __init__(self, keys, until):
+        self.keys, self.until, self.spins = list(keys), until, 0
+
+    def getmaxyx(self):
+        return (24, 100)
+
+    def get_wch(self):
+        import curses
+        if self.keys:
+            return self.keys.pop(0)
+        self.spins += 1
+        if self.until.is_set() or self.spins > 400:
+            return "q"
+        self.until.wait(0.01)
+        raise curses.error("no input")
+
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: None
+
+
+class FakeSource:
+    def __init__(self, done):
+        self.kinds, self.done = [], done
+
+    def fast(self):
+        self.kinds.append("fast")
+        return cached_snapshot()
+
+    def slow(self):
+        self.kinds.append("slow")
+        self.done.set()
+        return cached_snapshot()
+
+
+class LoopRefreshTests(unittest.TestCase):
+    def run_loop(self, keys, worktrees_module):
+        done = threading.Event()
+        source, screen = FakeSource(done), FakeScreen(keys, done)
+        with mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
+                mock.patch.object(dashboard, "_confirm", return_value=True), \
+                mock.patch.object(dashboard, "tmux_panes", return_value=[]):
+            dashboard._run_dashboard(screen, cached_snapshot(), None, worktrees_module,
+                                     "$1", "%1", source=source)
+        self.assertLess(screen.spins, 400, "slow fetch was never requested")
+        return source.kinds
+
+    def test_creating_a_worktree_requests_a_slow_fetch_at_once(self):
+        module = mock.Mock()
+        module.create_worktree.return_value = "/repo/a-topic"
+        kinds = self.run_loop(["n"], module)
+        module.create_worktree.assert_called_once()
+        self.assertEqual(kinds[0], "slow")
+
+    def test_removing_a_worktree_requests_a_slow_fetch_at_once(self):
+        module = mock.Mock()
+        kinds = self.run_loop(["\t", "\x0e", "d"], module)  # worktree 表示 → 1 行下 → 削除
+        module.remove_worktree.assert_called_once()
+        self.assertEqual(kinds[0], "slow")
+
+    def test_toggling_auto_requests_a_slow_fetch_at_once(self):
+        module = mock.Mock()
+        kinds = self.run_loop(["a"], module)
+        module.set_auto.assert_called_once()
+        self.assertEqual(kinds[0], "slow")
 
 
 class BenchScriptTests(unittest.TestCase):

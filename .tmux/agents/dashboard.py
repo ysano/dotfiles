@@ -774,6 +774,49 @@ def repository_root_for_row(row, snapshot):
     return ""
 
 
+# agent の状態は tmux だけで分かるので短い周期、git の読み直しは長い周期にする。
+FAST_REFRESH_SECONDS = 1.0
+SLOW_REFRESH_SECONDS = 5.0
+
+
+class RefreshSchedule:
+    """次の再取得の種類（"fast" / "slow"）と時刻を決める。
+
+    時刻は呼び出し側が渡す。次回は前回の「完了」から数えるので、取得が周期より
+    長くかかっても切れ目なく走り続けない。"""
+
+    def __init__(self, now, fast=FAST_REFRESH_SECONDS, slow=SLOW_REFRESH_SECONDS):
+        self.fast, self.slow = fast, slow
+        self.next_at = now + fast
+        self.slow_due_at = now + slow
+        self.slow_requested = False
+        self.in_flight = ""
+
+    def request_slow(self, now):
+        """worktree の作成・削除など、git の状態を変える操作の直後に呼ぶ。"""
+        self.slow_requested = True
+        self.next_at = min(self.next_at, now)
+
+    def due(self, now):
+        if self.in_flight or now < self.next_at:
+            return ""
+        return "slow" if self.slow_requested or now >= self.slow_due_at else "fast"
+
+    def started(self, kind):
+        self.in_flight = kind
+        if kind == "slow":
+            self.slow_requested = False
+
+    def finished(self, now, ok=True):
+        kind, self.in_flight = self.in_flight, ""
+        if kind == "slow" and ok:
+            self.slow_due_at = now + self.slow
+        elif kind == "slow":
+            self.slow_requested = True  # 失敗した slow はやり直す（連打はしない）
+        retry = kind == "slow" and not ok
+        self.next_at = now if self.slow_requested and not retry else now + self.fast
+
+
 class SnapshotLoader:
     """重い registry scan をキー入力スレッドから分離する。"""
 
@@ -782,18 +825,20 @@ class SnapshotLoader:
         self.results = queue.Queue()
         self.worker = None
 
-    def request(self):
+    def request(self, kind="slow"):
+        """取得を始めたら True。前の取得が終わっていなければ何もせず False。"""
         if self.worker is not None and self.worker.is_alive():
-            return
+            return False
 
         def load():
             try:
-                self.results.put((self.fetch(), None))
+                self.results.put((self.fetch(kind), None))
             except Exception as exc:  # UI に表示し、次の更新を継続する。
                 self.results.put((None, exc))
 
         self.worker = threading.Thread(target=load, daemon=True)
         self.worker.start()
+        return True
 
     def poll(self):
         latest = None
@@ -985,12 +1030,14 @@ def _suspend_for_legacy(screen, cwd):
             pass
 
 
-def _run_dashboard(screen, initial, registry, worktrees, session, origin):
+def _run_dashboard(screen, initial, registry, worktrees, session, origin, source=None):
     import curses
     if hasattr(curses, "set_escdelay"):
         curses.set_escdelay(25)
     model = DashboardModel(initial)
-    loader = SnapshotLoader(lambda: registry.snapshot(session, origin))
+    source = source or registry.SnapshotSource(session, origin)
+    loader = SnapshotLoader(lambda kind: source.fast() if kind == "fast" else source.slow())
+    schedule = RefreshSchedule(time.monotonic())
     styles = _color_styles(curses)
     screen.keypad(True)
     screen.timeout(100)
@@ -1001,7 +1048,6 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
     offset = 0
     message = ""
     message_until = 0.0
-    next_refresh = time.monotonic() + 1.0
     last_frame = None
     force_draw = False
 
@@ -1009,15 +1055,16 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
         loaded = loader.poll()
         if loaded:
             value, error = loaded
+            schedule.finished(time.monotonic(), ok=error is None)
             if value is not None:
                 model.refresh(value)
             if error is not None:
                 message = "更新失敗: " + str(error)
                 message_until = time.monotonic() + 4
         now = time.monotonic()
-        if now >= next_refresh:
-            loader.request()
-            next_refresh = now + 1.0
+        kind = schedule.due(now)
+        if kind and loader.request(kind):
+            schedule.started(kind)
         if message and now >= message_until:
             message = ""
         frame = frame_key(model, message, offset, screen.getmaxyx())
@@ -1086,6 +1133,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                 pane = worktrees.open_worktree(path, session, origin, provider)
                 if pane and focus_pane(pane, session):
                     return
+                schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 message = "起動失敗: " + str(exc)
                 message_until = now + 5
@@ -1106,7 +1154,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                 created = worktrees.create_worktree(root, name, base, session, origin)
                 message = "作成しました: " + created
                 message_until = time.monotonic() + 5
-                loader.request()
+                schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 message = "作成失敗: " + str(exc)
                 message_until = time.monotonic() + 5
@@ -1124,7 +1172,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                 worktrees.remove_worktree(path)
                 message = "削除しました: " + path
                 message_until = time.monotonic() + 4
-                loader.request()
+                schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 message = "削除失敗: " + str(exc)
                 message_until = time.monotonic() + 6
@@ -1135,7 +1183,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
                 model.snapshot["auto"] = enabled
                 message = "自動表示を{}にしました".format("ON" if enabled else "OFF")
                 message_until = time.monotonic() + 3
-                loader.request()
+                schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 message = "自動表示の変更失敗: " + str(exc)
                 message_until = time.monotonic() + 5
@@ -1143,7 +1191,7 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin):
             cwd = _row_cwd(model.selected_row()) if model.selected_row() else os.getcwd()
             _suspend_for_legacy(screen, cwd if Path(cwd).is_dir() else os.getcwd())
             force_draw = True
-            loader.request()
+            schedule.request_slow(time.monotonic())
 
 
 def _load_dependencies():
@@ -1162,7 +1210,8 @@ def main(argv=None):
         session = args.session or tmux("display-message", "-p", "#{session_id}")
         origin = args.pane or tmux("display-message", "-p", "#{pane_id}")
         registry, worktrees = _load_dependencies()
-        initial = registry.snapshot(session, origin)
+        source = registry.SnapshotSource(session, origin)
+        initial = source.slow()  # 最初の fast 取得から git を省けるよう、ここで索引を温める
         if args.dump:
             width = int(os.environ.get("COLUMNS", "120"))
             print(dump_text(initial, max(1, width)))
@@ -1171,7 +1220,7 @@ def main(argv=None):
             print("対話表示にはTTYが必要です（非対話では --dump を使用）", file=sys.stderr)
             return 2
         import curses
-        curses.wrapper(_run_dashboard, initial, registry, worktrees, session, origin)
+        curses.wrapper(_run_dashboard, initial, registry, worktrees, session, origin, source)
         return 0
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         print("tmux agent dashboard: " + str(exc), file=sys.stderr)

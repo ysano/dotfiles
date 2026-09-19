@@ -137,7 +137,8 @@ def build_snapshot(session_id, origin_pane, panes, repo_map, worktree_rows, auto
             "pane_locations": locations}
 
 
-def snapshot(session_id, origin_pane):
+def snapshot(session_id, origin_pane, inventory=None):
+    """inventory を渡すと git の問い合わせ結果をそこから読む（SnapshotSource 用）。"""
     import worktrees
     panes = read_panes(session_id)
     paths = {p["cwd"] for p in panes}
@@ -149,7 +150,7 @@ def snapshot(session_id, origin_pane):
             for actor in state.get("actors", {}).values():
                 if actor.get("cwd"):
                     paths.add(actor["cwd"])
-    inventory = worktrees.GitInventory()
+    inventory = inventory or worktrees.GitInventory()
     inventory.prefetch(sorted(paths))
     repo_map = {cwd: repository(cwd, inventory) for cwd in sorted(paths)}
     repo_map = {k: v for k, v in repo_map.items() if v}
@@ -163,6 +164,35 @@ def snapshot(session_id, origin_pane):
                 known.add(repo["id"])
     setting = _json(tmux("show-option", "-qv", "-t", session_id, "@agent_worktree_state"))
     return build_snapshot(session_id, origin_pane, panes, repo_map, rows, bool(setting.get("auto", False)))
+
+
+class SnapshotSource:
+    """dashboard の再取得元。slow は git を読み直し、fast は直近の slow の結果を再利用する。
+
+    fast も snapshot() と同じ経路を通るので、agent の状態・pane の位置・自動表示の理由は
+    毎回最新になる。git だけを省く。"""
+
+    def __init__(self, session_id, origin_pane):
+        self.session_id = session_id
+        self.origin_pane = origin_pane
+        self._inventory = None
+
+    def slow(self):
+        import worktrees
+        inventory = worktrees.GitInventory()
+        value = snapshot(self.session_id, self.origin_pane, inventory)
+        inventory.freeze()
+        self._inventory = inventory
+        return value
+
+    def fast(self):
+        import worktrees
+        if self._inventory is None:
+            return self.slow()
+        try:
+            return snapshot(self.session_id, self.origin_pane, self._inventory)
+        except worktrees.StaleInventory:  # 未知の cwd / root が現れた
+            return self.slow()
 
 
 def poll():
