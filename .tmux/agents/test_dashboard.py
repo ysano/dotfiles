@@ -469,7 +469,11 @@ class RenderCacheTests(unittest.TestCase):
     def test_render_after_rebuild_resolves_no_paths(self):
         model = dashboard.DashboardModel(cached_snapshot())
         with mock.patch.object(dashboard.Path, "resolve",
-                               side_effect=AssertionError("Path.resolve during render")):
+                               side_effect=AssertionError("Path.resolve during render")), \
+                mock.patch.object(dashboard.os.path, "realpath",
+                                  side_effect=AssertionError("realpath during render")), \
+                mock.patch.object(dashboard.os, "stat",
+                                  side_effect=AssertionError("os.stat during render")):
             for _ in range(5):
                 lines = dashboard.render_lines(model, 140)
                 layout = dashboard.column_layout(model.rows, 140, model.expanded,
@@ -524,6 +528,33 @@ class RenderCacheTests(unittest.TestCase):
         before = dashboard.frame_key(fresh, "", 0, (40, 120))
         fresh.refresh(busy)
         self.assertNotEqual(dashboard.frame_key(fresh, "", 0, (40, 120)), before)
+
+
+class RenderCacheRobustnessTests(unittest.TestCase):
+    def test_unresolvable_worktree_path_skips_only_that_entry(self):
+        data = cached_snapshot()
+        data["worktrees"].append({"id": "/loop/x", "path": "/loop/x", "repo": "/repo/a/.git",
+                                  "branch": "broken", "temporary": False, "panes": [],
+                                  "status": "available", "auto_reason": ""})
+        real_resolve = dashboard.Path.resolve
+
+        def fake_resolve(self, strict=False):
+            if "loop" in str(self):
+                raise RuntimeError("Symlink loop from " + str(self))
+            return real_resolve(self, strict=strict)
+
+        with mock.patch.object(dashboard.Path, "resolve", fake_resolve):
+            text = dashboard.dump_text(data, width=140)
+        self.assertIn("docs/design-information", text)
+
+    def test_signature_changes_when_status_color_changes_but_label_does_not(self):
+        data = cached_snapshot()
+        model = dashboard.DashboardModel(data)
+        before = model.signature
+        same_label = cached_snapshot()
+        same_label["agents"][0]["status"] = "作業中"  # 表示は Busy と同じ、色は default
+        model.refresh(same_label)
+        self.assertNotEqual(model.signature, before)
 
 
 class BenchScriptTests(unittest.TestCase):

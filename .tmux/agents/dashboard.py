@@ -220,7 +220,8 @@ class DashboardModel:
                        for row in self.rows}
         self._rows_signature = tuple(
             (row.id, row.depth, row.waiting, row.expandable,
-             bool(row.data.get("agent_id")), tuple(sorted(self.values[row.id].items())))
+             bool(row.data.get("agent_id")), str(row.data.get("status", "")),  # 色の元
+             tuple(sorted(self.values[row.id].items())))
             for row in self.rows)
 
     @property
@@ -422,8 +423,12 @@ def _worktree_index(snapshot):
     index = []
     for worktree in (snapshot or {}).get("worktrees", []):
         path = worktree.get("path")
-        if path:
+        if not path:
+            continue
+        try:
             index.append((Path(path).resolve(strict=False), worktree))
+        except (OSError, RuntimeError, ValueError):  # symlink loop 等はその1件だけ除く
+            continue
     return index
 
 
@@ -433,7 +438,10 @@ def _worktree_for_path(path, snapshot, index=None):
         return None
     if index is None:
         index = _worktree_index(snapshot)
-    target = Path(path).resolve(strict=False)
+    try:
+        target = Path(path).resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return None
     matches = []
     for resolved, worktree in index:
         try:
