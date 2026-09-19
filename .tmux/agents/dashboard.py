@@ -807,8 +807,9 @@ class RefreshSchedule:
         if kind == "slow":
             self.slow_requested = False
 
-    def finished(self, now, ok=True):
-        kind, self.in_flight = self.in_flight, ""
+    def finished(self, now, ok=True, kind=""):
+        """kind は実際に行われた取得。fast が slow に切り替わった場合に渡す。"""
+        kind, self.in_flight = kind or self.in_flight, ""
         if kind == "slow" and ok:
             self.slow_due_at = now + self.slow
         elif kind == "slow":
@@ -833,7 +834,8 @@ class SnapshotLoader:
         def load():
             try:
                 self.results.put((self.fetch(kind), None))
-            except Exception as exc:  # UI に表示し、次の更新を継続する。
+            except BaseException as exc:  # UI に表示し、次の更新を継続する。
+                # 結果を必ず返す。返さないと RefreshSchedule が取得中のまま止まる。
                 self.results.put((None, exc))
 
         self.worker = threading.Thread(target=load, daemon=True)
@@ -1055,7 +1057,8 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
         loaded = loader.poll()
         if loaded:
             value, error = loaded
-            schedule.finished(time.monotonic(), ok=error is None)
+            schedule.finished(time.monotonic(), ok=error is None,
+                              kind=getattr(source, "last_kind", ""))
             if value is not None:
                 model.refresh(value)
             if error is not None:
@@ -1133,10 +1136,11 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
                 pane = worktrees.open_worktree(path, session, origin, provider)
                 if pane and focus_pane(pane, session):
                     return
-                schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 message = "起動失敗: " + str(exc)
                 message_until = now + 5
+            # pane は作れたが前面化できず dashboard が残る場合も、一覧を読み直す
+            schedule.request_slow(time.monotonic())
         elif key == "n":
             root = repository_root_for_row(model.selected_row(), model.snapshot)
             if not root:

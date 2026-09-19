@@ -176,9 +176,11 @@ class SnapshotSource:
         self.session_id = session_id
         self.origin_pane = origin_pane
         self._inventory = None
+        self.last_kind = ""  # 直近に実際に行った取得（fast が slow に切り替わることがある）
 
     def slow(self):
         import worktrees
+        self.last_kind = "slow"
         inventory = worktrees.GitInventory()
         value = snapshot(self.session_id, self.origin_pane, inventory)
         inventory.freeze()
@@ -190,6 +192,7 @@ class SnapshotSource:
         if self._inventory is None:
             return self.slow()
         try:
+            self.last_kind = "fast"
             return snapshot(self.session_id, self.origin_pane, self._inventory)
         except worktrees.StaleInventory:  # 未知の cwd / root が現れた
             return self.slow()

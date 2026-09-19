@@ -611,6 +611,17 @@ class RefreshScheduleTests(unittest.TestCase):
         schedule.finished(0.6)
         self.assertEqual(schedule.due(0.6 + self.fast), "fast")
 
+    def test_fast_fetch_that_turned_into_a_slow_one_resets_the_slow_period(self):
+        schedule = dashboard.RefreshSchedule(now=0.0)
+        almost = self.slow - 0.2
+        schedule.next_at = almost
+        self.assertEqual(schedule.due(almost), "fast")
+        schedule.started("fast")
+        schedule.finished(almost + 0.1, kind="slow")  # 未知の cwd で slow に切り替わった
+        after = almost + 0.1 + self.fast
+        self.assertGreater(after, self.slow)           # 本来の slow の期限は過ぎているが
+        self.assertEqual(schedule.due(after), "fast")  # 直後にもう一度 git を読み直さない
+
     def test_failed_slow_fetch_is_retried_after_the_fast_period(self):
         schedule = dashboard.RefreshSchedule(now=0.0)
         schedule.request_slow(0.0)
@@ -637,10 +648,24 @@ class SnapshotLoaderTests(unittest.TestCase):
         self.assertEqual(loader.poll(), ({"kind": "fast"}, None))
         self.assertEqual(seen, ["fast"])
 
+    def test_worker_that_dies_abnormally_still_reports_so_refreshing_can_continue(self):
+        def fetch(kind):
+            raise SystemExit("worker killed")
+
+        loader = dashboard.SnapshotLoader(fetch)
+        self.assertTrue(loader.request("fast"))
+        loader.worker.join(5)
+        value, error = loader.poll()
+        self.assertIsNone(value)
+        self.assertIsInstance(error, SystemExit)
+
 
 class FakeScreen:
     def __init__(self, keys, until):
-        self.keys, self.until, self.spins = list(keys), until, 0
+        self.keys, self.until, self.spins, self.drawn = list(keys), until, 0, []
+
+    def addstr(self, y, x, value, attribute=0):
+        self.drawn.append(value)
 
     def getmaxyx(self):
         return (24, 100)
@@ -698,6 +723,44 @@ class LoopRefreshTests(unittest.TestCase):
         kinds = self.run_loop(["\t", "\x0e", "d"], module)  # worktree 表示 → 1 行下 → 削除
         module.remove_worktree.assert_called_once()
         self.assertEqual(kinds[0], "slow")
+
+    def test_failed_fetch_shows_a_message_and_refreshing_continues(self):
+        done = threading.Event()
+
+        class FlakySource(FakeSource):
+            def slow(self):
+                self.kinds.append("slow")
+                if self.kinds.count("slow") == 1:
+                    raise RuntimeError("tmux gone")
+                self.done.set()
+                return cached_snapshot()
+
+        source, screen = FlakySource(done), FakeScreen(["a"], done)
+        real = dashboard.RefreshSchedule
+        with mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                mock.patch.object(dashboard, "tmux_panes", return_value=[]), \
+                mock.patch.object(dashboard, "RefreshSchedule",
+                                  lambda now: real(now, fast=0.01, slow=60.0)):
+            dashboard._run_dashboard(screen, cached_snapshot(), None, mock.Mock(),
+                                     "$1", "%1", source=source)
+        self.assertLess(screen.spins, 400, "refreshing stopped after a failed fetch")
+        self.assertGreaterEqual(source.kinds.count("slow"), 2)
+        self.assertTrue(any("更新失敗: tmux gone" in text for text in screen.drawn), screen.drawn[-5:])
+
+    def test_opened_pane_that_cannot_be_focused_requests_a_slow_fetch(self):
+        for focus in (mock.Mock(return_value=False),
+                      mock.Mock(side_effect=[RuntimeError("no such pane"), False])):
+            done = threading.Event()
+            source, screen = FakeSource(done), FakeScreen(["s"], done)
+            module = mock.Mock()
+            module.open_worktree.return_value = "%9"
+            with mock.patch.object(dashboard, "focus_pane", focus), \
+                    mock.patch.object(dashboard, "worktree_path_for_row", return_value="/repo/a"):
+                dashboard._run_dashboard(screen, cached_snapshot(), None, module,
+                                         "$1", "%1", source=source)
+            module.open_worktree.assert_called_once()
+            self.assertLess(screen.spins, 400, "slow fetch was never requested")
+            self.assertEqual(source.kinds[0], "slow")
 
     def test_toggling_auto_requests_a_slow_fetch_at_once(self):
         module = mock.Mock()

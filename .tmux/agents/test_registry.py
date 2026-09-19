@@ -208,6 +208,7 @@ class SnapshotGitTests(unittest.TestCase):
             self.assertTrue(calls)
             calls.clear()
             fast = source.fast()
+            self.assertEqual(source.last_kind, "fast")
         self.assertEqual(calls, [])
         self.assertEqual(fast, slow)
 
@@ -242,10 +243,27 @@ class SnapshotGitTests(unittest.TestCase):
             box[0] = self.panes_for([str(self.root), str(other)])
             value = source.fast()
             self.assertTrue(calls)  # 遅い取得に切り替わった
+            self.assertEqual(source.last_kind, "slow")
             calls.clear()
             source.fast()
         self.assertEqual(sorted(repo["name"] for repo in value["repos"]), ["other", "repo"])
         self.assertEqual(calls, [])  # 切り替え後は新しい cwd も既知
+
+    def test_fast_refresh_switches_to_slow_for_a_new_worktree_of_a_known_repository(self):
+        calls, box = [], [self.panes_for([str(self.root)])]
+        with self.tmux_free(box, calls):
+            source = registry.SnapshotSource("$1", "%0")
+            source.slow()
+            fresh = Path(self.temp.name) / "fresh"
+            subprocess.run(["git", "-C", str(self.root), "worktree", "add", "-qb", "fresh",
+                            str(fresh)], check=True, capture_output=True)
+            calls.clear()
+            box[0] = self.panes_for([str(self.root), str(fresh)])
+            value = source.fast()
+        self.assertTrue(calls)  # 親の checkout に黙って割り当てず、読み直す
+        panes = {Path(row["path"]).name: row["panes"] for row in value["worktrees"]}
+        self.assertEqual(panes["fresh"], ["%1"])
+        self.assertEqual(panes["repo"], ["%0"])
 
     def test_fast_without_a_prior_slow_fetch_does_a_slow_one(self):
         calls, box = [], [self.panes_for([str(self.root)])]

@@ -73,7 +73,7 @@ def measure_steady(session, origin, seconds=10.0, fast=None, slow=None):
         while time.monotonic() - start < seconds:
             loaded = loader.poll()
             if loaded:
-                schedule.finished(time.monotonic(), ok=loaded[1] is None)
+                schedule.finished(time.monotonic(), ok=loaded[1] is None, kind=source.last_kind)
             kind = schedule.due(time.monotonic())
             if kind and loader.request(kind):
                 schedule.started(kind)
@@ -89,7 +89,10 @@ def measure_steady(session, origin, seconds=10.0, fast=None, slow=None):
 
 def _cpu_seconds():
     """自プロセスと、終了済みの子プロセス（git / tmux / ps）の CPU 秒。"""
-    import resource
+    try:
+        import resource
+    except ImportError:  # POSIX 以外では CPU は測らない
+        return 0.0
     total = 0.0
     for who in (resource.RUSAGE_SELF, resource.RUSAGE_CHILDREN):
         usage = resource.getrusage(who)
