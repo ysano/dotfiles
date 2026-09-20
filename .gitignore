@@ -180,6 +180,9 @@ karabiner/automatic_backups
 # Claude Code related
 .claude/cache/
 .claude/sessions/
+# ai-dlc の作業状態（一時的なもの。成果物は docs/ai-dlc/ に置く）
+.ai-dlc/
+.claude/drive-context.json
 CLAUDE_WORKFLOWS_TEST_RESULTS.md
 __pycache__/
 *.pyc
