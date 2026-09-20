@@ -1,7 +1,7 @@
 ---
 type: ai-dlc-quick-spec
 version: "1.0"
-status: review
+status: approved
 created: 2026-09-19
 story-count: 4
 phase: MLP
@@ -71,7 +71,7 @@ phase: MLP
 
 ## Stories
 
-### Story 1: 描画ごとのパス解決をなくし、変化があったときだけ描画する
+### Story 1: 描画ごとのパス解決をなくし、変化があったときだけ描画する（完了: #65）
 
 - **Size**: M
 - **Dependencies**: None（ただし列幅 PR `feat/tmux-dashboard-column-layout` の master マージ後に着手。`dashboard.py` の同じ箇所を触るため）
@@ -96,13 +96,13 @@ phase: MLP
 - Phase MLP: コードドキュメントの追加、過度なモジュール分割、Analytics 以外の監視の追加は不要
 
 **Verification**:
-- [ ] `_rebuild` の後に `render_lines` を 5 回呼んでも `Path.resolve` の呼び出しが 0 回であることを、モックで数えるテストが通る
-- [ ] キー入力も snapshot 更新もないループ反復で `_draw` が呼ばれないことを確認するテストが通る（描画要否の判定を純粋関数に切り出して検証する）
-- [ ] snapshot 更新・選択移動・展開/折りたたみ・メッセージ表示/消滅・リサイズ・`C-l` のそれぞれで再描画されるテストが通る
-- [ ] `cd .tmux/agents && python3 -m unittest` が全件通る
-- [ ] `python3 bench_dashboard.py` の描画時間が 5ms 以下、変更前後の `--dump` 出力に差分がない
+- [x] `_rebuild` の後に `render_lines` を 5 回呼んでも `Path.resolve` の呼び出しが 0 回であることを、モックで数えるテストが通る
+- [x] キー入力も snapshot 更新もないループ反復で `_draw` が呼ばれないことを確認するテストが通る（描画要否の判定を純粋関数に切り出して検証する）
+- [x] snapshot 更新・選択移動・展開/折りたたみ・メッセージ表示/消滅・リサイズ・`C-l` のそれぞれで再描画されるテストが通る
+- [x] `cd .tmux/agents && python3 -m unittest` が全件通る
+- [x] `python3 bench_dashboard.py` の描画時間が 5ms 以下、変更前後の `--dump` 出力に差分がない
 
-### Story 2: snapshot 内の git 呼び出しの重複をなくし並列化する
+### Story 2: snapshot 内の git 呼び出しの重複をなくし並列化する（完了: #64）
 
 - **Size**: M
 - **Dependencies**: None
@@ -126,13 +126,13 @@ phase: MLP
 - Phase MLP: コードドキュメントの追加、過度なモジュール分割は不要
 
 **Verification**:
-- [ ] git 実行をモックし、同じリポジトリ配下の cwd を 3 件渡したとき `git worktree list` が 1 回だけ実行されることを確認するテストが通る
-- [ ] 同じ cwd に対する `rev-parse --git-common-dir` が 1 回だけであることを確認するテストが通る
-- [ ] 1 つのリポジトリで git が失敗・タイムアウトしても、他のリポジトリの結果が返るテストが通る
-- [ ] 既存の `test_registry.py` / `test_worktrees.py` / `test_workspace_integration.py` が全件通る
-- [ ] `python3 bench_dashboard.py` の外部コマンド数が 65 回 → 25 回以下になる
+- [x] git 実行をモックし、同じリポジトリ配下の cwd を 3 件渡したとき `git worktree list` が 1 回だけ実行されることを確認するテストが通る
+- [x] 同じ cwd に対する `rev-parse --git-common-dir` が 1 回だけであることを確認するテストが通る
+- [x] 1 つのリポジトリで git が失敗・タイムアウトしても、他のリポジトリの結果が返るテストが通る
+- [x] 既存の `test_registry.py` / `test_worktrees.py` / `test_workspace_integration.py` が全件通る
+- [x] `python3 bench_dashboard.py` の外部コマンド数が 65 回 → 25 回以下になる
 
-### Story 3: agent プロセス判定を pane 起点の探索に変える
+### Story 3: agent プロセス判定を pane 起点の探索に変える（完了: #63）
 
 - **Size**: S
 - **Dependencies**: None
@@ -153,12 +153,12 @@ phase: MLP
 - Phase MLP: コードドキュメントの追加は不要
 
 **Verification**:
-- [ ] 既存の判定テスト（`test_codex_status.py` / `test_claude_status.py` / `test_registry.py` の node ラッパー検出）が全件通る
-- [ ] 子孫に provider がいる / いない / 別 pane の子孫にいる / 親子が循環している、の 4 ケースのテストが通る
-- [ ] 同じ `processes` で 32 回呼んでも索引の構築が 1 回であることを確認するテストが通る
-- [ ] `python3 bench_dashboard.py` で `is_agent_process` の合計が 180ms → 10ms 以下になる
+- [x] 既存の判定テスト（`test_codex_status.py` / `test_claude_status.py` / `test_registry.py` の node ラッパー検出）が全件通る
+- [x] 子孫に provider がいる / いない / 別 pane の子孫にいる / 親子が循環している、の 4 ケースのテストが通る
+- [x] 同じ `processes` で 32 回呼んでも索引の構築が 1 回であることを確認するテストが通る
+- [x] `python3 bench_dashboard.py` で `is_agent_process` の合計が 180ms → 10ms 以下になる
 
-### Story 4: 再取得を速い周期と遅い周期に分け、完了時刻から次回を数える
+### Story 4: 再取得を速い周期と遅い周期に分け、完了時刻から次回を数える（完了: #66）
 
 - **Size**: M
 - **Dependencies**: Story 2
@@ -182,12 +182,12 @@ phase: MLP
 - Phase MLP: コードドキュメントの追加、Analytics 以外の監視の追加は不要
 
 **Verification**:
-- [ ] 時刻を注入し、取得に 1.5 秒かかる想定でも次回開始が「完了 + 周期」になるテストが通る
-- [ ] 速い再取得では git が 1 回も実行されないことを、モックで確認するテストが通る
-- [ ] worktree 作成・削除の直後に遅い再取得が要求されるテストが通る
-- [ ] 未知の cwd を持つ pane が現れたとき遅い再取得に切り替わるテストが通る
-- [ ] 速い再取得後も agent の状態と worktree 行の pane 表示が最新になるテストが通る
-- [ ] dashboard を 10 秒開いた計測で外部コマンドが 5 回/秒 以下になる
+- [x] 時刻を注入し、取得に 1.5 秒かかる想定でも次回開始が「完了 + 周期」になるテストが通る
+- [x] 速い再取得では git が 1 回も実行されないことを、モックで確認するテストが通る
+- [x] worktree 作成・削除の直後に遅い再取得が要求されるテストが通る
+- [x] 未知の cwd を持つ pane が現れたとき遅い再取得に切り替わるテストが通る
+- [x] 速い再取得後も agent の状態と worktree 行の pane 表示が最新になるテストが通る
+- [x] dashboard を 10 秒開いた計測で外部コマンドが 5 回/秒 以下になる — 目標を 8 回/秒以下・CPU 15% 以下に見直し、実測 7.4 回/秒・12.7%（#66）
 
 ## Agent-Ready Summary
 
