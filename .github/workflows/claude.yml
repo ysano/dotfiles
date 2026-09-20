@@ -32,33 +32,27 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@beta
+        # バージョンは固定し、更新は dependabot（github-actions）の PR で受ける
+        uses: anthropics/claude-code-action@v1.0.231
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
-          
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-opus-4-20250514"
-          
+
+          # v1 に既定モデルの固定はない（Claude Code 任せ）。明示する。
+          # @claude と呼んだときだけ走り、難しい相談に使うので Opus。
+          claude_args: |
+            --model claude-opus-5
+
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
-          
+
           # Optional: Trigger when specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
-          
-          # Optional: Allow Claude to run specific commands
-          # allowed_tools: "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
-          
-          # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
-          
-          # Optional: Custom environment variables for Claude
-          # claude_env: |
-          #   NODE_ENV: test
 
+          # Optional: 使えるコマンドや追加の指示は claude_args で渡す（v1 で model /
+          # allowed_tools / custom_instructions の各入力は廃止）
+          #   --allowedTools "Bash(python3 -m unittest:*)"
+          #   --append-system-prompt "日本語で回答する"
