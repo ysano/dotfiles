@@ -12,8 +12,10 @@ time zsh -i -c exit
 # Zinit プラグイン読み込み時間
 # Zsh内: zinit times
 
-# 設定テストスクリプト
-./test_zsh_config.zsh
+# 構文チェック・テストスクリプト
+for f in .zshrc .zprofile .zsh/*.zsh; do zsh -n "$f"; done
+./test_aliases_claude.zsh
+./test_git_worktree.zsh
 ```
 
 ## Terminal Color Support
