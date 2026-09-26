@@ -32,6 +32,34 @@
 - **クロスプラットフォーム**: OS固有機能は条件分岐で対応
 - **環境非依存パス**: テスト・スクリプトに絶対パスをハードコードしない。CI（GitHub Actions）でも動作すること
 
+## 構成とデプロイ
+
+| パス | 役割 | `link.sh` での配備 |
+|---|---|---|
+| `.zshrc` `.zprofile` `.zsh/` | Zsh（OS 別 `aliases_{darwin,linux,msys,freebsd}.zsh`、Zinit） | `~/` に symlink |
+| `.emacs.d/` | Emacs（`init.el` ＋ `inits/`）。固有ルールは `.emacs.d/CLAUDE.md` | `~/.emacs.d` |
+| `.tmux.conf` `.tmux/` | tmux（モジュラー conf、Claude 連携 `claude/` `agents/`、検証入口 `ci.sh`） | `~/.tmux*` |
+| `.skhdrc` `.yabairc` `.Xresources` `.xinitrc` `.aspell.conf` | OS 固有の単体設定 | `~/` に symlink |
+| `.config/{bat,git,ripgrep}` | XDG 設定 | `$XDG_CONFIG_HOME/` |
+| `.claude/statusline-command.sh` | ホスト固有の統合スクリプト | `~/.claude/` に個別 symlink |
+| `.claude/{agents,commands,skills}` | dotfiles 固有の Claude Code 資産（このリポジトリで作業するときに読まれる） | 配備しない |
+| `bin/` | 個人 CLI（`emoji-id`、`claude-doctor`） | 配備しない（`.zshrc` が `~/dotfiles/bin` を PATH に追加） |
+| `karabiner/` `wsl/` `mayu/` `keyboard-maestro/` | OS 固有の設定 | 手動（`karabiner` と `wsl` は `README.org`、`mayu` と `keyboard-maestro` は `docs/managed-tools.md`） |
+
+- **`link.sh` の挙動**: 配備対象は先頭の配列（`files` / `dirs` / `config_dirs` / `claude_files`）で宣言する。既存の実ファイルは `*.orig` に退避し、既存の symlink は張り直す。msys/cygwin では `cmd //c mklink` を使う（`ln -s` だと実体コピーになるため）。リンク元は `$HOME/dotfiles` 固定なので、clone 先は `~/dotfiles` を前提とする。
+- **配備対象の追加**: 配列に名前を足すだけで済む。`config_dirs` / `claude_files` は、リンク元が存在しない場合は黙ってスキップされるので、追加後はリンクが張られたことを確認する。
+- **CI**: workflow ごとに `paths` フィルタで対象を絞っている。`ci.yml` は `.tmux/**` の変更で `.tmux/ci.sh` を実行し、`shell-tests.yml` は `bin/**` と `test_*.sh` の変更で `test_emoji_id.sh` を実行する。ルート直下の Zsh テスト（`test_*.zsh`）と `test_resurrect.sh` は CI に乗っていないため、手元で実行する。
+
+## 既知の陳腐化（未整理）
+
+`claude-home/` の撤去（2026-02-19、claude-plugins へ移行）と Claude-Command-Suite 統合の廃止で残った参照。修正するまでは、これらを正しい手順として扱わない。
+
+- `test-observability.yml`: トリガーも実行先も削除済みの `claude-home/` なので発火しない。`test-hooks.yml` は `.github/scripts/` の変更で起動するが、`test-board-integration.sh` が `claude-home/` を参照している。
+- `Makefile` の `test` / `unit-test` / `test-quick`: 存在しない `.tmux/claude/tests/test_runner.sh` を前提にしている（`make test` は exit 1）。`.github/pull_request_template.md` の `./test_runner.sh all` も同じ。
+- `link.sh` の `config_dirs` にある `gwt`: `.config/gwt` がないためスキップされる。
+- `scripts/*.sh` と `.gitattributes` の source mapping: 旧 Command-Suite 統合用の道具で、現行の `.claude/` 構成とは合わない。
+- `.claude/skills/tmux-config/SKILL.md` の `~/.tmux/test_resurrect.sh`: 実物はリポジトリ直下の `test_resurrect.sh`。
+
 ## Claude Code モジュール
 
 | ディレクトリ | 用途 |
