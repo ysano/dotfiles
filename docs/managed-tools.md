@@ -28,7 +28,6 @@
 | **Git** | `.config/git/config`, `.config/git/ignore` | `link.sh` → `$XDG_CONFIG_HOME` | バージョン管理 |
 | **bat** | `.config/bat/config` | `link.sh` → `$XDG_CONFIG_HOME` | catの代替（構文ハイライト） |
 | **ripgrep** | `.config/ripgrep/config` | `link.sh` → `$XDG_CONFIG_HOME` | grepの代替（高速検索） |
-| **gwt** | `.config/gwt/` | `link.sh` → `$XDG_CONFIG_HOME` | Git worktree管理 |
 | **Aspell** | `.aspell.conf` | `link.sh` → `$HOME` | スペルチェッカー |
 
 ### パッケージ管理

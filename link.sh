@@ -11,7 +11,7 @@ files=(.zshrc .zprofile .tmux.conf .aspell.conf .xinitrc .Xresources .yabairc .s
 dirs=(.zsh .emacs.d .tmux)
 
 # XDG_CONFIG_HOME配下のディレクトリ
-config_dirs=(gwt bat ripgrep git)
+config_dirs=(bat ripgrep git)
 
 # ~/.claude/ 配下に個別配備するファイル
 # (claude-plugins とは別管理。ホスト固有な統合スクリプト等を symlink で展開)

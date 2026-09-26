@@ -20,7 +20,7 @@ link.sh
   ├── dirs[]        ホーム直下ディレクトリ (.zsh, .emacs.d, .tmux)
   │   └── $HOME/$d -> $HOME/dotfiles/$d
   │
-  └── config_dirs[] XDG_CONFIG_HOME配下 (gwt, bat, ripgrep, git)
+  └── config_dirs[] XDG_CONFIG_HOME配下 (bat, ripgrep, git)
       └── $XDG_CONFIG_HOME/$d -> $HOME/dotfiles/.config/$d
 ```
 
