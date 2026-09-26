@@ -93,7 +93,7 @@ mise パッケージ本体は machine-management の Brewfile（`brew "mise"`）
 
 **対象**:
 - Emacs, tmux, Zsh, skhd, yabai（Skill対応）
-- Git, bat, ripgrep, gwt, Aspell, Homebrew, X11, RPM（その他）
+- Git, bat, ripgrep, Aspell, Homebrew, X11, RPM（その他）
 
 **動作**:
 1. ソースファイルへのシンボリックリンク作成
