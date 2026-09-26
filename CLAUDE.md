@@ -44,7 +44,7 @@
 | `.claude/statusline-command.sh` | ホスト固有の統合スクリプト | `~/.claude/` に個別 symlink |
 | `.claude/{agents,commands,skills}` | dotfiles 固有の Claude Code 資産（このリポジトリで作業するときに読まれる） | 配備しない |
 | `bin/` | 個人 CLI（`emoji-id`、`claude-doctor`） | 配備しない（`.zshrc` が `~/dotfiles/bin` を PATH に追加） |
-| `karabiner/` `wsl/` `mayu/` `keyboard-maestro/` | OS 固有の設定 | 手動コピー（`README.org`） |
+| `karabiner/` `wsl/` `mayu/` `keyboard-maestro/` | OS 固有の設定 | 手動（`karabiner` と `wsl` は `README.org`、`mayu` と `keyboard-maestro` は `docs/managed-tools.md`） |
 
 - **`link.sh` の挙動**: 配備対象は先頭の配列（`files` / `dirs` / `config_dirs` / `claude_files`）で宣言する。既存の実ファイルは `*.orig` に退避し、既存の symlink は張り直す。msys/cygwin では `cmd //c mklink` を使う（`ln -s` だと実体コピーになるため）。リンク元は `$HOME/dotfiles` 固定なので、clone 先は `~/dotfiles` を前提とする。
 - **配備対象の追加**: 配列に名前を足すだけで済む。`config_dirs` / `claude_files` は、リンク元が存在しない場合は黙ってスキップされるので、追加後はリンクが張られたことを確認する。
