@@ -28,7 +28,6 @@
 | **Git** | `.config/git/config`, `.config/git/ignore` | `link.sh` → `$XDG_CONFIG_HOME` | バージョン管理 |
 | **bat** | `.config/bat/config` | `link.sh` → `$XDG_CONFIG_HOME` | catの代替（構文ハイライト） |
 | **ripgrep** | `.config/ripgrep/config` | `link.sh` → `$XDG_CONFIG_HOME` | grepの代替（高速検索） |
-| **gwt** | `.config/gwt/` | `link.sh` → `$XDG_CONFIG_HOME` | Git worktree管理 |
 | **Aspell** | `.aspell.conf` | `link.sh` → `$HOME` | スペルチェッカー |
 
 ### パッケージ管理
@@ -94,7 +93,7 @@ mise パッケージ本体は machine-management の Brewfile（`brew "mise"`）
 
 **対象**:
 - Emacs, tmux, Zsh, skhd, yabai（Skill対応）
-- Git, bat, ripgrep, gwt, Aspell, Homebrew, X11, RPM（その他）
+- Git, bat, ripgrep, Aspell, Homebrew, X11, RPM（その他）
 
 **動作**:
 1. ソースファイルへのシンボリックリンク作成

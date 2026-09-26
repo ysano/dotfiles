@@ -73,7 +73,7 @@ for d in "${dirs[@]}"; do
 done
 
 # config_dirs 配列
-config_dirs=(gwt bat ripgrep git)
+config_dirs=(bat ripgrep git)
 for d in "${config_dirs[@]}"; do
     if [[ -d "$DOTFILES_ROOT/.config/$d" ]]; then
         result PASS "config: .config/$d/"

@@ -15,6 +15,7 @@
 ./link.sh                # シンボリックリンク作成・デプロイ（$HOME を変更する）
 ./test_aliases_claude.zsh && ./test_git_worktree.zsh  # Zsh エイリアス・gwt の検証
 (cd .tmux && bash ci.sh) # tmux 設定・スクリプトの検証（CI と同じ入口）
+make test                # 上記と bin のテストをまとめて実行
 ```
 
 各テストの CI 上の入口は `.github/workflows/` を参照。
@@ -49,16 +50,6 @@
 - **`link.sh` の挙動**: 配備対象は先頭の配列（`files` / `dirs` / `config_dirs` / `claude_files`）で宣言する。既存の実ファイルは `*.orig` に退避し、既存の symlink は張り直す。msys/cygwin では `cmd //c mklink` を使う（`ln -s` だと実体コピーになるため）。リンク元は `$HOME/dotfiles` 固定なので、clone 先は `~/dotfiles` を前提とする。
 - **配備対象の追加**: 配列に名前を足すだけで済む。`config_dirs` / `claude_files` は、リンク元が存在しない場合は黙ってスキップされるので、追加後はリンクが張られたことを確認する。
 - **CI**: workflow ごとに `paths` フィルタで対象を絞っている。`ci.yml` は `.tmux/**` の変更で `.tmux/ci.sh` を実行し、`shell-tests.yml` は `bin/**` と `test_*.sh` の変更で `test_emoji_id.sh` を実行する。ルート直下の Zsh テスト（`test_*.zsh`）と `test_resurrect.sh` は CI に乗っていないため、手元で実行する。
-
-## 既知の陳腐化（未整理）
-
-`claude-home/` の撤去（2026-02-19、claude-plugins へ移行）と Claude-Command-Suite 統合の廃止で残った参照。修正するまでは、これらを正しい手順として扱わない。
-
-- `test-observability.yml`: トリガーも実行先も削除済みの `claude-home/` なので発火しない。`test-hooks.yml` は `.github/scripts/` の変更で起動するが、`test-board-integration.sh` が `claude-home/` を参照している。
-- `Makefile` の `test` / `unit-test` / `test-quick`: 存在しない `.tmux/claude/tests/test_runner.sh` を前提にしている（`make test` は exit 1）。`.github/pull_request_template.md` の `./test_runner.sh all` も同じ。
-- `link.sh` の `config_dirs` にある `gwt`: `.config/gwt` がないためスキップされる。
-- `scripts/*.sh` と `.gitattributes` の source mapping: 旧 Command-Suite 統合用の道具で、現行の `.claude/` 構成とは合わない。
-- `.claude/skills/tmux-config/SKILL.md` の `~/.tmux/test_resurrect.sh`: 実物はリポジトリ直下の `test_resurrect.sh`。
 
 ## Claude Code モジュール
 

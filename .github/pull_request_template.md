@@ -48,7 +48,7 @@ Related to #(issue_number)
 ### Test Results
 ```bash
 # Paste test results here
-./test_runner.sh all
+make test
 ```
 
 ### Platform Testing

@@ -81,7 +81,7 @@ FAIL が出たら修正し、全 PASS/WARN になるまで繰り返す。
 | Zsh | `.zshrc`, `.zprofile`, `.zsh/` | zsh-config |
 | Keyboard | `karabiner/*.json`, `.skhdrc`, `.yabairc` | keyboard-config |
 
-**その他のツール**: `docs/managed-tools.md` 参照（Git, bat, ripgrep, gwt, Homebrew, X11, WSL, Cursor等）
+**その他のツール**: `docs/managed-tools.md` 参照（Git, bat, ripgrep, Homebrew, X11, WSL, Cursor等）
 
 **デプロイ**: 大部分は`link.sh`経由、詳細は`docs/managed-tools.md`参照
 

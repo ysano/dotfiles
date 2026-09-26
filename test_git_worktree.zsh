@@ -43,6 +43,9 @@ echo ""
 cd "$TEST_DIR"
 git init test-repo >/dev/null 2>&1
 cd test-repo
+# CI 等で user.name/email が未設定でも commit できるよう、テスト用リポジトリ内でだけ設定する
+git config user.name "gwt-test"
+git config user.email "gwt-test@example.invalid"
 git commit --allow-empty -m "initial commit" >/dev/null 2>&1
 
 # gwt読み込み

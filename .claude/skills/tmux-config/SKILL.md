@@ -100,7 +100,7 @@ Claude Voice 詳細: `.tmux/docs/` (7ファイル) を参照。
 tmux source ~/.tmux.conf
 
 # resurrect テスト
-~/.tmux/test_resurrect.sh
+~/dotfiles/test_resurrect.sh
 
 # デバッグモード有効化
 TMUX_DEBUG_MODE=true tmux

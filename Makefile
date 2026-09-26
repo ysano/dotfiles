@@ -8,8 +8,6 @@
 # 変数定義
 CLAUDE_DIR := .tmux/claude
 CORE_DIR := $(CLAUDE_DIR)/core
-OS_DIR := $(CLAUDE_DIR)/os
-TEST_DIR := $(CLAUDE_DIR)/tests
 EXCLUDE_SC := SC1090,SC1091,SC2034,SC2086,SC2155,SC2016,SC2001,SC2154,SC2005,SC2120,SC2046,SC2162,SC2119,SC2207,SC2184,SC2152,SC2064,SC2168,SC2178,SC2221,SC2222,SC2076,SC2181,SC2094,SC2088,SC2004,SC2126,SC2144,SC2206,SC2317
 
 # カラー出力
@@ -34,8 +32,14 @@ check: lint test security
 ## 🔍 コード品質チェック（ShellCheck + フォーマット）
 lint: shellcheck format-check
 
-## 🧪 テスト実行
-test: unit-test integration-test
+## 🧪 テスト実行（Zsh・tmux・bin の実テスト）
+test:
+	@echo "$(CYAN)🧪 テストを実行中...$(NC)"
+	@./test_aliases_claude.zsh
+	@./test_git_worktree.zsh
+	@cd .tmux && bash ci.sh
+	@bash test_emoji_id.sh
+	@echo "$(GREEN)✅ テスト完了$(NC)"
 
 ## 🔒 セキュリティチェック
 security: secret-scan vuln-scan
@@ -152,38 +156,6 @@ format-fix:
 # ============================================================================
 # テスト実行
 # ============================================================================
-
-## 🧪 単体テスト実行
-unit-test:
-	@echo "$(CYAN)🧪 単体テストを実行中...$(NC)"
-	@if [ -f "$(TEST_DIR)/test_runner.sh" ]; then \
-		cd $(TEST_DIR) && chmod +x test_runner.sh && ./test_runner.sh unit; \
-		echo "$(GREEN)✅ 単体テスト完了$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️ テストランナーが見つかりません: $(TEST_DIR)/test_runner.sh$(NC)"; \
-		exit 1; \
-	fi
-
-## 🔗 統合テスト実行
-integration-test:
-	@echo "$(CYAN)🔗 統合テストを実行中...$(NC)"
-	@if [ -f "$(TEST_DIR)/test_runner.sh" ]; then \
-		cd $(TEST_DIR) && chmod +x test_runner.sh && ./test_runner.sh integration; \
-		echo "$(GREEN)✅ 統合テスト完了$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️ テストランナーが見つかりません$(NC)"; \
-		exit 1; \
-	fi
-
-## ⚡ 高速テスト（基本チェックのみ）
-test-quick:
-	@echo "$(CYAN)⚡ 高速テストを実行中...$(NC)"
-	@if [ -f "$(TEST_DIR)/test_runner.sh" ]; then \
-		cd $(TEST_DIR) && chmod +x test_runner.sh && timeout 60 ./test_runner.sh unit --quick; \
-		echo "$(GREEN)✅ 高速テスト完了$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️ テストランナーが見つかりません$(NC)"; \
-	fi
 
 # ============================================================================
 # セキュリティチェック
@@ -305,7 +277,7 @@ quality-report:
 # ============================================================================
 
 ## 🔄 開発用フルチェック（高速）
-dev-check: shellcheck test-quick
+dev-check: shellcheck test
 	@echo "$(GREEN)🔄 開発用チェック完了$(NC)"
 
 ## 👀 ファイル変更監視（要: inotify-tools）
@@ -330,9 +302,8 @@ stats:
 	@echo ""
 	@echo "$(BLUE)📄 ファイル統計:$(NC)"
 	@echo "  Shell scripts: $$(find $(CLAUDE_DIR) -name "*.sh" | wc -l)"
-	@echo "  Test files: $$(find $(TEST_DIR) -name "*.sh" 2>/dev/null | wc -l)"
+	@echo "  Test files: $$(find $(CLAUDE_DIR) -name "test_*.sh" | wc -l)"
 	@echo "  Core modules: $$(find $(CORE_DIR) -name "*.sh" 2>/dev/null | wc -l)"
-	@echo "  OS modules: $$(find $(OS_DIR) -name "*.sh" 2>/dev/null | wc -l)"
 	@echo ""
 	@echo "$(BLUE)📊 コード統計:$(NC)"
 	@total_lines=$$(find $(CLAUDE_DIR) -name "*.sh" -exec wc -l {} + | tail -1 | awk '{print $$1}'); \
@@ -386,7 +357,7 @@ help:
 	@echo "  $(BLUE)make check$(NC)          # CI相当のフルチェック"
 	@echo "  $(BLUE)make dev-check$(NC)      # 開発用高速チェック"
 	@echo "  $(BLUE)make lint$(NC)           # コード品質チェックのみ"
-	@echo "  $(BLUE)make test-quick$(NC)     # 高速テストのみ"
+	@echo "  $(BLUE)make test$(NC)           # テストのみ"
 	@echo "  $(BLUE)make install-tools$(NC)  # 必要ツールをインストール"
 	@echo "  $(BLUE)make watch$(NC)          # ファイル変更監視"
 	@echo ""
