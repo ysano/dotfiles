@@ -14,7 +14,7 @@ allowed-tools: [Bash, Read, Edit, TodoWrite]
 2. **品質チェック（コミット前必須）**
 
    **dotfiles固有の品質チェック**:
-   - **Zsh**: `./test_zsh_config.zsh` - 構文、PATH、エイリアス検証
+   - **Zsh**: `for f in .zshrc .zprofile .zsh/*.zsh; do zsh -n "$f"; done` - 構文検証、`./test_aliases_claude.zsh` / `./test_git_worktree.zsh` - エイリアス・gwt 検証
    - **Emacs**: `emacs --batch --eval "(byte-compile-file \"init.el\")"` - byte-compile
    - **tmux**: `.claude/skills/tmux-config/scripts/check_conflicts.sh` - 競合検証
    - **Karabiner**: `python3 -c "import json; json.load(open('karabiner/karabiner.json'))"` - JSON構文
@@ -59,7 +59,8 @@ allowed-tools: [Bash, Read, Edit, TodoWrite]
 
 ```bash
 # 品質チェック（dotfiles）
-./test_zsh_config.zsh
+for f in .zshrc .zprofile .zsh/*.zsh; do zsh -n "$f"; done
+./test_aliases_claude.zsh
 emacs --batch --eval "(byte-compile-file \"init.el\")"
 .claude/skills/tmux-config/scripts/check_conflicts.sh
 

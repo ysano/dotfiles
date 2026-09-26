@@ -12,9 +12,18 @@
 ## 開発コマンド
 
 ```bash
-./link.sh                # シンボリックリンク作成・デプロイ
-./test_zsh_config.zsh    # Zsh設定の検証テスト
+./link.sh                # シンボリックリンク作成・デプロイ（$HOME を変更する）
+./test_aliases_claude.zsh && ./test_git_worktree.zsh  # Zsh エイリアス・gwt の検証
+(cd .tmux && bash ci.sh) # tmux 設定・スクリプトの検証（CI と同じ入口）
 ```
+
+各テストの CI 上の入口は `.github/workflows/` を参照。
+
+## 完了条件・作業上の注意
+
+- **Done**: 変更したツールの構文チェック（`zsh -n` / tmux の設定読込 / Emacs の batch load）が通る ＋ 変更領域のテストが通る ＋ CI（GitHub Actions）が green。
+- **`$HOME` への作用はリポジトリ外変更として扱う**: `./link.sh` の実行と `~` 配下への書き込みは事前に確認する。`~/.zshrc`・`~/.tmux`・`~/.tmux.conf`・`~/.emacs.d` は master の実体への symlink のため、master の作業ツリーを書き換えると稼働中の環境に即時反映される。実装は別 worktree で行う。
+- **ツール横断の監査**: emacs / zsh / tmux / keyboard にまたがる検証は、ツールごとに `dotfiles-validator` に分けて渡し、根拠を確認してから「ツール / 影響有無 / 根拠」の表に統合する。
 
 ## 設計原則
 
