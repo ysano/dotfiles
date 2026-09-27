@@ -7,6 +7,11 @@
 # JSON入力を取得
 input=$(cat)
 
+# jq の有無を確認（未導入時は新規追加分だけグレースフルに非表示にする。
+# 既存の抽出は元々 jq 前提のため対象外）
+have_jq=false
+command -v jq >/dev/null 2>&1 && have_jq=true
+
 # JSON から情報を抽出
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
 current_dir=$(echo "$input" | jq -r '.workspace.current_dir // ""')
@@ -19,6 +24,50 @@ worktree_branch=$(echo "$input" | jq -r '.worktree.branch // ""')
 git_worktree=$(echo "$input" | jq -r '.workspace.git_worktree // ""')
 cc_version=$(echo "$input" | jq -r '.version // ""')
 effort_level=$(echo "$input" | jq -r '.effort.level // ""')
+
+# セッション（5 時間枠）/ 週次の利用率とリセット時刻（Unix epoch 秒）。
+# rate_limits.{five_hour,seven_day} はサブスクライバーで最初の API 応答後のみ
+# 存在するオプショナルフィールド。無ければ非表示。
+session_used_pct=""; session_resets_at=""
+weekly_used_pct=""; weekly_resets_at=""
+if $have_jq; then
+    # 区切りはタブ等の空白だと空欄が詰められて列がずれるため、非空白の "|" を使う
+    IFS='|' read -r session_used_pct session_resets_at weekly_used_pct weekly_resets_at < <(
+        echo "$input" | jq -r '[.rate_limits.five_hour.used_percentage, .rate_limits.five_hour.resets_at,
+            .rate_limits.seven_day.used_percentage, .rate_limits.seven_day.resets_at]
+            | map(if . == null then "" else tostring end) | join("|")')
+fi
+
+# 使用中の Claude アカウント判別（メールアドレスのドメイン）。
+# CLAUDE_CONFIG_DIR ごとにログインアカウントが異なる想定。
+# .claude.json の oauthAccount.emailAddress を読む。.claude.json の場所は
+# CLAUDE_CONFIG_DIR 指定時は "$CLAUDE_CONFIG_DIR/.claude.json"、未指定時は
+# "$HOME/.claude.json"（~/.claude/ 配下ではない）。
+# 数千行規模のため結果を 6 時間キャッシュし、期限切れはバックグラウンド更新
+# （cc_version チェックと同じ方式）。キャッシュ未作成の初回のみ同期取得。
+acct_config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+if [ -n "$CLAUDE_CONFIG_DIR" ]; then
+    acct_json="$CLAUDE_CONFIG_DIR/.claude.json"
+else
+    acct_json="$HOME/.claude.json"
+fi
+account_email=""
+if $have_jq && [ -f "$acct_json" ]; then
+    _acct_cache="$acct_config_dir/.statusline-account-email-cache"
+    _acct_jq='.oauthAccount.emailAddress // empty'
+    # 並行描画での競合を避けるため、プロセス固有の一時ファイルに書いて mv で置き換える
+    _acct_tmp="$_acct_cache.$$.tmp"
+    if [ ! -f "$_acct_cache" ]; then
+        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) 2>/dev/null
+    elif [ -z "$(find "$_acct_cache" -mmin -360 2>/dev/null)" ]; then
+        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) >/dev/null 2>&1 &
+    fi
+    account_email=$(cat "$_acct_cache" 2>/dev/null)
+fi
+account_domain=""
+if [ -n "$account_email" ]; then
+    account_domain="${account_email#*@}"
+fi
 
 # Powerlevel10k Rainbow 色定義（ANSI 256色）
 # 背景色
@@ -118,9 +167,78 @@ if [ -n "$remaining_pct" ]; then
         context_color="${FG_YELLOW}"
     else
         context_icon="◉"
-        context_color="${FG_GREY}"
+        context_color="${FG_GREEN}"
     fi
     context_display="${context_icon}${remaining_int}%"
+fi
+
+# 利用枠の残量表示: rate_limit_display <ラベル> <used_percentage> <resets_at> <枠秒数> <予測開始の経過率>
+# 例: "3d/7d:70% ⚠41h"（<リセットまでの残り時間>/<枠>:<残り%>）。リセット時刻が無ければ "7d:70%"。
+# 残り時間の書式は format_duration を参照。used_percentage が空なら何も出さない。
+# 色はペース（枠開始からの平均消費ペースが続いた場合の枯渇予測・暦時間）で決める:
+#   緑 = リセットまで持つ / 黄 = 残り時間の後半で枯渇 / 赤 = 残り時間の前半で枯渇
+#   枯渇する場合は "⚠<枯渇までの時間>" を付ける（数字と同色）。
+# 例外: 残り 5% 未満は常に赤。枠序盤（経過率 < <予測開始の経過率>）やリセット時刻が
+# 無くペースを判定できない間は、残り% の閾値（<20 赤 / <50 黄 / それ以上緑）で決める。
+rate_limit_display() {
+    local label=$1 used=$2 resets_at=$3 window=$4 min_elapsed=$5 remaining color text
+    local left_s="" pace="" tte_s="" warn=""
+    [ -z "$used" ] && return
+    remaining=$(awk -v u="$used" 'BEGIN{v=100-u; if (v<0) v=0; printf "%d", v}')
+    if [ -n "$resets_at" ]; then
+        left_s=$(awk -v r="$resets_at" -v n="$(date +%s)" 'BEGIN{s=r-n; if (s<0) s=0; printf "%d", s}')
+        # ペース判定: "ok"（持つ）/ "<枯渇までの秒数>" / 空（判定不能＝序盤）
+        pace=$(awk -v u="$used" -v l="$left_s" -v w="$window" -v m="$min_elapsed" \
+            'BEGIN{e=w-l; if (u>=100) { print 0; exit }
+                   if (u<=0) { print "ok"; exit }
+                   if (e<=0 || e/w<m) exit;
+                   t=(100-u)/(u/e); if (t<l) printf "%d", t; else print "ok"}')
+    fi
+    # 枯渇予測（秒）。色の分岐とは独立に決める（残り 5% 未満でも ⚠ を付けるため）
+    [ -n "$pace" ] && [ "$pace" != "ok" ] && tte_s=$pace
+    if [ "$remaining" -lt 5 ]; then
+        color="${FG_RED}"
+    elif [ "$pace" = "ok" ]; then
+        color="${FG_GREEN}"
+    elif [ -n "$tte_s" ]; then
+        if [ "$tte_s" -le $((left_s / 2)) ]; then
+            color="${FG_RED}"
+        else
+            color="${FG_YELLOW}"
+        fi
+    elif [ "$remaining" -lt 20 ]; then
+        color="${FG_RED}"
+    elif [ "$remaining" -lt 50 ]; then
+        color="${FG_YELLOW}"
+    else
+        color="${FG_GREEN}"
+    fi
+    if [ -n "$left_s" ]; then
+        text="$(format_duration "$left_s")/${label}:${remaining}%"
+    else
+        text="${label}:${remaining}%"
+    fi
+    if [ -n "$tte_s" ] && [ "$remaining" -gt 0 ]; then
+        text+=" ⚠$(format_duration "$tte_s" floor)"
+    fi
+    printf '%s' "${color}${text}${C_RESET}"
+}
+# 秒数を "Nd"（2 日超）/ "NNh"（2 時間超〜2 日）/ "NNm"（2 時間以下）に整形。
+# 2 日を超えるのは実質 7d 枠のみ（5h 枠は常に h/m 表示）。
+# 第 2 引数 floor で切り捨て（枯渇予測を早めに見せる安全側の丸め）、既定は切り上げ。
+format_duration() {
+    awk -v s="$1" -v fl="${2:-}" 'function r(u){ q=int(s/u); if (fl!="floor" && s%u>0) q++; return q }
+        BEGIN{if (s<=7200) printf "%dm", r(60)
+              else if (s<=172800) printf "%dh", r(3600)
+              else printf "%dd", r(86400)}'
+}
+session_display=$(rate_limit_display "5h" "$session_used_pct" "$session_resets_at" 18000 0.2)
+weekly_display=$(rate_limit_display "7d" "$weekly_used_pct" "$weekly_resets_at" 604800 0.05)
+
+# 使用中アカウントの表示（メールドメインで判別）
+account_display=""
+if [ -n "$account_domain" ]; then
+    account_display="@${account_domain}"
 fi
 
 # Vimモード表示（P10k の prompt_char スタイル）
@@ -219,10 +337,20 @@ if [ -n "$effort_level" ]; then
     line2+=$(printf '%b' " ${FG_GREY}(${effort_level})${C_RESET}")
 fi
 
+# 使用中アカウント（メールドメインで判別）
+if [ -n "$account_display" ]; then
+    line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${FG_CYAN}${account_display}${C_RESET}")
+fi
+
 # Context残量
 if [ -n "$context_display" ]; then
     line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${context_color}${context_display}${C_RESET}")
 fi
+
+# セッション（5 時間枠）/ 週次の利用残量
+for _rl in "$session_display" "$weekly_display"; do
+    [ -n "$_rl" ] && line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${_rl}")
+done
 
 # Claude Code バージョン差異（古い時だけ警告・赤）
 if [ -n "$version_display" ]; then

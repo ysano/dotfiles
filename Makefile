@@ -39,6 +39,7 @@ test:
 	@./test_git_worktree.zsh
 	@cd .tmux && bash ci.sh
 	@bash test_emoji_id.sh
+	@bash test_statusline.sh
 	@echo "$(GREEN)✅ テスト完了$(NC)"
 
 ## 🔒 セキュリティチェック
