@@ -49,7 +49,7 @@ make test                # 上記と bin のテストをまとめて実行
 
 - **`link.sh` の挙動**: 配備対象は先頭の配列（`files` / `dirs` / `config_dirs` / `claude_files`）で宣言する。既存の実ファイルは `*.orig` に退避し、既存の symlink は張り直す。msys/cygwin では `cmd //c mklink` を使う（`ln -s` だと実体コピーになるため）。リンク元は `$HOME/dotfiles` 固定なので、clone 先は `~/dotfiles` を前提とする。
 - **配備対象の追加**: 配列に名前を足すだけで済む。`config_dirs` / `claude_files` は、リンク元が存在しない場合は黙ってスキップされるので、追加後はリンクが張られたことを確認する。
-- **CI**: workflow ごとに `paths` フィルタで対象を絞っている。`ci.yml` は `.tmux/**` の変更で `.tmux/ci.sh` を実行し、`shell-tests.yml` は `bin/**` と `test_*.sh` の変更で `test_emoji_id.sh` を実行する。ルート直下の Zsh テスト（`test_*.zsh`）と `test_resurrect.sh` は CI に乗っていないため、手元で実行する。
+- **CI**: workflow ごとに `paths` フィルタで対象を絞っている。`ci.yml` は `.tmux/**` の変更で `.tmux/ci.sh` を実行し、`shell-tests.yml` は `bin/**`・`test_*.sh`・`.claude/statusline-command.sh` の変更で `test_emoji_id.sh` と `test_statusline.sh` を実行する。ルート直下の Zsh テスト（`test_*.zsh`）と `test_resurrect.sh` は CI に乗っていないため、手元で実行する。
 
 ## Claude Code モジュール
 

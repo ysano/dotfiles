@@ -2,9 +2,9 @@ name: shell-tests
 
 on:
   push:
-    paths: [ 'bin/**', 'test_*.sh' ]
+    paths: [ 'bin/**', 'test_*.sh', '.claude/statusline-command.sh' ]
   pull_request:
-    paths: [ 'bin/**', 'test_*.sh' ]
+    paths: [ 'bin/**', 'test_*.sh', '.claude/statusline-command.sh' ]
 
 jobs:
   emoji-id:
@@ -12,3 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - run: bash test_emoji_id.sh
+
+  statusline:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - run: bash test_statusline.sh

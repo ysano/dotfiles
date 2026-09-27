@@ -55,11 +55,12 @@ account_email=""
 if $have_jq && [ -f "$acct_json" ]; then
     _acct_cache="$acct_config_dir/.statusline-account-email-cache"
     _acct_jq='.oauthAccount.emailAddress // empty'
+    # 並行描画での競合を避けるため、プロセス固有の一時ファイルに書いて mv で置き換える
+    _acct_tmp="$_acct_cache.$$.tmp"
     if [ ! -f "$_acct_cache" ]; then
-        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_cache" ) 2>/dev/null
+        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) 2>/dev/null
     elif [ -z "$(find "$_acct_cache" -mmin -360 2>/dev/null)" ]; then
-        ( jq -r "$_acct_jq" "$acct_json" 2>/dev/null > "$_acct_cache.tmp" \
-            && mv "$_acct_cache.tmp" "$_acct_cache" ) >/dev/null 2>&1 &
+        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) >/dev/null 2>&1 &
     fi
     account_email=$(cat "$_acct_cache" 2>/dev/null)
 fi
@@ -193,12 +194,13 @@ rate_limit_display() {
                    if (e<=0 || e/w<m) exit;
                    t=(100-u)/(u/e); if (t<l) printf "%d", t; else print "ok"}')
     fi
+    # 枯渇予測（秒）。色の分岐とは独立に決める（残り 5% 未満でも ⚠ を付けるため）
+    [ -n "$pace" ] && [ "$pace" != "ok" ] && tte_s=$pace
     if [ "$remaining" -lt 5 ]; then
         color="${FG_RED}"
     elif [ "$pace" = "ok" ]; then
         color="${FG_GREEN}"
-    elif [ -n "$pace" ]; then
-        tte_s=$pace
+    elif [ -n "$tte_s" ]; then
         if [ "$tte_s" -le $((left_s / 2)) ]; then
             color="${FG_RED}"
         else
