@@ -40,13 +40,11 @@ fi
 
 # 使用中の Claude アカウント判別（メールアドレスのドメイン）。
 # CLAUDE_CONFIG_DIR ごとにログインアカウントが異なる想定。
-# 1) "$acct_config_dir/account-email" に1行でメールアドレスを置けば最優先で使う
-#    （例: echo "you@example.com" > "$CLAUDE_CONFIG_DIR/account-email"）。
-# 2) 無ければ .claude.json の oauthAccount.emailAddress を読む。
-#    .claude.json の場所は CLAUDE_CONFIG_DIR 指定時は "$CLAUDE_CONFIG_DIR/.claude.json"、
-#    未指定時は "$HOME/.claude.json"（~/.claude/ 配下ではない）。
-#    数千行規模のため結果を 6 時間キャッシュし、期限切れはバックグラウンド更新
-#    （cc_version チェックと同じ方式）。キャッシュ未作成の初回のみ同期取得。
+# .claude.json の oauthAccount.emailAddress を読む。.claude.json の場所は
+# CLAUDE_CONFIG_DIR 指定時は "$CLAUDE_CONFIG_DIR/.claude.json"、未指定時は
+# "$HOME/.claude.json"（~/.claude/ 配下ではない）。
+# 数千行規模のため結果を 6 時間キャッシュし、期限切れはバックグラウンド更新
+# （cc_version チェックと同じ方式）。キャッシュ未作成の初回のみ同期取得。
 acct_config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 if [ -n "$CLAUDE_CONFIG_DIR" ]; then
     acct_json="$CLAUDE_CONFIG_DIR/.claude.json"
@@ -54,13 +52,11 @@ else
     acct_json="$HOME/.claude.json"
 fi
 account_email=""
-if [ -f "$acct_config_dir/account-email" ]; then
-    account_email=$(head -n1 "$acct_config_dir/account-email" 2>/dev/null | tr -d '[:space:]')
-elif $have_jq && [ -f "$acct_json" ]; then
+if $have_jq && [ -f "$acct_json" ]; then
     _acct_cache="$acct_config_dir/.statusline-account-email-cache"
     _acct_jq='.oauthAccount.emailAddress // empty'
     if [ ! -f "$_acct_cache" ]; then
-        jq -r "$_acct_jq" "$acct_json" 2>/dev/null > "$_acct_cache"
+        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_cache" ) 2>/dev/null
     elif [ -z "$(find "$_acct_cache" -mmin -360 2>/dev/null)" ]; then
         ( jq -r "$_acct_jq" "$acct_json" 2>/dev/null > "$_acct_cache.tmp" \
             && mv "$_acct_cache.tmp" "$_acct_cache" ) >/dev/null 2>&1 &
