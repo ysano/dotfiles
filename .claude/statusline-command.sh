@@ -43,8 +43,9 @@ fi
 # .claude.json の oauthAccount.emailAddress を読む。.claude.json の場所は
 # CLAUDE_CONFIG_DIR 指定時は "$CLAUDE_CONFIG_DIR/.claude.json"、未指定時は
 # "$HOME/.claude.json"（~/.claude/ 配下ではない）。
-# 数千行規模のため結果を 6 時間キャッシュし、期限切れはバックグラウンド更新
-# （cc_version チェックと同じ方式）。キャッシュ未作成の初回のみ同期取得。
+# 数千行規模のため結果をキャッシュし、.claude.json がキャッシュより新しくなったら
+# バックグラウンドで取り直す（/login での切替を追従するため。.claude.json は頻繁に
+# 書き換わるので、取り直しは 1 分に 1 回まで）。キャッシュ未作成の初回のみ同期取得。
 acct_config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 if [ -n "$CLAUDE_CONFIG_DIR" ]; then
     acct_json="$CLAUDE_CONFIG_DIR/.claude.json"
@@ -59,7 +60,7 @@ if $have_jq && [ -f "$acct_json" ]; then
     _acct_tmp="$_acct_cache.$$.tmp"
     if [ ! -f "$_acct_cache" ]; then
         ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) 2>/dev/null
-    elif [ -z "$(find "$_acct_cache" -mmin -360 2>/dev/null)" ]; then
+    elif [ "$acct_json" -nt "$_acct_cache" ] && [ -z "$(find "$_acct_cache" -mmin -1 2>/dev/null)" ]; then
         ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) >/dev/null 2>&1 &
     fi
     account_email=$(cat "$_acct_cache" 2>/dev/null)

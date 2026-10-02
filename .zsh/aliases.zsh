@@ -118,16 +118,6 @@ setup_git_aliases() {
 }
 
 # ================================
-# AI Tools
-# ================================
-
-# Claude Code: スタンドアロン・バイナリ版のセンチネル置換バグ回避のため npx 経由で起動
-# （バイナリ版はプロンプト中の識別子に反応してキャッシュ接頭辞が毎回変化する）
-if has_command claude; then
-    alias ysano-claude='CLAUDE_CONFIG_DIR=~/.claude-ysano claude'
-fi
-
-# ================================
 # Network Tools
 # ================================
 

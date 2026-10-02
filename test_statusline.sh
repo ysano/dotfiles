@@ -4,7 +4,7 @@
 set -u
 SCRIPT="$(cd "$(dirname "$0")" && pwd)/.claude/statusline-command.sh"
 # アカウント表示・キャッシュを実環境から切り離す
-CLAUDE_CONFIG_DIR=$(mktemp -d)
+CLAUDE_CONFIG_DIR=$(mktemp -d) && [ -d "$CLAUDE_CONFIG_DIR" ] || { echo "FAIL mktemp -d"; exit 1; }
 export CLAUDE_CONFIG_DIR
 trap 'rm -rf "$CLAUDE_CONFIG_DIR"' EXIT
 
@@ -49,5 +49,19 @@ check "resets_at 無しは残り% 閾値"    seven_day 60 ""     "[Y]7d:40%"
 # rate_limits 無しでは利用枠を表示しない
 out=$(echo '{"model":{"display_name":"O"}}' | bash "$SCRIPT" 2>&1 | tail -1 | normalize)
 if [ "$out" = "O" ]; then echo "ok   rate_limits 無し: $out"; else echo "FAIL rate_limits 無し: got '$out'"; fail=1; fi
+
+# アカウント表示: .claude.json が更新されたら 6h を待たずにキャッシュを取り直す
+# （同じ config dir で /login し直したとき、旧アカウントを表示し続けないこと）
+acct_cache="$CLAUDE_CONFIG_DIR/.statusline-account-email-cache"
+echo '{"oauthAccount":{"emailAddress":"me@new.example"}}' > "$CLAUDE_CONFIG_DIR/.claude.json"
+echo "me@old.example" > "$acct_cache"
+# キャッシュは 10 分前（6h TTL 内・更新間隔 1 分超）とする
+perl -e 'utime(time - 600, time - 600, $ARGV[0])' "$acct_cache"
+echo '{"model":{"display_name":"O"}}' | bash "$SCRIPT" >/dev/null 2>&1
+# 更新はバックグラウンドで行うため、反映を最大 3 秒待つ
+for _ in 1 2 3 4 5 6; do grep -q new "$acct_cache" 2>/dev/null && break; sleep 0.5; done
+out=$(echo '{"model":{"display_name":"O"}}' | bash "$SCRIPT" 2>&1 | tail -1 | normalize)
+if [ "$out" = "@new.example" ]; then echo "ok   .claude.json 更新でアカウント再取得: $out"; else echo "FAIL .claude.json 更新でアカウント再取得: got '$out'"; fail=1; fi
+rm -f "$CLAUDE_CONFIG_DIR/.claude.json" "$acct_cache"
 
 exit $fail

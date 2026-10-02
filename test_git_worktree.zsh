@@ -3,7 +3,8 @@
 # Usage: ./test_git_worktree.zsh
 
 SCRIPT_DIR="${0:a:h}"
-TEST_DIR=$(mktemp -d)
+# 作れなければカレント（実リポジトリ）で git 操作しないよう即中断する
+TEST_DIR=$(mktemp -d) && [[ -d "$TEST_DIR" ]] || { echo "❌ mktemp -d"; exit 1; }
 trap "rm -rf '$TEST_DIR'" EXIT
 
 PASS=0

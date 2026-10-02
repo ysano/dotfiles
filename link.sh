@@ -17,6 +17,14 @@ config_dirs=(bat ripgrep git)
 # (claude-plugins とは別管理。ホスト固有な統合スクリプト等を symlink で展開)
 claude_files=(statusline-command.sh)
 
+# Claude Code の追加プロファイル（CLAUDE_CONFIG_DIR で使う ~/.claude-* の config dir）
+# 既定プロファイル ~/.claude の共有資産を symlink で配備する。リンク元は dotfiles ではなく
+# ~/.claude（グローバル CLAUDE.md・prompts・個人 skill は dotfiles 管理外のため）。
+# 対象は .claude.json を持つ ~/.claude-* を自動検出する（プロファイル名はホスト側に置く）。
+claude_profile_shared=(CLAUDE.md prompts)
+# skills/ は個別に配備する。synced/ は claude.ai アカウントから同期されるため共有しない
+claude_profile_skip_skills=(synced)
+
 dotfiles=dotfiles
 
 # ================================
@@ -36,6 +44,21 @@ ensure_parent_dir() {
     local target="$1"
     local parent="$(dirname "$target")"
     [[ ! -d "$parent" ]] && mkdir -p "$parent"
+}
+
+# OS に応じてシンボリックリンクを作成する（msys/cygwin は mklink、ディレクトリは /D）
+make_symlink() {
+    local src="$1" dst="$2"
+    case "${OSTYPE}" in
+        msys|cygwin)
+            local opt=""
+            [[ -d "$src" ]] && opt="/D "
+            cmd //c "mklink ${opt}\"$(cygpath -w "$dst")\" \"$(cygpath -w "$src")\""
+            ;;
+        *)
+            ln -s "$src" "$dst"
+            ;;
+    esac
 }
 
 # ================================
@@ -121,6 +144,35 @@ case "${OSTYPE}" in
         done
         ;;
 esac
+
+# Claude Code の追加プロファイルへ共有資産を配備
+for profile_dir in "$HOME"/.claude-*(N); do
+    [[ -d "$profile_dir" && -f "$profile_dir/.claude.json" ]] || continue
+    # ~/.claude 自体を指すプロファイルは共有元と同一実体（退避で共有元を壊す）のでスキップ
+    default_dir="$HOME/.claude"
+    [[ "${profile_dir:A}" == "${default_dir:A}" ]] && continue
+
+    # 配備先が解決後に共有元と同一実体なら触らない（張り済み、または skills/ 等の親が
+    # 共有元を指す symlink。後者で退避すると共有元を壊す）
+    for item in $claude_profile_shared; do
+        src="$HOME/.claude/$item"
+        dst="$profile_dir/$item"
+        [[ -e "$src" ]] || continue
+        [[ -e "$dst" && "${dst:A}" == "${src:A}" ]] && continue
+        backup_if_exists "$dst"
+        make_symlink "$src" "$dst"
+    done
+
+    for skill_src in "$HOME"/.claude/skills/*(/N); do
+        skill="${skill_src:t}"
+        (( ${claude_profile_skip_skills[(Ie)$skill]} )) && continue
+        dst="$profile_dir/skills/$skill"
+        [[ -e "$dst" && "${dst:A}" == "${skill_src:A}" ]] && continue
+        ensure_parent_dir "$dst"
+        backup_if_exists "$dst"
+        make_symlink "$skill_src" "$dst"
+    done
+done
 
 # Claude Code 拡張は claude-plugins リポジトリで管理
 # /plugin install <name>@ysano-plugins でインストール

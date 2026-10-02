@@ -40,6 +40,7 @@ test:
 	@cd .tmux && bash ci.sh
 	@bash test_emoji_id.sh
 	@bash test_statusline.sh
+	@bash test_link.sh
 	@echo "$(GREEN)✅ テスト完了$(NC)"
 
 ## 🔒 セキュリティチェック
