@@ -100,6 +100,19 @@ if [ -f "$FUNC_TEST_SCRIPT" ]; then
   echo ""
 fi
 
+# 3.9 クリックしたファイルパスのプレビュー（open-path.sh）テスト
+OPEN_PATH_TEST_SCRIPT="$SCRIPT_DIR/test_open_path.sh"
+if [ -f "$OPEN_PATH_TEST_SCRIPT" ]; then
+  echo "--- Open Path Tests ---"
+  if bash "$OPEN_PATH_TEST_SCRIPT"; then
+    echo "[PASS] open-path tests"
+  else
+    echo "[FAIL] open-path tests"
+    errors=$((errors + 1))
+  fi
+  echo ""
+fi
+
 # Agent lifecycle, workspace UI, worktree operations and setup (no API access)
 echo "--- Agent Workspace Tests ---"
 if python3 -m unittest discover -s "$SCRIPT_DIR/agents" -p 'test_*.py'; then
