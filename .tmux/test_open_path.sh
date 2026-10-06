@@ -165,4 +165,22 @@ evil="$work/$(printf 'cwd\n\ttouch\tpwned3')"; mkdir -p "$evil"
 (cd "$work" && click_run 3.7c "$(printf 'x\n touch pwned4')" 0 "$evil" >/dev/null)
 if [ ! -e "$work/pwned3" ] && [ ! -e "$work/pwned4" ] && [ ! -e "$evil/pwned3" ]; then echo "ok   改行入りの cwd / 行でもコマンドを実行しない"; else echo "FAIL 改行入りの cwd / 行でもコマンドを実行しない"; fail=1; fi
 
+# --- open-path-menu.sh: 既定の右クリックメニューへ「Preview Path」を差し込む ---
+MENU="$(dirname "$SCRIPT")/open-path-menu.sh"
+sample='bind-key  -T root MouseDown3Pane          if-shell -F -t = "#{mouse_any_flag}" { select-pane -t = ; send-keys -M } { display-menu -T "#[align=centre]#{pane_index}" -t = -x M -y M "#{?mouse_word,Copy #[underscore]#{=/9/...:mouse_word},}" c { copy-mode -q ; set-buffer "#{q:mouse_word}" } Kill X { kill-pane } }'
+out=$(printf '%s\n' "$sample" | sh "$MENU" transform)
+case $out in
+    "bind-key -n MouseDown3Pane set -gF @open_path_client "*) echo "ok   menu: 先頭で値を退避する" ;;
+    *) echo "FAIL menu: 先頭で値を退避する: $out"; fail=1 ;;
+esac
+case $out in
+    *"-x M -y M \"Preview Path\" o { run-shell -b '$SCRIPT click' } '' \"#{?mouse_word,Copy"*"Kill X { kill-pane } }") echo "ok   menu: 項目を差し込み既定の項目を残す" ;;
+    *) echo "FAIL menu: 項目を差し込み既定の項目を残す: $out"; fail=1 ;;
+esac
+case $out in
+    *"set -gF -t = @open_path_cwd '#{pane_current_path}'"*"set -gF @open_path_line '#{mouse_line}'"*) echo "ok   menu: クリックした pane の cwd と行を退避" ;;
+    *) echo "FAIL menu: クリックした pane の cwd と行を退避: $out"; fail=1 ;;
+esac
+check "menu: 目印が無ければ何もしない" "" sh -c 'printf "%s\n" "bind-key -T root MouseDown3Pane display-menu -T x" | sh "$1" transform' _ "$MENU"
+
 exit $fail
