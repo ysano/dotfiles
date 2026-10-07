@@ -1,0 +1,5 @@
+# open-path.sh のプレビュー用 less キー定義（less 582+ の --lesskey-src で読む）
+# quit の追加文字の ASCII 値が終了コードになる: e=101 → Emacs、o=111 → 既定アプリ
+#command
+e quit e
+o quit o

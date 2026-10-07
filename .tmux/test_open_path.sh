@@ -47,6 +47,18 @@ check "末尾のコロン" "Error${TAB}"        sh "$SCRIPT" parse "Error:"
 ESC=$(printf '\033')
 check "対象行に目印" "  a${TAB}${ESC}[1;33m▶${ESC}[0m b${TAB}  c" sh -c 'printf "a\nb\nc\n" | sh "$1" mark 2 | paste -s -' _ "$SCRIPT"
 
+# --- action <less の終了コード>: lesskey の quit e / quit o（ASCII 101 / 111）を動作に変換 ---
+check "less の e → Emacs"        "emacs"   sh "$SCRIPT" action 101
+check "less の o → 既定アプリ"   "default" sh "$SCRIPT" action 111
+check "less の q → 閉じる"       "close"   sh "$SCRIPT" action 0
+check "それ以外 → 閉じる"        "close"   sh "$SCRIPT" action 2
+
+# --- lesskey_ok <less --version の 1 行目>: --lesskey-src（less 582+）が使えるか ---
+check "less 668 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 668 (POSIX regular expressions)"
+check "less 590 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 590 (GNU regular expressions)"
+check "less 551 は非対応" "no"  sh "$SCRIPT" lesskey_ok "less 551 (GNU regular expressions)"
+check "不明は非対応"      "no"  sh "$SCRIPT" lesskey_ok "BusyBox v1.36"
+
 # --- resolve <候補> <pane の cwd>: 実在するファイルの絶対パスと行番号 ---
 repo="$work/repo"
 mkdir -p "$repo/sub" "$repo/docs" "$work/home/dotfiles"

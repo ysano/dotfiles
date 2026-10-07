@@ -248,6 +248,40 @@ open_default() {
     fi
 }
 
+# less の終了コード → 動作（open-path.lesskey の quit e / quit o）
+action() {
+    case $1 in
+        101) echo emacs ;;
+        111) echo default ;;
+        *) echo close ;;
+    esac
+}
+
+# less --version の 1 行目から --lesskey-src（less 582+）が使えるか判定する
+lesskey_ok() {
+    printf '%s\n' "$1" | awk '$1 == "less" && $2 + 0 >= 582 { ok = 1 } END { print ok ? "yes" : "no"; exit !ok }'
+}
+
+# プレビューする中身を標準出力へ（行番号付きは折り返さず、対象行に ▶ を付ける）
+render() {
+    if [ -d "$path" ]; then
+        # shellcheck disable=SC2012  # 人が読む一覧表示のため ls を使う
+        ls -la -- "$path"
+    elif command -v bat >/dev/null 2>&1; then
+        bat --paging=never --wrap=never --style=numbers --color=always \
+            ${lineno:+--highlight-line "$lineno"} -- "$path"
+    else
+        awk '{ printf "%6d  %s\n", NR, $0 }' "$path"
+    fi | if [ -n "$lineno" ]; then mark "$lineno"; else cat; fi
+}
+
+do_action() {
+    case $1 in
+        emacs) open_emacs "$path" "$lineno" || { printf '\nEmacs に接続できません: %s\n' "$path"; sleep 2; } ;;
+        default) open_default "$path" || { printf '\n既定アプリで開けません: %s\n' "$path"; sleep 2; } ;;
+    esac
+}
+
 # 引数が無ければ click が set -g した @open_path_view_* を読む
 view() {
     if [ $# -gt 0 ]; then
@@ -258,30 +292,23 @@ view() {
     case $lineno in *[!0-9]*) lineno="" ;; esac
     [ -f "$path" ] || [ -d "$path" ] || { printf 'open-path: 見つかりません: %s\n' "$path"; sleep 2; return 1; }
     start=${lineno:-1}
-    if [ -d "$path" ]; then
-        # shellcheck disable=SC2012  # 人が読む一覧表示のため ls を使う
-        ls -la -- "$path" | less -R
-    elif [ -n "$lineno" ]; then
-        # 行番号付き: 行の対応を保つため折り返さずに出力し、対象行に ▶ を付けて less で開く
-        if command -v bat >/dev/null 2>&1; then
-            bat --paging=never --wrap=never --style=numbers --color=always \
-                --highlight-line "$lineno" -- "$path"
-        else
-            awk '{ printf "%6d  %s\n", NR, $0 }' "$path"
-        fi | mark "$lineno" | less -R -j.3 "+${start}g"
-    elif command -v bat >/dev/null 2>&1; then
-        bat --paging=always --style=numbers --color=always -- "$path"
-    else
-        less -N -- "$path"
+    keys="$(cd "$(dirname "$0")" && pwd)/open-path.lesskey"
+    if [ -f "$keys" ] && lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
+        # q: 閉じる / e: Emacs / o: 既定アプリ を less の中で 1 手にする
+        render | less -R -j.3 "+${start}g" --lesskey-src="$keys" "-Psq 閉じる  e Emacs  o 既定アプリ"
+        do_action "$(action $?)"
+        return 0
     fi
+    # 古い less: 閉じた後に 1 キーで選ぶ
+    render | less -R -j.3 "+${start}g"
     printf '\n[e] Emacs で開く  [o] 既定アプリで開く  [その他] 閉じる: '
     old=$(stty -g 2>/dev/null)
     stty -icanon -echo min 1 2>/dev/null
     key=$(dd bs=1 count=1 2>/dev/null)
     [ -n "$old" ] && stty "$old" 2>/dev/null
     case $key in
-        e) open_emacs "$path" "$lineno" || { printf '\nEmacs に接続できません: %s\n' "$path"; sleep 2; } ;;
-        o) open_default "$path" || { printf '\n既定アプリで開けません: %s\n' "$path"; sleep 2; } ;;
+        e) do_action emacs ;;
+        o) do_action default ;;
     esac
 }
 
@@ -294,5 +321,7 @@ case $cmd in
     click) click "$@" ;;
     view) view "$@" ;;
     mark) mark "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark} ..." >&2; exit 2 ;;
+    action) action "$@" ;;
+    lesskey_ok) lesskey_ok "$@" ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark|action|lesskey_ok} ..." >&2; exit 2 ;;
 esac
