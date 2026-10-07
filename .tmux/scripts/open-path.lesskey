@@ -1,5 +1,7 @@
 # open-path.sh のプレビュー用 less キー定義（less 582+ の --lesskey-src で読む）
-# quit の追加文字の ASCII 値が終了コードになる: e=101 → Emacs、o=111 → 既定アプリ
+# quit の追加文字の ASCII 値が終了コードになる:
+#   e=101 → Emacs、o=111 → 既定アプリ、r=114 → Markdown の整形/原文を切り替え
 #command
 e quit e
 o quit o
+r quit r

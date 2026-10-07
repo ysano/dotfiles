@@ -53,6 +53,40 @@ check "less の o → 既定アプリ"   "default" sh "$SCRIPT" action 111
 check "less の q → 閉じる"       "close"   sh "$SCRIPT" action 0
 check "それ以外 → 閉じる"        "close"   sh "$SCRIPT" action 2
 
+check "less の r → 整形/原文の切替" "toggle" sh "$SCRIPT" action 114
+
+# --- md_renderer: Markdown の整形に使うツール（glow → mdcat → なし） ---
+mdbin="$work/mdbin"; mkdir -p "$mdbin/both" "$mdbin/mdcat" "$mdbin/none"
+for t in glow mdcat; do printf '#!/bin/sh\necho %s "$@"\n' "$t" > "$mdbin/both/$t"; chmod +x "$mdbin/both/$t"; done
+cp "$mdbin/both/mdcat" "$mdbin/mdcat/mdcat"
+for d in both mdcat none; do for c in sh awk sed cat; do ln -sf "$(command -v $c)" "$mdbin/$d/$c"; done; done
+check "整形は glow を優先"     "glow"  env PATH="$mdbin/both" sh "$SCRIPT" md_renderer
+check "glow が無ければ mdcat"  "mdcat" env PATH="$mdbin/mdcat" sh "$SCRIPT" md_renderer
+check "どちらも無ければなし"   ""      env PATH="$mdbin/none" sh "$SCRIPT" md_renderer
+
+# --- is_markdown <パス> ---
+check "README.md は Markdown"   "yes" sh "$SCRIPT" is_markdown "docs/README.md"
+check ".markdown は Markdown"   "yes" sh "$SCRIPT" is_markdown "a/b.MARKDOWN"
+check ".sh は Markdown でない"  ""    sh "$SCRIPT" is_markdown "a/b.sh"
+
+# --- view は利用者の LESS（-F で即終了・-M でプロンプト無視 等）に左右されない ---
+lessbin="$work/lessbin"; mkdir -p "$lessbin"
+cat > "$lessbin/less" <<'STUB'
+#!/bin/sh
+case $1 in --version) echo "less 668 (stub)"; exit 0 ;; esac
+cat >/dev/null
+{ printf 'LESS=[%s]' "${LESS-unset}"; for a in "$@"; do printf ' [%s]' "$a"; done; echo; } >> "$LESS_STUB_LOG"
+exit 0
+STUB
+chmod +x "$lessbin/less"
+echo x > "$work/short.txt"
+env PATH="$lessbin:$PATH" LESS=-RFXx3M LESS_STUB_LOG="$work/less.log" sh "$SCRIPT" view "$work/short.txt" 3 >/dev/null 2>&1
+lesslog=$(cat "$work/less.log" 2>/dev/null)
+case $lesslog in
+    "LESS=[]"*"[--lesskey-src="*"[-Psq 閉じる  e Emacs  o 既定アプリ]"*) echo "ok   view は LESS を空にしてプロンプトを渡す" ;;
+    *) echo "FAIL view は LESS を空にしてプロンプトを渡す: $lesslog"; fail=1 ;;
+esac
+
 # --- lesskey_ok <less --version の 1 行目>: --lesskey-src（less 582+）が使えるか ---
 check "less 668 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 668 (POSIX regular expressions)"
 check "less 590 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 590 (GNU regular expressions)"

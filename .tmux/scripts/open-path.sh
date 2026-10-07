@@ -253,6 +253,7 @@ action() {
     case $1 in
         101) echo emacs ;;
         111) echo default ;;
+        114) echo toggle ;;
         *) echo close ;;
     esac
 }
@@ -262,8 +263,32 @@ lesskey_ok() {
     printf '%s\n' "$1" | awk '$1 == "less" && $2 + 0 >= 582 { ok = 1 } END { print ok ? "yes" : "no"; exit !ok }'
 }
 
-# プレビューする中身を標準出力へ（行番号付きは折り返さず、対象行に ▶ を付ける）
+# Markdown の整形に使うツール（glow → mdcat。どちらも無ければ失敗）
+md_renderer() {
+    if command -v glow >/dev/null 2>&1; then echo glow
+    elif command -v mdcat >/dev/null 2>&1; then echo mdcat
+    else return 1
+    fi
+}
+
+is_markdown() {
+    case $(printf '%s' "$1" | tr '[:upper:]' '[:lower:]') in
+        *.md|*.markdown|*.mdx) echo yes ;;
+        *) return 1 ;;
+    esac
+}
+
+# プレビューする中身を標準出力へ。mode=md は Markdown を整形（パイプでも色を付ける）、
+# mode=raw は原文（行番号付きは折り返さず、対象行に ▶ を付ける）
 render() {
+    if [ "$1" = md ]; then
+        width=$(( $(tput cols 2>/dev/null || echo 100) - 2 ))
+        case $(md_renderer) in
+            glow) glow -s dark -w "$width" "$path" ;;
+            mdcat) mdcat --ansi --columns "$width" "$path" ;;
+        esac
+        return
+    fi
     if [ -d "$path" ]; then
         # shellcheck disable=SC2012  # 人が読む一覧表示のため ls を使う
         ls -la -- "$path"
@@ -291,16 +316,40 @@ view() {
     fi
     case $lineno in *[!0-9]*) lineno="" ;; esac
     [ -f "$path" ] || [ -d "$path" ] || { printf 'open-path: 見つかりません: %s\n' "$path"; sleep 2; return 1; }
-    start=${lineno:-1}
+    # 利用者の LESS（-F は 1 画面に収まると即終了してポップアップが閉じる、-M は -Ps の
+    # プロンプトを無視させる等）に左右されないよう、必要なオプションは引数で渡す
+    LESS=""
+    export LESS
+    # 行番号なしの Markdown は整形して開く（整形すると行の対応が崩れるため行番号付きは原文）
+    mode=raw md=""
+    if [ -f "$path" ] && is_markdown "$path" >/dev/null && md_renderer >/dev/null; then
+        md=yes
+        [ -z "$lineno" ] && mode=md
+    fi
     keys="$(cd "$(dirname "$0")" && pwd)/open-path.lesskey"
     if [ -f "$keys" ] && lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
-        # q: 閉じる / e: Emacs / o: 既定アプリ を less の中で 1 手にする
-        render | less -R -j.3 "+${start}g" --lesskey-src="$keys" "-Psq 閉じる  e Emacs  o 既定アプリ"
-        do_action "$(action $?)"
-        return 0
+        # q: 閉じる / e: Emacs / o: 既定アプリ / r: 整形と原文の切替 を less の中で 1 手にする
+        prompt="q 閉じる  e Emacs  o 既定アプリ${md:+  r 整形/原文}"
+        while :; do
+            start=1
+            [ "$mode" = raw ] && start=${lineno:-1}
+            render "$mode" | less -R -j.3 "+${start}g" --lesskey-src="$keys" "-Ps$prompt"
+            act=$(action $?)
+            if [ "$act" = toggle ]; then
+                # Markdown 以外の r は再描画と同じ扱いで開き直す
+                if [ -n "$md" ]; then
+                    if [ "$mode" = md ]; then mode=raw; else mode=md; fi
+                fi
+                continue
+            fi
+            do_action "$act"
+            return 0
+        done
     fi
     # 古い less: 閉じた後に 1 キーで選ぶ
-    render | less -R -j.3 "+${start}g"
+    start=1
+    [ "$mode" = raw ] && start=${lineno:-1}
+    render "$mode" | less -R -j.3 "+${start}g"
     printf '\n[e] Emacs で開く  [o] 既定アプリで開く  [その他] 閉じる: '
     old=$(stty -g 2>/dev/null)
     stty -icanon -echo min 1 2>/dev/null
@@ -322,6 +371,8 @@ case $cmd in
     view) view "$@" ;;
     mark) mark "$@" ;;
     action) action "$@" ;;
+    md_renderer) md_renderer "$@" ;;
+    is_markdown) is_markdown "$@" ;;
     lesskey_ok) lesskey_ok "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark|action|lesskey_ok} ..." >&2; exit 2 ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark|action|lesskey_ok|md_renderer|is_markdown} ..." >&2; exit 2 ;;
 esac
