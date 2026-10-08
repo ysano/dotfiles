@@ -38,37 +38,46 @@ if $have_jq; then
             | map(if . == null then "" else tostring end) | join("|")')
 fi
 
-# 使用中の Claude アカウント判別（メールアドレスのドメイン）。
-# CLAUDE_CONFIG_DIR ごとにログインアカウントが異なる想定。
-# .claude.json の oauthAccount.emailAddress を読む。.claude.json の場所は
-# CLAUDE_CONFIG_DIR 指定時は "$CLAUDE_CONFIG_DIR/.claude.json"、未指定時は
-# "$HOME/.claude.json"（~/.claude/ 配下ではない）。
-# 数千行規模のため結果をキャッシュし、.claude.json がキャッシュより新しくなったら
-# バックグラウンドで取り直す（/login での切替を追従するため。.claude.json は頻繁に
-# 書き換わるので、取り直しは 1 分に 1 回まで）。キャッシュ未作成の初回のみ同期取得。
-acct_config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-    acct_json="$CLAUDE_CONFIG_DIR/.claude.json"
-else
-    acct_json="$HOME/.claude.json"
-fi
-account_email=""
-if $have_jq && [ -f "$acct_json" ]; then
-    _acct_cache="$acct_config_dir/.statusline-account-email-cache"
-    _acct_jq='.oauthAccount.emailAddress // empty'
-    # 並行描画での競合を避けるため、プロセス固有の一時ファイルに書いて mv で置き換える
-    _acct_tmp="$_acct_cache.$$.tmp"
-    if [ ! -f "$_acct_cache" ]; then
-        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) 2>/dev/null
-    elif [ "$acct_json" -nt "$_acct_cache" ] && [ -z "$(find "$_acct_cache" -mmin -1 2>/dev/null)" ]; then
-        ( jq -r "$_acct_jq" "$acct_json" > "$_acct_tmp" && mv "$_acct_tmp" "$_acct_cache" ) >/dev/null 2>&1 &
+# 使用中のプロファイル（CLAUDE_CONFIG_DIR）。プロファイルごとにログインアカウント
+# （= 利用枠）が異なる。メールのドメインは同じ会社の別 Team を区別できないため使わない。
+# 未指定・~/.claude は "default"、.claude-<名前> は場所によらず "<名前>"、
+# それ以外はディレクトリ名（~/.claude 以外の .claude は既定と取り違えないよう ".claude"）
+profile_dir="${CLAUDE_CONFIG_DIR:-}"
+profile_name="default"
+if [ -n "$profile_dir" ]; then
+    # 存在すれば実体のパスに解決する（末尾の / や /. /..、symlink の別名など表記の違いを吸収）
+    _profile_real=$(cd "$profile_dir" 2>/dev/null && pwd -P)
+    _home_claude=$(cd "$HOME/.claude" 2>/dev/null && pwd -P)
+    if [ -n "$_profile_real" ]; then
+        profile_dir="$_profile_real"
+    else
+        # 未作成: 末尾の / をすべて落とす（"/" だけのときはルートのまま）
+        while [ "${#profile_dir}" -gt 1 ] && [ "${profile_dir%/}" != "$profile_dir" ]; do
+            profile_dir="${profile_dir%/}"
+        done
     fi
-    account_email=$(cat "$_acct_cache" 2>/dev/null)
+    if [ -z "$_profile_real" ] || [ "$_profile_real" != "$_home_claude" ]; then
+        profile_name="${profile_dir##*/}"
+        case "$profile_name" in
+            .claude-?*) profile_name="${profile_name#.claude-}" ;;
+            "") profile_name="/" ;;   # ルート
+        esac
+    fi
 fi
-account_domain=""
-if [ -n "$account_email" ]; then
-    account_domain="${account_email#*@}"
-fi
+
+# 外から来る文字列（JSON・パス・ブランチ名・環境変数）は、出力で printf '%b' に通るため、
+# バックスラッシュと制御文字を ? に置き換えて表示制御として解釈されないようにする
+# 描画のたびに走るため、サブシェルや tr を起動せずに変数をその場で書き換える
+safe() {
+    local name v
+    for name in "$@"; do
+        v="${!name}"
+        v="${v//\\/?}"
+        v="${v//[[:cntrl:]]/?}"
+        printf -v "$name" '%s' "$v"
+    done
+}
+safe model output_style agent_name worktree_name worktree_branch cc_version effort_level profile_name
 
 # Powerlevel10k Rainbow 色定義（ANSI 256色）
 # 背景色
@@ -116,6 +125,7 @@ if [ -n "$current_dir" ]; then
 else
     display_dir="~"
 fi
+safe display_dir
 
 # Git情報を取得（オプショナルロックをスキップ）
 git_branch=""
@@ -127,6 +137,7 @@ if [ -n "$current_dir" ] && [ -d "$current_dir" ]; then
     if git rev-parse --git-dir > /dev/null 2>&1; then
         # ブランチ名を取得
         git_branch=$(git -c core.fileMode=false -c core.safecrlf=false symbolic-ref --short HEAD 2>/dev/null || git -c core.fileMode=false -c core.safecrlf=false rev-parse --short HEAD 2>/dev/null)
+        safe git_branch
 
         # Git ステータスを確認（高速化のため簡易チェック）
         if [ -n "$(git -c core.fileMode=false -c core.safecrlf=false status --porcelain 2>/dev/null)" ]; then
@@ -236,12 +247,6 @@ format_duration() {
 session_display=$(rate_limit_display "5h" "$session_used_pct" "$session_resets_at" 18000 0.2)
 weekly_display=$(rate_limit_display "7d" "$weekly_used_pct" "$weekly_resets_at" 604800 0.05)
 
-# 使用中アカウントの表示（メールドメインで判別）
-account_display=""
-if [ -n "$account_domain" ]; then
-    account_display="@${account_domain}"
-fi
-
 # Vimモード表示（P10k の prompt_char スタイル）
 vim_display=""
 if [ "$vim_mode" = "NORMAL" ]; then
@@ -338,10 +343,8 @@ if [ -n "$effort_level" ]; then
     line2+=$(printf '%b' " ${FG_GREY}(${effort_level})${C_RESET}")
 fi
 
-# 使用中アカウント（メールドメインで判別）
-if [ -n "$account_display" ]; then
-    line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${FG_CYAN}${account_display}${C_RESET}")
-fi
+# 使用中のプロファイル（どのアカウント = 利用枠か）
+line2+=$(printf '%b' " ${FG_GREY}│${C_RESET} ${FG_CYAN}${profile_name}${C_RESET}")
 
 # Context残量
 if [ -n "$context_display" ]; then
