@@ -30,6 +30,10 @@ mkdir -p "$fake_home/.claude/prompts" "$fake_home/.claude/skills/foo" "$fake_hom
 echo "global rules" > "$fake_home/.claude/CLAUDE.md"
 echo "p" > "$fake_home/.claude/prompts/x.md"
 echo "s" > "$fake_home/.claude/skills/foo/SKILL.md"
+# 正本を別リポ（machine-management）に置き、~/.claude/skills/<名前> を symlink にする構成
+mkdir -p "$fake_home/canon/bar" "$fake_home/.claude/skills/learned"
+echo "b" > "$fake_home/canon/bar/SKILL.md"
+ln -s "$fake_home/canon/bar" "$fake_home/.claude/skills/bar"
 
 # 追加プロファイル: .claude.json を持つ config dir。既存の実ファイルとアカウント固有の synced を持つ
 mkdir -p "$fake_home/.claude-alt/skills/synced/acct-alt"
@@ -44,6 +48,8 @@ p="$fake_home/.claude-alt"
 assert_link "CLAUDE.md を共有"     "$p/CLAUDE.md"     "$fake_home/.claude/CLAUDE.md"
 assert_link "prompts を共有"       "$p/prompts"       "$fake_home/.claude/prompts"
 assert_link "skill を個別に共有"   "$p/skills/foo"    "$fake_home/.claude/skills/foo"
+assert_link "symlink の skill も共有" "$p/skills/bar"  "$fake_home/.claude/skills/bar"
+if [ ! -e "$p/skills/learned" ]; then ok "learned は共有しない"; else ng "learned は共有しない"; fi
 
 if [ -f "$p/CLAUDE.md.orig" ] && [ "$(cat "$p/CLAUDE.md.orig")" = "stale" ]; then ok "既存の実ファイルは .orig に退避"; else ng "既存の実ファイルは .orig に退避"; fi
 if [ -d "$p/skills/synced/acct-alt" ] && [ ! -L "$p/skills/synced" ] && [ ! -e "$p/skills/synced/acct-main" ]; then

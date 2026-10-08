@@ -22,8 +22,9 @@ claude_files=(statusline-command.sh)
 # ~/.claude（グローバル CLAUDE.md・prompts・個人 skill は dotfiles 管理外のため）。
 # 対象は .claude.json を持つ ~/.claude-* を自動検出する（プロファイル名はホスト側に置く）。
 claude_profile_shared=(CLAUDE.md prompts)
-# skills/ は個別に配備する。synced/ は claude.ai アカウントから同期されるため共有しない
-claude_profile_skip_skills=(synced)
+# skills/ は個別に配備する。synced/（claude.ai アカウントから同期）と learned/（ツールが
+# 書き込む領域）は共有しない
+claude_profile_skip_skills=(synced learned)
 
 dotfiles=dotfiles
 
@@ -163,7 +164,9 @@ for profile_dir in "$HOME"/.claude-*(N); do
         make_symlink "$src" "$dst"
     done
 
-    for skill_src in "$HOME"/.claude/skills/*(/N); do
+    # (-/) で symlink の先がディレクトリのものも含める（正本を machine-management に置き、
+    # ~/.claude/skills/<名前> が symlink の構成。(/) だと実体のディレクトリしか一致しない）
+    for skill_src in "$HOME"/.claude/skills/*(-/N); do
         skill="${skill_src:t}"
         (( ${claude_profile_skip_skills[(Ie)$skill]} )) && continue
         dst="$profile_dir/skills/$skill"
