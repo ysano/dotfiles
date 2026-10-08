@@ -1,6 +1,7 @@
 #!/bin/sh
 # open-path-menu.sh - tmux 既定の右クリックメニュー（MouseDown3Pane）に「Preview Path」を足す
 #
+# マウスを使うアプリ（fullscreen の Claude Code 等）の中でもメニューを出す。
 # tmux にはメニューへ項目を追加する仕組みが無いため、設定読込のたびに素の tmux から
 # 既定の割り当てを取り出し、項目を差し込んで割り当て直す（tmux 更新にも追従する）。
 #   install     既定を取り出して差し込み、稼働中のサーバーへ source-file する
@@ -21,6 +22,21 @@ transform() {
     esac
     script="$(cd "$(dirname "$0")" && pwd)/open-path.sh"
     case $script in *"'"*) return 1 ;; esac
+    # 既定は「アプリがマウスを使っていれば右クリックをアプリへ渡す」。fullscreen の
+    # Claude Code 等でもメニューを出すため、条件から mouse_any_flag を外す
+    # （copy-mode 以外のモード中はアプリへ渡す、という残りの条件は保つ）
+    any='#{||:#{mouse_any_flag},'
+    case $cmd in
+        *"$any"*'}}}"'*)
+            # "#{||:#{mouse_any_flag},#{&&:...,#{?...,0,1}}}" → "#{&&:...,#{?...,0,1}}"
+            # （末尾の }}} は #{? と #{&& と #{|| の閉じ。#{|| の分を 1 つ外す）
+            head=${cmd%%"$any"*}
+            rest=${cmd#*"$any"}
+            cond=${rest%%'}}}"'*}
+            tail=${rest#*'}}}"'}
+            cmd="$head$cond}}\"$tail"
+            ;;
+    esac
     before=${cmd%%"$ANCHOR"*}
     after=${cmd#*"$ANCHOR"}
     item="\"Preview Path\" o { run-shell -b '$script click' } '' "

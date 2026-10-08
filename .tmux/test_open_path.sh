@@ -211,6 +211,14 @@ evil="$work/$(printf 'cwd\n\ttouch\tpwned3')"; mkdir -p "$evil"
 (cd "$work" && click_run 3.7c "$(printf 'x\n touch pwned4')" 0 "$evil" >/dev/null)
 if [ ! -e "$work/pwned3" ] && [ ! -e "$work/pwned4" ] && [ ! -e "$evil/pwned3" ]; then echo "ok   改行入りの cwd / 行でもコマンドを実行しない"; else echo "FAIL 改行入りの cwd / 行でもコマンドを実行しない"; fail=1; fi
 
+# --- Option + クリックはマウスを使うアプリ（fullscreen の Claude Code 等）の中でも tmux が処理する ---
+optblock=$(sed -n '/^bind -n M-MouseDown1Pane/,/^}/p' "$(dirname "$SCRIPT")/../keybindings.conf")
+case $optblock in
+    *mouse_any_flag*|*"send-keys -M"*) echo "FAIL Option + クリックをアプリへ渡さない: $optblock"; fail=1 ;;
+    *"open-path.sh click"*) echo "ok   Option + クリックをアプリへ渡さない" ;;
+    *) echo "FAIL Option + クリックの割り当てが無い"; fail=1 ;;
+esac
+
 # --- open-path-menu.sh: 既定の右クリックメニューへ「Preview Path」を差し込む ---
 MENU="$(dirname "$SCRIPT")/open-path-menu.sh"
 sample='bind-key  -T root MouseDown3Pane          if-shell -F -t = "#{mouse_any_flag}" { select-pane -t = ; send-keys -M } { display-menu -T "#[align=centre]#{pane_index}" -t = -x M -y M "#{?mouse_word,Copy #[underscore]#{=/9/...:mouse_word},}" c { copy-mode -q ; set-buffer "#{q:mouse_word}" } Kill X { kill-pane } }'
@@ -226,6 +234,14 @@ esac
 case $out in
     *"set -gF -t = @open_path_cwd '#{pane_current_path}'"*"set -gF @open_path_line '#{mouse_line}'"*) echo "ok   menu: クリックした pane の cwd と行を退避" ;;
     *) echo "FAIL menu: クリックした pane の cwd と行を退避: $out"; fail=1 ;;
+esac
+# マウスを使うアプリ（fullscreen の Claude Code 等）の中でも tmux のメニューを出す
+real='bind-key  -T root MouseDown3Pane          if-shell -F -t = "#{||:#{mouse_any_flag},#{&&:#{pane_in_mode},#{?#{m/r:(copy|view)-mode,#{pane_mode}},0,1}}}" { select-pane -t = ; send-keys -M } { display-menu -T x -t = -x M -y M Kill X { kill-pane } }'
+out=$(printf '%s\n' "$real" | sh "$MENU" transform)
+case $out in
+    *mouse_any_flag*) echo "FAIL menu: アプリがマウスを使っていてもメニューを出す: $out"; fail=1 ;;
+    *'if-shell -F -t = "#{&&:#{pane_in_mode},#{?#{m/r:(copy|view)-mode,#{pane_mode}},0,1}}"'*"Preview Path"*) echo "ok   menu: アプリがマウスを使っていてもメニューを出す" ;;
+    *) echo "FAIL menu: アプリがマウスを使っていてもメニューを出す: $out"; fail=1 ;;
 esac
 check "menu: 目印が無ければ何もしない" "" sh -c 'printf "%s\n" "bind-key -T root MouseDown3Pane display-menu -T x" | sh "$1" transform' _ "$MENU"
 
