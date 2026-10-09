@@ -1,5 +1,6 @@
 #!/bin/sh
-# open-path-menu.sh - tmux 既定の右クリックメニュー（MouseDown3Pane）に「Preview Path」を足す
+# open-path-menu.sh - tmux 既定の右クリックメニュー（MouseDown3Pane）に「Preview Path」（o）と
+#                     「Open in Default App」（a）を足す
 #
 # マウスを使うアプリ（fullscreen の Claude Code 等）の中でもメニューを出す。
 # tmux にはメニューへ項目を追加する仕組みが無いため、設定読込のたびに素の tmux から
@@ -39,7 +40,7 @@ transform() {
     esac
     before=${cmd%%"$ANCHOR"*}
     after=${cmd#*"$ANCHOR"}
-    item="\"Preview Path\" o { run-shell -b '$script click' } '' "
+    item="\"Preview Path\" o { run-shell -b '$script click' } \"Open in Default App\" a { run-shell -b '$script click open' } '' "
     save="set -gF @open_path_client '#{client_name}' \; set -gF -t = @open_path_cwd '#{pane_current_path}' \; set -gF @open_path_link '#{mouse_hyperlink}' \; set -gF @open_path_line '#{mouse_line}' \; set -gF @open_path_x '#{mouse_x}' \;"
     printf 'bind-key -n MouseDown3Pane %s %s%s%s%s\n' "$save" "$before" "$ANCHOR" "$item" "$after"
 }

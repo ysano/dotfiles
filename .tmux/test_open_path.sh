@@ -197,6 +197,25 @@ log=$(click_run 3.2a "see link.sh:3 here" 5 "$repo")
 case $log in *"[display-popup]"*"[-T]"*) echo "FAIL tmux 3.2 では -T を付けない: $log"; fail=1;; *"[display-popup]"*) echo "ok   tmux 3.2 では -T を付けない";; *) echo "FAIL tmux 3.2 でポップアップ: $log"; fail=1;; esac
 log=$(click_run 3.7c "foo bar" 3 "$repo")
 case $log in *"[display-message]"*) echo "ok   見つからなければメッセージ";; *) echo "FAIL 見つからなければメッセージ: $log"; fail=1;; esac
+# click open: ポップアップを出さず、既定アプリ（open / xdg-open）で開く
+for t in open xdg-open; do printf '#!/bin/sh\nfor a in "$@"; do printf "[%%s]" "$a"; done >> "$STUB_LOG"; echo " <- %s" >> "$STUB_LOG"\n' "$t" > "$stub/$t"; chmod +x "$stub/$t"; done
+click_open() {
+    : > "$work/log"
+    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_client=c1 STUB_link="" \
+        STUB_line="$1" STUB_x="$2" STUB_cwd="$3" sh "$SCRIPT" click open >/dev/null 2>&1
+    cat "$work/log"
+}
+log=$(click_open "see link.sh:3 here" 5 "$repo")
+case $log in
+    *"[display-popup]"*) echo "FAIL click open はポップアップを出さない: $log"; fail=1 ;;
+    *"[$repo/link.sh] <- open"*) echo "ok   click open は既定アプリで開く" ;;
+    *) echo "FAIL click open は既定アプリで開く: $log"; fail=1 ;;
+esac
+log=$(click_open "see docs/ here" 6 "$repo")
+case $log in *"[$repo/docs] <- open"*) echo "ok   click open はディレクトリも開く" ;; *) echo "FAIL click open はディレクトリも開く: $log"; fail=1 ;; esac
+log=$(click_open "foo bar" 3 "$repo")
+case $log in *"<- open"*) echo "FAIL click open: 見つからなければ開かない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   click open: 見つからなければメッセージ" ;; *) echo "FAIL click open: 見つからなければメッセージ: $log"; fail=1 ;; esac
+
 # フォーマット展開される display-popup の -d / コマンド文字列に画面由来の値を載せない
 fmtdir="$work/#(touch pwned5)"; mkdir -p "$fmtdir"; echo x > "$fmtdir/a.txt"
 log=$(click_run 3.7c "a.txt" 0 "$fmtdir")
@@ -228,7 +247,7 @@ case $out in
     *) echo "FAIL menu: 先頭で値を退避する: $out"; fail=1 ;;
 esac
 case $out in
-    *"-x M -y M \"Preview Path\" o { run-shell -b '$SCRIPT click' } '' \"#{?mouse_word,Copy"*"Kill X { kill-pane } }") echo "ok   menu: 項目を差し込み既定の項目を残す" ;;
+    *"-x M -y M \"Preview Path\" o { run-shell -b '$SCRIPT click' } \"Open in Default App\" a { run-shell -b '$SCRIPT click open' } '' \"#{?mouse_word,Copy"*"Kill X { kill-pane } }") echo "ok   menu: 項目を差し込み既定の項目を残す" ;;
     *) echo "FAIL menu: 項目を差し込み既定の項目を残す: $out"; fail=1 ;;
 esac
 case $out in

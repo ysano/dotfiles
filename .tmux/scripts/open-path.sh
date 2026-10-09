@@ -2,7 +2,8 @@
 # open-path.sh - クリックしたファイルパスの中身をポップアップでプレビューする
 #
 # keybindings.conf の Option + クリックから呼ばれる（値は @open_path_* ユーザーオプション経由）:
-#   open-path.sh click
+#   open-path.sh click        プレビュー（ポップアップ）
+#   open-path.sh click open   既定アプリで開く（右クリックメニューの "Open in Default App"）
 # 段階ごとのサブコマンド（テスト・デバッグ用）:
 #   extract <行> <桁>        クリック位置（0 起点の表示桁）のパス候補を切り出す
 #   parse <候補>             末尾の記号を落とし「パス<TAB>行番号」に分ける
@@ -204,7 +205,9 @@ popup_title_supported() {
     }'
 }
 
+# click [open]: 引数なしはポップアップでプレビュー、open は既定アプリで直接開く
 click() {
+    mode=${1:-preview}
     client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
     res=""
     case $link in
@@ -219,6 +222,12 @@ click() {
     fi
     tab=$(printf '\t')
     path=${res%%"$tab"*} lineno=${res#*"$tab"}
+    if [ "$mode" = open ]; then
+        # 実在確認を通った絶対パスだけを渡す。応答しない場合に run-shell が残らないよう打ち切る
+        bounded 5 open_default "$path" >/dev/null 2>&1 ||
+            tmux display-message -c "$client" "open-path: 既定アプリで開けません"
+        return 0
+    fi
     # display-popup の -d やコマンド文字列はフォーマット展開されうるため、画面由来の
     # 値（パス等）は載せない。view へは展開なしの set -g で渡し、-d も使わない
     tmux set -g @open_path_view_path "$path"
