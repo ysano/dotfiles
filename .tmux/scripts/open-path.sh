@@ -151,6 +151,77 @@ search_name() {
     }
 }
 
+# cwd・git ルート以外で相対パスの起点になりうるディレクトリを、段 <n> の分だけ 1 行ずつ出す:
+# 1 同じリポジトリの worktree / 2 OPEN_PATH_ROOTS（: 区切り）/ 3 ghq 配下の各リポジトリ。
+# Claude Code 等は起動時の cwd のまま別リポジトリ・別 worktree 相対のパスを表示するため
+tier_roots() {
+    case $1 in
+        1)
+            [ -n "$git_root" ] || return 0
+            bounded 3 git -C "$cwd" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p' ;;
+        2)
+            printf '%s\n' "${OPEN_PATH_ROOTS:-}" | tr ':' '\n' ;;
+        3)
+            ghq_roots=${GHQ_ROOT:-}
+            if [ -z "$ghq_roots" ] && command -v ghq >/dev/null 2>&1; then
+                ghq_roots=$(bounded 2 ghq root 2>/dev/null) || ghq_roots=""
+            fi
+            printf '%s\n' "${ghq_roots:-$HOME/ghq}" | tr ':' '\n' | while IFS= read -r r; do
+                [ -n "$r" ] || continue
+                for d in "$r"/*/*/*; do
+                    [ -d "$d" ] && printf '%s\n' "$d"
+                done
+            done ;;
+    esac
+}
+
+# 追加の探索に使える候補か: 「名前/名前」の形で、絶対・~・.. を含まない相対パス
+# （名前だけ・docs/ のような 1 段は多数のリポジトリで同名が見つかるため cwd 配下の探索に
+# 任せ、.. で各ルートの外へは出さない）
+roots_candidate() {
+    # shellcheck disable=SC2088  # 画面上の "~" を文字列として照合する
+    case $1 in
+        /*|"~"*|..|../*|*/..|*/../*) return 1 ;;
+        ?*/?*) return 0 ;;
+    esac
+    return 1
+}
+
+# 候補（引数）を段の順に各ルートからの相対パスとして探す。段の中で一致が 1 つならそれを返し、
+# 複数なら取り違えないよう失敗する（下の段へは進まず、下の段のコマンドも呼ばない）。
+# ルート数が多いため、まず組み込みの test で絞ってから実体パスを求める
+search_roots() {
+    n=0
+    for c in "$@"; do
+        roots_candidate "$c" && n=$((n + 1))
+    done
+    # 対象の候補が無ければ、git・ghq を呼ぶ前に返す（止まる git の待ちを積み上げない）
+    [ "$n" -gt 0 ] || return 1
+    for tier in 1 2 3; do
+        res=$(tier_roots "$tier" | {
+            hit="" count=0
+            while IFS= read -r r; do
+                [ -n "$r" ] || continue
+                for c in "$@"; do
+                    roots_candidate "$c" || continue
+                    [ -e "$r/$c" ] || continue
+                    f=$(canonical "$r/$c") || continue
+                    if [ "$f" != "$hit" ]; then hit=$f count=$((count + 1)); fi
+                    break
+                done
+            done
+            [ "$count" -eq 0 ] && exit 0
+            [ "$count" -eq 1 ] && { printf 'hit\t%s\n' "$hit"; exit 0; }
+            printf 'ambiguous\n'
+        })
+        case $res in
+            hit"$(printf '\t')"*) printf '%s\n' "${res#hit?}"; return 0 ;;
+            ambiguous) return 1 ;;
+        esac
+    done
+    return 1
+}
+
 resolve() {
     token=$1 cwd=$2
     case $token in
@@ -170,6 +241,9 @@ resolve() {
             printf '%s\t%s\n' "$f" "$line"; return 0
         fi
     done
+    if f=$(search_roots "$path" "${path#[ab]/}" "$trimmed" "${trimmed#[ab]/}"); then
+        printf '%s\t%s\n' "$f" "$line"; return 0
+    fi
     # 直接見つからなければ、ファイル名だけの候補を cwd 配下から探す
     if f=$(search_name "$path" "$cwd"); then
         printf '%s\t%s\n' "$f" "$line"; return 0
@@ -209,6 +283,9 @@ popup_title_supported() {
 click() {
     mode=${1:-preview}
     client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
+    # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
+    roots=$(opt roots)
+    if [ -n "$roots" ]; then OPEN_PATH_ROOTS=$roots; export OPEN_PATH_ROOTS; fi
     res=""
     case $link in
         file://*) res=$(resolve "$link" "$cwd") ;;

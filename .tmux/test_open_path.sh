@@ -115,6 +115,38 @@ check "file:// 自ホスト名"       "$work/a b.txt${TAB}"     sh "$SCRIPT" res
 check "file:// 他ホストは拒否"   ""                        sh "$SCRIPT" resolve "file://remote.invalid$work/a%20b.txt" "/"
 check "存在しなければ失敗"       ""                        sh "$SCRIPT" resolve "nope.txt" "$repo"
 
+# --- cwd・git ルートに無ければ、同じリポジトリの worktree → ghq 配下 → OPEN_PATH_ROOTS を探す ---
+# （Claude Code の cwd は起動時のまま固定のため、別リポジトリ・別 worktree 相対のパスが表示される）
+git -C "$repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+git -C "$repo" worktree add -q -b wt "$work/repo-wt"
+mkdir -p "$work/repo-wt/new" "$work/ghq/github.com/x/other/scripts" "$work/extra/tools"
+echo x > "$work/repo-wt/new/only-in-wt.sh"
+echo x > "$work/ghq/github.com/x/other/scripts/foo.sh"
+echo x > "$work/ghq/github.com/x/other/rootname.md"
+echo x > "$work/extra/tools/bar.sh"
+mkdir -p "$work/ghq/github.com/x/other/sub"; echo x > "$work/ghq/github.com/x/other/sub/link.sh"
+check "別 worktree 相対"                 "$work/repo-wt/new/only-in-wt.sh${TAB}4" env GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "new/only-in-wt.sh:4" "$repo"
+check "ghq 配下の別リポジトリ相対"       "$work/ghq/github.com/x/other/scripts/foo.sh${TAB}" env GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "scripts/foo.sh" "$repo"
+check "OPEN_PATH_ROOTS（: 区切り）"      "$work/extra/tools/bar.sh${TAB}" env GHQ_ROOT="$work/ghq" OPEN_PATH_ROOTS="/nonexistent:$work/extra" sh "$SCRIPT" resolve "tools/bar.sh" "$repo"
+check "cwd に有れば cwd を優先"          "$repo/link.sh${TAB}" env GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "link.sh" "$repo"
+check "名前だけは他リポジトリを探さない" "" env GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "rootname.md" "$repo"
+check "git 管理外の cwd でも ghq を探す" "$work/ghq/github.com/x/other/scripts/foo.sh${TAB}" env GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "scripts/foo.sh" "$work/plain"
+# 追加ルートからは ../ で外へ出ない（cwd 相対の ../ は従来どおり許す）
+mkdir -p "$work/outside"; echo x > "$work/outside/leak.txt"
+check "追加ルートからの ../ は拒否"      "" env GHQ_ROOT="$work/ghq" OPEN_PATH_ROOTS="$work/extra" sh "$SCRIPT" resolve "../outside/leak.txt" "$work/plain"
+# 同じ段に複数あれば取り違えないよう失敗し、明示したルートは ghq より優先する
+mkdir -p "$work/ghq/github.com/y/dup/scripts"; echo x > "$work/ghq/github.com/y/dup/scripts/foo.sh"
+check "ghq で複数一致なら開かない"       "" env GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "scripts/foo.sh" "$repo"
+mkdir -p "$work/extra/scripts"; echo x > "$work/extra/scripts/foo.sh"
+check "OPEN_PATH_ROOTS は ghq より優先"  "$work/extra/scripts/foo.sh${TAB}" env GHQ_ROOT="$work/ghq" OPEN_PATH_ROOTS="$work/extra" sh "$SCRIPT" resolve "scripts/foo.sh" "$repo"
+# 上の段で決まれば下の段（ghq root）を呼ばない
+slowghq="$work/slowghq"; mkdir -p "$slowghq"
+printf '#!/bin/sh\nsleep 5\necho "%s"\n' "$work/ghq" > "$slowghq/ghq"; chmod +x "$slowghq/ghq"
+t0=$(date +%s)
+check "上の段で決まれば ghq を待たない"  "$work/extra/scripts/foo.sh${TAB}" env -u GHQ_ROOT PATH="$slowghq:$PATH" OPEN_PATH_ROOTS="$work/extra" sh "$SCRIPT" resolve "scripts/foo.sh" "$repo"
+elapsed=$(( $(date +%s) - t0 ))
+if [ "$elapsed" -le 1 ]; then echo "ok   ghq を呼ばずに返す（${elapsed}s）"; else echo "FAIL ghq を呼ばずに返す（${elapsed}s）"; fail=1; fi
+
 # --- ファイル名だけの候補は cwd 配下を探す ---
 mkdir -p "$repo/sub/deep" "$repo/a/b" "$repo/ignored" "$repo/other" "$work/plain/x/y"
 echo x > "$repo/sub/deep/only.txt"
@@ -167,6 +199,16 @@ t0=$(date +%s)
 env PATH="$hang:$PATH" sh "$SCRIPT" resolve "zz-missing.txt" "$repo" >/dev/null 2>&1
 elapsed=$(( $(date +%s) - t0 ))
 if [ "$elapsed" -le 9 ]; then echo "ok   git を時間で打ち切る（${elapsed}s）"; else echo "FAIL git を時間で打ち切る（${elapsed}s）"; fail=1; fi
+# rev-parse は通り、その後の git（worktree list・ls-files）が止まっても待ちを積み上げない
+hang2="$work/hang2"; mkdir -p "$hang2"
+realgit=$(command -v git)
+printf '#!/bin/sh\ncase " $* " in *" rev-parse "*) exec "%s" "$@" ;; esac\ntrap "" TERM\nexec sleep 10\n' "$realgit" > "$hang2/git"; chmod +x "$hang2/git"
+for tok in "zz-missing.txt" "zz/missing.txt"; do
+    t0=$(date +%s)
+    env PATH="$hang2:$PATH" GHQ_ROOT="$work/ghq" sh "$SCRIPT" resolve "$tok" "$repo" >/dev/null 2>&1
+    elapsed=$(( $(date +%s) - t0 ))
+    if [ "$elapsed" -le 6 ]; then echo "ok   止まる git の待ちを積み上げない: $tok（${elapsed}s）"; else echo "FAIL 止まる git の待ちを積み上げない: $tok（${elapsed}s）"; fail=1; fi
+done
 
 # 画面上の文字列はシェルに展開しない
 sh "$SCRIPT" resolve "\$(touch $work/pwned)" "$repo" >/dev/null 2>&1
