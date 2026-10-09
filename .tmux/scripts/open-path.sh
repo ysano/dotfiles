@@ -8,6 +8,8 @@
 #   extract <行> <桁>        クリック位置（0 起点の表示桁）のパス候補を切り出す
 #   parse <候補>             末尾の記号を落とし「パス<TAB>行番号」に分ける
 #   resolve <候補> <cwd>     実在するファイルの「実体パス<TAB>行番号」を返す
+#   popup_size <パス> <幅> <高さ>  中身に合わせたポップアップの「幅 高さ」
+#   render <md|raw> <パス> [行番号]  プレビューする中身を標準出力へ
 #   view [<パス> [行番号]]   ポップアップ内でプレビューし、Emacs / 既定アプリで開ける
 #
 # 画面上の文字列は信用しない入力として扱う: eval・シェルへの埋め込みはせず、
@@ -279,6 +281,37 @@ popup_title_supported() {
     }'
 }
 
+# popup_size <パス> <端末の幅> <高さ>: 中身に合わせたポップアップの「幅 高さ」を返す。
+# 幅: Markdown は glow が読みやすい行長（約 100 桁）、ディレクトリは ls -la 程度、それ以外は
+# 最長行（タブは bat と同じ 4 桁、全角はバイト数で多めに数える）＋行番号・目印・枠の分。
+# 高さ: 行数＋枠とプロンプトの分（Markdown・ディレクトリは整形後の行数が読めないので上限）。
+# どれも最小 80x12、最大は端末の 85%。端末の大きさが分からなければ 85% のまま
+popup_size() {
+    # 幅・高さは個別に検証する（空・先頭 0（8 進として算術エラー）・0 は 85% のまま）
+    for v in "$2" "$3"; do
+        case $v in ""|0*|*[!0-9]*) echo "85% 85%"; return 0 ;; esac
+    done
+    max_w=$(( $2 * 85 / 100 )) max_h=$(( $3 * 85 / 100 ))
+    if [ -d "$1" ]; then
+        w=100 h=$max_h
+    elif is_markdown "$1" >/dev/null; then
+        w=108 h=$max_h
+    else
+        # 巨大なファイル（改行の無いものも）で待たされないよう先頭の 256 KiB・2000 行だけを
+        # 見る。読み切れなかったときの高さは上限にする
+        # shellcheck disable=SC2046  # awk の「幅 高さ」を 2 つの引数に分ける
+        set -- $(head -c 262144 -- "$1" 2>/dev/null | head -n 2000 | LC_ALL=C awk '{
+            b += length($0) + 1; gsub(/\t/, "    "); if (length($0) > m) m = length($0)
+        } END { print m + 12, (b >= 262144 || NR >= 2000 ? 99999 : NR + 3) }')
+        w=${1:-80} h=${2:-12}
+    fi
+    [ "$w" -ge 80 ] || w=80
+    [ "$h" -ge 12 ] || h=12
+    [ "$w" -le "$max_w" ] || w=$max_w
+    [ "$h" -le "$max_h" ] || h=$max_h
+    echo "$w $h"
+}
+
 # click [open]: 引数なしはポップアップでプレビュー、open は既定アプリで直接開く
 click() {
     mode=${1:-preview}
@@ -310,12 +343,14 @@ click() {
     tmux set -g @open_path_view_path "$path"
     tmux set -g @open_path_view_line "$lineno"
     popup="sh $(shquote "$0") view"
+    # shellcheck disable=SC2046  # 「幅 高さ」を 2 つの引数に分ける
+    set -- $(popup_size "$path" $(tmux display -p -c "$client" '#{client_width} #{client_height}' 2>/dev/null))
     if popup_title_supported; then
         # -T はフォーマットなので # を ## にエスケープする（#() の実行を防ぐ）
         title=$(printf ' %s ' "$path" | sed 's/#/##/g')
-        tmux display-popup -c "$client" -E -w 85% -h 85% -T "$title" "$popup"
+        tmux display-popup -c "$client" -E -w "$1" -h "$2" -T "$title" "$popup"
     else
-        tmux display-popup -c "$client" -E -w 85% -h 85% "$popup"
+        tmux display-popup -c "$client" -E -w "$1" -h "$2" "$popup"
     fi
 }
 
@@ -382,7 +417,8 @@ render() {
         bat --paging=never --wrap=never --style=numbers --color=always \
             ${lineno:+--highlight-line "$lineno"} -- "$path"
     else
-        awk '{ printf "%6d  %s\n", NR, $0 }' "$path"
+        # タブは bat と同じ 4 桁に展開する（popup_size の幅の計算とそろえる）
+        awk '{ gsub(/\t/, "    "); printf "%6d  %s\n", NR, $0 }' "$path"
     fi | if [ -n "$lineno" ]; then mark "$lineno"; else cat; fi
 }
 
@@ -419,7 +455,8 @@ view() {
         while :; do
             start=1
             [ "$mode" = raw ] && start=${lineno:-1}
-            render "$mode" | less -R -j.3 "+${start}g" --lesskey-src="$keys" "-Ps$prompt"
+            # --mouse: ホイールでスクロールする（tmux のポップアップは中のアプリへマウスを渡す）
+            render "$mode" | less -R -j.3 --mouse --wheel-lines=3 "+${start}g" --lesskey-src="$keys" "-Ps$prompt"
             act=$(action $?)
             if [ "$act" = toggle ]; then
                 # Markdown 以外の r は再描画と同じ扱いで開き直す
@@ -460,5 +497,7 @@ case $cmd in
     md_renderer) md_renderer "$@" ;;
     is_markdown) is_markdown "$@" ;;
     lesskey_ok) lesskey_ok "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark|action|lesskey_ok|md_renderer|is_markdown} ..." >&2; exit 2 ;;
+    popup_size) popup_size "$@" ;;
+    render) mode=${1:-raw} path=${2:-} lineno=${3:-}; render "$mode" ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
 esac

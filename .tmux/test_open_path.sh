@@ -83,7 +83,7 @@ echo x > "$work/short.txt"
 env PATH="$lessbin:$PATH" LESS=-RFXx3M LESS_STUB_LOG="$work/less.log" sh "$SCRIPT" view "$work/short.txt" 3 >/dev/null 2>&1
 lesslog=$(cat "$work/less.log" 2>/dev/null)
 case $lesslog in
-    "LESS=[]"*"[--lesskey-src="*"[-Psq 閉じる  e Emacs  o 既定アプリ]"*) echo "ok   view は LESS を空にしてプロンプトを渡す" ;;
+    "LESS=[]"*"[--mouse]"*"[--lesskey-src="*"[-Psq 閉じる  e Emacs  o 既定アプリ]"*) echo "ok   view は LESS を空にしてプロンプトを渡す" ;;
     *) echo "FAIL view は LESS を空にしてプロンプトを渡す: $lesslog"; fail=1 ;;
 esac
 
@@ -92,6 +92,33 @@ check "less 668 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 668 (POSIX regu
 check "less 590 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 590 (GNU regular expressions)"
 check "less 551 は非対応" "no"  sh "$SCRIPT" lesskey_ok "less 551 (GNU regular expressions)"
 check "不明は非対応"      "no"  sh "$SCRIPT" lesskey_ok "BusyBox v1.36"
+
+# --- popup_size <パス> <端末の幅> <高さ>: 中身に合わせたポップアップの「幅 高さ」 ---
+sz="$work/size"; mkdir -p "$sz"
+echo x > "$sz/short.txt"
+awk 'BEGIN { for (i = 0; i < 300; i++) { s = ""; for (j = 0; j < (i == 7 ? 200 : 20); j++) s = s "a"; print s } }' > "$sz/long.txt"
+awk 'BEGIN { s = ""; for (j = 0; j < 500; j++) s = s "a"; print s }' > "$sz/wide.txt"
+printf '\tx\n' > "$sz/tab.txt"
+printf '# t\n' > "$sz/doc.md"
+check "短いファイルは最小の 80x12"        "80 12"   sh "$SCRIPT" popup_size "$sz/short.txt" 310 56
+check "最長行＋行番号の幅、高さは上限"    "212 47"  sh "$SCRIPT" popup_size "$sz/long.txt" 310 56
+check "幅は端末の 85% まで"               "263 12"  sh "$SCRIPT" popup_size "$sz/wide.txt" 310 56
+check "Markdown は読みやすい幅に固定"     "108 47"  sh "$SCRIPT" popup_size "$sz/doc.md" 310 56
+check "狭い端末では 85% に収める"         "51 17"   sh "$SCRIPT" popup_size "$sz/doc.md" 60 20
+check "ディレクトリは 100 桁"             "100 47"  sh "$SCRIPT" popup_size "$sz" 310 56
+check "端末の大きさが不明なら 85%"        "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" "" ""
+check "片方だけ空なら 85%"                "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" 310 ""
+check "先頭 0 の寸法は 85%"               "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" 08 56
+check "0 の寸法は 85%"                    "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" 0 0
+# 改行の無い巨大なファイルも全体を読まず、高さは上限にする
+awk 'BEGIN { s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"; for (i = 0; i < 16; i++) s = s s; for (i = 0; i < 4; i++) printf "%s", s }' > "$sz/huge.txt"
+check "改行の無い巨大ファイルは上限"      "263 47"  sh "$SCRIPT" popup_size "$sz/huge.txt" 310 56
+# bat が無いときの表示もタブを 4 桁に展開する（大きさの計算とそろえる）
+nobat="$work/nobat"; mkdir -p "$nobat"
+for c in sh awk sed sort head cut cat tr dirname basename tput; do
+    p=$(command -v "$c") && [ "${p#/}" != "$p" ] && ln -sf "$p" "$nobat/$c"
+done
+check "bat 無しでもタブは 4 桁"           "     1      x" env PATH="$nobat" sh "$SCRIPT" render raw "$sz/tab.txt"
 
 # --- resolve <候補> <pane の cwd>: 実在するファイルの絶対パスと行番号 ---
 repo="$work/repo"
@@ -221,7 +248,7 @@ cat > "$stub/tmux" <<'STUB'
 #!/bin/sh
 case $1 in
     show) eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\"" ;;
-    display) printf '%s\n' "$STUB_version" ;;
+    display) case $* in *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
     display-popup|display-message|set) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
 esac
 STUB
@@ -236,6 +263,8 @@ click_run() {
 log=$(click_run 3.7c "see link.sh:3 here" 5 "$repo")
 case $log in *"[set][-g][@open_path_view_path][$repo/link.sh]"*"[set][-g][@open_path_view_line][3]"*"[display-popup]"*"[-T]"*"view]"*) echo "ok   click でポップアップ（3.3+ はタイトル付き）";; *) echo "FAIL click でポップアップ: $log"; fail=1;; esac
 log=$(click_run 3.2a "see link.sh:3 here" 5 "$repo")
+# ポップアップの大きさは中身に合わせる（link.sh は 1 行 → 最小の 80x12）
+case $log in *"[display-popup][-c][c1][-E][-w][80][-h][12]"*) echo "ok   click は中身に合わせた大きさで開く";; *) echo "FAIL click は中身に合わせた大きさで開く: $log"; fail=1;; esac
 case $log in *"[display-popup]"*"[-T]"*) echo "FAIL tmux 3.2 では -T を付けない: $log"; fail=1;; *"[display-popup]"*) echo "ok   tmux 3.2 では -T を付けない";; *) echo "FAIL tmux 3.2 でポップアップ: $log"; fail=1;; esac
 log=$(click_run 3.7c "foo bar" 3 "$repo")
 case $log in *"[display-message]"*) echo "ok   見つからなければメッセージ";; *) echo "FAIL 見つからなければメッセージ: $log"; fail=1;; esac
