@@ -98,8 +98,10 @@
   :defer t
   :commands id-manager
   :bind ("M-7" . id-manager)
-  :custom
-  (idm-database-file "~/secret/idm-db.gpg")
+  :init
+  ;; idm-database-file は defvar のため :custom だとロード後に既定値へ戻る。
+  ;; ロード前に setq しておけば defvar は上書きしない
+  (setq idm-database-file "~/secret/idm-db.gpg")
   :config
   ;; Enhanced GPG security settings
   (setq epa-file-cache-passphrase-for-symmetric-encryption nil)  ;; Don't cache for security
