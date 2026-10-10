@@ -41,6 +41,7 @@ test:
 	@bash test_emoji_id.sh
 	@bash test_statusline.sh
 	@bash test_link.sh
+	@bash test_ssh_agent.sh
 	@echo "$(GREEN)✅ テスト完了$(NC)"
 
 ## 🔒 セキュリティチェック

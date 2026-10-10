@@ -38,6 +38,9 @@ source "$HOME/.zsh/aliases.zsh"
 # Git Worktree custom commands (after aliases to override conflicts)
 source "$HOME/.zsh/git-worktree.zsh"
 
+# ssh-agent を固定ソケット ~/.ssh/agent.sock で（Linux/WSL のみ）
+source "$HOME/.zsh/ssh_agent.zsh"
+
 # 6. Local Settings (if exists)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
