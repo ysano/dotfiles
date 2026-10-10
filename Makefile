@@ -42,6 +42,7 @@ test:
 	@bash test_statusline.sh
 	@bash test_link.sh
 	@bash test_ssh_agent.sh
+	@bash test_emacs_idm.sh
 	@echo "$(GREEN)✅ テスト完了$(NC)"
 
 ## 🔒 セキュリティチェック
