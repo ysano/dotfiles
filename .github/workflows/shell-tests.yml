@@ -2,9 +2,9 @@ name: shell-tests
 
 on:
   push:
-    paths: [ 'bin/**', 'test_*.sh', '.claude/statusline-command.sh', 'link.sh' ]
+    paths: [ 'bin/**', 'test_*.sh', '.claude/statusline-command.sh', 'link.sh', '.zsh/ssh_agent.zsh' ]
   pull_request:
-    paths: [ 'bin/**', 'test_*.sh', '.claude/statusline-command.sh', 'link.sh' ]
+    paths: [ 'bin/**', 'test_*.sh', '.claude/statusline-command.sh', 'link.sh', '.zsh/ssh_agent.zsh' ]
 
 jobs:
   emoji-id:
@@ -25,3 +25,10 @@ jobs:
     - uses: actions/checkout@v6
     - run: sudo apt-get update && sudo apt-get install -y zsh
     - run: bash test_link.sh
+
+  ssh-agent:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - run: sudo apt-get update && sudo apt-get install -y zsh
+    - run: bash test_ssh_agent.sh
