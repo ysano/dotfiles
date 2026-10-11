@@ -164,13 +164,8 @@ if [[ "$font_refs" -gt 0 ]]; then
     else
         result WARN "Font settings found ($font_refs refs) but not in init-platform.el"
     fi
-
-    # smart-font-scaling.el の存在確認
-    if [[ -f "$EMACS_DIR/elisp/smart-font-scaling.el" ]]; then
-        result PASS "smart-font-scaling.el exists (cross-platform font handling)"
-    fi
 else
-    result PASS "No direct font configuration found (may use smart-font-scaling)"
+    result PASS "No direct font configuration found"
 fi
 echo ""
 
