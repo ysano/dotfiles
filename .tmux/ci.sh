@@ -113,6 +113,19 @@ if [ -f "$OPEN_PATH_TEST_SCRIPT" ]; then
   echo ""
 fi
 
+# 3.10 pane の大きさの自動調整（balance-panes.sh）テスト
+BALANCE_TEST_SCRIPT="$SCRIPT_DIR/test_balance_panes.sh"
+if [ -f "$BALANCE_TEST_SCRIPT" ]; then
+  echo "--- Balance Panes Tests ---"
+  if bash "$BALANCE_TEST_SCRIPT"; then
+    echo "[PASS] balance-panes tests"
+  else
+    echo "[FAIL] balance-panes tests"
+    errors=$((errors + 1))
+  fi
+  echo ""
+fi
+
 # Agent lifecycle, workspace UI, worktree operations and setup (no API access)
 echo "--- Agent Workspace Tests ---"
 if python3 -m unittest discover -s "$SCRIPT_DIR/agents" -p 'test_*.py'; then
