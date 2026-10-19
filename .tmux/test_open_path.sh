@@ -31,7 +31,26 @@ check "括弧と句点で止まる"       "README.md"         sh "$SCRIPT" extra
 check "バッククォートで止まる"   ".tmux/base.conf"   sh "$SCRIPT" extract 'edit `.tmux/base.conf` now' 8
 check "全角の後ろの桁を補正"     "docs/設計.md"      sh "$SCRIPT" extract "日本語 docs/設計.md を見る" 9
 check "全角文字上のクリック"     "docs/設計.md"      sh "$SCRIPT" extract "日本語 docs/設計.md を見る" 12
-check "diff の b/ 側"            "b/link.sh"         sh "$SCRIPT" extract "diff a/link.sh b/link.sh" 17
+check "全角括弧で止まる"         ".tmux/balance.conf" sh "$SCRIPT" extract "読み込み（.tmux/balance.conf）を確認" 12
+check "読点で止まる"             ".tmux/ci.sh"       sh "$SCRIPT" extract "修正: .tmux/ci.sh、.tmux/test.sh" 8
+check "読点の後ろも切り出す"     ".tmux/test.sh"     sh "$SCRIPT" extract "修正: .tmux/ci.sh、.tmux/test.sh" 20
+check "かぎ括弧で止まる"         "link.sh"           sh "$SCRIPT" extract "「link.sh」を開く" 4
+check "罫線は 1 桁（表の中）"    "scripts/link.sh"   sh "$SCRIPT" extract "│ a │ b │ scripts/link.sh │" 10
+check "罫線上は候補なし"         ""                  sh "$SCRIPT" extract "│ a │ b │" 4
+check "罫線に接したパス"         "link.sh"           sh "$SCRIPT" extract "│link.sh│" 3
+check "中黒で止まる"             "docs/a.md"         sh "$SCRIPT" extract "docs/a.md・3 件" 3
+# extract <行> <桁> <前の行> <次の行>: 行末・行頭で折り返されたパスをつないだ候補も出す（長い順）
+wrapped=$(printf '%s\n' "/tmp/wt-karin/x/pr.md" "/tmp/wt-ka")
+check "次の行へ折り返したパス"   "$wrapped" sh "$SCRIPT" extract "  本文は /tmp/wt-ka" 12 "" "     rin/x/pr.md。採否" 10
+check "前の行から折り返したパス" "$(printf '%s\n' "/tmp/wt-karin/x/pr.md" "rin/x/pr.md")" sh "$SCRIPT" extract "     rin/x/pr.md。採否" 7 "  本文は /tmp/wt-ka" "" 10
+check "短い行は折り返しとみなさない" "READ"  sh "$SCRIPT" extract "READ" 1 "" " ME.md" 20
+check "継続行は字下げが要る"     "/tmp/wt-ka"        sh "$SCRIPT" extract "  本文は /tmp/wt-ka" 12 "" "rin/x/pr.md" 10
+check "絵文字は 2 桁"            "a.txt"             sh "$SCRIPT" extract "⌚ a.txt b.txt" 7
+check "候補は長い順"             "$(printf '%s\n' path/to/longer/foo.md path/to/longer/foo foo.md foo)" sh "$SCRIPT" extract "          foo" 11 "path/to/longer/" " .md" 10
+check "補助平面の全角は 2 桁"    "a.txt"             sh "$SCRIPT" extract "$(printf '\360\233\200\200 a.txt b.txt')" 7
+check "補助私用領域は 1 桁"      "a.txt"             sh "$SCRIPT" extract "$(printf '\363\260\200\200 a.txt b.txt')" 2
+check "行の途中なら折り返しを見ない" "a/b" sh "$SCRIPT" extract "see a/b here" 5 "x/y" "z/w"
+check "diff の b/ 側"          "b/link.sh"         sh "$SCRIPT" extract "diff a/link.sh b/link.sh" 17
 check "チルダ"                   "~/dotfiles/link.sh" sh "$SCRIPT" extract "~/dotfiles/link.sh" 3
 check "空白上は候補なし"         ""                  sh "$SCRIPT" extract "foo bar" 3
 check "行末より右は候補なし"     ""                  sh "$SCRIPT" extract "foo" 10
@@ -248,8 +267,10 @@ cat > "$stub/tmux" <<'STUB'
 #!/bin/sh
 case $1 in
     show) eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\"" ;;
-    display) case $* in *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
+    display) case $* in *pane_in_mode*) printf '%s\n' "${STUB_pstate:-0 24 40}" ;; *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
     display-popup|display-message|set) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
+    # capture-pane -p -t <pane> -S <行> -E <行> → STUB_row_<行>（pane が違えば空）
+    capture-pane) [ "$4" = "${STUB_pane:-}" ] && eval "printf '%s\n' \"\${STUB_row_$6:-}\"" ;;
 esac
 STUB
 chmod +x "$stub/tmux"
@@ -266,6 +287,15 @@ log=$(click_run 3.2a "see link.sh:3 here" 5 "$repo")
 # ポップアップの大きさは中身に合わせる（link.sh は 1 行 → 最小の 80x12）
 case $log in *"[display-popup][-c][c1][-E][-w][80][-h][12]"*) echo "ok   click は中身に合わせた大きさで開く";; *) echo "FAIL click は中身に合わせた大きさで開く: $log"; fail=1;; esac
 case $log in *"[display-popup]"*"[-T]"*) echo "FAIL tmux 3.2 では -T を付けない: $log"; fail=1;; *"[display-popup]"*) echo "ok   tmux 3.2 では -T を付けない";; *) echo "FAIL tmux 3.2 でポップアップ: $log"; fail=1;; esac
+# 行末で折り返されたパスは、クリックした行の前後（pane の画面上の行）をつないで探す
+log=$(STUB_pane=%7 STUB_y=4 STUB_row_5="   nk.sh。次" click_run 3.7c "本文は $repo/li" 12 /)
+case $log in *"[@open_path_view_path][$repo/link.sh]"*) echo "ok   click: 次の行へ折り返したパス";; *) echo "FAIL click: 次の行へ折り返したパス: $log"; fail=1;; esac
+log=$(STUB_pane=%7 STUB_y=4 STUB_row_3="本文は $repo/li" click_run 3.7c "   nk.sh。次" 4 /)
+case $log in *"[@open_path_view_path][$repo/link.sh]"*) echo "ok   click: 前の行から折り返したパス";; *) echo "FAIL click: 前の行から折り返したパス: $log"; fail=1;; esac
+log=$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24 40" STUB_row_5="   nk.sh。次" click_run 3.7c "本文は $repo/li" 12 /)
+case $log in *"[display-message]"*) echo "ok   click: コピーモード中は前後の行をつながない";; *) echo "FAIL click: コピーモード中は前後の行をつながない: $log"; fail=1;; esac
+log=$(STUB_pane=%7 STUB_y=23 STUB_row_24="   nk.sh。次" click_run 3.7c "本文は $repo/li" 12 /)
+case $log in *"[display-message]"*) echo "ok   click: 最下行の次の行は見ない";; *) echo "FAIL click: 最下行の次の行は見ない: $log"; fail=1;; esac
 log=$(click_run 3.7c "foo bar" 3 "$repo")
 case $log in *"[display-message]"*) echo "ok   見つからなければメッセージ";; *) echo "FAIL 見つからなければメッセージ: $log"; fail=1;; esac
 # click open: ポップアップを出さず、既定アプリ（open / xdg-open）で開く

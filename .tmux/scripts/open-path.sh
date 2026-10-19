@@ -15,27 +15,122 @@
 # 画面上の文字列は信用しない入力として扱う: eval・シェルへの埋め込みはせず、
 # 引数として渡し、実在確認を通ったパスだけを表示する。
 
-# 表示桁 → 文字の対応は UTF-8 の先頭バイトで推定する（3/4 バイト文字 = 全角 2 桁）。
+# East Asian Width が W/F の符号位置の範囲（Unicode 15.1。私用領域を除く）。次で生成:
+#   python3 -c 'import unicodedata as u, itertools as t; print(" ".join("%d-%d" % (g[0][1], g[-1][1]) for k, g in ((k, list(g)) for k, g in t.groupby(((u.east_asian_width(chr(c)) in "WF" and u.category(chr(c)) != "Co", c) for c in range(0x110000)), key=lambda e: e[0])) if k))'
+WIDE_RANGES='
+    4352-4447 8986-8987 9001-9002 9193-9196 9200-9200 9203-9203 9725-9726 9748-9749 9800-9811 9855-9855
+    9875-9875 9889-9889 9898-9899 9917-9918 9924-9925 9934-9934 9940-9940 9962-9962 9970-9971 9973-9973
+    9978-9978 9981-9981 9989-9989 9994-9995 10024-10024 10060-10060 10062-10062 10067-10069 10071-10071 10133-10135
+    10160-10160 10175-10175 11035-11036 11088-11088 11093-11093 11904-11929 11931-12019 12032-12245 12272-12350 12353-12438
+    12441-12543 12549-12591 12593-12686 12688-12771 12783-12830 12832-12871 12880-19903 19968-42124 42128-42182 43360-43388
+    44032-55203 63744-64255 65040-65049 65072-65106 65108-65126 65128-65131 65281-65376 65504-65510 94176-94180 94192-94193
+    94208-100343 100352-101589 101632-101640 110576-110579 110581-110587 110589-110590 110592-110882 110898-110898 110928-110930 110933-110933
+    110948-110951 110960-111355 126980-126980 127183-127183 127374-127374 127377-127386 127488-127490 127504-127547 127552-127560 127568-127569
+    127584-127589 127744-127776 127789-127797 127799-127868 127870-127891 127904-127946 127951-127955 127968-127984 127988-127988 127992-128062
+    128064-128064 128066-128252 128255-128317 128331-128334 128336-128359 128378-128378 128405-128406 128420-128420 128507-128591 128640-128709
+    128716-128716 128720-128722 128725-128727 128732-128735 128747-128748 128756-128764 128992-129003 129008-129008 129292-129338 129340-129349
+    129351-129535 129648-129660 129664-129672 129680-129725 129727-129733 129742-129755 129760-129768 129776-129784 131072-196605 196608-262141
+'
+
+# 表示桁 → 文字の対応は UTF-8 を復号した符号位置で推定する（CJK・全角形・絵文字 = 2 桁、
+# 罫線・記号・私用領域のアイコン等 = 1 桁）。
+# 和文の約物（、。「」（）・等）と罫線・記号はパスの区切りとして扱う（表や和文に接したパス）。
 # mawk / BSD awk / gawk で同じ結果になるよう LC_ALL=C でバイト単位に処理する。
+# <前の行> <次の行> <折り返し桁> を渡すと、改行で折り返されたパスをつないだ候補も出す
 extract() {
-    printf '%s\n' "$1" | LC_ALL=C awk -v x="$2" '
-    function pathchar(c) { return c ~ /[A-Za-z0-9._~\/@+%:-]/ || c >= "\200" }
-    {
-        n = length($0); col = 0; k = 0; hit = 0; x += 0
-        for (i = 1; i <= n; i++) {
-            c = substr($0, i, 1)
-            if (c >= "\200" && c < "\300") continue
-            start[++k] = i
-            w = (c >= "\340") ? 2 : 1
-            if (x >= col && x < col + w) hit = k
-            col += w
+    printf '%s\n' "$1" | OPEN_PATH_PREV=${3:-} OPEN_PATH_NEXT=${4:-} OPEN_PATH_WIDE=$WIDE_RANGES \
+        LC_ALL=C awk -v x="$2" -v wrapcol="${5:-0}" '
+    BEGIN {
+        for (i = 1; i < 256; i++) ord[sprintf("%c", i)] = i
+        nw = split(ENVIRON["OPEN_PATH_WIDE"], rs, /[ \n]+/); m = 0
+        for (i = 1; i <= nw; i++) if (split(rs[i], p, "-") == 2) { lo[++m] = p[1] + 0; hi[m] = p[2] + 0 }
+    }
+    function within(u, lo, hi) { return u >= lo && u <= hi }
+    # UTF-8 の 1 文字（バイト列）→ 符号位置
+    function cp(c,    n, b) {
+        n = length(c); b = ord[substr(c, 1, 1)]
+        if (n == 1) return b
+        if (n == 2) return (b - 192) * 64 + ord[substr(c, 2, 1)] - 128
+        if (n == 3) return (b - 224) * 4096 + (ord[substr(c, 2, 1)] - 128) * 64 + ord[substr(c, 3, 1)] - 128
+        return (b - 240) * 262144 + (ord[substr(c, 2, 1)] - 128) * 4096 + (ord[substr(c, 3, 1)] - 128) * 64 + ord[substr(c, 4, 1)] - 128
+    }
+    # WIDE_RANGES を二分探索する
+    function width(u,    a, b, c) {
+        if (u < 4352) return 1
+        a = 1; b = m
+        while (a <= b) {
+            c = int((a + b) / 2)
+            if (u < lo[c]) b = c - 1
+            else if (u > hi[c]) a = c + 1
+            else return 2
         }
-        start[k + 1] = n + 1
-        if (!hit || !pathchar(substr($0, start[hit], 1))) exit 1
+        return 1
+    }
+    # 区切り: 一般句読点〜記号・罫線（U+2000–2BFF）、CJK 記号と句読点、中黒、全角の記号
+    function pathchar(c,    u) {
+        if (c < "\200") return c ~ /[A-Za-z0-9._~\/@+%:-]/
+        u = cp(c)
+        return !(within(u, 8192, 11263) || within(u, 12288, 12351) || u == 12539 || within(u, 65281, 65295) \
+            || within(u, 65306, 65312) || within(u, 65339, 65344) || within(u, 65371, 65381))
+    }
+    # 文字列 s を 1 文字ずつ a[1..] に分け、文字数を返す
+    function chars(s, a,    n, i, k, c) {
+        n = length(s); k = 0
+        for (i = 1; i <= n; i++) {
+            c = substr(s, i, 1)
+            if (c >= "\200" && c < "\300") a[k] = a[k] c
+            else a[++k] = c
+        }
+        return k
+    }
+    # 次の行が字下げされていれば、その空白に続くパス文字の並び
+    function headrun(s,    a, k, i, t) {
+        k = chars(s, a); i = 1; t = ""
+        while (i <= k && a[i] == " ") i++
+        if (i == 1) return ""
+        while (i <= k && pathchar(a[i])) t = t a[i++]
+        return t
+    }
+    # 前の行が折り返し桁まで埋まっていれば、行末の空白の手前にあるパス文字の並び
+    function tailrun(s,    a, k, i, t, w, j2) {
+        k = chars(s, a); i = k; t = ""; w = 0
+        while (i >= 1 && a[i] == " ") i--
+        for (j2 = 1; j2 <= i; j2++) w += width(cp(a[j2]))
+        if (w < wrapcol) return ""
+        while (i >= 1 && pathchar(a[i])) t = a[i--] t
+        return t
+    }
+    {
+        k = chars($0, ch); col = 0; hit = 0; x += 0; wrapcol += 0
+        for (j = 1; j <= k; j++) {
+            w = width(cp(ch[j]))
+            if (x >= col && x < col + w) hit = j
+            col += w
+            end[j] = col
+        }
+        if (!hit || !pathchar(ch[hit])) exit 1
         l = hit; r = hit
-        while (l > 1 && pathchar(substr($0, start[l - 1], 1))) l--
-        while (r < k && pathchar(substr($0, start[r + 1], 1))) r++
-        print substr($0, start[l], start[r + 1] - start[l])
+        while (l > 1 && pathchar(ch[l - 1])) l--
+        while (r < k && pathchar(ch[r + 1])) r++
+        tok = ""
+        for (j = l; j <= r; j++) tok = tok ch[j]
+        # Claude Code 等は長い行を改行で折り返し、続きを字下げする。クリックした並びが
+        # 折り返し桁まで埋まった行の末尾にあれば次の行、字下げした行の先頭にあれば前の行の
+        # 続きをつないだ候補を先に出す
+        tail = ""; head = ""
+        for (j = r + 1; j <= k && ch[j] == " "; j++) ;
+        if (j > k && end[r] >= wrapcol) tail = headrun(ENVIRON["OPEN_PATH_NEXT"])
+        for (j = l - 1; j >= 1 && ch[j] == " "; j--) ;
+        if (j < 1 && l > 1) head = tailrun(ENVIRON["OPEN_PATH_PREV"])
+        n = 0
+        if (head != "" && tail != "") cand[++n] = head tok tail
+        if (tail != "") cand[++n] = tok tail
+        if (head != "") cand[++n] = head tok
+        cand[++n] = tok
+        # 長い順（同じ長さなら上の順）に出す
+        for (i = 2; i <= n; i++)
+            for (j = i; j > 1 && length(cand[j]) > length(cand[j - 1]); j--) { t = cand[j]; cand[j] = cand[j - 1]; cand[j - 1] = t }
+        for (i = 1; i <= n; i++) print cand[i]
     }'
 }
 
@@ -313,6 +408,30 @@ popup_size() {
 }
 
 # click [open]: 引数なしはポップアップでプレビュー、open は既定アプリで直接開く
+# wrapped <行> <桁> <cwd>: 改行で折り返されたパスを、クリックした pane の前後の行を
+# つないで探し直す（画面上の #{mouse_y} 行目の前後。コピーモード中は探さない）
+wrapped() {
+    pane=$(opt pane) y=$(opt y)
+    case $y in ''|*[!0-9]*) return 1 ;; esac
+    [ -n "$pane" ] || return 1
+    # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
+    set -- "$1" "$2" "$3" $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height} #{pane_width}' 2>/dev/null)
+    # コピーモード中は capture-pane（通常の画面）と表示中の行が一致しないため見ない
+    [ "${4:-1}" = 0 ] || return 1
+    case ${5:-}${6:-} in ''|*[!0-9]*) return 1 ;; esac
+    # 範囲外の行を指定すると tmux は端の行（= クリックした行自身）を返すため、
+    # 画面の 1 行目の前と最下行の後は見ない
+    prev="" next=""
+    [ "$y" -gt 0 ] && prev=$(tmux capture-pane -p -t "$pane" -S $((y - 1)) -E $((y - 1)) 2>/dev/null)
+    [ $((y + 1)) -lt "$5" ] && next=$(tmux capture-pane -p -t "$pane" -S $((y + 1)) -E $((y + 1)) 2>/dev/null)
+    # 折り返しとみなすのは、pane の幅の半分以上まで埋まった行の末尾だけ（短い独立した行を
+    # つながない）
+    extract "$1" "$2" "$prev" "$next" $(($6 / 2)) | while IFS= read -r cand; do
+        [ "$cand" = "$tok" ] && continue
+        r=$(resolve "$cand" "$3") && [ -n "$r" ] && { printf '%s\n' "$r"; break; }
+    done
+}
+
 click() {
     mode=${1:-preview}
     client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
@@ -325,6 +444,9 @@ click() {
     esac
     if [ -z "$res" ]; then
         tok=$(extract "$line" "$x") && res=$(resolve "$tok" "$cwd")
+    fi
+    if [ -z "$res" ] && [ -n "${tok:-}" ]; then
+        res=$(wrapped "$line" "$x" "$cwd")
     fi
     if [ -z "$res" ]; then
         tmux display-message -c "$client" "open-path: ファイルが見つかりません"

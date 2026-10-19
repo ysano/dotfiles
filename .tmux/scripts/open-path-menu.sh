@@ -41,7 +41,7 @@ transform() {
     before=${cmd%%"$ANCHOR"*}
     after=${cmd#*"$ANCHOR"}
     item="\"Preview Path\" o { run-shell -b '$script click' } \"Open in Default App\" a { run-shell -b '$script click open' } '' "
-    save="set -gF @open_path_client '#{client_name}' \; set -gF -t = @open_path_cwd '#{pane_current_path}' \; set -gF @open_path_link '#{mouse_hyperlink}' \; set -gF @open_path_line '#{mouse_line}' \; set -gF @open_path_x '#{mouse_x}' \;"
+    save="set -gF @open_path_client '#{client_name}' \; set -gF -t = @open_path_cwd '#{pane_current_path}' \; set -gF @open_path_link '#{mouse_hyperlink}' \; set -gF @open_path_line '#{mouse_line}' \; set -gF @open_path_x '#{mouse_x}' \; set -gF @open_path_y '#{mouse_y}' \; set -gF -t = @open_path_pane '#{pane_id}' \;"
     printf 'bind-key -n MouseDown3Pane %s %s%s%s%s\n' "$save" "$before" "$ANCHOR" "$item" "$after"
 }
 
