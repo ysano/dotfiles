@@ -58,6 +58,22 @@ check "最小の大きさに足りなければ変えない" "" sh -c 'printf "%s
 single='{"V":2,"L":{"t":"p","w":284,"h":51,"x":0,"y":0,"a":true,"i":0,"I":"%0"}}'
 check "pane 1 つはそのまま"      "0:284x51@0,0" balanced "$single"
 
+# floating pane（tmux 3.8。z を持つ）は分割の大きさに数えず、位置・大きさも変えない
+float='{"V":2,"L":{"t":"h","w":284,"h":51,"x":0,"y":0,"c":[{"t":"p","w":200,"h":51,"x":0,"y":0,"a":true,"i":0,"I":"%0"},{"t":"p","w":142,"h":12,"x":4,"y":2,"i":2,"z":0,"I":"%2"},{"t":"p","w":83,"h":51,"x":201,"y":0,"i":1,"I":"%1"}]}}'
+check "floating pane は数えず動かさない" "0:141x51@0,0 2:142x12@4,2 1:142x51@142,0" balanced "$float"
+# --- grid-layout <最小の幅>: 標準入力の window_layout（JSON）を、最小の幅を保てる列数の碁盤目にする ---
+gridded() { printf '%s' "$2" | sh "$SCRIPT" grid-layout "$1" | cells; }
+four='{"V":2,"L":{"t":"h","w":284,"h":51,"x":0,"y":0,"c":[{"t":"p","w":70,"h":51,"x":0,"y":0,"i":0,"I":"%1"},{"t":"p","w":70,"h":51,"x":71,"y":0,"i":1,"I":"%2"},{"t":"p","w":70,"h":51,"x":142,"y":0,"a":true,"i":2,"I":"%3"},{"t":"p","w":71,"h":51,"x":213,"y":0,"i":3,"I":"%4"}]}}'
+check "grid: 4 枚・幅 90 → 3 列（1 列目が 2 段）" "0:94x25@0,0 1:94x25@0,26 2:94x51@95,0 3:94x51@190,0" gridded 90 "$four"
+check "grid: 幅 140 → 2 列"      "0:141x25@0,0 1:141x25@0,26 2:142x25@142,0 3:142x25@142,26" gridded 140 "$four"
+check "grid: 入れ子も並べ直す"   "0:94x51@0,0 1:94x51@95,0 2:94x51@190,0" gridded 90 "$nested"
+check "grid: 幅が足りなければ 1 列" "0:284x12@0,0 1:284x12@0,13 2:284x12@0,26 3:284x12@0,39" gridded 300 "$four"
+check "grid: floating pane は数えず動かさない" "0:141x51@0,0 1:142x51@142,0 2:142x12@4,2" gridded 90 "$float"
+check "grid: pane 1 つはそのまま" "0:284x51@0,0" gridded 90 "$single"
+check "grid: pane 以外のキーを保つ" "true 2 %3" sh -c 'printf "%s" "$1" | sh "$2" grid-layout 90 | jq -r "[.L.c[1].a, .L.c[1].i, .L.c[1].I] | map(tostring) | join(\" \")"' _ "$four" "$SCRIPT"
+# 古い tmux 向けの文字列形式（先頭は tmux と同じ 16 ビットのチェックサム）
+check "grid: 古い形式に変換"     "9e70,284x51,0,0{94x51,0,0[94x25,0,0,1,94x25,0,26,2],94x51,95,0,3,94x51,190,0,4}" sh -c 'printf "%s" "$1" | sh "$2" grid-layout 90 | sh "$2" legacy' _ "$four" "$SCRIPT"
+
 # --- 実際の tmux（3.8 以降の JSON 形式）で、分割・終了のたびに均等になること ---
 if ! command -v tmux >/dev/null 2>&1; then
     echo "SKIP tmux が無いため実機の検証を省略"
@@ -74,6 +90,18 @@ geom() { t list-panes -t "${1:-}" -F '#{pane_width}x#{pane_height}@#{pane_left},
 t split-window -h 'sleep 300'
 t split-window -h 'sleep 300'
 check "分割すると均等になる"           "94x51@0,0 94x51@95,0 94x51@190,0" geom
+# prefix M-8: 最小の幅（@layout_grid_min_width、既定 90）を保てる列数の碁盤目に並べ直す
+# （古い tmux は文字列形式で渡すため、この検証は JSON でない tmux でも行う）
+t new-window -d -n grid 'sleep 300'
+for _ in 1 2 3 4 5; do t split-window -d -t grid 'sleep 300'; done
+t run-shell "sh '$SCRIPT' grid grid"
+check "grid: 6 枚を 3 列 × 2 段に"  "94x25@0,0 94x25@0,26 94x25@95,0 94x25@95,26 94x25@190,0 94x25@190,26" geom grid
+t set -g @layout_grid_min_width 140
+t run-shell "sh '$SCRIPT' grid grid"
+check "grid: 最小の幅を変えると 2 列" "141x16@0,0 141x16@0,17 141x17@0,34 142x16@142,0 142x16@142,17 142x17@142,34" geom grid
+t set -gu @layout_grid_min_width
+t kill-window -t grid
+check "grid: prefix M-8 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-8 | grep -c "balance-panes.sh grid"' _ "$work/home" "$L"
 # 以降の入れ子の検証は JSON の window_layout（tmux 3.8 以降）の経路だけ。
 # それより前の tmux（CI の ubuntu 等）は select-layout -E の経路を上の検証で確かめる
 if ! t display -p '#{window_layout}' | grep -q '^{'; then
