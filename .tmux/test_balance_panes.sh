@@ -101,6 +101,12 @@ t run-shell "sh '$SCRIPT' grid grid"
 check "grid: 最小の幅を変えると 2 列" "141x16@0,0 141x16@0,17 141x17@0,34 142x16@142,0 142x16@142,17 142x17@142,34" geom grid
 t set -gu @layout_grid_min_width
 t kill-window -t grid
+# M-4（main-vertical）/ M-7（main-vertical-mirrored）は縦の区切りを中央にする
+t new-window -d -n main 'sleep 300'
+t split-window -d -t main 'sleep 300'; t split-window -d -t main 'sleep 300'
+t select-layout -t main main-vertical
+check "main-vertical は中央で区切る" "141x51@0,0 142x25@142,0 142x25@142,26" geom main
+t kill-window -t main
 check "grid: prefix M-8 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-8 | grep -c "balance-panes.sh grid"' _ "$work/home" "$L"
 # 以降の入れ子の検証は JSON の window_layout（tmux 3.8 以降）の経路だけ。
 # それより前の tmux（CI の ubuntu 等）は select-layout -E の経路を上の検証で確かめる
