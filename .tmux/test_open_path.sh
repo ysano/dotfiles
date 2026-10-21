@@ -261,6 +261,39 @@ sh "$SCRIPT" resolve "\$(touch $work/pwned)" "$repo" >/dev/null 2>&1
 sh "$SCRIPT" extract "\$(touch $work/pwned2)" 3 >/dev/null 2>&1
 if [ ! -e "$work/pwned" ] && [ ! -e "$work/pwned2" ]; then echo "ok   コマンド置換を実行しない"; else echo "FAIL コマンド置換を実行しない"; fail=1; fi
 
+# --- context <名前> <cwd> <クリックした行の番号> <折り返し桁>: 標準入力の画面の行に出ている
+#     パスのディレクトリから、名前（相対パス）を近い行から順に探す ---
+ctx="$work/ctx"; mkdir -p "$ctx/a/b" "$ctx/c"
+for f in a/b/pr.md a/b/verdict.md c/verdict.md; do echo x > "$ctx/$f"; done
+near() { printf '%s\n' "${@:5}" | sh "$SCRIPT" context "$1" "$2" "$3" "$4"; }
+check "context: 前の行のパスと同じディレクトリ" "$ctx/a/b/verdict.md" near verdict.md / 1 10 "本文は $ctx/a/b/pr.md。採否記録は同ディレクトリ" "     verdict.md。"
+check "context: 近い行を優先（前）"   "$ctx/a/b/verdict.md" near verdict.md / 3 10 "$ctx/c/" "" "see $ctx/a/b/pr.md" "verdict.md"
+check "context: 近い行を優先（後）"   "$ctx/c/verdict.md"   near verdict.md / 0 10 "verdict.md" "$ctx/c/" "" "see $ctx/a/b/pr.md"
+check "context: 同じ行のパス"         "$ctx/c/verdict.md"   near verdict.md / 1 10 "see $ctx/a/b/pr.md" "$ctx/c/ と verdict.md"
+check "context: 折り返されたパス"     "$ctx/a/b/verdict.md" near verdict.md / 2 10 "本文は $ctx/a" "   /b/pr.md。" "verdict.md"
+check "context: cwd 相対のパス"       "$ctx/a/b/verdict.md" near verdict.md "$ctx" 1 10 "edit a/b/pr.md" "verdict.md"
+check "context: 名前が相対パス"       "$ctx/a/b/verdict.md" near b/verdict.md / 1 10 "$ctx/a/pr.md" "b/verdict.md"
+# 誤ってつないだ並びが実在しなくても、元の各行のパスも使う
+check "context: 誤連結しても元の行を使う" "$ctx/c/verdict.md" near verdict.md / 2 5 "$ctx/a/b/pr.md" "   $ctx/c/x" "verdict.md"
+check "context: 見つからなければ失敗" ""                    near none.md / 1 10 "$ctx/a/b/pr.md" "none.md"
+check "context: 絶対パスは探さない"   ""                    near /verdict.md / 1 10 "$ctx/a/b/pr.md" "/verdict.md"
+
+# --- commit_repo <候補> <ディレクトリ...>: コミットの SHA なら、それを持つリポジトリを返す ---
+crepo="$work/crepo"; mkdir -p "$crepo/sub"
+git -C "$crepo" init -q && echo hi > "$crepo/f.txt" && git -C "$crepo" add f.txt &&
+    GIT_AUTHOR_DATE=2026-01-01T00:00:00Z GIT_COMMITTER_DATE=2026-01-01T00:00:00Z \
+        git -C "$crepo" -c user.name=t -c user.email=t@example.com commit -qm "init commit"
+sha=$(git -C "$crepo" rev-parse HEAD); short=$(printf '%s' "$sha" | cut -c1-7)
+check "commit: 短い SHA"             "$crepo"  sh "$SCRIPT" commit_repo "$short" "$crepo"
+check "commit: 完全な SHA"           "$crepo"  sh "$SCRIPT" commit_repo "$sha" "$crepo/sub"
+check "commit: 順に探す"             "$crepo"  sh "$SCRIPT" commit_repo "$short" "$work/none" "$ctx" "$crepo"
+check "commit: 無いコミット"         ""        sh "$SCRIPT" commit_repo deadbeefcafe "$crepo"
+check "commit: tree は対象外"        ""        sh "$SCRIPT" commit_repo "$(git -C "$crepo" rev-parse 'HEAD^{tree}' | cut -c1-12)" "$crepo"
+check "commit: 16 進でない"          ""        sh "$SCRIPT" commit_repo README "$crepo"
+check "commit: 数字だけで該当なし"   ""        sh "$SCRIPT" commit_repo 1234567 "$crepo"
+check "commit: 6 桁以下は対象外"     ""        sh "$SCRIPT" commit_repo "$(printf '%s' "$sha" | cut -c1-6)" "$crepo"
+check "commit: 差分を表示"           "1"       sh -c 'sh "$1" render commit "$2" "$3" | grep -c "init commit"' _ "$SCRIPT" "$crepo" "$short"
+
 # --- click: tmux のユーザーオプション経由で値を受け取りポップアップを開く（tmux は偽物） ---
 stub="$work/stub"; mkdir -p "$stub"
 cat > "$stub/tmux" <<'STUB'
@@ -269,8 +302,9 @@ case $1 in
     show) eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\"" ;;
     display) case $* in *pane_in_mode*) printf '%s\n' "${STUB_pstate:-0 24 40}" ;; *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
     display-popup|display-message|set) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
-    # capture-pane -p -t <pane> -S <行> -E <行> → STUB_row_<行>（pane が違えば空）
-    capture-pane) [ "$4" = "${STUB_pane:-}" ] && eval "printf '%s\n' \"\${STUB_row_$6:-}\"" ;;
+    # capture-pane -p -t <pane> -S <行> -E <行> → STUB_row_<行> を順に（pane が違えば空）
+    capture-pane) [ "$4" = "${STUB_pane:-}" ] || exit 0
+                  i=$6; while [ "$i" -le "$8" ]; do eval "printf '%s\n' \"\${STUB_row_$i:-}\""; i=$((i + 1)); done ;;
 esac
 STUB
 chmod +x "$stub/tmux"
@@ -296,6 +330,14 @@ log=$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24 40" STUB_row_5="   nk.sh。次" cl
 case $log in *"[display-message]"*) echo "ok   click: コピーモード中は前後の行をつながない";; *) echo "FAIL click: コピーモード中は前後の行をつながない: $log"; fail=1;; esac
 log=$(STUB_pane=%7 STUB_y=23 STUB_row_24="   nk.sh。次" click_run 3.7c "本文は $repo/li" 12 /)
 case $log in *"[display-message]"*) echo "ok   click: 最下行の次の行は見ない";; *) echo "FAIL click: 最下行の次の行は見ない: $log"; fail=1;; esac
+# コミットの SHA はリポジトリの差分を開く
+log=$(click_run 3.7c "see $short here" 6 "$crepo")
+case $log in *"[@open_path_view_kind][commit]"*"[@open_path_view_path][$crepo]"*"[@open_path_view_sha][$short]"*"[display-popup]"*) echo "ok   click: SHA は差分を開く";; *) echo "FAIL click: SHA は差分を開く: $log"; fail=1;; esac
+log=$(click_run 3.7c "see link.sh:3 here" 5 "$repo")
+case $log in *"[@open_path_view_kind][]"*) echo "ok   click: ファイルは種類を空にする";; *) echo "FAIL click: ファイルは種類を空にする: $log"; fail=1;; esac
+# ファイル名だけなら、前後の行に出ているパスのディレクトリから探す
+log=$(STUB_pane=%7 STUB_y=2 STUB_row_0="本文は $ctx/a/b/pr.md。" STUB_row_1="" STUB_row_2="verdict.md を見る" click_run 3.7c "verdict.md を見る" 2 /)
+case $log in *"[@open_path_view_path][$ctx/a/b/verdict.md]"*) echo "ok   click: 前後の行のディレクトリから探す";; *) echo "FAIL click: 前後の行のディレクトリから探す: $log"; fail=1;; esac
 log=$(click_run 3.7c "foo bar" 3 "$repo")
 case $log in *"[display-message]"*) echo "ok   見つからなければメッセージ";; *) echo "FAIL 見つからなければメッセージ: $log"; fail=1;; esac
 # click open: ポップアップを出さず、既定アプリ（open / xdg-open）で開く
