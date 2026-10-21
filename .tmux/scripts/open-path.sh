@@ -10,6 +10,9 @@
 #   resolve <候補> <cwd>     実在するファイルの「実体パス<TAB>行番号」を返す
 #   popup_size <パス> <幅> <高さ>  中身に合わせたポップアップの「幅 高さ」
 #   render <md|raw> <パス> [行番号]  プレビューする中身を標準出力へ
+#   render commit <リポジトリ> <SHA>  コミットの差分を標準出力へ
+#   context <名前> <cwd> <行の番号> <折り返し桁>  標準入力の画面の行のディレクトリから探す
+#   commit_repo <SHA> <ディレクトリ...>  そのコミットを持つリポジトリ
 #   view [<パス> [行番号]]   ポップアップ内でプレビューし、Emacs / 既定アプリで開ける
 #
 # 画面上の文字列は信用しない入力として扱う: eval・シェルへの埋め込みはせず、
@@ -32,14 +35,9 @@ WIDE_RANGES='
     129351-129535 129648-129660 129664-129672 129680-129725 129727-129733 129742-129755 129760-129768 129776-129784 131072-196605 196608-262141
 '
 
-# 表示桁 → 文字の対応は UTF-8 を復号した符号位置で推定する（CJK・全角形・絵文字 = 2 桁、
-# 罫線・記号・私用領域のアイコン等 = 1 桁）。
-# 和文の約物（、。「」（）・等）と罫線・記号はパスの区切りとして扱う（表や和文に接したパス）。
-# mawk / BSD awk / gawk で同じ結果になるよう LC_ALL=C でバイト単位に処理する。
-# <前の行> <次の行> <折り返し桁> を渡すと、改行で折り返されたパスをつないだ候補も出す
-extract() {
-    printf '%s\n' "$1" | OPEN_PATH_PREV=${3:-} OPEN_PATH_NEXT=${4:-} OPEN_PATH_WIDE=$WIDE_RANGES \
-        LC_ALL=C awk -v x="$2" -v wrapcol="${5:-0}" '
+# 画面の文字列を扱う awk の共通部分（extract と context で使う。OPEN_PATH_WIDE に
+# WIDE_RANGES、wrapcol に折り返し桁を渡す）
+TEXT_AWK='
     BEGIN {
         for (i = 1; i < 256; i++) ord[sprintf("%c", i)] = i
         nw = split(ENVIRON["OPEN_PATH_WIDE"], rs, /[ \n]+/); m = 0
@@ -100,6 +98,16 @@ extract() {
         while (i >= 1 && pathchar(a[i])) t = a[i--] t
         return t
     }
+'
+
+# 表示桁 → 文字の対応は UTF-8 を復号した符号位置で推定する（CJK・全角形・絵文字 = 2 桁、
+# 罫線・記号・私用領域のアイコン等 = 1 桁）。
+# 和文の約物（、。「」（）・等）と罫線・記号はパスの区切りとして扱う（表や和文に接したパス）。
+# mawk / BSD awk / gawk で同じ結果になるよう LC_ALL=C でバイト単位に処理する。
+# <前の行> <次の行> <折り返し桁> を渡すと、改行で折り返されたパスをつないだ候補も出す
+extract() {
+    printf '%s\n' "$1" | OPEN_PATH_PREV=${3:-} OPEN_PATH_NEXT=${4:-} OPEN_PATH_WIDE=$WIDE_RANGES \
+        LC_ALL=C awk -v x="$2" -v wrapcol="${5:-0}" "$TEXT_AWK"'
     {
         k = chars($0, ch); col = 0; hit = 0; x += 0; wrapcol += 0
         for (j = 1; j <= k; j++) {
@@ -432,6 +440,127 @@ wrapped() {
     done
 }
 
+# ctx_tokens <クリックした行の番号（0 起点）>: 標準入力の画面の行から、パスらしい並び
+# （/ を含むか ~ で始まる）を「クリックした行からの距離<TAB>出現順<TAB>並び」で出す。
+# 改行で折り返されたパス（行が折り返し桁まで埋まり、次の行が字下げされている）はつなぐ
+ctx_tokens() {
+    OPEN_PATH_WIDE=$WIDE_RANGES LC_ALL=C awk -v clicked="$1" -v wrapcol="${2:-0}" "$TEXT_AWK"'
+    function rstrip(s) { sub(/ +$/, "", s); return s }
+    function lstrip(s) { sub(/^ +/, "", s); return s }
+    function absd(d) { return d < 0 ? -d : d }
+    # text のパスらしい並びを距離 d で出す
+    function emit(text, d,    a, k, j, t) {
+        k = chars(text, a); j = 1
+        while (j <= k) {
+            if (!pathchar(a[j])) { j++; continue }
+            t = ""
+            while (j <= k && pathchar(a[j])) t = t a[j++]
+            sub(/[.:,]+$/, "", t); sub(/:[0-9]+(:[0-9]+)?$/, "", t)
+            if (t ~ /\// || t ~ /^~/) printf "%d\t%d\t%s\n", d, ++seq, t
+        }
+    }
+    { L[NR - 1] = $0 }
+    END {
+        wrapcol += 0; clicked += 0; seq = 0; i = 0
+        while (i < NR) {
+            first = i; text = L[i]; d = absd(i - clicked)
+            while (i + 1 < NR && tailrun(text) != "" && headrun(L[i + 1]) != "") {
+                text = rstrip(text) lstrip(L[++i])
+                if (absd(i - clicked) < d) d = absd(i - clicked)
+            }
+            emit(text, d)
+            # 折り返しでない行を誤ってつないだ場合に備え、元の各行の並びも出す
+            if (i > first) for (j2 = first; j2 <= i; j2++) emit(L[j2], absd(j2 - clicked))
+            i++
+        }
+    }' | sort -t "$(printf '\t')" -k1,1n -k2,2n | cut -f3-
+}
+
+# ctx_dirs <cwd> <クリックした行の番号> <折り返し桁>: 画面の行に出ているパスのディレクトリ
+# （パスがファイルなら、その親）を、クリックした行に近い順に重複なく出す。
+# パス自体が無くても親が実在すればそれを使う（説明の中で名前だけ変わったファイル等）
+ctx_dirs() {
+    cwd=$1
+    git_root=$(bounded 3 git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || git_root=""
+    seen="
+"
+    ctx_tokens "$2" "$3" | while IFS= read -r t; do
+        f=$(try_candidate "$t" "$cwd") || f=$(try_candidate "$(dirname -- "$t")" "$cwd") || continue
+        [ -d "$f" ] || f=$(dirname -- "$f")
+        case $seen in *"
+$f
+"*) continue ;; esac
+        seen="$seen$f
+"
+        printf '%s\n' "$f"
+    done
+}
+
+# in_dirs <名前>: 名前（相対パス）を、標準入力のディレクトリ（1 行ずつ）の順に探す
+in_dirs() {
+    case $1 in
+        ""|/*|"~"*|..|../*|*/..|*/../*) return 1 ;;
+    esac
+    while IFS= read -r d; do
+        canonical "$d/$1" && return 0
+    done
+    return 1
+}
+
+# context <名前> <cwd> <クリックした行の番号> <折り返し桁>: 名前（相対パス）を、標準入力の
+# 画面の行に出ているディレクトリから近い順に探す（「同ディレクトリの verdict.md」等）
+context() {
+    ctx_dirs "$2" "$3" "$4" | in_dirs "$1"
+}
+
+# is_sha <候補>: 7〜40 桁の小文字 16 進か（短い SHA の数 % は数字だけになるため英字は求めない）
+is_sha() {
+    case $1 in *[!0-9a-f]*|"") return 1 ;; esac
+    [ "${#1}" -ge 7 ] && [ "${#1}" -le 40 ]
+}
+
+# commit_repo <候補> <ディレクトリ...>: 候補がコミットの SHA なら、順に見たディレクトリの
+# リポジトリのうち、そのコミットを持つものを返す（同じリポジトリは 1 回だけ確かめる）
+commit_repo() {
+    sha=$1; shift
+    is_sha "$sha" || return 1
+    checked="
+"
+    for d in "$@"; do
+        [ -d "$d" ] || continue
+        r=$(bounded 3 git -C "$d" rev-parse --show-toplevel 2>/dev/null) || continue
+        case $checked in *"
+$r
+"*) continue ;; esac
+        checked="$checked$r
+"
+        if bounded 3 git -C "$r" rev-parse -q --verify "$sha^{commit}" >/dev/null 2>&1; then
+            canonical "$r"; return
+        fi
+    done
+    return 1
+}
+
+# near_lines: クリックした pane の前後（上 15 行・下 5 行）を出し、OPEN_NEAR_IDX に
+# クリックした行の番号、OPEN_NEAR_WRAP に折り返し桁を入れる（コピーモード中は失敗）
+near_lines() {
+    pane=$(opt pane) y=$(opt y)
+    case $y in ''|*[!0-9]*) return 1 ;; esac
+    [ -n "$pane" ] || return 1
+    # shellcheck disable=SC2046  # 「モード 高さ 幅 履歴」を 4 つに分ける
+    set -- $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height} #{pane_width} #{history_size}' 2>/dev/null)
+    [ "${1:-1}" = 0 ] || return 1
+    case ${2:-}${3:-} in ''|*[!0-9]*) return 1 ;; esac
+    hist=${4:-0}
+    case $hist in *[!0-9]*) hist=0 ;; esac
+    # 範囲外を指定すると tmux は端に丸めるため、行の番号がずれないよう先に丸める
+    start=$((y - 15)) end=$((y + 5))
+    [ "$start" -ge $((0 - hist)) ] || start=$((0 - hist))
+    [ "$end" -lt "$2" ] || end=$(($2 - 1))
+    OPEN_NEAR_IDX=$((y - start)) OPEN_NEAR_WRAP=$(($3 / 2))
+    near=$(tmux capture-pane -p -t "$pane" -S "$start" -E "$end" 2>/dev/null) || return 1
+}
+
 click() {
     mode=${1:-preview}
     client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
@@ -448,6 +577,39 @@ click() {
     if [ -z "$res" ] && [ -n "${tok:-}" ]; then
         res=$(wrapped "$line" "$x" "$cwd")
     fi
+    # 見つからなければ、前後の行に出ているパスのディレクトリから探す。コミットの SHA なら
+    # cwd → 前後の行のディレクトリのリポジトリの順に探し、差分を開く
+    # （git の呼び出しが積み上がらないよう、SHA は cwd を先に確かめ、前後の行は 1 回だけ読む）
+    repo=""
+    if [ -z "$res" ] && [ -n "${tok:-}" ] && parsed=$(parse "$tok"); then
+        tab=$(printf '\t')
+        name=${parsed%%"$tab"*}
+        is_sha "$name" && repo=$(commit_repo "$name" "$cwd")
+        if [ -z "$repo" ] && near_lines; then
+            dirs=$(printf '%s\n' "$near" | ctx_dirs "$cwd" "$OPEN_NEAR_IDX" "$OPEN_NEAR_WRAP")
+            if f=$(printf '%s\n' "$dirs" | in_dirs "$name"); then
+                res="$f$tab${parsed#*"$tab"}"
+            elif is_sha "$name"; then
+                # shellcheck disable=SC2086  # ディレクトリは 1 行ずつ渡す（glob は展開しない。改行を含む名前は対象外）
+                repo=$(IFS='
+'; set -f; commit_repo "$name" $dirs)
+            fi
+        fi
+    fi
+    if [ -n "$repo" ]; then
+        [ "$mode" = open ] && { tmux display-message -c "$client" "open-path: コミットは既定アプリで開けません"; return 0; }
+        tmux set -g @open_path_view_kind commit
+        tmux set -g @open_path_view_path "$repo"
+        tmux set -g @open_path_view_sha "$name"
+        popup="sh $(shquote "$0") view"
+        if popup_title_supported; then
+            title=$(printf ' %s  %s ' "$name" "$(basename -- "$repo")" | sed 's/#/##/g')
+            tmux display-popup -c "$client" -E -w 85% -h 85% -T "$title" "$popup"
+        else
+            tmux display-popup -c "$client" -E -w 85% -h 85% "$popup"
+        fi
+        return 0
+    fi
     if [ -z "$res" ]; then
         tmux display-message -c "$client" "open-path: ファイルが見つかりません"
         return 0
@@ -462,6 +624,7 @@ click() {
     fi
     # display-popup の -d やコマンド文字列はフォーマット展開されうるため、画面由来の
     # 値（パス等）は載せない。view へは展開なしの set -g で渡し、-d も使わない
+    tmux set -g @open_path_view_kind ""
     tmux set -g @open_path_view_path "$path"
     tmux set -g @open_path_view_line "$lineno"
     popup="sh $(shquote "$0") view"
@@ -524,6 +687,19 @@ is_markdown() {
 # プレビューする中身を標準出力へ。mode=md は Markdown を整形（パイプでも色を付ける）、
 # mode=raw は原文（行番号付きは折り返さず、対象行に ▶ を付ける）
 render() {
+    if [ "$1" = commit ]; then
+        # delta があれば git の pager 設定（~/.config/git/pager.sh）と同じく、幅 120 以上は
+        # 左右に並べる。ポップアップでは less に渡すため delta 自身は page しない
+        cols=$(tput cols 2>/dev/null || echo 100)
+        git -C "$path" -c core.quotePath=false show --stat --patch --color=always "$sha" |
+            if command -v delta >/dev/null 2>&1; then
+                if [ "$cols" -ge 120 ]; then delta --paging=never --width "$cols" --side-by-side
+                else delta --paging=never --width "$cols"; fi
+            else
+                cat
+            fi
+        return
+    fi
     if [ "$1" = md ]; then
         width=$(( $(tput cols 2>/dev/null || echo 100) - 2 ))
         case $(md_renderer) in
@@ -552,7 +728,25 @@ do_action() {
 }
 
 # 引数が無ければ click が set -g した @open_path_view_* を読む
+# コミットの差分を less で見る（q で閉じる）
+view_commit() {
+    case $sha in ""|*[!0-9a-f]*) printf 'open-path: SHA ではありません: %s\n' "$sha"; sleep 2; return 1 ;; esac
+    [ -d "$path" ] || { printf 'open-path: 見つかりません: %s\n' "$path"; sleep 2; return 1; }
+    LESS=""
+    export LESS
+    if lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
+        render commit | less -R --mouse --wheel-lines=3 "-Psq 閉じる"
+    else
+        render commit | less -R
+    fi
+}
+
 view() {
+    if [ $# -eq 0 ] && [ "$(opt view_kind)" = commit ]; then
+        path=$(opt view_path) sha=$(opt view_sha)
+        view_commit
+        return
+    fi
     if [ $# -gt 0 ]; then
         path=$1 lineno=${2:-}
     else
@@ -620,6 +814,8 @@ case $cmd in
     is_markdown) is_markdown "$@" ;;
     lesskey_ok) lesskey_ok "$@" ;;
     popup_size) popup_size "$@" ;;
-    render) mode=${1:-raw} path=${2:-} lineno=${3:-}; render "$mode" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
+    render) mode=${1:-raw} path=${2:-} lineno=${3:-} sha=${3:-}; render "$mode" ;;
+    context) context "$@" ;;
+    commit_repo) commit_repo "$@" ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
 esac
