@@ -125,6 +125,8 @@ check "幅は端末の 85% まで"               "263 12"  sh "$SCRIPT" popup_si
 check "Markdown は読みやすい幅に固定"     "108 47"  sh "$SCRIPT" popup_size "$sz/doc.md" 310 56
 check "狭い端末では 85% に収める"         "51 17"   sh "$SCRIPT" popup_size "$sz/doc.md" 60 20
 check "ディレクトリは 100 桁"             "100 47"  sh "$SCRIPT" popup_size "$sz" 310 56
+check "整形した文書（PR / Issue）は Markdown と同じ" "108 47" sh "$SCRIPT" popup_size --doc 310 56
+check "整形した文書も 85% に収める"       "51 17"   sh "$SCRIPT" popup_size --doc 60 20
 check "端末の大きさが不明なら 85%"        "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" "" ""
 check "片方だけ空なら 85%"                "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" 310 ""
 check "先頭 0 の寸法は 85%"               "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" 08 56
@@ -425,6 +427,8 @@ case $log in *"[@open_path_view_kind][]"*) echo "ok   click: ファイルは種�
 # PR / Issue の参照は GitHub の内容を開く（click では通信しない）
 log=$(click_run 3.7c "PR #78 を見る" 4 "$grepo/sub")
 case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][78]"*"[display-popup]"*"[-T][ acme/widget##78 ]"*) echo "ok   click: #番号は cwd のリポジトリの PR / Issue を開く";; *) echo "FAIL click: #番号は cwd のリポジトリの PR / Issue を開く: $log"; fail=1;; esac
+# PR / Issue のポップアップは Markdown のプレビューと同じ大きさ（幅 108、高さは端末の 85%）
+case $log in *"[display-popup][-c][c1][-E][-w][108][-h][47]"*) echo "ok   click: PR / Issue は Markdown と同じ大きさで開く";; *) echo "FAIL click: PR / Issue は Markdown と同じ大きさで開く: $log"; fail=1;; esac
 log=$(click_run 3.7c "see o/r#5 now" 6 /)
 case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][o/r]"*"[@open_path_view_num][5]"*"[display-popup]"*) echo "ok   click: owner/repo#番号";; *) echo "FAIL click: owner/repo#番号: $log"; fail=1;; esac
 log=$(click_run 3.7c "see https://github.com/acme/widget/pull/9 ok" 10 /)

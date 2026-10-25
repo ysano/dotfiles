@@ -390,6 +390,7 @@ popup_title_supported() {
 }
 
 # popup_size <パス> <端末の幅> <高さ>: 中身に合わせたポップアップの「幅 高さ」を返す。
+# パスの代わりに --doc を渡すと、整形した文書（gh の PR / Issue 等）として Markdown と同じにする。
 # 幅: Markdown は glow が読みやすい行長（約 100 桁）、ディレクトリは ls -la 程度、それ以外は
 # 最長行（タブは bat と同じ 4 桁、全角はバイト数で多めに数える）＋行番号・目印・枠の分。
 # 高さ: 行数＋枠とプロンプトの分（Markdown・ディレクトリは整形後の行数が読めないので上限）。
@@ -402,7 +403,7 @@ popup_size() {
     max_w=$(( $2 * 85 / 100 )) max_h=$(( $3 * 85 / 100 ))
     if [ -d "$1" ]; then
         w=100 h=$max_h
-    elif is_markdown "$1" >/dev/null; then
+    elif [ "$1" = --doc ] || is_markdown "$1" >/dev/null; then
         w=108 h=$max_h
     else
         # 巨大なファイル（改行の無いものも）で待たされないよう先頭の 256 KiB・2000 行だけを
@@ -735,11 +736,14 @@ open_ref() {
     tmux set -g @open_path_view_repo "$nwo"
     tmux set -g @open_path_view_num "$num"
     popup="sh $(shquote "$0") view"
+    # gh の本文は整形した Markdown なので、Markdown のプレビューと同じ大きさにする
+    # shellcheck disable=SC2046  # 「幅 高さ」を 2 つの引数に分ける
+    set -- $(popup_size --doc $(tmux display -p -c "$client" '#{client_width} #{client_height}' 2>/dev/null))
     if popup_title_supported; then
         title=$(printf ' %s#%s ' "$nwo" "$num" | sed 's/#/##/g')
-        tmux display-popup -c "$client" -E -w 85% -h 85% -T "$title" "$popup"
+        tmux display-popup -c "$client" -E -w "$1" -h "$2" -T "$title" "$popup"
     else
-        tmux display-popup -c "$client" -E -w 85% -h 85% "$popup"
+        tmux display-popup -c "$client" -E -w "$1" -h "$2" "$popup"
     fi
 }
 
