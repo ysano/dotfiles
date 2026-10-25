@@ -1,5 +1,6 @@
 #!/bin/sh
 # open-path.sh - クリックしたファイルパスの中身をポップアップでプレビューする
+# （コミットの SHA は差分、GitHub の PR / Issue の参照は gh で取得した本文・コメント）
 #
 # keybindings.conf の Option + クリックから呼ばれる（値は @open_path_* ユーザーオプション経由）:
 #   open-path.sh click        プレビュー（ポップアップ）
@@ -13,6 +14,10 @@
 #   render commit <リポジトリ> <SHA>  コミットの差分を標準出力へ
 #   context <名前> <cwd> <行の番号> <折り返し桁>  標準入力の画面の行のディレクトリから探す
 #   commit_repo <SHA> <ディレクトリ...>  そのコミットを持つリポジトリ
+#   gh_ref <行> <桁> / gh_url <URL>  PR / Issue の参照（#番号・owner/repo#番号・URL）
+#   gh_nwo <remote の URL> / gh_repo <ディレクトリ...>  GitHub の owner/repo
+#   gh_kind <owner/repo> <番号>   pr か issue か（gh api で問い合わせる）
+#   render gh <owner/repo> <番号> <pr|issue> [body|diff]  PR / Issue の本文・差分を標準出力へ
 #   view [<パス> [行番号]]   ポップアップ内でプレビューし、Emacs / 既定アプリで開ける
 #
 # 画面上の文字列は信用しない入力として扱う: eval・シェルへの埋め込みはせず、
@@ -541,6 +546,203 @@ $r
     return 1
 }
 
+# PR / Issue の参照「owner/repo#番号」「#番号」・URL を「owner/repo<TAB>番号」にする awk の関数
+# （文末の . は落とす。番号は 1 始まりの 10 桁まで、owner / repo は . だけの名前を除く）
+GH_REF_AWK='
+    function ghref(s,    i, nwo, n, a) {
+        while (s ~ /\.$/) s = substr(s, 1, length(s) - 1)
+        if (s !~ /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)?#[1-9][0-9]*$/) return ""
+        i = index(s, "#"); nwo = substr(s, 1, i - 1); n = substr(s, i + 1)
+        if (length(n) > 10) return ""
+        if (nwo != "") { split(nwo, a, "/"); if (a[1] ~ /^\.+$/ || a[2] ~ /^\.+$/) return "" }
+        return nwo "\t" n
+    }
+    # 語の先頭の GitHub の PR / Issue の URL（前の括弧・和文、後ろの句読点や /files・#… の続きは
+    # 無視する）。別の URL の中（?next=https://github.com/…）や番号の続き（/pull/9-x）は対象外
+    function ghurl(s,    a) {
+        if (!match(s, /https?:\/\/(www\.)?github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/(pull|issues)\/[0-9]+/)) return ""
+        if (substr(s, 1, RSTART - 1) ~ /[A-Za-z0-9\/:=?&%.@#_-]/) return ""
+        if (substr(s, RSTART + RLENGTH) ~ /^([A-Za-z0-9_-]|\.[A-Za-z0-9])/) return ""
+        s = substr(s, RSTART, RLENGTH)
+        sub(/^https?:\/\/(www\.)?github\.com\//, "", s)
+        split(s, a, "/")
+        return ghref(a[1] "/" a[2] "#" a[4])
+    }
+'
+
+# gh_ref <行> <桁>: クリック位置の「#番号」「owner/repo#番号」・GitHub の PR / Issue の URL を
+# 「owner/repo<TAB>番号」で出す（owner/repo が無ければ空。URL から読んだものは <TAB>url を足す）。
+# 英字に続く #・見出しの ##・
+# 文字参照の &# は対象外。URL の中のクリックは、どこをクリックしても URL 全体を読む
+# （?q=#78 の #78 を単独の参照にしない）
+gh_ref() {
+    printf '%s\n' "$1" | OPEN_PATH_WIDE=$WIDE_RANGES LC_ALL=C awk -v x="$2" "$TEXT_AWK$GH_REF_AWK"'
+    function refchar(c) { return c ~ /^[A-Za-z0-9_.\/#-]$/ }
+    {
+        k = chars($0, ch); col = 0; hit = 0; x += 0
+        for (j = 1; j <= k; j++) {
+            w = width(cp(ch[j]))
+            if (x >= col && x < col + w) hit = j
+            col += w
+        }
+        if (!hit || ch[hit] == " ") exit 1
+        for (wl = hit; wl > 1 && ch[wl - 1] != " "; wl--) ;
+        for (wr = hit; wr < k && ch[wr + 1] != " "; wr++) ;
+        word = ""
+        for (j = wl; j <= wr; j++) word = word ch[j]
+        if (index(word, "://")) {
+            # 空白なしで並んだ URL もあるため、クリック位置から前へ最も近い http(s):// から読む
+            us = 0
+            for (j = hit; j >= wl && !us; j--) {
+                t = ""
+                for (m = j; m <= j + 7 && m <= wr; m++) t = t ch[m]
+                if (t ~ /^https?:\/\//) us = j
+            }
+            if (!us) exit 1
+            url = ""
+            for (j = us; j <= wr; j++) url = url ch[j]
+            if ((out = ghurl(url)) == "") exit 1
+            print out "\turl"
+            exit 0
+        }
+        if (!refchar(ch[hit])) exit 1
+        l = hit; r = hit
+        while (l > 1 && refchar(ch[l - 1])) l--
+        while (r < k && refchar(ch[r + 1])) r++
+        # HTML の文字参照（&#123;）やパスの続き（@scope/pkg#9・~/a#9 等）は対象外
+        if (l > 1 && ch[l - 1] ~ /^[&@~+%]$/) exit 1
+        s = ""
+        for (j = l; j <= r; j++) s = s ch[j]
+        if ((out = ghref(s)) == "") exit 1
+        print out
+    }'
+}
+
+# gh_url <URL>: GitHub の PR / Issue の URL（OSC 8 のリンク等）を「owner/repo<TAB>番号」にする
+gh_url() {
+    printf '%s\n' "$1" | awk "$GH_REF_AWK"'
+    NR == 1 {
+        if ((out = ghurl($0)) == "") exit 1
+        print out
+    }'
+}
+
+# gh_nwo <remote の URL>: github.com の remote（https・scp 形式・ssh://）の owner/repo
+gh_nwo() {
+    printf '%s\n' "$1" | awk "$GH_REF_AWK"'
+    NR == 1 {
+        s = $0
+        if (!sub(/^(https?:\/\/([^@\/]*@)?|ssh:\/\/([^@\/]*@)?|git:\/\/|[^@\/:]*@)(www\.)?github\.com[:\/]/, "", s)) exit 1
+        sub(/\/$/, "", s); sub(/\.git$/, "", s)
+        if ((out = ghref(s "#1")) == "") exit 1
+        sub(/\t.*/, "", out)
+        if (out == "") exit 1
+        print out
+    }'
+}
+
+# gh_repo <ディレクトリ...>: 順に見たディレクトリのリポジトリのうち、github.com の remote を
+# 持つ最初のものの owner/repo。remote は gh と同じく gh repo set-default で選んだもの →
+# upstream → github → origin → その他の順に選ぶ（fork では #番号は元のリポジトリを指す）
+gh_repo() {
+    checked="
+"
+    for d in "$@"; do
+        [ -d "$d" ] || continue
+        r=$(bounded 3 git -C "$d" rev-parse --show-toplevel 2>/dev/null) || continue
+        case $checked in *"
+$r
+"*) continue ;; esac
+        checked="$checked$r
+"
+        remotes=$(git -C "$r" remote 2>/dev/null) || continue
+        base=$(git -C "$r" config --get-regexp '^remote\..*\.gh-resolved$' 2>/dev/null |
+            awk '$2 == "base" { sub(/^remote\./, "", $1); sub(/\.gh-resolved$/, "", $1); print $1; exit }')
+        for name in $base upstream github origin $remotes; do
+            case "
+$remotes
+" in *"
+$name
+"*) ;; *) continue ;; esac
+            url=$(git -C "$r" remote get-url "$name" 2>/dev/null) || continue
+            if nwo=$(gh_nwo "$url"); then printf '%s\n' "$nwo"; return 0; fi
+        done
+    done
+    return 1
+}
+
+# valid_ref <owner/repo> <番号>: gh や URL に渡してよい参照か
+valid_ref() {
+    case $1 in */*) ;; *) return 1 ;; esac
+    case $1$2 in *"
+"*) return 1 ;; esac
+    [ -n "$(printf '%s#%s\n' "$1" "$2" | awk "$GH_REF_AWK"'{ print ghref($0) }')" ]
+}
+
+# gh を対話・更新通知・pager なしで呼ぶ環境変数（remote が複数あると対話で既定を尋ねて
+# 止まるため、呼び出しには常に -R / repos/<owner>/<repo> を付ける）
+gh_env() {
+    GH_PROMPT_DISABLED=1 GH_NO_UPDATE_NOTIFIER=1 GH_PAGER=cat
+    export GH_PROMPT_DISABLED GH_NO_UPDATE_NOTIFIER GH_PAGER
+}
+
+# gh_kind <owner/repo> <番号>: PR なら pr、Issue なら issue（Issue の API は PR にも答え、
+# PR には pull_request が付く）。OPEN_PATH_GH_TIMEOUT 秒（既定 15）で打ち切る
+gh_kind() {
+    valid_ref "$1" "$2" || return 1
+    secs=${OPEN_PATH_GH_TIMEOUT:-15}
+    case $secs in ""|0*|*[!0-9]*) secs=15 ;; esac
+    gh_env
+    # bounded には gh を直接渡す（関数を渡すと打ち切られるのはサブシェルだけで、gh が
+    # 出力を開いたまま残り $(...) が待ち続ける）
+    k=$(bounded "$secs" gh api "repos/$1/issues/$2" --jq 'if .pull_request then "pr" else "issue" end') || return 1
+    case $k in pr|issue) echo "$k" ;; *) return 1 ;; esac
+}
+
+# local_file <相対パス> <cwd>: cwd → git ルートの順に、実在する通常のファイルの実体パス
+local_file() {
+    for base in "$2" "$(bounded 3 git -C "$2" rev-parse --show-toplevel 2>/dev/null)"; do
+        [ -n "$base" ] && [ -f "$base/$1" ] && { canonical "$base/$1"; return; }
+    done
+    return 1
+}
+
+# open_ref [open]: click が見つけた PR / Issue（$ref = owner/repo<TAB>番号）を開く。owner/repo が
+# 無ければ cwd → 前後の行のディレクトリのリポジトリから決める。click では通信しない
+open_ref() {
+    tab=$(printf '\t')
+    nwo=${ref%%"$tab"*} num=${ref#*"$tab"}
+    if [ -z "$nwo" ]; then
+        nwo=$(gh_repo "$cwd")
+        if [ -z "$nwo" ] && near_lines; then
+            dirs=$(printf '%s\n' "$near" | ctx_dirs "$cwd" "$OPEN_NEAR_IDX" "$OPEN_NEAR_WRAP")
+            # shellcheck disable=SC2086  # ディレクトリは 1 行ずつ渡す（glob は展開しない）
+            nwo=$(IFS='
+'; set -f; gh_repo $dirs)
+        fi
+    fi
+    if ! valid_ref "$nwo" "$num"; then
+        tmux display-message -c "$client" "open-path: PR / Issue の GitHub リポジトリが分かりません"
+        return 0
+    fi
+    if [ "$1" = open ]; then
+        # Issue の URL は PR でも GitHub が PR へ転送する（gh を使わず、未認証でも開ける）
+        bounded 5 open_default "https://github.com/$nwo/issues/$num" >/dev/null 2>&1 ||
+            tmux display-message -c "$client" "open-path: ブラウザで開けません"
+        return 0
+    fi
+    tmux set -g @open_path_view_kind gh
+    tmux set -g @open_path_view_repo "$nwo"
+    tmux set -g @open_path_view_num "$num"
+    popup="sh $(shquote "$0") view"
+    if popup_title_supported; then
+        title=$(printf ' %s#%s ' "$nwo" "$num" | sed 's/#/##/g')
+        tmux display-popup -c "$client" -E -w 85% -h 85% -T "$title" "$popup"
+    else
+        tmux display-popup -c "$client" -E -w 85% -h 85% "$popup"
+    fi
+}
+
 # near_lines: クリックした pane の前後（上 15 行・下 5 行）を出し、OPEN_NEAR_IDX に
 # クリックした行の番号、OPEN_NEAR_WRAP に折り返し桁を入れる（コピーモード中は失敗）
 near_lines() {
@@ -567,12 +769,34 @@ click() {
     # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
     roots=$(opt roots)
     if [ -n "$roots" ]; then OPEN_PATH_ROOTS=$roots; export OPEN_PATH_ROOTS; fi
-    res=""
+    res="" ref="" tok=""
     case $link in
         file://*) res=$(resolve "$link" "$cwd") ;;
+        http://*|https://*) ref=$(gh_url "$link") ;;
     esac
-    if [ -z "$res" ]; then
+    # PR / Issue の参照（#番号・owner/repo#番号・URL）はファイルより先に見る。ただし
+    # owner/repo#番号（URL は除く）の全体か owner/repo が cwd → git ルートの配下に実在する
+    # ファイルなら、ファイルとして開く（docs/README.md#123 等。ディレクトリは除く: ghq の
+    # ルートの ysano/dotfiles#78 等）
+    tab=$(printf '\t')
+    if [ -z "$res$ref" ] && ref=$(gh_ref "$line" "$x"); then
+        case $ref in
+            "$tab"*) ;;
+            *"${tab}url") ref=${ref%"${tab}url"} ;;
+            *)
+                if f=$(local_file "${ref%%"$tab"*}#${ref#*"$tab"}" "$cwd"); then
+                    res="$f$tab" ref=""
+                elif local_file "${ref%%"$tab"*}" "$cwd" >/dev/null; then
+                    ref=""
+                fi ;;
+        esac
+    fi
+    if [ -z "$res$ref" ]; then
         tok=$(extract "$line" "$x") && res=$(resolve "$tok" "$cwd")
+    fi
+    if [ -n "$ref" ]; then
+        open_ref "$mode"
+        return 0
     fi
     if [ -z "$res" ] && [ -n "${tok:-}" ]; then
         res=$(wrapped "$line" "$x" "$cwd")
@@ -686,18 +910,32 @@ is_markdown() {
 
 # プレビューする中身を標準出力へ。mode=md は Markdown を整形（パイプでも色を付ける）、
 # mode=raw は原文（行番号付きは折り返さず、対象行に ▶ を付ける）
+# 標準入力の差分を、delta があれば git の pager 設定（~/.config/git/pager.sh）と同じく
+# 整形する（幅 120 以上は左右に並べる）。ポップアップでは less に渡すため delta 自身は page しない
+pretty_diff() {
+    if command -v delta >/dev/null 2>&1; then
+        if [ "$1" -ge 120 ]; then delta --paging=never --width "$1" --side-by-side
+        else delta --paging=never --width "$1"; fi
+    else
+        cat
+    fi
+}
+
 render() {
+    cols=$(tput cols 2>/dev/null || echo 100)
     if [ "$1" = commit ]; then
-        # delta があれば git の pager 設定（~/.config/git/pager.sh）と同じく、幅 120 以上は
-        # 左右に並べる。ポップアップでは less に渡すため delta 自身は page しない
-        cols=$(tput cols 2>/dev/null || echo 100)
-        git -C "$path" -c core.quotePath=false show --stat --patch --color=always "$sha" |
-            if command -v delta >/dev/null 2>&1; then
-                if [ "$cols" -ge 120 ]; then delta --paging=never --width "$cols" --side-by-side
-                else delta --paging=never --width "$cols"; fi
-            else
-                cat
-            fi
+        git -C "$path" -c core.quotePath=false show --stat --patch --color=always "$sha" | pretty_diff "$cols"
+        return
+    fi
+    if [ "$1" = gh ]; then
+        valid_ref "$nwo" "$num" || return 1
+        gh_env
+        # GH_FORCE_TTY: パイプに出しても端末と同じく整形・色付けする（値は折り返し桁）
+        case $kind$part in
+            prdiff) GH_FORCE_TTY=$cols gh pr diff "$num" -R "$nwo" --color=always | pretty_diff "$cols" ;;
+            pr*|issue*) GH_FORCE_TTY=$cols gh "$kind" view "$num" -R "$nwo" --comments ;;
+            *) return 1 ;;
+        esac
         return
     fi
     if [ "$1" = md ]; then
@@ -741,11 +979,55 @@ view_commit() {
     fi
 }
 
+# PR / Issue を less で見る（o でブラウザ、PR は r で本文・コメントと差分を切り替える）
+view_gh() {
+    if ! valid_ref "$nwo" "$num"; then
+        printf 'open-path: PR / Issue の参照ではありません: %s#%s\n' "$nwo" "$num"; sleep 2; return 1
+    fi
+    url="https://github.com/$nwo/issues/$num"
+    LESS=""
+    export LESS
+    printf '読み込み中: %s#%s\n' "$nwo" "$num"
+    err=""
+    if ! command -v gh >/dev/null 2>&1; then
+        kind="" err="gh（GitHub CLI）がありません"
+    elif ! kind=$(gh_kind "$nwo" "$num" 2>/dev/null); then
+        # 失敗の理由（未認証・404 等）を見せるため、もう一度だけ stderr を取る
+        kind="" err=$(gh_kind "$nwo" "$num" 2>&1 >/dev/null)
+    fi
+    keys="$(cd "$(dirname "$0")" && pwd)/open-path.lesskey"
+    if ! [ -f "$keys" ] || ! lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
+        if [ -n "$kind" ]; then render gh; else printf '%s\n\n%s\n' "${err:-取得できません}" "$url"; fi | less -R
+        return 0
+    fi
+    part=body
+    while :; do
+        prompt="q 閉じる  o ブラウザ"
+        [ "$kind" = pr ] && prompt="$prompt  r 本文/差分"
+        if [ -n "$kind" ]; then
+            render gh
+        else
+            printf 'open-path: %s#%s を取得できません\n\n%s\n\n%s\n' "$nwo" "$num" "${err:-}" "$url"
+        fi | less -R --mouse --wheel-lines=3 --lesskey-src="$keys" "-Ps$prompt"
+        case $(action $?) in
+            toggle)
+                if [ "$kind" = pr ]; then
+                    if [ "$part" = body ]; then part="diff"; else part="body"; fi
+                fi
+                continue ;;
+            default)
+                bounded 5 open_default "$url" >/dev/null 2>&1 || { printf '\nブラウザで開けません: %s\n' "$url"; sleep 2; } ;;
+        esac
+        return 0
+    done
+}
+
 view() {
-    if [ $# -eq 0 ] && [ "$(opt view_kind)" = commit ]; then
-        path=$(opt view_path) sha=$(opt view_sha)
-        view_commit
-        return
+    if [ $# -eq 0 ]; then
+        case $(opt view_kind) in
+            commit) path=$(opt view_path) sha=$(opt view_sha); view_commit; return ;;
+            gh) nwo=$(opt view_repo) num=$(opt view_num); view_gh; return ;;
+        esac
     fi
     if [ $# -gt 0 ]; then
         path=$1 lineno=${2:-}
@@ -814,8 +1096,14 @@ case $cmd in
     is_markdown) is_markdown "$@" ;;
     lesskey_ok) lesskey_ok "$@" ;;
     popup_size) popup_size "$@" ;;
-    render) mode=${1:-raw} path=${2:-} lineno=${3:-} sha=${3:-}; render "$mode" ;;
+    render) mode=${1:-raw} path=${2:-} lineno=${3:-} sha=${3:-} nwo=${2:-} num=${3:-} kind=${4:-} part=${5:-body}
+            render "$mode" ;;
     context) context "$@" ;;
     commit_repo) commit_repo "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
+    gh_ref) gh_ref "$@" ;;
+    gh_url) gh_url "$@" ;;
+    gh_nwo) gh_nwo "$@" ;;
+    gh_repo) gh_repo "$@" ;;
+    gh_kind) gh_kind "$@" ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|gh_nwo|gh_repo|gh_kind|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
 esac

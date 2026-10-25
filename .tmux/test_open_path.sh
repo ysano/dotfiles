@@ -294,6 +294,93 @@ check "commit: 数字だけで該当なし"   ""        sh "$SCRIPT" commit_repo
 check "commit: 6 桁以下は対象外"     ""        sh "$SCRIPT" commit_repo "$(printf '%s' "$sha" | cut -c1-6)" "$crepo"
 check "commit: 差分を表示"           "1"       sh -c 'sh "$1" render commit "$2" "$3" | grep -c "init commit"' _ "$SCRIPT" "$crepo" "$short"
 
+# --- gh_ref <行> <桁>: クリック位置の PR / Issue の参照（#N・owner/repo#N）を「owner/repo<TAB>番号」で ---
+check "gh: #番号"                    "${TAB}78"                sh "$SCRIPT" gh_ref "PR #78 を見る" 4
+check "gh: # の上"                   "${TAB}78"                sh "$SCRIPT" gh_ref "PR #78 を見る" 3
+check "gh: 全角の後ろの桁を補正"     "${TAB}78"                sh "$SCRIPT" gh_ref "日本語 #78 です" 8
+check "gh: 全角括弧で止まる"         "${TAB}78"                sh "$SCRIPT" gh_ref "（#78）" 3
+check "gh: owner/repo#番号"          "ysano/dotfiles${TAB}78"  sh "$SCRIPT" gh_ref "see ysano/dotfiles#78." 6
+check "gh: 文末の句点"               "${TAB}78"                sh "$SCRIPT" gh_ref "see #78." 5
+check "gh: 見出しは対象外"           ""                        sh "$SCRIPT" gh_ref "## Heading" 0
+check "gh: 数字でない"               ""                        sh "$SCRIPT" gh_ref "see #abc" 5
+check "gh: 0 始まりは対象外"         ""                        sh "$SCRIPT" gh_ref "see #012" 5
+check "gh: 英字に続く # は対象外"    ""                        sh "$SCRIPT" gh_ref "PR#78" 3
+check "gh: 階層の深いパスは対象外"   ""                        sh "$SCRIPT" gh_ref "a/b/c#78" 6
+check "gh: 文字参照は対象外"         ""                        sh "$SCRIPT" gh_ref "&#123;" 2
+# URL の中のクリックは、# 以降を含め URL 全体を読む（?foo=#78 の #78 を単独の参照にしない）。
+# URL から読んだものは 3 つ目に url を付ける（ローカルのファイルを優先する判定から外すため）
+check "gh: URL の中は URL 全体"      "acme/widget${TAB}9${TAB}url"      sh "$SCRIPT" gh_ref "https://github.com/acme/widget/pull/9?foo=#78" 42
+check "gh: URL の記号の上"           "acme/widget${TAB}9${TAB}url"      sh "$SCRIPT" gh_ref "https://github.com/acme/widget/pull/9?foo=#78" 37
+check "gh: 文中の URL"               "acme/widget${TAB}9${TAB}url"      sh "$SCRIPT" gh_ref "see https://github.com/acme/widget/pull/9 ok" 10
+check "gh: 括弧の中の URL"           "o/r${TAB}3${TAB}url"              sh "$SCRIPT" gh_ref "(https://github.com/o/r/issues/3)" 5
+check "gh: GitHub 以外の URL"        ""                        sh "$SCRIPT" gh_ref "https://example.com/#78" 21
+check "gh: 別ホストの URL のクエリ"   ""                        sh "$SCRIPT" gh_ref "https://example.com/?next=https://github.com/o/r/pull/9" 10
+two="(https://github.com/o/r/pull/1),(https://github.com/o/r/pull/2)"
+check "gh: 並んだ URL の前"          "o/r${TAB}1${TAB}url"     sh "$SCRIPT" gh_ref "$two" 5
+check "gh: 並んだ URL の後ろ"        "o/r${TAB}2${TAB}url"     sh "$SCRIPT" gh_ref "$two" 54
+check "gh: パスの続きは対象外"       ""                        sh "$SCRIPT" gh_ref "@scope/pkg#9" 3
+check "gh: ~ に続くものは対象外"     ""                        sh "$SCRIPT" gh_ref "~/a#9" 2
+check "gh: .. は対象外"              ""                        sh "$SCRIPT" gh_ref "o/..#7" 4
+check "gh: 参照の外"                 ""                        sh "$SCRIPT" gh_ref "PR #78 を見る" 0
+# --- gh_url <URL>: GitHub の PR / Issue の URL ---
+check "gh: PR の URL"                "ysano/dotfiles${TAB}78"  sh "$SCRIPT" gh_url "https://github.com/ysano/dotfiles/pull/78"
+check "gh: Issue の URL"             "ysano/dotfiles${TAB}73"  sh "$SCRIPT" gh_url "https://github.com/ysano/dotfiles/issues/73"
+check "gh: 後ろに続く URL"           "o/r${TAB}9"              sh "$SCRIPT" gh_url "https://github.com/o/r/pull/9/files#diff-1"
+check "gh: 前後の記号"               "o/r${TAB}9"              sh "$SCRIPT" gh_url "<https://github.com/o/r/pull/9>。"
+check "gh: 番号に続く英字は対象外"   ""                        sh "$SCRIPT" gh_url "https://github.com/o/r/pull/9abc"
+check "gh: 番号に続く - は対象外"     ""                        sh "$SCRIPT" gh_url "https://github.com/o/r/pull/9-abc"
+check "gh: 別の URL の中は対象外"    ""                        sh "$SCRIPT" gh_url "https://example.com/?next=https://github.com/o/r/pull/9"
+check "gh: 和文に接した URL"         "o/r${TAB}9"              sh "$SCRIPT" gh_url "詳細はhttps://github.com/o/r/pull/9を参照"
+check "gh: PR / Issue 以外の URL"    ""                        sh "$SCRIPT" gh_url "https://github.com/o/r/blob/master/x"
+check "gh: GitHub 以外"              ""                        sh "$SCRIPT" gh_url "https://example.com/o/r/pull/1"
+# --- gh_nwo <remote の URL>: owner/repo ---
+check "gh: https の remote"          "o/r"                     sh "$SCRIPT" gh_nwo "https://github.com/o/r"
+check "gh: .git 付き"                "o/r.x"                   sh "$SCRIPT" gh_nwo "https://github.com/o/r.x.git"
+check "gh: scp 形式"                 "o/r"                     sh "$SCRIPT" gh_nwo "git@github.com:o/r.git"
+check "gh: ssh:// 形式"              "o/r"                     sh "$SCRIPT" gh_nwo "ssh://git@github.com/o/r.git"
+check "gh: GitHub 以外の remote"     ""                        sh "$SCRIPT" gh_nwo "https://gitlab.com/o/r"
+# --- gh_repo <ディレクトリ...>: GitHub の remote を持つ最初のリポジトリの owner/repo ---
+grepo="$work/grepo"; mkdir -p "$grepo/sub"; echo x > "$grepo/README.md"
+git -C "$grepo" init -q && git -C "$grepo" remote add origin https://github.com/acme/widget.git
+frepo="$work/frepo"; mkdir -p "$frepo"
+git -C "$frepo" init -q && git -C "$frepo" remote add origin git@github.com:me/widget.git &&
+    git -C "$frepo" remote add upstream https://github.com/acme/widget
+lrepo="$work/lrepo"; mkdir -p "$lrepo"
+git -C "$lrepo" init -q && git -C "$lrepo" remote add origin https://gitlab.com/o/r
+check "gh: origin"                   "acme/widget"             sh "$SCRIPT" gh_repo "$grepo/sub"
+check "gh: fork は upstream"         "acme/widget"             sh "$SCRIPT" gh_repo "$frepo"
+check "gh: GitHub 以外は飛ばす"      "acme/widget"             sh "$SCRIPT" gh_repo "$lrepo" "$work/none" "$grepo"
+check "gh: 該当なし"                 ""                        sh "$SCRIPT" gh_repo "$lrepo" "$work"
+git -C "$frepo" config remote.origin.gh-resolved base
+check "gh: gh repo set-default を優先" "me/widget"             sh "$SCRIPT" gh_repo "$frepo"
+# --- gh_kind / render gh: gh は偽物（CI の gh は未認証のため本物を呼ばない） ---
+ghstub="$work/ghstub"; mkdir -p "$ghstub"
+cat > "$ghstub/gh" <<'STUB'
+#!/bin/sh
+for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo " <- gh${GH_FORCE_TTY:+ tty}" >> "$STUB_LOG"
+case $1 in
+    api) [ -z "${STUB_gh_sleep:-}" ] || exec sleep "$STUB_gh_sleep"
+         [ -z "${STUB_gh_fail:-}" ] || { echo "HTTP 404: Not Found" >&2; exit 1; }; echo "${STUB_gh_kind:-pr}" ;;
+    *) echo "body" ;;
+esac
+STUB
+chmod +x "$ghstub/gh"
+ghrun() { : > "$work/log"; env PATH="$ghstub:$PATH" STUB_LOG="$work/log" "$@" >/dev/null 2>&1; cat "$work/log"; }
+check "gh: PR か"                    "pr"                      env PATH="$ghstub:$PATH" STUB_LOG=/dev/null sh "$SCRIPT" gh_kind acme/widget 78
+check "gh: Issue か"                 "issue"                   env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_kind=issue sh "$SCRIPT" gh_kind acme/widget 3
+check "gh: 取得できなければ失敗"     ""                        env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_fail=1 sh "$SCRIPT" gh_kind acme/widget 3
+# 応答しない gh は打ち切る（gh 自身を終了させ、出力の読み込みで待ち続けない）
+t0=$(date +%s)
+check "gh: 応答しなければ失敗"       ""                        env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_sleep=8 OPEN_PATH_GH_TIMEOUT=1 sh "$SCRIPT" gh_kind acme/widget 3
+if [ $(( $(date +%s) - t0 )) -le 4 ]; then echo "ok   gh: 応答しなければ打ち切る"; else echo "FAIL gh: 応答しなければ打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
+check "gh: 想定外の応答は失敗"       ""                        env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_kind=x sh "$SCRIPT" gh_kind acme/widget 3
+log=$(ghrun sh "$SCRIPT" gh_kind "o/.." 3)
+case $log in "") echo "ok   gh: 不正な owner/repo では gh を呼ばない" ;; *) echo "FAIL gh: 不正な owner/repo では gh を呼ばない: $log"; fail=1 ;; esac
+check "gh: PR の本文"   "[pr][view][78][-R][acme/widget][--comments] <- gh tty"     ghrun sh "$SCRIPT" render gh acme/widget 78 pr body
+check "gh: PR の差分"   "[pr][diff][78][-R][acme/widget][--color=always] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 78 pr diff
+check "gh: Issue の本文" "[issue][view][3][-R][acme/widget][--comments] <- gh tty"  ghrun sh "$SCRIPT" render gh acme/widget 3 issue body
+check "gh: Issue に差分は無い" "[issue][view][3][-R][acme/widget][--comments] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 3 issue diff
+
 # --- click: tmux のユーザーオプション経由で値を受け取りポップアップを開く（tmux は偽物） ---
 stub="$work/stub"; mkdir -p "$stub"
 cat > "$stub/tmux" <<'STUB'
@@ -311,7 +398,7 @@ chmod +x "$stub/tmux"
 # click_run <tmux バージョン> <行> <桁> <cwd> → 偽 tmux への呼び出しログ
 click_run() {
     : > "$work/log"
-    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version="$1" STUB_client=c1 STUB_link="" \
+    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version="$1" STUB_client=c1 STUB_link="${CLICK_LINK:-}" \
         STUB_line="$2" STUB_x="$3" STUB_cwd="$4" sh "$SCRIPT" click >/dev/null 2>&1
     cat "$work/log"
 }
@@ -335,6 +422,35 @@ log=$(click_run 3.7c "see $short here" 6 "$crepo")
 case $log in *"[@open_path_view_kind][commit]"*"[@open_path_view_path][$crepo]"*"[@open_path_view_sha][$short]"*"[display-popup]"*) echo "ok   click: SHA は差分を開く";; *) echo "FAIL click: SHA は差分を開く: $log"; fail=1;; esac
 log=$(click_run 3.7c "see link.sh:3 here" 5 "$repo")
 case $log in *"[@open_path_view_kind][]"*) echo "ok   click: ファイルは種類を空にする";; *) echo "FAIL click: ファイルは種類を空にする: $log"; fail=1;; esac
+# PR / Issue の参照は GitHub の内容を開く（click では通信しない）
+log=$(click_run 3.7c "PR #78 を見る" 4 "$grepo/sub")
+case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][78]"*"[display-popup]"*"[-T][ acme/widget##78 ]"*) echo "ok   click: #番号は cwd のリポジトリの PR / Issue を開く";; *) echo "FAIL click: #番号は cwd のリポジトリの PR / Issue を開く: $log"; fail=1;; esac
+log=$(click_run 3.7c "see o/r#5 now" 6 /)
+case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][o/r]"*"[@open_path_view_num][5]"*"[display-popup]"*) echo "ok   click: owner/repo#番号";; *) echo "FAIL click: owner/repo#番号: $log"; fail=1;; esac
+log=$(click_run 3.7c "see https://github.com/acme/widget/pull/9 ok" 10 /)
+case $log in *"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][9]"*"[display-popup]"*) echo "ok   click: PR の URL";; *) echo "FAIL click: PR の URL: $log"; fail=1;; esac
+log=$(CLICK_LINK="https://github.com/acme/widget/issues/3" click_run 3.7c "see the issue" 5 /)
+case $log in *"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][3]"*"[display-popup]"*) echo "ok   click: ハイパーリンクの URL";; *) echo "FAIL click: ハイパーリンクの URL: $log"; fail=1;; esac
+log=$(STUB_pane=%7 STUB_y=2 STUB_row_0="本文は $grepo/README.md。" STUB_row_1="" STUB_row_2="PR #78 を見る" click_run 3.7c "PR #78 を見る" 4 /)
+case $log in *"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][78]"*) echo "ok   click: #番号は前後の行のリポジトリも探す";; *) echo "FAIL click: #番号は前後の行のリポジトリも探す: $log"; fail=1;; esac
+mkdir -p "$grepo/docs" && echo x > "$grepo/docs/change#123"
+log=$(click_run 3.7c "see docs/change#123" 6 "$grepo")
+case $log in *"[@open_path_view_path][$grepo/docs/change#123]"*) echo "ok   click: # を含む実在のファイルはファイルとして開く";; *) echo "FAIL click: # を含む実在のファイルはファイルとして開く: $log"; fail=1;; esac
+echo x > "$grepo/docs/README.md"
+log=$(click_run 3.7c "see docs/README.md#123" 9 "$grepo")
+case $log in *"[@open_path_view_path][$grepo/docs/README.md]"*) echo "ok   click: # の前が実在のファイルならファイルとして開く";; *) echo "FAIL click: # の前が実在のファイルならファイルとして開く: $log"; fail=1;; esac
+log=$(click_run 3.7c "see docs/README.md#123" 9 "$grepo/sub")
+case $log in *"[@open_path_view_path][$grepo/docs/README.md]"*) echo "ok   click: git ルートからの相対パスもファイルとして開く";; *) echo "FAIL click: git ルートからの相対パスもファイルとして開く: $log"; fail=1;; esac
+log=$(click_run 3.7c "see docs/change#123" 6 "$grepo/sub")
+case $log in *"[@open_path_view_path][$grepo/docs/change#123]"*) echo "ok   click: git ルートからの # を含むファイル";; *) echo "FAIL click: git ルートからの # を含むファイル: $log"; fail=1;; esac
+mkdir -p "$grepo/acme" && echo x > "$grepo/acme/widget" && echo x > "$grepo/acme/widget#9"
+log=$(click_run 3.7c "see https://github.com/acme/widget/pull/9 ok" 10 "$grepo")
+case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][9]"*"[display-popup]"*) echo "ok   click: URL は同名のファイルがあっても PR を開く";; *) echo "FAIL click: URL は同名のファイルがあっても PR を開く: $log"; fail=1;; esac
+rm -rf "$grepo/acme"
+log=$(click_run 3.7c "see https://github.com/acme/widget/pull/9?foo=#78" 47 "$grepo")
+case $log in *"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][9]"*"[display-popup]"*) echo "ok   click: URL の # の後ろも URL として開く";; *) echo "FAIL click: URL の # の後ろも URL として開く: $log"; fail=1;; esac
+log=$(click_run 3.7c "PR #78 を見る" 4 "$lrepo")
+case $log in *"[display-popup]"*) echo "FAIL click: リポジトリが分からなければ開かない: $log"; fail=1;; *"[display-message]"*) echo "ok   click: リポジトリが分からなければメッセージ";; *) echo "FAIL click: リポジトリが分からなければメッセージ: $log"; fail=1;; esac
 # ファイル名だけなら、前後の行に出ているパスのディレクトリから探す
 log=$(STUB_pane=%7 STUB_y=2 STUB_row_0="本文は $ctx/a/b/pr.md。" STUB_row_1="" STUB_row_2="verdict.md を見る" click_run 3.7c "verdict.md を見る" 2 /)
 case $log in *"[@open_path_view_path][$ctx/a/b/verdict.md]"*) echo "ok   click: 前後の行のディレクトリから探す";; *) echo "FAIL click: 前後の行のディレクトリから探す: $log"; fail=1;; esac
@@ -354,6 +470,8 @@ case $log in
     *"[$repo/link.sh] <- open"*) echo "ok   click open は既定アプリで開く" ;;
     *) echo "FAIL click open は既定アプリで開く: $log"; fail=1 ;;
 esac
+log=$(click_open "PR #78 を見る" 4 "$grepo")
+case $log in *"[https://github.com/acme/widget/issues/78] <- open"*) echo "ok   click open: #番号はブラウザで開く" ;; *) echo "FAIL click open: #番号はブラウザで開く: $log"; fail=1 ;; esac
 log=$(click_open "see docs/ here" 6 "$repo")
 case $log in *"[$repo/docs] <- open"*) echo "ok   click open はディレクトリも開く" ;; *) echo "FAIL click open はディレクトリも開く: $log"; fail=1 ;; esac
 log=$(click_open "foo bar" 3 "$repo")
