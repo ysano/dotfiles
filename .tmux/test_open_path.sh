@@ -73,6 +73,7 @@ check "less の q → 閉じる"       "close"   sh "$SCRIPT" action 0
 check "それ以外 → 閉じる"        "close"   sh "$SCRIPT" action 2
 
 check "less の r → 整形/原文の切替" "toggle" sh "$SCRIPT" action 114
+check "less の c → Claude に渡す"   "claude" sh "$SCRIPT" action 99
 
 # --- md_renderer: Markdown の整形に使うツール（glow → mdcat → なし） ---
 mdbin="$work/mdbin"; mkdir -p "$mdbin/both" "$mdbin/mdcat" "$mdbin/none"
@@ -102,7 +103,7 @@ echo x > "$work/short.txt"
 env PATH="$lessbin:$PATH" LESS=-RFXx3M LESS_STUB_LOG="$work/less.log" sh "$SCRIPT" view "$work/short.txt" 3 >/dev/null 2>&1
 lesslog=$(cat "$work/less.log" 2>/dev/null)
 case $lesslog in
-    "LESS=[]"*"[--mouse]"*"[--lesskey-src="*"[-Psq 閉じる  e Emacs  o 既定アプリ]"*) echo "ok   view は LESS を空にしてプロンプトを渡す" ;;
+    "LESS=[]"*"[--mouse]"*"[--lesskey-src="*"[-Psq 閉じる  e Emacs  o 既定アプリ  c Claude]"*) echo "ok   view は LESS を空にしてプロンプトを渡す" ;;
     *) echo "FAIL view は LESS を空にしてプロンプトを渡す: $lesslog"; fail=1 ;;
 esac
 
@@ -390,7 +391,8 @@ cat > "$stub/tmux" <<'STUB'
 case $1 in
     show) eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\"" ;;
     display) case $* in *pane_in_mode*) printf '%s\n' "${STUB_pstate:-0 24 40}" ;; *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
-    display-popup|display-message|set) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
+    display-popup|display-message|set|set-buffer|paste-buffer|select-pane|send-keys) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
+    list-panes) printf '%s\n' "${STUB_panes:-}" ;;
     # capture-pane -p -t <pane> -S <行> -E <行> → STUB_row_<行> を順に（pane が違えば空）
     capture-pane) [ "$4" = "${STUB_pane:-}" ] || exit 0
                   i=$6; while [ "$i" -le "$8" ]; do eval "printf '%s\n' \"\${STUB_row_$i:-}\""; i=$((i + 1)); done ;;
@@ -494,6 +496,39 @@ esac
 evil="$work/$(printf 'cwd\n\ttouch\tpwned3')"; mkdir -p "$evil"
 (cd "$work" && click_run 3.7c "$(printf 'x\n touch pwned4')" 0 "$evil" >/dev/null)
 if [ ! -e "$work/pwned3" ] && [ ! -e "$work/pwned4" ] && [ ! -e "$evil/pwned3" ]; then echo "ok   改行入りの cwd / 行でもコマンドを実行しない"; else echo "FAIL 改行入りの cwd / 行でもコマンドを実行しない"; fail=1; fi
+
+# --- Claude Code に渡す（ポップアップの c）: 文書を指す文字列を Claude の pane の入力欄へ ---
+check "claude: ファイル"             "@/p/a.md "                       sh "$SCRIPT" claude_text file /p/a.md
+check "claude: 行番号付き"           "@/p/a.md (L42) "                 sh "$SCRIPT" claude_text file /p/a.md 42
+check "claude: 空白を含むパス"       '"/p/a b.md" '                    sh "$SCRIPT" claude_text file "/p/a b.md"
+check "claude: 空白を含むパスの行番号" '"/p/a b.md" (L42) '              sh "$SCRIPT" claude_text file "/p/a b.md" 42
+# 改行等の制御文字があると Claude の入力欄で送信されうるため渡さない
+check "claude: 改行を含むパスは渡さない" ""                            sh "$SCRIPT" claude_text file "$(printf '/p/a\nb.md')"
+check "claude: 制御文字を含むリポジトリ" ""                            sh "$SCRIPT" claude_text commit "$(printf '/r\033x')" abc1234
+check "claude: PR"                   "https://github.com/o/r/pull/78 " sh "$SCRIPT" claude_text gh o/r 78 pr
+check "claude: Issue"                "https://github.com/o/r/issues/3 " sh "$SCRIPT" claude_text gh o/r 3 issue
+check "claude: 種類不明の参照"       "https://github.com/o/r/issues/3 " sh "$SCRIPT" claude_text gh o/r 3 ""
+check "claude: コミット"             "commit abc1234 (/repo) "         sh "$SCRIPT" claude_text commit /repo abc1234
+# claude_ancestors: ps の表（pid ppid 実行ファイル）から、claude / claude.exe とその祖先の pid
+pstab=$(printf '%s\n' "1 0 launchd" "100 1 -zsh" "101 100 node" "102 101 /opt/bin/claude" "200 1 zsh" "201 200 vim" "300 1 zsh" "301 300 claude.exe" "400 1 zsh" "401 400 claude-helper" "  500   1 /bin/zsh" "501 500 /Users/Jane Doe/.local/bin/claude")
+check "claude: 祖先の pid"           "$(printf '%s\n' 1 100 101 102 300 301 500 501)" sh -c 'printf "%s\n" "$2" | sh "$1" claude_ancestors | sort -n' _ "$SCRIPT" "$pstab"
+printf '#!/bin/sh\nprintf "%%s\\n" "$STUB_ps"\n' > "$stub/ps"; chmod +x "$stub/ps"
+# to_claude <文字列>: クリックした pane（Claude でなければ同じ window の Claude の pane）へ貼り付ける
+to_claude_run() {
+    : > "$work/log"
+    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_ps="$pstab" STUB_pane="$1" STUB_panes="$2" sh "$SCRIPT" to_claude "$3" >/dev/null 2>&1
+    cat "$work/log"
+}
+log=$(to_claude_run %1 "$(printf '%s\n' "%1 100" "%2 200")" "@/p/a.md ")
+case $log in *"[set-buffer][-b][open-path-claude][@/p/a.md ]"*"[paste-buffer][-p][-d][-b][open-path-claude][-t][%1]"*"[select-pane][-t][%1]"*) echo "ok   claude: クリックした pane へ貼り付ける" ;; *) echo "FAIL claude: クリックした pane へ貼り付ける: $log"; fail=1 ;; esac
+log=$(to_claude_run %2 "$(printf '%s\n' "%1 200" "%2 400" "%3 300")" "@/p/a.md ")
+case $log in *"[paste-buffer][-p][-d][-b][open-path-claude][-t][%3]"*"[select-pane][-t][%3]"*) echo "ok   claude: 同じ window の Claude の pane へ貼り付ける" ;; *) echo "FAIL claude: 同じ window の Claude の pane へ貼り付ける: $log"; fail=1 ;; esac
+log=$(STUB_pstate="1 24 40" to_claude_run %1 "$(printf '%s\n' "%1 100")" "@/p/a.md ")
+case $log in *"[send-keys][-t][%1][-X][cancel]"*"[paste-buffer]"*) echo "ok   claude: コピーモードを解除してから貼り付ける" ;; *) echo "FAIL claude: コピーモードを解除してから貼り付ける: $log"; fail=1 ;; esac
+log=$(to_claude_run %1 "$(printf '%s\n' "%1 100")" "$(printf '@/p/a\nb.md ')")
+case $log in *"[paste-buffer]"*) echo "FAIL claude: 制御文字を含む文字列は貼り付けない: $log"; fail=1 ;; *) echo "ok   claude: 制御文字を含む文字列は貼り付けない" ;; esac
+log=$(to_claude_run %1 "$(printf '%s\n' "%1 200" "%2 400")" "@/p/a.md ")
+case $log in *"[paste-buffer]"*) echo "FAIL claude: Claude の pane が無ければ貼り付けない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   claude: Claude の pane が無ければメッセージ" ;; *) echo "FAIL claude: Claude の pane が無ければメッセージ: $log"; fail=1 ;; esac
 
 # --- Option + クリックはマウスを使うアプリ（fullscreen の Claude Code 等）の中でも tmux が処理する ---
 optblock=$(sed -n '/^bind -n M-MouseDown1Pane/,/^}/p' "$(dirname "$SCRIPT")/../keybindings.conf")
