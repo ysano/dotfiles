@@ -882,12 +882,13 @@ open_default() {
     fi
 }
 
-# less の終了コード → 動作（open-path.lesskey の quit e / quit o）
+# less の終了コード → 動作（open-path.lesskey の quit e / quit o / quit r / quit c）
 action() {
     case $1 in
         101) echo emacs ;;
         111) echo default ;;
         114) echo toggle ;;
+        99) echo claude ;;
         *) echo close ;;
     esac
 }
@@ -962,28 +963,115 @@ render() {
     fi | if [ -n "$lineno" ]; then mark "$lineno"; else cat; fi
 }
 
+# claude_text <file|gh|commit> ...: Claude Code の入力欄に入れる、文書を指す文字列（後ろに空白）。
+#   file <パス> [行番号]: @パス（行番号は (L42) と添える。@ の行指定は文書化されていないため）。
+#     空白を含むパスは @ の書き方が文書化されていないため、引用符で囲むだけにする
+#   gh <owner/repo> <番号> <pr|issue|空>: URL / commit <リポジトリ> <SHA>: commit <SHA> (<リポジトリ>)
+# 改行等の制御文字を含むものは渡さない（入力欄で送信されうるため）
+claude_text() {
+    no_cntrl "$*" || return 1
+    case $1 in
+        file)
+            case $2 in
+                *" "*) printf '"%s" %s' "$2" "${3:+(L$3) }" ;;
+                *) printf '@%s %s' "$2" "${3:+(L$3) }" ;;
+            esac ;;
+        gh)
+            if [ "$4" = pr ]; then printf 'https://github.com/%s/pull/%s ' "$2" "$3"
+            else printf 'https://github.com/%s/issues/%s ' "$2" "$3"; fi ;;
+        commit) printf 'commit %s (%s) ' "$3" "$2" ;;
+        *) return 1 ;;
+    esac
+}
+
+# no_cntrl <文字列>: 制御文字（改行・ESC 等）を含まないか（tr はバイト単位で、UTF-8 の
+# 多バイト文字は 0x80 以上のバイトだけなので影響しない）
+no_cntrl() {
+    [ "$(printf '%s' "$1" | tr -d '\000-\037\177')" = "$1" ]
+}
+
+# claude_ancestors: 標準入力の ps の表（pid ppid 実行ファイル）から、実行ファイル名が
+# claude / claude.exe のプロセスとその祖先の pid を出す（agents/claude_status.py と同じ判定。
+# npm 版は node が前面に出るため、pane のプロセスの子孫を実行ファイル名で見る）
+claude_ancestors() {
+    awk '{
+        # 実行ファイルのパスは空白を含みうるため、pid・ppid より後ろ全体を使う
+        pp[$1] = $2; n = $0; sub(/^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+/, "", n); sub(/.*\//, "", n)
+        if (n == "claude" || n == "claude.exe") hit[$1] = 1
+    }
+    END {
+        for (p in hit)
+            for (q = p; (q in pp) && !(q in seen); q = pp[q]) { seen[q] = 1; print q }
+    }'
+}
+
+# claude_pane <pane>: クリックした pane が Claude Code ならそれ、違えば同じ window の
+# Claude Code の pane（最初のもの）
+claude_pane() {
+    # awk -v には改行を渡せない（BSD awk）ため空白区切りにする
+    pids=$(ps -axo pid=,ppid=,comm= 2>/dev/null | claude_ancestors | tr '\n' ' ')
+    [ -n "$pids" ] || return 1
+    tmux list-panes -t "$1" -F '#{pane_id} #{pane_pid}' 2>/dev/null |
+        awk -v me="$1" -v pids="$pids" '
+            BEGIN { n = split(pids, a, " "); for (i = 1; i <= n; i++) c[a[i]] = 1 }
+            ($2 in c) { if ($1 == me) { print $1; found = 1; exit } if (first == "") first = $1 }
+            END { if (!found && first != "") print first; exit (!found && first == "") }'
+}
+
+# to_claude <文字列>: クリックした pane（Claude でなければ同じ window の Claude Code）の入力欄へ
+# 貼り付け（bracketed paste。@ の補完メニューを開かない）、その pane を選ぶ。Enter は送らない
+to_claude() {
+    if [ -z "$1" ] || ! no_cntrl "$1"; then
+        tmux display-message "open-path: Claude Code に渡せない名前です（制御文字を含む等）"
+        return 1
+    fi
+    pane=$(opt pane)
+    if [ -z "$pane" ] || ! target=$(claude_pane "$pane") || [ -z "$target" ]; then
+        tmux display-message "open-path: この window に Claude Code の pane が見つかりません"
+        return 1
+    fi
+    # コピーモードの画面には bracketed paste が効かず改行が Enter になるため、先に解除する
+    case $(tmux display -p -t "$target" '#{pane_in_mode}' 2>/dev/null) in
+        1*) tmux send-keys -t "$target" -X cancel ;;
+    esac
+    tmux set-buffer -b open-path-claude "$1" &&
+        tmux paste-buffer -p -d -b open-path-claude -t "$target" &&
+        tmux select-pane -t "$target"
+}
+
 do_action() {
     case $1 in
+        claude) to_claude "$(claude_text file "$path" "$lineno")" ;;
         emacs) open_emacs "$path" "$lineno" || { printf '\nEmacs に接続できません: %s\n' "$path"; sleep 2; } ;;
         default) open_default "$path" || { printf '\n既定アプリで開けません: %s\n' "$path"; sleep 2; } ;;
     esac
 }
 
 # 引数が無ければ click が set -g した @open_path_view_* を読む
-# コミットの差分を less で見る（q で閉じる）
+# コミットの差分を less で見る（q で閉じる、c で Claude Code に渡す）
 view_commit() {
     case $sha in ""|*[!0-9a-f]*) printf 'open-path: SHA ではありません: %s\n' "$sha"; sleep 2; return 1 ;; esac
     [ -d "$path" ] || { printf 'open-path: 見つかりません: %s\n' "$path"; sleep 2; return 1; }
     LESS=""
     export LESS
-    if lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
-        render commit | less -R --mouse --wheel-lines=3 "-Psq 閉じる"
-    else
+    keys="$(cd "$(dirname "$0")" && pwd)/open-path.lesskey"
+    if ! [ -f "$keys" ] || ! lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
         render commit | less -R
+        return 0
     fi
+    while :; do
+        render commit | less -R --mouse --wheel-lines=3 --lesskey-src="$keys" "-Psq 閉じる  c Claude"
+        case $(action $?) in
+            # r（他の表示の切替キー）は描き直し、e / o は閉じる
+            toggle) continue ;;
+            claude) to_claude "$(claude_text commit "$path" "$sha")" ;;
+        esac
+        return 0
+    done
 }
 
-# PR / Issue を less で見る（o でブラウザ、PR は r で本文・コメントと差分を切り替える）
+# PR / Issue を less で見る（o でブラウザ、c で Claude Code に渡す、PR は r で本文・コメントと
+# 差分を切り替える）
 view_gh() {
     if ! valid_ref "$nwo" "$num"; then
         printf 'open-path: PR / Issue の参照ではありません: %s#%s\n' "$nwo" "$num"; sleep 2; return 1
@@ -1006,7 +1094,7 @@ view_gh() {
     fi
     part=body
     while :; do
-        prompt="q 閉じる  o ブラウザ"
+        prompt="q 閉じる  o ブラウザ  c Claude"
         [ "$kind" = pr ] && prompt="$prompt  r 本文/差分"
         if [ -n "$kind" ]; then
             render gh
@@ -1021,6 +1109,7 @@ view_gh() {
                 continue ;;
             default)
                 bounded 5 open_default "$url" >/dev/null 2>&1 || { printf '\nブラウザで開けません: %s\n' "$url"; sleep 2; } ;;
+            claude) to_claude "$(claude_text gh "$nwo" "$num" "$kind")" ;;
         esac
         return 0
     done
@@ -1053,7 +1142,7 @@ view() {
     keys="$(cd "$(dirname "$0")" && pwd)/open-path.lesskey"
     if [ -f "$keys" ] && lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
         # q: 閉じる / e: Emacs / o: 既定アプリ / r: 整形と原文の切替 を less の中で 1 手にする
-        prompt="q 閉じる  e Emacs  o 既定アプリ${md:+  r 整形/原文}"
+        prompt="q 閉じる  e Emacs  o 既定アプリ  c Claude${md:+  r 整形/原文}"
         while :; do
             start=1
             [ "$mode" = raw ] && start=${lineno:-1}
@@ -1075,7 +1164,7 @@ view() {
     start=1
     [ "$mode" = raw ] && start=${lineno:-1}
     render "$mode" | less -R -j.3 "+${start}g"
-    printf '\n[e] Emacs で開く  [o] 既定アプリで開く  [その他] 閉じる: '
+    printf '\n[e] Emacs で開く  [o] 既定アプリで開く  [c] Claude に渡す  [その他] 閉じる: '
     old=$(stty -g 2>/dev/null)
     stty -icanon -echo min 1 2>/dev/null
     key=$(dd bs=1 count=1 2>/dev/null)
@@ -1083,6 +1172,7 @@ view() {
     case $key in
         e) do_action emacs ;;
         o) do_action default ;;
+        c) do_action claude ;;
     esac
 }
 
@@ -1109,5 +1199,8 @@ case $cmd in
     gh_nwo) gh_nwo "$@" ;;
     gh_repo) gh_repo "$@" ;;
     gh_kind) gh_kind "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|gh_nwo|gh_repo|gh_kind|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
+    claude_text) claude_text "$@" ;;
+    claude_ancestors) claude_ancestors ;;
+    to_claude) to_claude "$@" ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|gh_nwo|gh_repo|gh_kind|claude_text|claude_ancestors|to_claude|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
 esac
