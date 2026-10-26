@@ -325,6 +325,20 @@ check "gh: パスの続きは対象外"       ""                        sh "$SCR
 check "gh: ~ に続くものは対象外"     ""                        sh "$SCRIPT" gh_ref "~/a#9" 2
 check "gh: .. は対象外"              ""                        sh "$SCRIPT" gh_ref "o/..#7" 4
 check "gh: 参照の外"                 ""                        sh "$SCRIPT" gh_ref "PR #78 を見る" 0
+# 登録した省略形「名前#番号」（OPEN_PATH_GH_ALIAS = 空白区切りの 名前=owner/repo）
+alias_tbl=" bp=acme/blueprint  int=acme/internal "
+check "gh: 省略形"                   "acme/blueprint${TAB}123${TAB}alias" env OPEN_PATH_GH_ALIAS="$alias_tbl" sh "$SCRIPT" gh_ref "see bp#123 now" 5
+check "gh: 2 つ目の省略形と句点"     "acme/internal${TAB}4${TAB}alias" env OPEN_PATH_GH_ALIAS="$alias_tbl" sh "$SCRIPT" gh_ref "see int#4." 6
+check "gh: 未登録の名前は対象外"     ""                        env OPEN_PATH_GH_ALIAS="$alias_tbl" sh "$SCRIPT" gh_ref "see PR#78" 6
+check "gh: 名前の前方一致は対象外"   ""                        env OPEN_PATH_GH_ALIAS="$alias_tbl" sh "$SCRIPT" gh_ref "see b#78" 5
+check "gh: 表が無ければ対象外"       ""                        env -u OPEN_PATH_GH_ALIAS sh "$SCRIPT" gh_ref "see bp#123 now" 5
+check "gh: 省略形の先が空"           ""                        env OPEN_PATH_GH_ALIAS="bp=" sh "$SCRIPT" gh_ref "see bp#1" 5
+check "gh: 省略形の先が owner だけ"  ""                        env OPEN_PATH_GH_ALIAS="bp=acme" sh "$SCRIPT" gh_ref "see bp#1" 5
+check "gh: 省略形の先が .."          ""                        env OPEN_PATH_GH_ALIAS="bp=acme/.." sh "$SCRIPT" gh_ref "see bp#1" 5
+check "gh: 省略形の先が深い"         ""                        env OPEN_PATH_GH_ALIAS="bp=a/b/c" sh "$SCRIPT" gh_ref "see bp#1" 5
+check "gh: 省略形の名前に . は不可"  ""                        env OPEN_PATH_GH_ALIAS="b.p=acme/blueprint" sh "$SCRIPT" gh_ref "see b.p#1" 5
+check "gh: 省略形も文字参照は対象外" ""                        env OPEN_PATH_GH_ALIAS="$alias_tbl" sh "$SCRIPT" gh_ref "&bp#1" 2
+check "gh: owner/repo#番号は表より先" "bp/x${TAB}1"            env OPEN_PATH_GH_ALIAS="$alias_tbl" sh "$SCRIPT" gh_ref "see bp/x#1" 5
 # --- gh_url <URL>: GitHub の PR / Issue の URL ---
 check "gh: PR の URL"                "ysano/dotfiles${TAB}78"  sh "$SCRIPT" gh_url "https://github.com/ysano/dotfiles/pull/78"
 check "gh: Issue の URL"             "ysano/dotfiles${TAB}73"  sh "$SCRIPT" gh_url "https://github.com/ysano/dotfiles/issues/73"
@@ -433,6 +447,13 @@ case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][acme/widget]"
 case $log in *"[display-popup][-c][c1][-E][-w][108][-h][47]"*) echo "ok   click: PR / Issue は Markdown と同じ大きさで開く";; *) echo "FAIL click: PR / Issue は Markdown と同じ大きさで開く: $log"; fail=1;; esac
 log=$(click_run 3.7c "see o/r#5 now" 6 /)
 case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][o/r]"*"[@open_path_view_num][5]"*"[display-popup]"*) echo "ok   click: owner/repo#番号";; *) echo "FAIL click: owner/repo#番号: $log"; fail=1;; esac
+# 省略形は @open_path_gh_alias の表で owner/repo にする（同名のファイルより優先）
+echo x > "$grepo/bp#12" && mkdir -p "$grepo/acme" && echo x > "$grepo/acme/blueprint" && echo x > "$grepo/acme/blueprint#12"
+log=$(STUB_gh_alias="bp=acme/blueprint" click_run 3.7c "see bp#12 now" 5 "$grepo")
+case $log in *"[@open_path_view_kind][gh]"*"[@open_path_view_repo][acme/blueprint]"*"[@open_path_view_num][12]"*"[display-popup]"*"[-T][ acme/blueprint##12 ]"*) echo "ok   click: 登録した省略形";; *) echo "FAIL click: 登録した省略形: $log"; fail=1;; esac
+log=$(click_run 3.7c "see bp#12 now" 5 "$grepo")
+case $log in *"[@open_path_view_kind][gh]"*) echo "FAIL click: 表が無ければ省略形は GitHub で開かない: $log"; fail=1;; *) echo "ok   click: 表が無ければ省略形は GitHub で開かない";; esac
+rm -rf "$grepo/bp#12" "$grepo/acme"
 log=$(click_run 3.7c "see https://github.com/acme/widget/pull/9 ok" 10 /)
 case $log in *"[@open_path_view_repo][acme/widget]"*"[@open_path_view_num][9]"*"[display-popup]"*) echo "ok   click: PR の URL";; *) echo "FAIL click: PR の URL: $log"; fail=1;; esac
 log=$(CLICK_LINK="https://github.com/acme/widget/issues/3" click_run 3.7c "see the issue" 5 /)

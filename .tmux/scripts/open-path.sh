@@ -569,11 +569,27 @@ GH_REF_AWK='
         split(s, a, "/")
         return ghref(a[1] "/" a[2] "#" a[4])
     }
+    # 登録した省略形「名前#番号」（OPEN_PATH_GH_ALIAS = 空白区切りの「名前=owner/repo」）。
+    # 名前は英数字・_・- だけ（. や / を含むものはパス・owner/repo#番号として扱う）
+    function ghalias(s,    i, name, n, a, k, j, t) {
+        while (s ~ /\.$/) s = substr(s, 1, length(s) - 1)
+        if (s !~ /^[A-Za-z0-9_-]+#[1-9][0-9]*$/) return ""
+        i = index(s, "#"); name = substr(s, 1, i - 1); n = substr(s, i + 1)
+        k = split(ENVIRON["OPEN_PATH_GH_ALIAS"], a, /[ \t]+/)
+        for (j = 1; j <= k; j++) {
+            if (index(a[j], name "=") != 1) continue
+            t = substr(a[j], length(name) + 2)
+            if (t !~ /^[^\/]+\/[^\/]+$/) return ""
+            return ghref(t "#" n)
+        }
+        return ""
+    }
 '
 
 # gh_ref <行> <桁>: クリック位置の「#番号」「owner/repo#番号」・GitHub の PR / Issue の URL を
 # 「owner/repo<TAB>番号」で出す（owner/repo が無ければ空。URL から読んだものは <TAB>url を足す）。
-# 英字に続く #・見出しの ##・
+# OPEN_PATH_GH_ALIAS に登録した省略形（bp#番号 等）は owner/repo に置き換え、<TAB>alias を足す。
+# 英字に続く #（省略形を除く）・見出しの ##・
 # 文字参照の &# は対象外。URL の中のクリックは、どこをクリックしても URL 全体を読む
 # （?q=#78 の #78 を単独の参照にしない）
 gh_ref() {
@@ -614,7 +630,10 @@ gh_ref() {
         if (l > 1 && ch[l - 1] ~ /^[&@~+%]$/) exit 1
         s = ""
         for (j = l; j <= r; j++) s = s ch[j]
-        if ((out = ghref(s)) == "") exit 1
+        if ((out = ghref(s)) == "") {
+            if ((out = ghalias(s)) == "") exit 1
+            out = out "\talias"
+        }
         print out
     }'
 }
@@ -773,20 +792,24 @@ click() {
     # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
     roots=$(opt roots)
     if [ -n "$roots" ]; then OPEN_PATH_ROOTS=$roots; export OPEN_PATH_ROOTS; fi
+    # PR / Issue の省略形（任意。同名のファイルより優先）:
+    # set -g @open_path_gh_alias "bp=owner/repo int=owner/repo2"
+    gh_alias=$(opt gh_alias)
+    if [ -n "$gh_alias" ]; then OPEN_PATH_GH_ALIAS=$gh_alias; export OPEN_PATH_GH_ALIAS; fi
     res="" ref="" tok=""
     case $link in
         file://*) res=$(resolve "$link" "$cwd") ;;
         http://*|https://*) ref=$(gh_url "$link") ;;
     esac
     # PR / Issue の参照（#番号・owner/repo#番号・URL）はファイルより先に見る。ただし
-    # owner/repo#番号（URL は除く）の全体か owner/repo が cwd → git ルートの配下に実在する
+    # owner/repo#番号（URL・省略形は除く）の全体か owner/repo が cwd → git ルートの配下に実在する
     # ファイルなら、ファイルとして開く（docs/README.md#123 等。ディレクトリは除く: ghq の
     # ルートの ysano/dotfiles#78 等）
     tab=$(printf '\t')
     if [ -z "$res$ref" ] && ref=$(gh_ref "$line" "$x"); then
         case $ref in
             "$tab"*) ;;
-            *"${tab}url") ref=${ref%"${tab}url"} ;;
+            *"${tab}url"|*"${tab}alias") ref=${ref%"$tab"*} ;;
             *)
                 if f=$(local_file "${ref%%"$tab"*}#${ref#*"$tab"}" "$cwd"); then
                     res="$f$tab" ref=""
