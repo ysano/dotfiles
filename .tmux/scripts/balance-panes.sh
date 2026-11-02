@@ -4,9 +4,12 @@
 #   balance-panes.sh [<window>]   指定（省略時は現在）の window をそろえる
 #   balance-panes.sh grid [<window>]  最小の幅（@layout_grid_min_width、既定 90）を保てる
 #                                 だけ列を増やした碁盤目に並べ直す（prefix M-8）
+#   balance-panes.sh main [<window>]  main pane が左半分を占め、残りを碁盤目にする（prefix M-4）
+#   balance-panes.sh main-mirrored [<window>]  同じく main pane を右に（prefix M-7）
 # テスト用（標準入力 → 標準出力）:
 #   balance-panes.sh layout       window_layout（JSON）を均等にして出す
 #   balance-panes.sh grid-layout <最小の幅>  window_layout（JSON）を碁盤目にして出す
+#   balance-panes.sh main-layout <最小の幅> [mirrored]  window_layout（JSON）を main ＋碁盤目にして出す
 #   balance-panes.sh legacy       JSON の layout を古い tmux の文字列形式（チェックサム付き）にする
 #
 # tmux 3.8 の select-layout -E は、入れ子の分割（左右に分けた中をさらに上下に分ける等）で
@@ -46,6 +49,14 @@ JQ_DEFS='
         end;
     def leaves: if floating then [] elif .t == "p" or ((.c // []) | length) == 0 then [.] else [.c[] | leaves] | add end;
     def floats: [.. | select(floating)];
+    # pane の配列を $k 列に分け、左の列から上から順に詰める。列ごとの段数の差は 1 以内（多い
+    # 列を左に寄せる）。1 枚だけの列は pane のまま、2 枚以上は上下の分割にする
+    def columns($k):
+      . as $p | (length / $k | floor) as $base | (length % $k) as $extra
+      | [range(0; $k) as $i
+          | ($i * $base + ([$i, $extra] | min)) as $s
+          | $p[$s:$s + $base + (if $i < $extra then 1 else 0 end)]
+          | if length == 1 then .[0] else {t: "v", c: .} end];
 '
 
 layout() {
@@ -60,14 +71,27 @@ grid_layout() {
     .L as $r | ($r | leaves) as $p | ($p | length) as $n | ($r | floats) as $f
     | if $n < 2 then . else
       ((($r.w + 1) / ($min + 1)) | floor | [., 1] | max | [., $n] | min) as $cols
-    | (($n / $cols) | floor) as $base | ($n % $cols) as $extra
-    | [range(0; $cols) as $k
-        | ($k * $base + ([$k, $extra] | min)) as $s
-        | $p[$s:$s + $base + (if $k < $extra then 1 else 0 end)]
-        | if length == 1 then .[0] else {t: "v", c: .} end] as $columns
+    | ($p | columns($cols)) as $columns
     # floating pane は最上位の分割の後ろにそのまま戻す
     | (if $cols == 1 then $columns[0] | .c += $f else {t: "h", c: ($columns + $f)} end) as $tree
     | .L = ($tree | bal($r.x; $r.y; $r.w; $r.h)) end'
+}
+
+# main（tmux の main-vertical と同じく pane 番号が最小の pane）が左半分を占め、残りの pane を
+# 右半分の列に grid_layout と同じ順で詰める（$right が true なら左右を入れ替える）。列の数は
+# 右半分で幅 $min 以上を保てる数で、1 列に 2 枚以上入るときだけ増やす（3 枚なら 2 段の 1 列）。
+# 半分の中をさらに左右に分けるため、分割・終了の後の bal でも main は半分の幅のまま
+main_layout() {
+    jq -c --argjson min "$1" --argjson right "$2" "$JQ_DEFS"'
+    .L as $r | ($r | leaves | sort_by(.i)) as $p | ($p | length) as $n | ($r | floats) as $f
+    | if $n < 2 then . else
+      # 余りの 1 桁を含まない狭いほうの半分で数える（左右を入れ替えても列の数を変えない）
+      (($r.w - 1) / 2 | floor) as $half
+    | ((($half + 1) / ($min + 1)) | floor) as $fit
+    | ([$fit, (($n - 1) / 2 | floor)] | min | [., 1] | max) as $k
+    | ($p[1:] | columns($k) | if length == 1 then .[0] else {t: "h", c: .} end) as $others
+    | (if $right then [$others, $p[0]] else [$p[0], $others] end) as $halves
+    | .L = ({t: "h", c: ($halves + $f)} | bal($r.x; $r.y; $r.w; $r.h)) end'
 }
 
 # 古い tmux の layout 文字列: 「チェックサム,本体」。本体は「幅x高さ,左,上」に続けて
@@ -109,10 +133,20 @@ balance() {
     esac
 }
 
+# rearrange <grid|main|main-mirrored> <最小の幅>: 標準入力の layout（JSON）を並べ直す
+rearrange() {
+    case $1 in
+        grid) grid_layout "$2" ;;
+        main) main_layout "$2" false ;;
+        main-mirrored) main_layout "$2" true ;;
+    esac
+}
+
+# arrange <grid|main|main-mirrored> [<window>]: window を並べ直す（prefix M-8 / M-4 / M-7）。
 # 古い tmux（layout が JSON でない）では、pane の一覧と window の大きさから JSON を組んで
-# 同じ計算をし、文字列形式に直して渡す
-grid() {
-    win=${1:-}
+# 同じ計算をし、文字列形式に直して渡す（main-mirrored を除く）
+arrange() {
+    mode=$1 win=${2:-}
     [ "$(tmux display -p ${win:+-t "$win"} '#{window_zoomed_flag}' 2>/dev/null)" = 1 ] && return 0
     if ! command -v jq >/dev/null 2>&1; then
         tmux display-message "balance-panes: jq が必要です"
@@ -123,14 +157,20 @@ grid() {
     cur=$(tmux display -p ${win:+-t "$win"} '#{window_layout}' 2>/dev/null) || return 0
     case $cur in
         "{"*)
-            new=$(printf '%s' "$cur" | grid_layout "$min" 2>/dev/null) ;;
+            new=$(printf '%s' "$cur" | rearrange "$mode" "$min" 2>/dev/null) ;;
         *)
+            # 古い tmux は layout 文字列の pane 番号を無視し、番号の順にセルへ割り当てる。main（番号が
+            # 最小）を右に置けないため、main-mirrored は tmux 既定の main-vertical-mirrored に任せる
+            if [ "$mode" = main-mirrored ]; then
+                tmux select-layout ${win:+-t "$win"} main-vertical-mirrored 2>/dev/null
+                return 0
+            fi
             # shellcheck disable=SC2046  # 「幅 高さ」を 2 つの引数に分ける
             set -- $(tmux display -p ${win:+-t "$win"} '#{window_width} #{window_height}' 2>/dev/null)
             new=$(tmux list-panes ${win:+-t "$win"} -F '#{pane_id}' 2>/dev/null |
                 jq -Rsc --argjson w "${1:-0}" --argjson h "${2:-0}" \
                     '{L: {t: "h", w: $w, h: $h, x: 0, y: 0, c: [split("\n")[] | select(. != "") | {t: "p", I: .}]}}' |
-                grid_layout "$min" | legacy) 2>/dev/null ;;
+                rearrange "$mode" "$min" | legacy) 2>/dev/null ;;
     esac
     [ -n "$new" ] && [ "$new" != "$cur" ] || return 0
     tmux select-layout ${win:+-t "$win"} "$new" 2>/dev/null
@@ -139,7 +179,8 @@ grid() {
 case ${1:-} in
     layout) layout ;;
     grid-layout) grid_layout "${2:-90}" ;;
+    main-layout) [ "${3:-}" = mirrored ] && right=true || right=false; main_layout "${2:-90}" "$right" ;;
     legacy) legacy ;;
-    grid) shift; grid "$@"; exit 0 ;;
+    grid|main|main-mirrored) arrange "$@"; exit 0 ;;
     *) balance "$@"; exit 0 ;;
 esac
