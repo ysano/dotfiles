@@ -28,12 +28,18 @@ cat > "$stub/tmux" <<'STUB'
 case "$*" in
     *window_zoomed_flag*) echo "${STUB_zoomed:-0}" ;;
     *window_layout*) echo "abcd,284x51,0,0{94x51,0,0,0,94x51,95,0,1}" ;;
+    *window_width*) echo "284 51" ;;
+    list-panes*) printf '%%1\n%%2\n%%3\n' ;;
     *) echo "CALL: $*" ;;
 esac
 STUB
 chmod +x "$stub/tmux"
 check "古い layout は select-layout -E" "CALL: select-layout -t @1 -E" env PATH="$stub:$PATH" sh "$SCRIPT" @1
 check "拡大表示中は何もしない"          ""                             env PATH="$stub:$PATH" STUB_zoomed=1 sh "$SCRIPT" @1
+# 古い tmux は layout 文字列の pane 番号を無視して番号順にセルへ割り当てる（main-vertical-mirrored
+# も 3.5 から）。main-mirrored は左右を入れ替えた木をそのまま渡し、番号が最大の pane が右の main になる
+check "古い layout の main-mirrored は main を最後のセルに" "CALL: select-layout -t @1 545f,284x51,0,0{141x51,0,0[141x25,0,0,2,141x25,0,26,3],142x51,142,0,1}" \
+    env PATH="$stub:$PATH" sh "$SCRIPT" main-mirrored @1
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "SKIP jq が無いため layout の検証を省略"
@@ -74,6 +80,22 @@ check "grid: pane 以外のキーを保つ" "true 2 %3" sh -c 'printf "%s" "$1" 
 # 古い tmux 向けの文字列形式（先頭は tmux と同じ 16 ビットのチェックサム）
 check "grid: 古い形式に変換"     "9e70,284x51,0,0{94x51,0,0[94x25,0,0,1,94x25,0,26,2],94x51,95,0,3,94x51,190,0,4}" sh -c 'printf "%s" "$1" | sh "$2" grid-layout 90 | sh "$2" legacy' _ "$four" "$SCRIPT"
 
+# --- main-layout <最小の幅> [mirrored]: main（pane 番号が最小）が左半分を占め、残りを右半分の格子にする ---
+# 他の pane の列の数は右半分で最小の幅を保てる数。1 列に 2 枚以上入るときだけ増やす
+mained() { printf '%s' "$3" | sh "$SCRIPT" main-layout "$1" $2 | cells; }
+flatn() { jq -nc --argjson n "$1" '{V: 2, L: {t: "h", w: 341, h: 63, x: 0, y: 0, c: [range(0; $n) as $i | {t: "p", w: 10, h: 63, x: 0, y: 0, i: $i, I: "%\($i)"}]}}'; }
+nine=$(flatn 9)
+check "main: 9 枚 → main 50% ＋ 2 列 × 4 段" "0:170x63@0,0 1:84x15@171,0 2:84x15@171,16 3:84x15@171,32 4:84x15@171,48 5:85x15@256,0 6:85x15@256,16 7:85x15@256,32 8:85x15@256,48" mained 80 "" "$nine"
+check "main: mirrored は main が右" "1:84x15@0,0 2:84x15@0,16 3:84x15@0,32 4:84x15@0,48 5:85x15@85,0 6:85x15@85,16 7:85x15@85,32 8:85x15@85,48 0:170x63@171,0" mained 80 mirrored "$nine"
+check "main: 3 枚は他を 1 列に（中央で区切る）" "0:170x63@0,0 1:170x31@171,0 2:170x31@171,32" mained 80 "" "$(flatn 3)"
+check "main: 5 枚 → 他は 2 列 × 2 段" "0:170x63@0,0 1:84x31@171,0 2:84x31@171,32 3:85x31@256,0 4:85x31@256,32" mained 80 "" "$(flatn 5)"
+check "main: 2 枚は中央で区切る" "0:170x63@0,0 1:170x63@171,0" mained 80 "" "$(flatn 2)"
+check "main: 右半分に 2 列取れなければ他は 1 列" "0:170x63@0,0 1:170x15@171,0 2:170x15@171,16 3:170x15@171,32 4:170x15@171,48" mained 90 "" "$(flatn 5)"
+# 表示順でなく pane 番号の最小が main（tmux の main-vertical と同じ）
+check "main: pane 番号の最小が main" "0:170x63@0,0 1:170x31@171,0 2:170x31@171,32" mained 90 "" "$(flatn 3 | jq -c '.L.c |= [.[2], .[0], .[1]]')"
+check "main: floating pane は数えず動かさない" "0:141x51@0,0 1:142x51@142,0 2:142x12@4,2" mained 90 "" "$float"
+check "main: pane 1 つはそのまま" "0:284x51@0,0" mained 90 "" "$single"
+
 # --- 実際の tmux（3.8 以降の JSON 形式）で、分割・終了のたびに均等になること ---
 if ! command -v tmux >/dev/null 2>&1; then
     echo "SKIP tmux が無いため実機の検証を省略"
@@ -101,13 +123,29 @@ t run-shell "sh '$SCRIPT' grid grid"
 check "grid: 最小の幅を変えると 2 列" "141x16@0,0 141x16@0,17 141x17@0,34 142x16@142,0 142x16@142,17 142x17@142,34" geom grid
 t set -gu @layout_grid_min_width
 t kill-window -t grid
-# M-4（main-vertical）/ M-7（main-vertical-mirrored）は縦の区切りを中央にする
+# main-vertical（prefix Space の巡回で選ぶ）は縦の区切りを中央にする
 t new-window -d -n main 'sleep 300'
 t split-window -d -t main 'sleep 300'; t split-window -d -t main 'sleep 300'
 t select-layout -t main main-vertical
 check "main-vertical は中央で区切る" "141x51@0,0 142x25@142,0 142x25@142,26" geom main
 t kill-window -t main
 check "grid: prefix M-8 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-8 | grep -c "balance-panes.sh grid"' _ "$work/home" "$L"
+# prefix M-4 / M-7: main が半分を占め、残りを格子にする（幅 284・最小の幅 60 なら他は 2 列）
+t new-window -d -n mg 'sleep 300'
+for _ in 1 2 3 4 5 6 7 8; do t split-window -d -t mg 'sleep 300'; t select-layout -t mg tiled; done
+t set -g @layout_grid_min_width 60
+t run-shell "sh '$SCRIPT' main mg"
+check "main: 9 枚を main 50% ＋ 2 列 × 4 段に" "141x51@0,0 70x12@142,0 70x12@142,13 70x12@142,26 70x12@142,39 71x12@213,0 71x12@213,13 71x12@213,26 71x12@213,39" geom mg
+t run-shell "sh '$SCRIPT' main-mirrored mg"
+if t display -p '#{window_layout}' | grep -q '^{'; then
+    check "main: mirrored は main が右" "142x51@142,0 70x12@0,0 70x12@0,13 70x12@0,26 70x12@0,39 70x12@71,0 70x12@71,13 70x12@71,26 70x12@71,39" geom mg
+else
+    check "main: mirrored は main が右（古い tmux は番号が最大の pane）" "142x51@142,0" t display -p -t mg.8 '#{pane_width}x#{pane_height}@#{pane_left},#{pane_top}'
+fi
+t set -gu @layout_grid_min_width
+t kill-window -t mg
+check "main: prefix M-4 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-4 | grep -c "balance-panes.sh main #"' _ "$work/home" "$L"
+check "main: prefix M-7 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-7 | grep -c "balance-panes.sh main-mirrored"' _ "$work/home" "$L"
 # 以降の入れ子の検証は JSON の window_layout（tmux 3.8 以降）の経路だけ。
 # それより前の tmux（CI の ubuntu 等）は select-layout -E の経路を上の検証で確かめる
 if ! t display -p '#{window_layout}' | grep -q '^{'; then
@@ -128,6 +166,15 @@ t split-window -d -h -t other 'sleep 300'
 t split-window -d -h -t other 'sleep 300'
 check "-t で指定した window がそろう"  "94x51@0,0 94x51@95,0 94x51@190,0" geom other
 check "現在の window は変えない"       "141x51@0,0 142x25@142,0 142x25@142,26" geom
+# prefix M-4 の後に分割しても、main は半分の幅のまま（左右分割の中の左右分割を保つ）
+t new-window -d -n mg 'sleep 300'
+for _ in 1 2 3 4 5; do t split-window -d -t mg 'sleep 300'; t select-layout -t mg tiled; done
+t set -g @layout_grid_min_width 60
+t run-shell "sh '$SCRIPT' main mg"
+t set -gu @layout_grid_min_width
+t split-window -d -t mg.1 'sleep 300'
+check "main: 分割しても main は半分のまま" "141" t display -p -t mg.0 '#{pane_width}'
+t kill-window -t mg
 # 拡大表示（resize-pane -Z）中は何もしない（拡大を解かない）
 t resize-pane -Z
 t run-shell "sh '$SCRIPT'"
