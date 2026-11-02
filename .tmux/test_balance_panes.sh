@@ -28,15 +28,18 @@ cat > "$stub/tmux" <<'STUB'
 case "$*" in
     *window_zoomed_flag*) echo "${STUB_zoomed:-0}" ;;
     *window_layout*) echo "abcd,284x51,0,0{94x51,0,0,0,94x51,95,0,1}" ;;
+    *window_width*) echo "284 51" ;;
+    list-panes*) printf '%%1\n%%2\n%%3\n' ;;
     *) echo "CALL: $*" ;;
 esac
 STUB
 chmod +x "$stub/tmux"
 check "古い layout は select-layout -E" "CALL: select-layout -t @1 -E" env PATH="$stub:$PATH" sh "$SCRIPT" @1
 check "拡大表示中は何もしない"          ""                             env PATH="$stub:$PATH" STUB_zoomed=1 sh "$SCRIPT" @1
-# 古い tmux は layout 文字列の pane 番号を無視して番号順にセルへ割り当てるため、main（番号が最小）を
-# 右に置けない。main-mirrored は tmux 既定の main-vertical-mirrored に任せる
-check "古い layout の main-mirrored は main-vertical-mirrored" "CALL: select-layout -t @1 main-vertical-mirrored" env PATH="$stub:$PATH" sh "$SCRIPT" main-mirrored @1
+# 古い tmux は layout 文字列の pane 番号を無視して番号順にセルへ割り当てる（main-vertical-mirrored
+# も 3.5 から）。main-mirrored は左右を入れ替えた木をそのまま渡し、番号が最大の pane が右の main になる
+check "古い layout の main-mirrored は main を最後のセルに" "CALL: select-layout -t @1 545f,284x51,0,0{141x51,0,0[141x25,0,0,2,141x25,0,26,3],142x51,142,0,1}" \
+    env PATH="$stub:$PATH" sh "$SCRIPT" main-mirrored @1
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "SKIP jq が無いため layout の検証を省略"
@@ -137,7 +140,7 @@ t run-shell "sh '$SCRIPT' main-mirrored mg"
 if t display -p '#{window_layout}' | grep -q '^{'; then
     check "main: mirrored は main が右" "142x51@142,0 70x12@0,0 70x12@0,13 70x12@0,26 70x12@0,39 70x12@71,0 70x12@71,13 70x12@71,26 70x12@71,39" geom mg
 else
-    check "main: mirrored は main が右（古い tmux は main-vertical-mirrored）" "141x51@143,0" t display -p -t mg.0 '#{pane_width}x#{pane_height}@#{pane_left},#{pane_top}'
+    check "main: mirrored は main が右（古い tmux は番号が最大の pane）" "142x51@142,0" t display -p -t mg.8 '#{pane_width}x#{pane_height}@#{pane_left},#{pane_top}'
 fi
 t set -gu @layout_grid_min_width
 t kill-window -t mg

@@ -144,7 +144,7 @@ rearrange() {
 
 # arrange <grid|main|main-mirrored> [<window>]: window を並べ直す（prefix M-8 / M-4 / M-7）。
 # 古い tmux（layout が JSON でない）では、pane の一覧と window の大きさから JSON を組んで
-# 同じ計算をし、文字列形式に直して渡す（main-mirrored を除く）
+# 同じ計算をし、文字列形式に直して渡す
 arrange() {
     mode=$1 win=${2:-}
     [ "$(tmux display -p ${win:+-t "$win"} '#{window_zoomed_flag}' 2>/dev/null)" = 1 ] && return 0
@@ -159,12 +159,8 @@ arrange() {
         "{"*)
             new=$(printf '%s' "$cur" | rearrange "$mode" "$min" 2>/dev/null) ;;
         *)
-            # 古い tmux は layout 文字列の pane 番号を無視し、番号の順にセルへ割り当てる。main（番号が
-            # 最小）を右に置けないため、main-mirrored は tmux 既定の main-vertical-mirrored に任せる
-            if [ "$mode" = main-mirrored ]; then
-                tmux select-layout ${win:+-t "$win"} main-vertical-mirrored 2>/dev/null
-                return 0
-            fi
+            # 古い tmux は layout 文字列の pane 番号を無視し、番号の順にセルへ割り当てる。そのため
+            # main-mirrored では、番号が最大の pane が右の main になる（main-vertical-mirrored も 3.5 から）
             # shellcheck disable=SC2046  # 「幅 高さ」を 2 つの引数に分ける
             set -- $(tmux display -p ${win:+-t "$win"} '#{window_width} #{window_height}' 2>/dev/null)
             new=$(tmux list-panes ${win:+-t "$win"} -F '#{pane_id}' 2>/dev/null |
