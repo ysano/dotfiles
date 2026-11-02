@@ -321,6 +321,18 @@ check "gh: 別ホストの URL のクエリ"   ""                        sh "$SC
 two="(https://github.com/o/r/pull/1),(https://github.com/o/r/pull/2)"
 check "gh: 並んだ URL の前"          "o/r${TAB}1${TAB}url"     sh "$SCRIPT" gh_ref "$two" 5
 check "gh: 並んだ URL の後ろ"        "o/r${TAB}2${TAB}url"     sh "$SCRIPT" gh_ref "$two" 54
+# 別の URL のクエリの中の URL をクリックしても、外側の URL を読む
+inner="https://github.com/acme/widget/pull/9?next=https://github.com/other/project/pull/12"
+check "gh: クエリの中の URL の上"    "acme/widget${TAB}9${TAB}url"      sh "$SCRIPT" gh_ref "$inner" 65
+check "gh: クエリの中の URL の先頭"  "acme/widget${TAB}9${TAB}url"      sh "$SCRIPT" gh_ref "$inner" 44
+check "gh: + に続くクエリの中の URL" "acme/widget${TAB}9${TAB}url"      sh "$SCRIPT" gh_ref "https://github.com/acme/widget/pull/9?next=+https://github.com/other/project/pull/12" 70
+# = 等に続く URL（シェルの URL=https://… 等）も URL 全体を読む（# 以降を単独の参照にしない）
+check "gh: = に続く URL"             "o/r${TAB}1${TAB}url"     sh "$SCRIPT" gh_ref "url=https://github.com/o/r/pull/1?q=#9" 10
+check "gh: = に続く URL の # の上"   "o/r${TAB}1${TAB}url"     sh "$SCRIPT" gh_ref "url=https://github.com/o/r/pull/1?q=#9" 36
+check "gh: = に続く別ホストの URL"   ""                        sh "$SCRIPT" gh_ref "url=https://example.com/?q=other/project#12" 27
+# 同じ語の後ろに URL があっても、その前の #番号は単独の参照として読む
+check "gh: URL の前の #番号"         "${TAB}9"                 sh "$SCRIPT" gh_ref "#9、https://github.com/o/r/pull/2" 1
+check "gh: URL の前の #番号の後ろの URL" "o/r${TAB}2${TAB}url"  sh "$SCRIPT" gh_ref "#9、https://github.com/o/r/pull/2" 10
 check "gh: パスの続きは対象外"       ""                        sh "$SCRIPT" gh_ref "@scope/pkg#9" 3
 check "gh: ~ に続くものは対象外"     ""                        sh "$SCRIPT" gh_ref "~/a#9" 2
 check "gh: .. は対象外"              ""                        sh "$SCRIPT" gh_ref "o/..#7" 4
@@ -375,9 +387,9 @@ ghstub="$work/ghstub"; mkdir -p "$ghstub"
 cat > "$ghstub/gh" <<'STUB'
 #!/bin/sh
 for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo " <- gh${GH_FORCE_TTY:+ tty}" >> "$STUB_LOG"
+[ -z "${STUB_gh_sleep:-}" ] || exec sleep "$STUB_gh_sleep"
 case $1 in
-    api) [ -z "${STUB_gh_sleep:-}" ] || exec sleep "$STUB_gh_sleep"
-         [ -z "${STUB_gh_fail:-}" ] || { echo "HTTP 404: Not Found" >&2; exit 1; }; echo "${STUB_gh_kind:-pr}" ;;
+    api) [ -z "${STUB_gh_fail:-}" ] || { echo "HTTP 404: Not Found" >&2; exit 1; }; echo "${STUB_gh_kind:-pr}" ;;
     *) echo "body" ;;
 esac
 STUB
@@ -397,6 +409,12 @@ check "gh: PR の本文"   "[pr][view][78][-R][acme/widget][--comments] <- gh tt
 check "gh: PR の差分"   "[pr][diff][78][-R][acme/widget][--color=always] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 78 pr diff
 check "gh: Issue の本文" "[issue][view][3][-R][acme/widget][--comments] <- gh tty"  ghrun sh "$SCRIPT" render gh acme/widget 3 issue body
 check "gh: Issue に差分は無い" "[issue][view][3][-R][acme/widget][--comments] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 3 issue diff
+# 本文・差分の取得も打ち切る（止まった gh を待ち続けると、less を抜けてもポップアップが閉じない）
+for part in body diff; do
+    t0=$(date +%s)
+    env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_sleep=8 OPEN_PATH_GH_TIMEOUT=1 sh "$SCRIPT" render gh acme/widget 78 pr "$part" >/dev/null 2>&1
+    if [ $(( $(date +%s) - t0 )) -le 4 ]; then echo "ok   gh: 応答しない $part の取得を打ち切る"; else echo "FAIL gh: 応答しない $part の取得を打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
+done
 
 # --- click: tmux のユーザーオプション経由で値を受け取りポップアップを開く（tmux は偽物） ---
 stub="$work/stub"; mkdir -p "$stub"
