@@ -608,19 +608,27 @@ gh_ref() {
         word = ""
         for (j = wl; j <= wr; j++) word = word ch[j]
         if (index(word, "://")) {
-            # 空白なしで並んだ URL もあるため、クリック位置から前へ最も近い http(s):// から読む
-            us = 0
+            # 空白なしで並んだ URL もあるため、クリック位置から前へ最も近い http(s):// から読む。
+            # 直前が URL に使う文字（?next=https://… の = 等。区切りに使う括弧・カンマ・引用符は
+            # 除く）なら別の URL の中なので、さらに前を探す。そうした候補しか無ければ
+            # （URL=https://… 等）、最も前の候補から読む
+            us = 0; first = 0
             for (j = hit; j >= wl && !us; j--) {
                 t = ""
                 for (m = j; m <= j + 7 && m <= wr; m++) t = t ch[m]
-                if (t ~ /^https?:\/\//) us = j
+                if (t !~ /^https?:\/\//) continue
+                first = j
+                if (j == wl || ch[j - 1] !~ /^[A-Za-z0-9\/:=?&%.@#_+~!$*;-]$/) us = j
             }
-            if (!us) exit 1
-            url = ""
-            for (j = us; j <= wr; j++) url = url ch[j]
-            if ((out = ghurl(url)) == "") exit 1
-            print out "\turl"
-            exit 0
+            if (!us) us = first
+            # クリック位置より前に URL が無ければ（#9、https://… の #9 等）、URL でない参照として読む
+            if (us) {
+                url = ""
+                for (j = us; j <= wr; j++) url = url ch[j]
+                if ((out = ghurl(url)) == "") exit 1
+                print out "\turl"
+                exit 0
+            }
         }
         if (!refchar(ch[hit])) exit 1
         l = hit; r = hit
@@ -706,12 +714,17 @@ gh_env() {
     export GH_PROMPT_DISABLED GH_NO_UPDATE_NOTIFIER GH_PAGER
 }
 
+# gh を打ち切るまでの秒数を secs に入れる（OPEN_PATH_GH_TIMEOUT、既定 15）
+gh_secs() {
+    secs=${OPEN_PATH_GH_TIMEOUT:-15}
+    case $secs in ""|0*|*[!0-9]*) secs=15 ;; esac
+}
+
 # gh_kind <owner/repo> <番号>: PR なら pr、Issue なら issue（Issue の API は PR にも答え、
 # PR には pull_request が付く）。OPEN_PATH_GH_TIMEOUT 秒（既定 15）で打ち切る
 gh_kind() {
     valid_ref "$1" "$2" || return 1
-    secs=${OPEN_PATH_GH_TIMEOUT:-15}
-    case $secs in ""|0*|*[!0-9]*) secs=15 ;; esac
+    gh_secs
     gh_env
     # bounded には gh を直接渡す（関数を渡すと打ち切られるのはサブシェルだけで、gh が
     # 出力を開いたまま残り $(...) が待ち続ける）
@@ -957,11 +970,14 @@ render() {
     fi
     if [ "$1" = gh ]; then
         valid_ref "$nwo" "$num" || return 1
+        gh_secs
         gh_env
-        # GH_FORCE_TTY: パイプに出しても端末と同じく整形・色付けする（値は折り返し桁）
+        # GH_FORCE_TTY: パイプに出しても端末と同じく整形・色付けする（値は折り返し桁）。
+        # 止まった gh を待ち続けると less を抜けてもポップアップが閉じないため、gh_kind と同じ秒数で
+        # 打ち切る（bounded には gh を直接渡す）
         case $kind$part in
-            prdiff) GH_FORCE_TTY=$cols gh pr diff "$num" -R "$nwo" --color=always | pretty_diff "$cols" ;;
-            pr*|issue*) GH_FORCE_TTY=$cols gh "$kind" view "$num" -R "$nwo" --comments ;;
+            prdiff) bounded "$secs" env GH_FORCE_TTY="$cols" gh pr diff "$num" -R "$nwo" --color=always | pretty_diff "$cols" ;;
+            pr*|issue*) bounded "$secs" env GH_FORCE_TTY="$cols" gh "$kind" view "$num" -R "$nwo" --comments ;;
             *) return 1 ;;
         esac
         return
