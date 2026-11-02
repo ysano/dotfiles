@@ -949,8 +949,14 @@ is_markdown() {
     esac
 }
 
-# プレビューする中身を標準出力へ。mode=md は Markdown を整形（パイプでも色を付ける）、
-# mode=raw は原文（行番号付きは折り返さず、対象行に ▶ を付ける）
+# 端末（ポップアップ）の桁数。render は less へのパイプの中で動くため、tput は stdout から
+# 幅を取れず terminfo の既定の 80 を返す。制御端末から読み、読めなければ tput に任せる
+term_cols() {
+    tc=$(stty size 2>/dev/null </dev/tty | awk '{ print $2 }')
+    case $tc in ""|0|*[!0-9]*) tc=$(tput cols 2>/dev/null || echo 100) ;; esac
+    echo "$tc"
+}
+
 # 標準入力の差分を、delta があれば git の pager 設定（~/.config/git/pager.sh）と同じく
 # 整形する（幅 120 以上は左右に並べる）。ポップアップでは less に渡すため delta 自身は page しない
 pretty_diff() {
@@ -962,8 +968,11 @@ pretty_diff() {
     fi
 }
 
+# プレビューする中身を標準出力へ。mode=md は Markdown を整形（パイプでも色を付ける）、
+# mode=raw は原文（行番号付きは折り返さず、対象行に ▶ を付ける）。差分・PR / Issue・Markdown の
+# 整形の幅は、ポップアップ（端末）の幅に合わせる
 render() {
-    cols=$(tput cols 2>/dev/null || echo 100)
+    cols=$(term_cols)
     if [ "$1" = commit ]; then
         git -C "$path" -c core.quotePath=false show --stat --patch --color=always "$sha" | pretty_diff "$cols"
         return
@@ -983,7 +992,7 @@ render() {
         return
     fi
     if [ "$1" = md ]; then
-        width=$(( $(tput cols 2>/dev/null || echo 100) - 2 ))
+        width=$(( cols - 2 ))
         case $(md_renderer) in
             glow) glow -s dark -w "$width" "$path" ;;
             mdcat) mdcat --ansi --columns "$width" "$path" ;;

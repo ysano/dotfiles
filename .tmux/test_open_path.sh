@@ -84,6 +84,21 @@ check "整形は glow を優先"     "glow"  env PATH="$mdbin/both" sh "$SCRIPT"
 check "glow が無ければ mdcat"  "mdcat" env PATH="$mdbin/mdcat" sh "$SCRIPT" md_renderer
 check "どちらも無ければなし"   ""      env PATH="$mdbin/none" sh "$SCRIPT" md_renderer
 
+# --- render md: 整形の幅はポップアップ（端末）の幅に合わせる ---
+# render は less へのパイプの中で動くため、stdout からは端末の幅が取れない。幅 120 の端末を
+# 別ソケットの tmux で用意し、偽の glow に渡った -w を見る
+if command -v tmux >/dev/null 2>&1; then
+    printf '# t\n' > "$work/w.md"
+    sock="open-path-test-$$"
+    tmux -L "$sock" -f /dev/null new-session -d -x 120 -y 20 \
+        "env PATH='$mdbin/both:$PATH' sh '$SCRIPT' render md '$work/w.md' > '$work/w.out' 2>&1; touch '$work/w.done'"
+    for _ in $(seq 50); do [ -f "$work/w.done" ] && break; sleep 0.1; done
+    tmux -L "$sock" kill-server 2>/dev/null
+    check "整形の幅は端末の幅 − 2" "glow -s dark -w 118 $work/w.md" cat "$work/w.out"
+else
+    echo "skip render md の幅（tmux が無い）"
+fi
+
 # --- is_markdown <パス> ---
 check "README.md は Markdown"   "yes" sh "$SCRIPT" is_markdown "docs/README.md"
 check ".markdown は Markdown"   "yes" sh "$SCRIPT" is_markdown "a/b.MARKDOWN"
@@ -415,6 +430,20 @@ for part in body diff; do
     env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_sleep=8 OPEN_PATH_GH_TIMEOUT=1 sh "$SCRIPT" render gh acme/widget 78 pr "$part" >/dev/null 2>&1
     if [ $(( $(date +%s) - t0 )) -le 4 ]; then echo "ok   gh: 応答しない $part の取得を打ち切る"; else echo "FAIL gh: 応答しない $part の取得を打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
 done
+# 本文の折り返し（GH_FORCE_TTY）もポップアップ（端末）の幅に合わせる。render md と同じく、幅 120 の
+# 端末を別ソケットの tmux で用意し、出力を端末から外して偽の gh に渡った値を見る
+if command -v tmux >/dev/null 2>&1; then
+    ghw="$work/ghw"; mkdir -p "$ghw"
+    printf '#!/bin/sh\necho "$GH_FORCE_TTY" > "%s"\n' "$work/ghw.out" > "$ghw/gh"; chmod +x "$ghw/gh"
+    sock="open-path-test-gh-$$"
+    tmux -L "$sock" -f /dev/null new-session -d -x 120 -y 20 \
+        "env PATH='$ghw:$PATH' sh '$SCRIPT' render gh acme/widget 78 pr body > /dev/null 2>&1; touch '$work/ghw.done'"
+    for _ in $(seq 50); do [ -f "$work/ghw.done" ] && break; sleep 0.1; done
+    tmux -L "$sock" kill-server 2>/dev/null
+    check "gh: 本文の折り返しは端末の幅" "120" cat "$work/ghw.out"
+else
+    echo "skip gh の本文の幅（tmux が無い）"
+fi
 
 # --- click: tmux のユーザーオプション経由で値を受け取りポップアップを開く（tmux は偽物） ---
 stub="$work/stub"; mkdir -p "$stub"
