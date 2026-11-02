@@ -4,7 +4,8 @@
 #   balance-panes.sh [<window>]   指定（省略時は現在）の window をそろえる
 #   balance-panes.sh grid [<window>]  最小の幅（@layout_grid_min_width、既定 90）を保てる
 #                                 だけ列を増やした碁盤目に並べ直す（prefix M-8）
-#   balance-panes.sh main [<window>]  main pane が左半分を占め、残りを碁盤目にする（prefix M-4）
+#   balance-panes.sh main [<window>]  main pane が左半分を占め、残りを最小の幅
+#                                 （@layout_main_min_width、既定 80）で碁盤目にする（prefix M-4）
 #   balance-panes.sh main-mirrored [<window>]  同じく main pane を右に（prefix M-7）
 # テスト用（標準入力 → 標準出力）:
 #   balance-panes.sh layout       window_layout（JSON）を均等にして出す
@@ -152,8 +153,14 @@ arrange() {
         tmux display-message "balance-panes: jq が必要です"
         return 0
     fi
-    min=$(tmux show -gv @layout_grid_min_width 2>/dev/null)
-    case $min in ''|0*|*[!0-9]*) min=90 ;; esac
+    # 最小の幅は M-8 が @layout_grid_min_width（既定 90）、M-4 / M-7 が @layout_main_min_width
+    # （既定 80。341 桁の画面でも、main の残りの半分に 80 桁超の列を 2 つ取れる）
+    case $mode in
+        grid) opt=@layout_grid_min_width def=90 ;;
+        *) opt=@layout_main_min_width def=80 ;;
+    esac
+    min=$(tmux show -gv "$opt" 2>/dev/null)
+    case $min in ''|0*|*[!0-9]*) min=$def ;; esac
     cur=$(tmux display -p ${win:+-t "$win"} '#{window_layout}' 2>/dev/null) || return 0
     case $cur in
         "{"*)

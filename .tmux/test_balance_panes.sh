@@ -122,6 +122,11 @@ t set -g @layout_grid_min_width 140
 t run-shell "sh '$SCRIPT' grid grid"
 check "grid: 最小の幅を変えると 2 列" "141x16@0,0 141x16@0,17 141x17@0,34 142x16@142,0 142x16@142,17 142x17@142,34" geom grid
 t set -gu @layout_grid_min_width
+# M-4 / M-7 の最小の幅（@layout_main_min_width）は M-8 に効かない
+t set -g @layout_main_min_width 300
+t run-shell "sh '$SCRIPT' grid grid"
+check "grid: @layout_main_min_width は効かない" "94x25@0,0 94x25@0,26 94x25@95,0 94x25@95,26 94x25@190,0 94x25@190,26" geom grid
+t set -gu @layout_main_min_width
 t kill-window -t grid
 # main-vertical（prefix Space の巡回で選ぶ）は縦の区切りを中央にする
 t new-window -d -n main 'sleep 300'
@@ -133,7 +138,7 @@ check "grid: prefix M-8 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-
 # prefix M-4 / M-7: main が半分を占め、残りを格子にする（幅 284・最小の幅 60 なら他は 2 列）
 t new-window -d -n mg 'sleep 300'
 for _ in 1 2 3 4 5 6 7 8; do t split-window -d -t mg 'sleep 300'; t select-layout -t mg tiled; done
-t set -g @layout_grid_min_width 60
+t set -g @layout_main_min_width 60
 t run-shell "sh '$SCRIPT' main mg"
 check "main: 9 枚を main 50% ＋ 2 列 × 4 段に" "141x51@0,0 70x12@142,0 70x12@142,13 70x12@142,26 70x12@142,39 71x12@213,0 71x12@213,13 71x12@213,26 71x12@213,39" geom mg
 t run-shell "sh '$SCRIPT' main-mirrored mg"
@@ -142,8 +147,17 @@ if t display -p '#{window_layout}' | grep -q '^{'; then
 else
     check "main: mirrored は main が右（古い tmux は番号が最大の pane）" "142x51@142,0" t display -p -t mg.8 '#{pane_width}x#{pane_height}@#{pane_left},#{pane_top}'
 fi
-t set -gu @layout_grid_min_width
+t set -gu @layout_main_min_width
 t kill-window -t mg
+# M-4 / M-7 の最小の幅は @layout_main_min_width（既定 80）で、M-8 の @layout_grid_min_width とは別。
+# 既定なら 341 桁の画面でも他の pane は 84・85 桁の 2 列になる
+t new-session -d -s wide -x 341 -y 63 'sleep 300'
+for _ in 1 2 3 4 5 6 7 8; do t split-window -d -t wide 'sleep 300'; t select-layout -t wide tiled; done
+t set -g @layout_grid_min_width 200
+t run-shell "sh '$SCRIPT' main wide"
+check "main: 既定の最小の幅 80 なら 341 桁で他は 2 列" "170x63@0,0 84x15@171,0 84x15@171,16 84x15@171,32 84x15@171,48 85x15@256,0 85x15@256,16 85x15@256,32 85x15@256,48" geom wide
+t set -gu @layout_grid_min_width
+t kill-session -t wide
 check "main: prefix M-4 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-4 | grep -c "balance-panes.sh main #"' _ "$work/home" "$L"
 check "main: prefix M-7 に割り当て" "1" sh -c 'HOME="$1" tmux -L "$2" list-keys -T prefix M-7 | grep -c "balance-panes.sh main-mirrored"' _ "$work/home" "$L"
 # 以降の入れ子の検証は JSON の window_layout（tmux 3.8 以降）の経路だけ。
@@ -169,9 +183,9 @@ check "現在の window は変えない"       "141x51@0,0 142x25@142,0 142x25@1
 # prefix M-4 の後に分割しても、main は半分の幅のまま（左右分割の中の左右分割を保つ）
 t new-window -d -n mg 'sleep 300'
 for _ in 1 2 3 4 5; do t split-window -d -t mg 'sleep 300'; t select-layout -t mg tiled; done
-t set -g @layout_grid_min_width 60
+t set -g @layout_main_min_width 60
 t run-shell "sh '$SCRIPT' main mg"
-t set -gu @layout_grid_min_width
+t set -gu @layout_main_min_width
 t split-window -d -t mg.1 'sleep 300'
 check "main: 分割しても main は半分のまま" "141" t display -p -t mg.0 '#{pane_width}'
 t kill-window -t mg
