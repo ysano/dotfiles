@@ -109,12 +109,14 @@ setup_dev_tools() {
     if [[ -d "${MISE_DATA_DIR:-$HOME/.local/share/mise}" ]] && command -v mise >/dev/null 2>&1; then
         # プラグイン（vfox/asdf backend: yarn/poetry/postgres 等）の週次自動更新。
         # sentinel mtime が 7 日以上前なら 'mise plugins update' を disown 起動。
-        # stat: BSD (-f %m) → GNU (-c %Y) フォールバックでクロスプラットフォーム対応。
+        # stat: GNU (-c %Y) → BSD (-f %m) の順。GNU stat は -f を「ファイルシステム
+        # 情報表示」と解釈し、exit≠0 でも stdout に複数行を吐いて算術評価を壊すため
+        # BSD 形式を先に試してはいけない（BSD stat は -c で stdout に何も出さない）。
         local _mise_stamp="${MISE_DATA_DIR:-$HOME/.local/share/mise}/.plugins-updated"
         local _mise_week=$((7 * 24 * 60 * 60))
         local _mise_mtime
-        _mise_mtime=$(stat -f %m "$_mise_stamp" 2>/dev/null \
-            || stat -c %Y "$_mise_stamp" 2>/dev/null \
+        _mise_mtime=$(stat -c %Y "$_mise_stamp" 2>/dev/null \
+            || stat -f %m "$_mise_stamp" 2>/dev/null \
             || echo 0)
         if (( $(date +%s) - _mise_mtime > _mise_week )); then
             ( mise plugins update >/dev/null 2>&1 && touch "$_mise_stamp" ) &!
