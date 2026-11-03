@@ -31,9 +31,9 @@ init-platform       (120行)  OS固有設定
 init-local                   <- ローカル設定(locate-libraryで存在時のみ)
 ```
 
-**elisp/ カスタムライブラリ** (8ファイル, 2,624行):
-`smart-font-scaling.el`, `text-adjust.el`, `cygwin-mount.el`, `mell.el`,
-`cp5022x.el`, `mozc-cursor-color.el`, `setup-cygwin.el`, `eww-hatebu.el`
+**elisp/ カスタムライブラリ** (7ファイル, 2,254行):
+`text-adjust.el`, `cygwin-mount.el`, `mell.el`, `cp5022x.el`,
+`mozc-cursor-color.el`, `setup-cygwin.el`, `eww-hatebu.el`
 
 ## Conventions
 
