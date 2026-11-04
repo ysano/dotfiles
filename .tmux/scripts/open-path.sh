@@ -966,8 +966,9 @@ glow_dir() {
     [ -d "$1" ] && command -v glow >/dev/null 2>&1 || return 1
     base=${1%/}
     case ${base##*/} in .*) return 1 ;; esac
-    # glow は ~/Library（macOS）と $GOPATH も起点にすると 1 件も出さない（その下は出す）
-    [ "$base" = "${HOME%/}/Library" ] && return 1
+    # glow は ~/Library（macOS だけ）と $GOPATH も起点にすると 1 件も出さない（その下は出す）
+    [ -n "${HOME:-}" ] && [ "$base" = "${HOME%/}/Library" ] && [ "$(uname -s 2>/dev/null)" = Darwin ] &&
+        return 1
     [ -n "${GOPATH:-}" ] && [ "$base" = "${GOPATH%/}" ] && return 1
     if [ "$(git -C "$1" rev-parse --is-inside-work-tree 2>/dev/null)" = true ]; then
         found=$(md_files "$1" -print0 | git -C "$1" check-ignore --no-index --stdin -z -v -n 2>/dev/null |

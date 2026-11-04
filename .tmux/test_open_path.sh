@@ -189,10 +189,15 @@ printf '# t\n' > "$gd/upper/README.MD"
 check "glow_dir: 否定の規則で含め直した Markdown"     "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/neg"
 check "glow_dir: 改行を含む名前（無視される）だけ"    ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/nl"
 check "glow_dir: 拡張子が大文字の Markdown"           "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/upper"
-# glow は ~/Library と $GOPATH を起点にすると 1 件も出さない（その下のディレクトリは出す）
+# glow は ~/Library（macOS だけ）と $GOPATH を起点にすると 1 件も出さない（その下のディレクトリは出す）
 mkdir -p "$gd/home/Library/sub" "$gd/gop"
 printf '# t\n' > "$gd/home/Library/a.md"; printf '# t\n' > "$gd/home/Library/sub/a.md"; printf '# t\n' > "$gd/gop/a.md"
-check "glow_dir: ~/Library そのもの"                  ""    env HOME="$gd/home" PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/home/Library"
+if [ "$(uname -s)" = Darwin ]; then
+    check "glow_dir: ~/Library そのもの（macOS）"       ""    env HOME="$gd/home" PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/home/Library"
+else
+    check "glow_dir: ~/Library は macOS 以外では普通のディレクトリ" "yes" env HOME="$gd/home" PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/home/Library"
+fi
+check "glow_dir: HOME が無くても動く"                "yes" env -u HOME PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/md"
 check "glow_dir: ~/Library の下のディレクトリ"        "yes" env HOME="$gd/home" PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/home/Library/sub"
 check "glow_dir: \$GOPATH そのもの"                   ""    env GOPATH="$gd/gop" PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/gop"
 
