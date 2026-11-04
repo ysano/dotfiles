@@ -169,6 +169,16 @@ check "glow_dir: 無視されたファイルの Markdown だけ"   "" env PATH="
 check "glow_dir: 追跡していない Markdown"            "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/new"
 check "glow_dir: 追跡している Markdown"              "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/tracked"
 check "glow_dir: git の起点からも深さ 4 まで"        "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr"
+# glow は追跡しているかに関わらず .gitignore を当てる（強制で追加した Markdown も一覧に出さない）。
+# 削除してまだステージしていない Markdown は無い。引用符を含む名前（git が引用する）も Markdown
+mkdir -p "$gr/forced" "$gr/deleted" "$gr/quoted"
+printf 'forced/\n' >> "$gr/.gitignore"
+printf '# t\n' > "$gr/forced/a.md"; git -C "$gr" add -f forced/a.md
+printf '# t\n' > "$gr/deleted/a.md"; echo x > "$gr/deleted/t.txt"; git -C "$gr" add deleted/a.md; rm "$gr/deleted/a.md"
+printf '# t\n' > "$gr/quoted/a\"b.md"
+check "glow_dir: 強制で追加した無視対象の Markdown だけ" "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/forced"
+check "glow_dir: 削除してステージ前の Markdown だけ"   "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/deleted"
+check "glow_dir: 引用符を含む名前の Markdown"         "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/quoted"
 
 # --- view <ディレクトリ>: Markdown を含めば glow の一覧で開き、less（ls -la）は出さない ---
 # vrun <view の引数...>: 偽の glow / less で view を動かし、それぞれに渡った引数を記録する
