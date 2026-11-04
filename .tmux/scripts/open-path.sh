@@ -956,32 +956,36 @@ is_markdown() {
 # glow_dir <ディレクトリ>: ls -la の代わりに glow の一覧（glow -t）で開くか。glow が一覧に出す
 # Markdown（拡張子は glow と同じ。隠し・node_modules の中は glow も出さない）があるときだけ yes。
 # 一覧の起点そのものが隠しディレクトリ（.claude 等）だと glow は 1 件も出さないため対象外にする。
-# git 管理下は、glow と同じく追跡しているかに関わらず .gitignore に合うものを数えない
-# （check-ignore --no-index。どの規則にも合わない行は「::<TAB>パス」。パスは引用されうるため
-# 先頭だけを見る）。管理外は 1 件見つけたら find を止める（-quit。読むのをやめても find は
-# 次の書き込みまで走り続ける）
+# git 管理下は、glow と同じく追跡しているかに関わらず .gitignore で無視されるものを数えない
+# （check-ignore --no-index）。-z の出力は 1 件ごとに「規則のファイル・行番号・規則・パス」の
+# 4 つで、どの規則にも合わなければ規則が空、否定（!）の規則で含め直されていれば ! 始まり。
+# 名前の改行で 4 つの区切りがずれないよう、改行を ? に替えてから NUL を改行にする。
+# 管理外は 1 件見つけたら find を止める（-quit。読むのをやめても find は次の書き込みまで
+# 走り続ける）
 glow_dir() {
     [ -d "$1" ] && command -v glow >/dev/null 2>&1 || return 1
     base=${1%/}
     case ${base##*/} in .*) return 1 ;; esac
     if [ "$(git -C "$1" rev-parse --is-inside-work-tree 2>/dev/null)" = true ]; then
-        found=$(md_files "$1" | git -C "$1" check-ignore --no-index --stdin -v -n 2>/dev/null |
-            awk -F '\t' '$1 == "::" { print; exit }')
+        found=$(md_files "$1" -print0 | git -C "$1" check-ignore --no-index --stdin -z -v -n 2>/dev/null |
+            tr '\n\000' '?\n' | awk 'NR % 4 == 3 && (/^$/ || /^!/) { print "yes"; exit }')
     else
-        found=$(md_files "$1" -quit | head -n 1)
+        found=$(md_files "$1" -print -quit | head -n 1)
     fi
     [ -n "$found" ] || return 1
     echo yes
 }
 
-# md_files <ディレクトリ> [-quit]: glow が一覧に出しうる Markdown（拡張子は glow と同じ。隠し・
-# node_modules の中は glow も出さない）を、そのディレクトリからの相対パス（./ 始まり）で出す。
-# 大きな木で待たされないよう深さ 4・3 秒で打ち切る
+# md_files <ディレクトリ> <find の出力の指定...>: glow が一覧に出しうる Markdown（拡張子は glow と
+# 同じく大文字・小文字を区別しない。隠し・node_modules の中は glow も出さない）を、そのディレクトリ
+# からの相対パス（./ 始まり）で出す。大きな木で待たされないよう深さ 4・3 秒で打ち切る
 md_files() {
-    (cd -- "$1" 2>/dev/null && bounded 3 find . -maxdepth 4 \
+    mdir=$1
+    shift
+    (cd -- "$mdir" 2>/dev/null && bounded 3 find . -maxdepth 4 \
         -type d \( -name '.?*' -o -name node_modules \) -prune \
-        -o -type f ! -name '.*' \( -name '*.md' -o -name '*.mdown' -o -name '*.mkdn' -o -name '*.mkd' \
-            -o -name '*.markdown' \) -print ${2:+"$2"} 2>/dev/null)
+        -o -type f ! -name '.*' \( -iname '*.md' -o -iname '*.mdown' -o -iname '*.mkdn' -o -iname '*.mkd' \
+            -o -iname '*.markdown' \) "$@" 2>/dev/null)
 }
 
 # 端末（ポップアップ）の桁数。render は less へのパイプの中で動くため、tput は stdout から

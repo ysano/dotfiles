@@ -179,6 +179,16 @@ printf '# t\n' > "$gr/quoted/a\"b.md"
 check "glow_dir: 強制で追加した無視対象の Markdown だけ" "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/forced"
 check "glow_dir: 削除してステージ前の Markdown だけ"   "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/deleted"
 check "glow_dir: 引用符を含む名前の Markdown"         "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/quoted"
+# 否定（!）の規則で含め直したものは一覧に出る。改行を含む名前を 2 つに割って誤判定しない。
+# 拡張子の大文字・小文字は glow と同じく区別しない
+mkdir -p "$gr/neg" "$gr/nl" "$gd/upper"
+printf 'neg/*.md\n!neg/README.md\nnl/*.md\n' >> "$gr/.gitignore"
+printf '# t\n' > "$gr/neg/README.md"
+printf '# t\n' > "$gr/nl/$(printf 'a\nb').md"
+printf '# t\n' > "$gd/upper/README.MD"
+check "glow_dir: 否定の規則で含め直した Markdown"     "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/neg"
+check "glow_dir: 改行を含む名前（無視される）だけ"    ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/nl"
+check "glow_dir: 拡張子が大文字の Markdown"           "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/upper"
 
 # --- view <ディレクトリ>: Markdown を含めば glow の一覧で開き、less（ls -la）は出さない ---
 # vrun <view の引数...>: 偽の glow / less で view を動かし、それぞれに渡った引数を記録する
