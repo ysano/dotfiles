@@ -122,6 +122,66 @@ case $lesslog in
     *) echo "FAIL view は LESS を空にしてプロンプトを渡す: $lesslog"; fail=1 ;;
 esac
 
+# --- glow_dir <ディレクトリ>: ls -la の代わりに glow の一覧（TUI）で開くか ---
+# glow が一覧に出すもの（Markdown の拡張子で、隠し・node_modules の外）が深さ 4 までにあるときだけ
+gd="$work/glowdir"
+mkdir -p "$gd/bin" "$gd/nobin" "$gd/md/docs" "$gd/mkd" "$gd/plain" "$gd/inhidden/.git" \
+    "$gd/deps/node_modules/x" "$gd/.dot" "$gd/deep/1/2/3/4"
+for f in md/docs/a.md mkd/a.markdown inhidden/.git/a.md inhidden/.hidden.md deps/node_modules/x/a.md \
+    .dot/a.md deep/1/2/3/4/a.md; do
+    printf '# t\n' > "$gd/$f"
+done
+echo x > "$gd/plain/a.txt"
+cat > "$gd/bin/glow" <<'STUB'
+#!/bin/sh
+{ printf 'GLOW_MOUSE=[%s]' "${GLOW_MOUSE-unset}"; for a in "$@"; do printf ' [%s]' "$a"; done; echo; } >> "$GLOW_STUB_LOG"
+exit "${GLOW_STUB_RC:-0}"
+STUB
+chmod +x "$gd/bin/glow"
+for c in sh find head; do ln -sf "$(command -v "$c")" "$gd/nobin/$c"; done
+withglow="$gd/bin:$PATH"
+check "glow_dir: Markdown を含むディレクトリ"         "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/md"
+check "glow_dir: .markdown も Markdown"              "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/mkd"
+check "glow_dir: Markdown が無い"                    ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/plain"
+check "glow_dir: 隠しファイル・隠しディレクトリの中だけ" "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/inhidden"
+check "glow_dir: node_modules の中だけ"              ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/deps"
+check "glow_dir: 起点が隠しディレクトリ（glow は 0 件）" "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/.dot"
+check "glow_dir: 深さ 4 より下だけ"                  ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/deep"
+check "glow_dir: ファイルは対象外"                   ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/md/docs/a.md"
+check "glow_dir: glow が無い"                        ""    env PATH="$gd/nobin" sh "$SCRIPT" glow_dir "$gd/md"
+
+# --- view <ディレクトリ>: Markdown を含めば glow の一覧で開き、less（ls -la）は出さない ---
+# vrun <view の引数...>: 偽の glow / less で view を動かし、それぞれに渡った引数を記録する
+vrun() {
+    rm -f "$gd/glow.log" "$gd/less.log"
+    env PATH="$gd/bin:$lessbin:$PATH" GLOW_STUB_LOG="$gd/glow.log" LESS_STUB_LOG="$gd/less.log" \
+        sh "$SCRIPT" view "$@" >/dev/null 2>&1 </dev/null
+    glowlog=$(cat "$gd/glow.log" 2>/dev/null) lesslog=$(cat "$gd/less.log" 2>/dev/null)
+}
+vrun "$gd/md"
+case $glowlog in
+    "GLOW_MOUSE=[true] [-t] [-s] [dark] [-w] ["[0-9]*"] [$gd/md]")
+        if [ -z "$lesslog" ]; then echo "ok   view: Markdown を含むディレクトリは glow の一覧で開く"
+        else echo "FAIL view: glow の後に less も開いた: $lesslog"; fail=1; fi ;;
+    *) echo "FAIL view: Markdown を含むディレクトリは glow の一覧で開く: $glowlog"; fail=1 ;;
+esac
+vrun "$gd/plain"
+case $glowlog/$lesslog in
+    "/LESS=[]"*"[-Psq 閉じる  e Emacs  o 既定アプリ  c Claude]"*) echo "ok   view: Markdown の無いディレクトリは今までどおり less" ;;
+    *) echo "FAIL view: Markdown の無いディレクトリは今までどおり less: glow=$glowlog less=$lesslog"; fail=1 ;;
+esac
+GLOW_STUB_RC=1 vrun "$gd/md"
+case $glowlog/$lesslog in
+    *"[-t]"*"/LESS=[]"*"[-Psq 閉じる"*) echo "ok   view: glow が起動に失敗したら less の一覧に戻る" ;;
+    *) echo "FAIL view: glow が起動に失敗したら less の一覧に戻る: glow=$glowlog less=$lesslog"; fail=1 ;;
+esac
+vrun "$gd/md/docs/a.md"
+case $glowlog/$lesslog in
+    *"[-t]"*) echo "FAIL view: Markdown ファイルは glow -t で開かない: $glowlog"; fail=1 ;;
+    */"LESS=[]"*"r 整形/原文]"*) echo "ok   view: Markdown ファイルは今までどおり less（glow -t は使わない）" ;;
+    *) echo "FAIL view: Markdown ファイルは今までどおり less: glow=$glowlog less=$lesslog"; fail=1 ;;
+esac
+
 # --- lesskey_ok <less --version の 1 行目>: --lesskey-src（less 582+）が使えるか ---
 check "less 668 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 668 (POSIX regular expressions)"
 check "less 590 は対応"   "yes" sh "$SCRIPT" lesskey_ok "less 590 (GNU regular expressions)"
@@ -140,7 +200,9 @@ check "最長行＋行番号の幅、高さは上限"    "212 47"  sh "$SCRIPT" 
 check "幅は端末の 85% まで"               "263 12"  sh "$SCRIPT" popup_size "$sz/wide.txt" 310 56
 check "Markdown は読みやすい幅に固定"     "108 47"  sh "$SCRIPT" popup_size "$sz/doc.md" 310 56
 check "狭い端末では 85% に収める"         "51 17"   sh "$SCRIPT" popup_size "$sz/doc.md" 60 20
-check "ディレクトリは 100 桁"             "100 47"  sh "$SCRIPT" popup_size "$sz" 310 56
+check "ディレクトリ（ls -la）は 100 桁"   "100 47"  env PATH="$withglow" sh "$SCRIPT" popup_size "$gd/plain" 310 56
+check "glow の一覧で開くディレクトリは Markdown と同じ" "108 47" env PATH="$withglow" sh "$SCRIPT" popup_size "$gd/md" 310 56
+check "glow が無ければ Markdown を含んでも 100 桁" "100 47" env PATH="$gd/nobin" sh "$SCRIPT" popup_size "$gd/md" 310 56
 check "整形した文書（PR / Issue）は Markdown と同じ" "108 47" sh "$SCRIPT" popup_size --doc 310 56
 check "整形した文書も 85% に収める"       "51 17"   sh "$SCRIPT" popup_size --doc 60 20
 check "端末の大きさが不明なら 85%"        "85% 85%" sh "$SCRIPT" popup_size "$sz/short.txt" "" ""
