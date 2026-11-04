@@ -956,26 +956,40 @@ is_markdown() {
 # glow_dir <ディレクトリ>: ls -la の代わりに glow の一覧（glow -t）で開くか。glow が一覧に出す
 # Markdown（拡張子は glow と同じ。隠し・node_modules の中は glow も出さない）があるときだけ yes。
 # 一覧の起点そのものが隠しディレクトリ（.claude 等）だと glow は 1 件も出さないため対象外にする。
-# 大きな木で待たされないよう深さ 4・3 秒で打ち切り、1 件見つけたら find を止める（-quit。
-# head で読むのをやめても find は次の書き込みまで走り続ける）。.gitignore は見ないため、
-# 無視された Markdown しか無いと glow の一覧は空になる
+# git 管理下は glow と同じく .gitignore で無視されたものを数えない（ls-files。サブディレクトリ
+# から実行するとその配下だけを相対パスで返す）。管理外は find で探し、1 件見つけたら止める
+# （-quit。読むのをやめても find は次の書き込みまで走り続ける）。大きな木で待たされないよう
+# 深さ 4・3 秒で打ち切る
 glow_dir() {
     [ -d "$1" ] && command -v glow >/dev/null 2>&1 || return 1
     base=${1%/}
     case ${base##*/} in .*) return 1 ;; esac
-    found=$( (cd -- "$1" 2>/dev/null && bounded 3 find . -maxdepth 4 \
-        -type d \( -name '.?*' -o -name node_modules \) -prune \
-        -o -type f ! -name '.*' \( -name '*.md' -o -name '*.mdown' -o -name '*.mkdn' -o -name '*.mkd' \
-            -o -name '*.markdown' \) -print -quit 2>/dev/null) | head -n 1)
+    found=$(
+        if [ "$(git -C "$1" rev-parse --is-inside-work-tree 2>/dev/null)" = true ]; then
+            # quotePath=true（git 既定）だと日本語名が "\NNN" に引用され拡張子で照合できない
+            bounded 3 git -C "$1" -c core.quotePath=false ls-files --cached --others --exclude-standard 2>/dev/null
+        else
+            (cd -- "$1" 2>/dev/null && bounded 3 find . -maxdepth 4 \
+                -type d \( -name '.?*' -o -name node_modules \) -prune \
+                -o -type f ! -name '.*' \( -name '*.md' -o -name '*.mdown' -o -name '*.mkdn' -o -name '*.mkd' \
+                    -o -name '*.markdown' \) -print -quit 2>/dev/null)
+        fi | awk '{
+            sub(/^\.\//, ""); n = split($0, p, "/")
+            if (n > 4) next
+            for (i = 1; i <= n; i++) if (p[i] ~ /^\./ || p[i] == "node_modules") next
+            if (p[n] ~ /\.(md|mdown|mkdn|mkd|markdown)$/) { print; exit }
+        }')
     [ -n "$found" ] || return 1
     echo yes
 }
 
 # 端末（ポップアップ）の桁数。render は less へのパイプの中で動くため、tput は stdout から
-# 幅を取れず terminfo の既定の 80 を返す。制御端末から読み、読めなければ tput に任せる
+# 幅を取れず terminfo の既定の 80 を返す。制御端末から読み、読めなければ tput に任せる。
+# 呼び出し側は算術展開に使うため、空・0・先頭 0（8 進として失敗する）・数字以外は 100 にする
 term_cols() {
     tc=$(stty size 2>/dev/null </dev/tty | awk '{ print $2 }')
-    case $tc in ""|0|*[!0-9]*) tc=$(tput cols 2>/dev/null || echo 100) ;; esac
+    case $tc in ""|0*|*[!0-9]*) tc=$(tput cols 2>/dev/null) ;; esac
+    case $tc in ""|0*|*[!0-9]*) tc=100 ;; esac
     echo "$tc"
 }
 

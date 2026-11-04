@@ -98,6 +98,13 @@ if command -v tmux >/dev/null 2>&1; then
 else
     echo "skip render md の幅（tmux が無い）"
 fi
+# 端末の幅が先頭 0 等（算術展開で 8 進として失敗する）なら既定の 100 として扱う
+# （stty / tput を偽物にし、実行した端末の幅に左右されないようにする）
+badw="$work/badw"; mkdir -p "$badw"
+printf '#!/bin/sh\necho "24 08"\n' > "$badw/stty"; printf '#!/bin/sh\necho 08\n' > "$badw/tput"
+chmod +x "$badw/stty" "$badw/tput"
+printf '# t\n' > "$work/w8.md"
+check "端末の幅が 08 なら既定の 100" "glow -s dark -w 98 $work/w8.md" env PATH="$badw:$mdbin/both:$PATH" sh "$SCRIPT" render md "$work/w8.md"
 
 # --- is_markdown <パス> ---
 check "README.md は Markdown"   "yes" sh "$SCRIPT" is_markdown "docs/README.md"
@@ -149,6 +156,19 @@ check "glow_dir: 起点が隠しディレクトリ（glow は 0 件）" "" env P
 check "glow_dir: 深さ 4 より下だけ"                  ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/deep"
 check "glow_dir: ファイルは対象外"                   ""    env PATH="$withglow" sh "$SCRIPT" glow_dir "$gd/md/docs/a.md"
 check "glow_dir: glow が無い"                        ""    env PATH="$gd/nobin" sh "$SCRIPT" glow_dir "$gd/md"
+# git 管理下は glow と同じく .gitignore で無視された Markdown を数えない（サブディレクトリからも）
+gr="$gd/repo"; mkdir -p "$gr/gen" "$gr/docs" "$gr/new" "$gr/tracked"
+git -C "$gr" init -q
+printf 'gen/\n*.local.md\n' > "$gr/.gitignore"
+printf '# t\n' > "$gr/gen/a.md"; echo x > "$gr/gen/b.txt"
+printf '# t\n' > "$gr/docs/n.local.md"; echo x > "$gr/docs/t.txt"
+printf '# t\n' > "$gr/new/a.md"
+printf '# t\n' > "$gr/tracked/a.md"; git -C "$gr" add tracked/a.md
+check "glow_dir: 無視されたディレクトリの Markdown だけ" "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/gen"
+check "glow_dir: 無視されたファイルの Markdown だけ"   "" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/docs"
+check "glow_dir: 追跡していない Markdown"            "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/new"
+check "glow_dir: 追跡している Markdown"              "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr/tracked"
+check "glow_dir: git の起点からも深さ 4 まで"        "yes" env PATH="$withglow" sh "$SCRIPT" glow_dir "$gr"
 
 # --- view <ディレクトリ>: Markdown を含めば glow の一覧で開き、less（ls -la）は出さない ---
 # vrun <view の引数...>: 偽の glow / less で view を動かし、それぞれに渡った引数を記録する
