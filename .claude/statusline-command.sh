@@ -14,6 +14,7 @@ command -v jq >/dev/null 2>&1 && have_jq=true
 
 # JSON から情報を抽出
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
+model_id=$(echo "$input" | jq -r '.model.id // ""')
 current_dir=$(echo "$input" | jq -r '.workspace.current_dir // ""')
 output_style=$(echo "$input" | jq -r '.output_style.name // ""')
 vim_mode=$(echo "$input" | jq -r '.vim.mode // ""')
@@ -102,6 +103,31 @@ FG_YELLOW="\033[38;5;220m"     # 黄
 FG_MAGENTA="\033[38;5;205m"    # マゼンタ
 
 C_RESET="\033[0m"
+C_BOLD="\033[1m"
+
+# モデルの性能と effort の色（2 行目のモデル名と "(effort)"）
+#   モデル: model.id の系列で決める（判定できなければ display_name）。上位ほど
+#   色相が 青緑 → 青 → 紫 → マゼンタ と進み、最上位は太字にする
+#     | 系列            | 色            |
+#     | Haiku           | 37  青緑      |
+#     | Sonnet          | 39  青        |
+#     | Opus            | 141 紫        |
+#     | Fable / Mythos  | 213 マゼンタ・太字 |
+#     | それ以外        | 254 白（序列を示さない） |
+#   effort: 高いほど熱い色（灰 → 黄 → 橙 → 赤）。高いほど利用枠の消費も速い
+#     | low 244 灰 | medium 250 明るい灰 | high 229 淡い黄 | xhigh 209 橙 | max 197 赤・太字 |
+#     それ以外の値は 244 灰
+#   残量の健全度に使う緑・黄・赤（76 / 220 / 196）とは番号を分けている
+FG_TIER_HAIKU="\033[38;5;37m"
+FG_TIER_SONNET="\033[38;5;39m"
+FG_TIER_OPUS="\033[38;5;141m"
+FG_TIER_FABLE="${C_BOLD}\033[38;5;213m"
+FG_TIER_OTHER="\033[38;5;254m"
+FG_EFFORT_LOW="\033[38;5;244m"
+FG_EFFORT_MEDIUM="\033[38;5;250m"
+FG_EFFORT_HIGH="\033[38;5;229m"
+FG_EFFORT_XHIGH="\033[38;5;209m"
+FG_EFFORT_MAX="${C_BOLD}\033[38;5;197m"
 
 # Powerline セパレータ（Nerd Font）
 SEP_RIGHT_HARD=""  # U+E0B4 (丸い終端)
@@ -247,6 +273,32 @@ format_duration() {
 session_display=$(rate_limit_display "5h" "$session_used_pct" "$session_resets_at" 18000 0.2)
 weekly_display=$(rate_limit_display "7d" "$weekly_used_pct" "$weekly_resets_at" 604800 0.05)
 
+# モデルの系列（性能の序列）を判定して色を決める。model.id を優先し、系列名が
+# 含まれなければ display_name を見る。部分一致なので Bedrock 等の接頭辞
+# （us.anthropic.claude-…）や日付・[1m] の接尾辞が付いても拾える
+model_color="${FG_TIER_OTHER}"
+shopt -s nocasematch
+for _m in "$model_id" "$model"; do
+    case "$_m" in
+        *fable*|*mythos*) model_color="${FG_TIER_FABLE}" ;;
+        *opus*)           model_color="${FG_TIER_OPUS}" ;;
+        *sonnet*)         model_color="${FG_TIER_SONNET}" ;;
+        *haiku*)          model_color="${FG_TIER_HAIKU}" ;;
+        *) continue ;;
+    esac
+    break
+done
+shopt -u nocasematch
+
+case "$effort_level" in
+    low)    effort_color="${FG_EFFORT_LOW}" ;;
+    medium) effort_color="${FG_EFFORT_MEDIUM}" ;;
+    high)   effort_color="${FG_EFFORT_HIGH}" ;;
+    xhigh)  effort_color="${FG_EFFORT_XHIGH}" ;;
+    max)    effort_color="${FG_EFFORT_MAX}" ;;
+    *)      effort_color="${FG_GREY}" ;;
+esac
+
 # Vimモード表示（P10k の prompt_char スタイル）
 vim_display=""
 if [ "$vim_mode" = "NORMAL" ]; then
@@ -333,14 +385,14 @@ if [ -n "$vim_display" ]; then
     line2+=$(printf '%b' "${vim_color}${vim_display}${C_RESET} ")
 fi
 
-# Model
+# Model（性能の系列で色分け）
 if [ -n "$model" ]; then
-    line2+=$(printf '%b' "${FG_BLUE}${model}${C_RESET}")
+    line2+=$(printf '%b' "${model_color}${model}${C_RESET}")
 fi
 
-# Effort level（モデルの隣に表示）
+# Effort level（モデルの隣に、段階で色分けして表示）
 if [ -n "$effort_level" ]; then
-    line2+=$(printf '%b' " ${FG_GREY}(${effort_level})${C_RESET}")
+    line2+=$(printf '%b' " ${effort_color}(${effort_level})${C_RESET}")
 fi
 
 # 使用中のプロファイル（どのアカウント = 利用枠か）
