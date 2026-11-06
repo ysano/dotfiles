@@ -5,7 +5,8 @@
 # keybindings.conf の Option + クリックから呼ばれる（値は @open_path_* ユーザーオプション経由）:
 #   open-path.sh click        プレビュー（ポップアップ）
 #   open-path.sh click open   既定アプリで開く（右クリックメニューの "Open in Default App"）
-#   open-path.sh click link   普通のクリック: URL・PR / Issue の参照をブラウザで開く（それ以外は何もしない）
+#   open-path.sh click link [<通し番号>]  普通のクリック: URL・PR / Issue の参照をブラウザで開く
+#                             （それ以外は何もしない。通し番号が今の @open_path_seq と違えば何もしない）
 # GitHub 以外の URL は、どの click でもブラウザで開く（プレビューできないため）
 # 段階ごとのサブコマンド（テスト・デバッグ用）:
 #   extract <行> <桁>        クリック位置（0 起点の表示桁）のパス候補を切り出す
@@ -17,7 +18,7 @@
 #   context <名前> <cwd> <行の番号> <折り返し桁>  標準入力の画面の行のディレクトリから探す
 #   commit_repo <SHA> <ディレクトリ...>  そのコミットを持つリポジトリ
 #   gh_ref <行> <桁> / gh_url <URL>  PR / Issue の参照（#番号・owner/repo#番号・URL）
-#   url_at <行> <桁> [<前の行> <次の行> <折り返し桁>]  クリック位置の http(s) の URL
+#   url_at <行> <桁> [<次の行> <端の桁>]  クリック位置の http(s) の URL
 #   gh_nwo <remote の URL> / gh_repo <ディレクトリ...>  GitHub の owner/repo
 #   gh_kind <owner/repo> <番号>   pr か issue か（gh api で問い合わせる）
 #   render gh <owner/repo> <番号> <pr|issue> [body|diff]  PR / Issue の本文・差分を標準出力へ
@@ -662,33 +663,38 @@ gh_url() {
     }'
 }
 
-# url_at <行> <桁> [<前の行> <次の行> <折り返し桁>]: クリック位置の http(s) の URL を出す。
+# url_at <行> <桁> [<次の行> <端の桁>]: クリック位置の http(s) の URL を出す。
 # 前後の括弧・引用符・句読点は含めない（URL の中で対になる丸括弧は残す）。別の URL の中
-# （?next=https://…）のクリックは外側の URL として読む（gh_ref と同じ）。前後の行を渡すと、
-# 改行で折り返して続きを字下げした URL をつなぐ（extract と同じ条件。1 行ずつ）
+# （?next=https://…）のクリックは外側の URL として読み、区切りの後に続く別の URL
+# （https://a,https://b）の手前で止める。URL が行末にあり、行が <端の桁> まで埋まって
+# いれば（長い URL を端で折り返した行）、字下げした次の行の続きをつなぐ
 url_at() {
-    printf '%s\n' "$1" | OPEN_PATH_PREV=${3:-} OPEN_PATH_NEXT=${4:-} OPEN_PATH_WIDE=$WIDE_RANGES \
-        LC_ALL=C awk -v x="$2" -v wrapcol="${5:-0}" "$TEXT_AWK"'
+    printf '%s\n' "$1" | OPEN_PATH_NEXT=${3:-} OPEN_PATH_WIDE=$WIDE_RANGES \
+        LC_ALL=C awk -v x="$2" -v edge="${4:-0}" "$TEXT_AWK"'
     # URL の文字（RFC 3986 の非予約文字・予約文字と %。角括弧と引用符は Markdown や文の
     # 区切りに使われるため除く。端末に出る URL は % で符号化されているものとし、空白なしで
     # 続く和文（https://…を見る）を含めないよう、多バイト文字は区切りにする）
     function urlchar(c) {
         return c < "\200" && c ~ /[A-Za-z0-9._~:\/?#@!$&()*+,;=%-]/
     }
-    # s の i 文字目から http:// か https:// に 1 文字以上続く並びが始まるか（a = chars(s) の結果）
+    # a[i] から http:// か https:// に 1 文字以上続く並びが始まるか（a = chars の結果、k = 文字数）
     function scheme(a, k, i,    t, m) {
         t = ""
         for (m = i; m <= i + 8 && m <= k; m++) t = t a[m]
         return t ~ /^https?:\/\/./
     }
-    # a[from..to] のうち URL が始まる位置: 後ろから見て、直前が URL の文字でない（区切りの
-    # 括弧・カンマ・引用符は除く）http(s)://。そうした候補が無ければ最も前の http(s)://
+    # a[i] から、別の URL の中ではない URL が始まるか（直前が無いか、URL の続きに使う文字で
+    # ない。区切りの括弧・カンマ・引用符は URL の続きとみなさない）
+    function own(a, k, i) {
+        return scheme(a, k, i) && (i == 1 || a[i - 1] !~ /^[A-Za-z0-9\/:=?&%.@#_+~!$*;-]$/)
+    }
+    # a[from..to] のうち URL が始まる位置: 後ろから見て最初の own。無ければ最も前の http(s)://
     function start(a, k, from, to,    j, first) {
         first = 0
         for (j = to; j >= from; j--) {
             if (!scheme(a, k, j)) continue
             first = j
-            if (j == from || a[j - 1] !~ /^[A-Za-z0-9\/:=?&%.@#_+~!$*;-]$/) return j
+            if (j == from || own(a, k, j)) return j
         }
         return first
     }
@@ -705,17 +711,8 @@ url_at() {
         while (i <= k && urlchar(a[i])) t = t a[i++]
         return t
     }
-    # 前の行が折り返し桁まで埋まっていれば、行末の URL の文字の並び
-    function urltail(s,    a, k, i, t, w, j) {
-        k = chars(s, a); i = k; t = ""; w = 0
-        while (i >= 1 && a[i] == " ") i--
-        for (j = 1; j <= i; j++) w += width(cp(a[j]))
-        if (w < wrapcol) return ""
-        while (i >= 1 && urlchar(a[i])) t = a[i--] t
-        return t
-    }
     {
-        k = chars($0, ch); col = 0; hit = 0; x += 0; wrapcol += 0
+        k = chars($0, ch); col = 0; hit = 0; x += 0; edge += 0
         for (j = 1; j <= k; j++) {
             w = width(cp(ch[j]))
             if (x >= col && x < col + w) hit = j
@@ -723,25 +720,16 @@ url_at() {
             end[j] = col
         }
         if (!hit || !urlchar(ch[hit])) exit 1
-        l = hit; r = hit
+        l = hit
         while (l > 1 && urlchar(ch[l - 1])) l--
-        while (r < k && urlchar(ch[r + 1])) r++
+        if (!(us = start(ch, k, l, hit))) exit 1
+        r = hit
+        while (r < k && urlchar(ch[r + 1]) && !own(ch, k, r + 1)) r++
         url = ""
-        if (us = start(ch, k, l, hit)) {
-            for (j = us; j <= r; j++) url = url ch[j]
-        } else {
-            # 字下げした行の先頭なら、前の行の末尾から始まる URL の続き
-            for (j = l - 1; j >= 1 && ch[j] == " "; j--) ;
-            if (j >= 1 || l == 1 || wrapcol <= 0) exit 1
-            head = urltail(ENVIRON["OPEN_PATH_PREV"])
-            n = chars(head, hd)
-            if (!(hs = start(hd, n, 1, n))) exit 1
-            for (j = hs; j <= n; j++) url = url hd[j]
-            for (j = l; j <= r; j++) url = url ch[j]
-        }
-        # 折り返し桁まで埋まった行の末尾なら、字下げした次の行の続きをつなぐ
+        for (j = us; j <= r; j++) url = url ch[j]
+        # 端まで埋まった行の末尾なら、字下げした次の行の続きをつなぐ
         for (j = r + 1; j <= k && ch[j] == " "; j++) ;
-        if (j > k && wrapcol > 0 && end[r] >= wrapcol) url = url urlhead(ENVIRON["OPEN_PATH_NEXT"])
+        if (j > k && edge > 0 && end[r] >= edge) url = url urlhead(ENVIRON["OPEN_PATH_NEXT"])
         # 末尾の句読点と、対にならない閉じ括弧は URL に含めない
         while (url != "") {
             c = substr(url, length(url), 1)
@@ -916,12 +904,14 @@ open_url() {
         tmux display-message -c "$client" "open-path: ブラウザで開けません"
 }
 
-# url_click <行> <桁>: クリック位置の URL（url_at）。コピーモード中でなければ、改行で
-# 折り返した URL をつなぐよう、クリックした pane の前後の行も渡す（wrapped と同じ条件）
+# url_click <行> <桁>: クリック位置の URL（url_at）。コピーモード中でなければ、端で
+# 折り返した長い URL をつなぐよう、クリックした pane の次の行と端の桁も渡す。端の桁は
+# pane の幅 − 4（Claude Code は右端の数桁手前で折り返すことがある。半幅等の緩い条件だと、
+# 字下げした無関係な次の行をつないでしまう）。続きの行のクリックは前の行とつながない
+# （行だけでは折り返しと確かめられない。OSC 8 のリンクなら折り返しても全体を読める）
 url_click() {
-    # URL を含む行か、字下げした行（前の行から折り返した URL の続き）でなければ探さない
-    case $1 in *://*|' '*) ;; *) return 1 ;; esac
-    prev="" next="" wrapcol=0
+    case $1 in *://*) ;; *) return 1 ;; esac
+    next="" edge=0
     pane=$(opt pane) y=$(opt y)
     case $y in ''|*[!0-9]*) y="" ;; esac
     if [ -n "$pane" ] && [ -n "$y" ]; then
@@ -930,16 +920,20 @@ url_click() {
         # コピーモード中は capture-pane（通常の画面）と表示中の行が一致しないため見ない。
         # 範囲外の行は tmux が端の行（= クリックした行自身）を返すため、画面の外は見ない
         if [ "${3:-1}" = 0 ] && digits "${4:-}" && digits "${5:-}"; then
-            [ "$y" -gt 0 ] && prev=$(tmux capture-pane -p -t "$pane" -S $((y - 1)) -E $((y - 1)) 2>/dev/null)
             [ $((y + 1)) -lt "$4" ] && next=$(tmux capture-pane -p -t "$pane" -S $((y + 1)) -E $((y + 1)) 2>/dev/null)
-            wrapcol=$(($5 / 2))
+            edge=$(($5 - 4))
         fi
     fi
-    url_at "$1" "$2" "$prev" "$next" "$wrapcol"
+    url_at "$1" "$2" "$next" "$edge"
 }
 
 click() {
     mode=${1:-preview}
+    # 普通のクリックは、ボタンを離した時の押下の通し番号（@open_path_seq）を受け取る。
+    # 待つ間に次の押下（ダブルクリック等）があって番号が進んでいたら、何もしない
+    if [ "$mode" = link ] && [ -n "${2:-}" ] && [ "$2" != "$(opt seq)" ]; then
+        return 0
+    fi
     client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
     # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
     roots=$(opt roots)
