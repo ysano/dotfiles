@@ -9,6 +9,8 @@ trap 'rm -rf "$work"' EXIT
 CLAUDE_CONFIG_DIR="$work/.claude-test"
 mkdir -p "$CLAUDE_CONFIG_DIR"
 export CLAUDE_CONFIG_DIR
+# 実行する側の環境の effort 指定（auto 等）が結果に混ざらないようにする
+unset CLAUDE_CODE_EFFORT_LEVEL
 
 now=$(date +%s)
 fail=0
@@ -116,13 +118,16 @@ profile "ドメインは出さない"       "$work/home/.claude-karin"    karin
 # モデルの性能（model.id の系列）と effort の段階を色で分ける
 # （色番号の対応は statusline-command.sh の「モデルの性能と effort の色」の表）
 # tier <名前> <入力 JSON> <期待する 2 行目>
-#   256 色の前景色を <番号>、太字を <b> に置き換え、ほかの制御列（リセット等）は除く
+#   256 色の前景色を <番号>、太字を <b>、斜体を <i> に置き換え、ほかの制御列（リセット等）は除く
+#   環境変数を足すときは TIER_ENV に "名前=値" を入れる
 tier() {
     local out
-    out=$(printf '%s' "$2" | bash "$SCRIPT" 2>&1 | tail -1 |
-        sed -e 's/\x1b\[38;5;\([0-9]*\)m/<\1>/g' -e 's/\x1b\[1m/<b>/g' -e 's/\x1b\[[0-9;]*m//g')
+    out=$(printf '%s' "$2" | env ${TIER_ENV:+"$TIER_ENV"} bash "$SCRIPT" 2>&1 | tail -1 |
+        sed -e 's/\x1b\[38;5;\([0-9]*\)m/<\1>/g' -e 's/\x1b\[1m/<b>/g' -e 's/\x1b\[3m/<i>/g' \
+            -e 's/\x1b\[[0-9;]*m//g')
     if [ "$out" = "$3" ]; then echo "ok   tier $1: $out"; else echo "FAIL tier $1: got '$out' want '$3'"; fail=1; fi
 }
+TIER_ENV=""
 P=' <244>│ <51>test'   # 2 行目でモデルの後に続くプロファイル（色が漏れていないことも見る）
 tier "Fable は最上位（太字）"   '{"model":{"id":"claude-fable-5-1","display_name":"Fable 5.1"},"effort":{"level":"max"}}' "<b><213>Fable 5.1 <b><197>(max)$P"
 tier "Mythos は Fable と同じ"   '{"model":{"id":"claude-mythos-5-1","display_name":"Mythos 5.1"}}'                       "<b><213>Mythos 5.1$P"
@@ -130,7 +135,7 @@ tier "Opus"                     '{"model":{"id":"claude-opus-5-5","display_name"
 tier "Sonnet"                   '{"model":{"id":"claude-sonnet-5-5","display_name":"Sonnet 5.5"},"effort":{"level":"high"}}' "<39>Sonnet 5.5 <229>(high)$P"
 tier "Haiku"                    '{"model":{"id":"claude-haiku-5-5","display_name":"Haiku 5.5"},"effort":{"level":"medium"}}' "<37>Haiku 5.5 <250>(medium)$P"
 tier "effort low"               '{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"low"}}'       "<141>Opus <244>(low)$P"
-tier "effort 未知の値は灰色"    '{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"auto"}}'      "<141>Opus <244>(auto)$P"
+tier "effort 未知の値は灰色"    '{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"turbo"}}'     "<141>Opus <244>(turbo)$P"
 tier "effort 無しは出さない"    '{"model":{"id":"claude-opus-5-5","display_name":"Opus"}}'                                "<141>Opus$P"
 tier "Bedrock の接頭辞付き id"  '{"model":{"id":"us.anthropic.claude-opus-5-5","display_name":"Opus"}}'                   "<141>Opus$P"
 tier "[1m] 付きの id"           '{"model":{"id":"claude-opus-5-5[1m]","display_name":"Opus"}}'                            "<141>Opus$P"
@@ -140,5 +145,18 @@ tier "表示名は大小文字を問わない" '{"model":{"display_name":"OPUS"}
 tier "id で判定できなければ表示名" '{"model":{"id":"gateway-model-1","display_name":"Opus"}}'                            "<141>Opus$P"
 tier "id を表示名より優先"      '{"model":{"id":"claude-sonnet-5-5","display_name":"Opus"}}'                              "<39>Opus$P"
 tier "系列が不明なら白"         '{"model":{"id":"gateway-model-1","display_name":"Custom"}}'                              "<254>Custom$P"
+
+# auto（CLAUDE_CODE_EFFORT_LEVEL=auto|unset）は effort を送らないが、JSON の effort.level は
+# "high" で埋まる（v2.1.318）。statusline は親の環境変数を受け継ぐので、そこで判定する
+H='{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"high"}}'
+TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=auto"   tier "env auto は (auto)"          "$H" "<141>Opus <i><246>(auto)$P"
+TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=UNSET"  tier "env unset は大小文字を問わず" "$H" "<141>Opus <i><246>(auto)$P"
+TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL= auto " tier "env auto の前後の空白は無視" "$H" "<141>Opus <i><246>(auto)$P"
+TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=auto"   tier "env auto でも effort 非対応なら出さない" \
+    '{"model":{"id":"claude-opus-5-5","display_name":"Opus"}}' "<141>Opus$P"
+TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=xhigh"  tier "env が明示レベルなら JSON の値" \
+    '{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"xhigh"}}' "<141>Opus <209>(xhigh)$P"
+TIER_ENV=""
+tier "JSON の auto もそのまま auto" '{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"auto"}}' "<141>Opus <i><246>(auto)$P"
 
 exit $fail

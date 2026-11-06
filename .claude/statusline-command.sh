@@ -104,6 +104,7 @@ FG_MAGENTA="\033[38;5;205m"    # マゼンタ
 
 C_RESET="\033[0m"
 C_BOLD="\033[1m"
+C_ITALIC="\033[3m"
 
 # モデルの性能と effort の色（2 行目のモデル名と "(effort)"）
 #   モデル: model.id の系列で決める（判定できなければ display_name）。上位ほど
@@ -116,7 +117,9 @@ C_BOLD="\033[1m"
 #     | それ以外        | 254 白（序列を示さない） |
 #   effort: 高いほど熱い色（灰 → 黄 → 橙 → 赤）。高いほど利用枠の消費も速い
 #     | low 244 灰 | medium 250 明るい灰 | high 229 淡い黄 | xhigh 209 橙 | max 197 赤・太字 |
-#     それ以外の値は 244 灰
+#     | auto 246 斜体（effort を送らない）| それ以外の値は 244 灰 |
+#     auto は CLAUDE_CODE_EFFORT_LEVEL=auto|unset で判定する（下記）。/effort auto で保存値を
+#     消しただけの場合は JSON にモデルの既定値が入るため、auto とは表示できない
 #   残量の健全度に使う緑・黄・赤（76 / 220 / 196）とは番号を分けている
 FG_TIER_HAIKU="\033[38;5;37m"
 FG_TIER_SONNET="\033[38;5;39m"
@@ -128,6 +131,7 @@ FG_EFFORT_MEDIUM="\033[38;5;250m"
 FG_EFFORT_HIGH="\033[38;5;229m"
 FG_EFFORT_XHIGH="\033[38;5;209m"
 FG_EFFORT_MAX="${C_BOLD}\033[38;5;197m"
+FG_EFFORT_AUTO="${C_ITALIC}\033[38;5;246m"
 
 # Powerline セパレータ（Nerd Font）
 SEP_RIGHT_HARD=""  # U+E0B4 (丸い終端)
@@ -278,6 +282,14 @@ weekly_display=$(rate_limit_display "7d" "$weekly_used_pct" "$weekly_resets_at" 
 # （us.anthropic.claude-…）や日付・[1m] の接尾辞が付いても拾える
 model_color="${FG_TIER_OTHER}"
 shopt -s nocasematch
+# CLAUDE_CODE_EFFORT_LEVEL=auto|unset（大小文字・前後の空白は問わない）では Claude Code は
+# effort を送らないが、JSON の effort.level は "high" で埋まる（v2.1.318 の sN()）。
+# statusline は親の環境変数を受け継ぐので、そこから auto と判定する。effort 自体が
+# 無い（モデルが effort に対応しない）ときは出さない
+_env_effort=${CLAUDE_CODE_EFFORT_LEVEL-}
+case "${_env_effort//[[:space:]]/}" in
+    auto|unset) [ -n "$effort_level" ] && effort_level=auto ;;
+esac
 for _m in "$model_id" "$model"; do
     case "$_m" in
         *fable*|*mythos*) model_color="${FG_TIER_FABLE}" ;;
@@ -296,6 +308,7 @@ case "$effort_level" in
     high)   effort_color="${FG_EFFORT_HIGH}" ;;
     xhigh)  effort_color="${FG_EFFORT_XHIGH}" ;;
     max)    effort_color="${FG_EFFORT_MAX}" ;;
+    auto)   effort_color="${FG_EFFORT_AUTO}" ;;
     *)      effort_color="${FG_GREY}" ;;
 esac
 
