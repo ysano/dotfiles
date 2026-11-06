@@ -129,7 +129,10 @@ tier() {
 }
 TIER_ENV=""
 P=' <244>│ <51>test'   # 2 行目でモデルの後に続くプロファイル（色が漏れていないことも見る）
-tier "Fable は最上位（太字）"   '{"model":{"id":"claude-fable-5-1","display_name":"Fable 5.1"},"effort":{"level":"max"}}' "<b><213>Fable 5.1 <b><197>(max)$P"
+# max は 1 文字ずつ虹色（Claude Code の /effort スライダーと同じ使い分け）
+R='<203>(<209>m<221>a<114>x<110>)'
+tier "Fable は最上位（太字）"   '{"model":{"id":"claude-fable-5-1","display_name":"Fable 5.1"},"effort":{"level":"max"}}' "<b><213>Fable 5.1 $R$P"
+tier "max は虹色（太字は付けない）" '{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"max"}}'   "<141>Opus $R$P"
 tier "Mythos は Fable と同じ"   '{"model":{"id":"claude-mythos-5-1","display_name":"Mythos 5.1"}}'                       "<b><213>Mythos 5.1$P"
 tier "Opus"                     '{"model":{"id":"claude-opus-5-5","display_name":"Opus 5.5"},"effort":{"level":"xhigh"}}' "<141>Opus 5.5 <209>(xhigh)$P"
 tier "Sonnet"                   '{"model":{"id":"claude-sonnet-5-5","display_name":"Sonnet 5.5"},"effort":{"level":"high"}}' "<39>Sonnet 5.5 <229>(high)$P"

@@ -115,11 +115,13 @@ C_ITALIC="\033[3m"
 #     | Opus            | 141 紫        |
 #     | Fable / Mythos  | 213 マゼンタ・太字 |
 #     | それ以外        | 254 白（序列を示さない） |
-#   effort: 高いほど熱い色（灰 → 黄 → 橙 → 赤）。高いほど利用枠の消費も速い
-#     | low 244 灰 | medium 250 明るい灰 | high 229 淡い黄 | xhigh 209 橙 | max 197 赤・太字 |
+#   effort: 高いほど熱い色（灰 → 黄 → 橙）、max は七色。高いほど利用枠の消費も速い
+#     | low 244 灰 | medium 250 明るい灰 | high 229 淡い黄 | xhigh 209 橙 | max 1 文字ずつ七色 |
 #     | auto 246 斜体（effort を送らない）| それ以外の値は 244 灰 |
 #     auto は CLAUDE_CODE_EFFORT_LEVEL=auto|unset で判定する（下記）。/effort auto で保存値を
 #     消しただけの場合は JSON にモデルの既定値が入るため、auto とは表示できない
+#   七色は Claude Code の /effort スライダーが max を虹色で描くのに合わせ、本体の
+#   rainbow（dark テーマ）を 256 色に寄せた 203 / 209 / 221 / 114 / 110 / 140 / 175
 #   残量の健全度に使う緑・黄・赤（76 / 220 / 196）とは番号を分けている
 FG_TIER_HAIKU="\033[38;5;37m"
 FG_TIER_SONNET="\033[38;5;39m"
@@ -130,7 +132,8 @@ FG_EFFORT_LOW="\033[38;5;244m"
 FG_EFFORT_MEDIUM="\033[38;5;250m"
 FG_EFFORT_HIGH="\033[38;5;229m"
 FG_EFFORT_XHIGH="\033[38;5;209m"
-FG_EFFORT_MAX="${C_BOLD}\033[38;5;197m"
+RAINBOW=("\033[38;5;203m" "\033[38;5;209m" "\033[38;5;221m" "\033[38;5;114m"
+         "\033[38;5;110m" "\033[38;5;140m" "\033[38;5;175m")
 FG_EFFORT_AUTO="${C_ITALIC}\033[38;5;246m"
 
 # Powerline セパレータ（Nerd Font）
@@ -309,7 +312,7 @@ case "$effort_level" in
     medium) effort_color="${FG_EFFORT_MEDIUM}" ;;
     high)   effort_color="${FG_EFFORT_HIGH}" ;;
     xhigh)  effort_color="${FG_EFFORT_XHIGH}" ;;
-    max)    effort_color="${FG_EFFORT_MAX}" ;;
+    max)    effort_color="" ;;   # 下で 1 文字ずつ七色にする
     auto)   effort_color="${FG_EFFORT_AUTO}" ;;
     *)      effort_color="${FG_GREY}" ;;
 esac
@@ -405,8 +408,15 @@ if [ -n "$model" ]; then
     line2+=$(printf '%b' "${model_color}${model}${C_RESET}")
 fi
 
-# Effort level（モデルの隣に、段階で色分けして表示）
-if [ -n "$effort_level" ]; then
+# Effort level（モデルの隣に、段階で色分けして表示。max は 1 文字ずつ七色）
+if [ "$effort_level" = max ]; then
+    _text="(max)" _effort_display="" _i=0
+    while [ "$_i" -lt "${#_text}" ]; do
+        _effort_display+="${RAINBOW[_i % ${#RAINBOW[@]}]}${_text:_i:1}"
+        _i=$((_i + 1))
+    done
+    line2+=$(printf '%b' " ${_effort_display}${C_RESET}")
+elif [ -n "$effort_level" ]; then
     line2+=$(printf '%b' " ${effort_color}(${effort_level})${C_RESET}")
 fi
 
