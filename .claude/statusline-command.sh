@@ -287,7 +287,9 @@ shopt -s nocasematch
 # statusline は親の環境変数を受け継ぐので、そこから auto と判定する。effort 自体が
 # 無い（モデルが effort に対応しない）ときは出さない
 _env_effort=${CLAUDE_CODE_EFFORT_LEVEL-}
-case "${_env_effort//[[:space:]]/}" in
+_env_effort="${_env_effort#"${_env_effort%%[![:space:]]*}"}"   # 前の空白を除く
+_env_effort="${_env_effort%"${_env_effort##*[![:space:]]}"}"   # 後ろの空白を除く
+case "$_env_effort" in
     auto|unset) [ -n "$effort_level" ] && effort_level=auto ;;
 esac
 for _m in "$model_id" "$model"; do

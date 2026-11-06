@@ -152,6 +152,7 @@ H='{"model":{"id":"claude-opus-5-5","display_name":"Opus"},"effort":{"level":"hi
 TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=auto"   tier "env auto は (auto)"          "$H" "<141>Opus <i><246>(auto)$P"
 TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=UNSET"  tier "env unset は大小文字を問わず" "$H" "<141>Opus <i><246>(auto)$P"
 TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL= auto " tier "env auto の前後の空白は無視" "$H" "<141>Opus <i><246>(auto)$P"
+TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=a uto"  tier "env の途中の空白は詰めない（CLI と同じく前後だけ）" "$H" "<141>Opus <229>(high)$P"
 TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=auto"   tier "env auto でも effort 非対応なら出さない" \
     '{"model":{"id":"claude-opus-5-5","display_name":"Opus"}}' "<141>Opus$P"
 TIER_ENV="CLAUDE_CODE_EFFORT_LEVEL=xhigh"  tier "env が明示レベルなら JSON の値" \
