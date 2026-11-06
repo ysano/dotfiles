@@ -425,6 +425,19 @@ check "commit: 数字だけで該当なし"   ""        sh "$SCRIPT" commit_repo
 check "commit: 6 桁以下は対象外"     ""        sh "$SCRIPT" commit_repo "$(printf '%s' "$sha" | cut -c1-6)" "$crepo"
 check "commit: 差分を表示"           "1"       sh -c 'sh "$1" render commit "$2" "$3" | grep -c "init commit"' _ "$SCRIPT" "$crepo" "$short"
 
+# --- url_at <行> <桁>: クリック位置の http(s) の URL（click の分岐と切り分けて直接確かめる） ---
+check "url: URL の上"                "https://example.com/a?b=1"         sh "$SCRIPT" url_at "see https://example.com/a?b=1 ok" 10
+check "url: スキームの上"            "https://example.com/a"             sh "$SCRIPT" url_at "see https://example.com/a ok" 4
+check "url: URL の外"                ""                                  sh "$SCRIPT" url_at "see https://example.com/a ok" 1
+check "url: 全角の後ろの桁を補正"    "https://example.com/a"             sh "$SCRIPT" url_at "日本語 https://example.com/a です" 10
+check "url: 隣接する URL の前"       "https://one.example/a"             sh "$SCRIPT" url_at "https://one.example/a,https://two.example/b" 10
+check "url: 隣接する URL の後ろ"     "https://two.example/b"             sh "$SCRIPT" url_at "https://one.example/a,https://two.example/b" 30
+check "url: クエリの中の URL は外側" "https://x.example/?next=https://y.example/z" sh "$SCRIPT" url_at "https://x.example/?next=https://y.example/z" 30
+check "url: 文末の句読点を除く"      "https://example.com/a"             sh "$SCRIPT" url_at "see https://example.com/a.," 6
+check "url: 対になる括弧は残す"      "https://e.org/wiki/Foo_(bar)"      sh "$SCRIPT" url_at "(https://e.org/wiki/Foo_(bar))" 5
+check "url: 対にならない閉じ括弧"    "https://e.org/a"                   sh "$SCRIPT" url_at "[x](https://e.org/a)" 6
+check "url: http(s) 以外は対象外"    ""                                  sh "$SCRIPT" url_at "see ftp://example.com/a ok" 6
+
 # --- gh_ref <行> <桁>: クリック位置の PR / Issue の参照（#N・owner/repo#N）を「owner/repo<TAB>番号」で ---
 check "gh: #番号"                    "${TAB}78"                sh "$SCRIPT" gh_ref "PR #78 を見る" 4
 check "gh: # の上"                   "${TAB}78"                sh "$SCRIPT" gh_ref "PR #78 を見る" 3
