@@ -576,7 +576,14 @@ case $1 in
     list-panes) printf '%s\n' "${STUB_panes:-}" ;;
     # capture-pane -p -t <pane> -S <行> -E <行> [-J] → STUB_row_<行> を順に（pane が違えば空）。
     # -J なら、STUB_wrap_<行> がある行（端末の幅で折り返した行）を次の行とつなぐ
-    capture-pane) [ "$4" = "${STUB_pane:-}" ] || exit 0
+    # STUB_CAPS（ディレクトリ）があれば、n 回目の capture-pane はその中のファイル n を出す
+    # （読み取りの間に画面が書き換わった状態を作る）
+    capture-pane) if [ -n "${STUB_CAPS:-}" ]; then
+                      n=$(( $(cat "$STUB_CAPS/n" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$STUB_CAPS/n"
+                      [ -f "$STUB_CAPS/$n" ] && cat "$STUB_CAPS/$n"
+                      exit 0
+                  fi
+                  [ "$4" = "${STUB_pane:-}" ] || exit 0
                   i=$6; while [ "$i" -le "$8" ]; do
                       eval "row=\${STUB_row_$i:-} wrap=\${STUB_wrap_$i:-}"
                       if [ "${9:-}" = -J ] && [ -n "$wrap" ]; then printf '%s' "$row"; else printf '%s\n' "$row"; fi
@@ -716,21 +723,20 @@ opened "link: カンマで続く URL の前"        "https://one.example/a" "$(c
 opened "link: カンマで続く URL の後ろ"      "https://two.example/b" "$(click_link "https://one.example/a,https://two.example/b" 30 /)"
 # 端末の幅で折り返した行（tmux が折り返しとして記録した行。capture-pane -J でつながる）だけ
 # 次の行をつなぐ。改行で折り返した行は、右端まで埋まっていても字下げしていてもつながない
-opened "link: 端末の幅で折り返した URL"     "https://example.com/very/long/path?q=1" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 STUB_row_5="th?q=1 end" \
-        click_link "see https://example.com/very/long/pa" 10 /)"
+# （pane の幅は 40。端末の幅で折り返すのは幅いっぱいまで埋まった行だけ）
+r40="see https://example.com/very/long/pathxx"
+opened "link: 端末の幅で折り返した URL"     "https://example.com/very/long/pathxxyy?q=1" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="$r40" STUB_wrap_4=1 STUB_row_5="yy?q=1 end" click_link "$r40" 10 /)"
 opened "link: 折り返していない次の行はつながない" "https://example.com/very/long/path" \
     "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/path" STUB_row_5="    Next steps" \
         click_link "see https://example.com/very/long/path" 10 /)"
-opened "link: 折り返した先の別の URL の手前で止める" "https://example.com/very/long/path" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 STUB_row_5="th,https://b.example x" \
-        click_link "see https://example.com/very/long/pa" 10 /)"
-opened "link: コピーモード中は折り返しをつながない" "https://example.com/very/long/pa" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24" STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 STUB_row_5="th?q=1 end" \
-        click_link "see https://example.com/very/long/pa" 10 /)"
+opened "link: 折り返した先の別の URL の手前で止める" "https://example.com/very/long/pathxxth" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="$r40" STUB_wrap_4=1 STUB_row_5="th,https://b.example x" click_link "$r40" 10 /)"
+opened "link: コピーモード中は折り返しをつながない" "https://example.com/very/long/pathxx" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24 40" STUB_row_4="$r40" STUB_wrap_4=1 STUB_row_5="yy?q=1 end" click_link "$r40" 10 /)"
 # 続きの行は前の行とつながない（OSC 8 のリンクなら開く）
 silent "link: 折り返した URL の続きの行は開かない" \
-    "$(STUB_pane=%7 STUB_y=5 STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 click_link "th?q=1 end" 5 /)"
+    "$(STUB_pane=%7 STUB_y=5 STUB_row_4="$r40" STUB_wrap_4=1 click_link "yy?q=1 end" 5 /)"
 # 普通のクリックは @open_path_up_* を読む（待つ間に Option + クリック等が書き換える共通の値は使わない）
 opened "link: 共通の @open_path_* は読まない" "https://up.example/y" \
     "$(STUB_line="see https://shared.example/x ok" STUB_x=6 STUB_link="https://shared.example/l" click_link "see https://up.example/y ok" 6 /)"
@@ -745,6 +751,14 @@ opened "link: 読み取る間も通し番号が同じなら開く" "https://exam
 # 待つ間に画面の行が書き換わっていたら、折り返しをつながず、クリックした時の行だけを使う
 opened "link: 書き換わった行はつながない"   "https://example.com/a" \
     "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/ab" STUB_wrap_4=1 STUB_row_5="cd x" click_link "see https://example.com/a" 10 /)"
+opened "link: 書き換わった幅いっぱいの行もつながない" "https://example.com/very/long/pathxx" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/pathzz" STUB_wrap_4=1 STUB_row_5="yy x" click_link "$r40" 10 /)"
+# 画面は 1 回だけ読む（2 回に分けると、その間に書き換わった行の URL を開いてしまう）
+caps="$work/caps"; rm -rf "$caps"; mkdir -p "$caps"
+printf '%s\n' "see https://example.com/a" > "$caps/1"
+printf '%s\n' "see https://example.com/attacker/new-page" > "$caps/2"
+opened "link: 画面は 1 回だけ読む"          "https://example.com/a" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_CAPS="$caps" click_link "see https://example.com/a" 10 /)"
 # URL・参照でなければ何もしない（ファイル・SHA・ただの語。メッセージも出さない）
 silent "link: ファイルは開かない"           "$(click_link "see link.sh:3 here" 5 "$repo")"
 silent "link: SHA は開かない"               "$(click_link "see $short here" 6 "$crepo")"

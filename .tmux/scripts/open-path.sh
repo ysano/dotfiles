@@ -899,37 +899,38 @@ open_url() {
 
 # url_click <行> <桁>: クリック位置の URL（url_at）。端末の幅で自動的に折り返された行
 # （tmux が折り返しとして記録した行）の続きはつなぐ。クリックした画面の行から下の数行を
-# capture-pane -J（折り返しをつなぐ）で読み、その最初の行（= クリックした行から始まる論理行）
-# を使う。改行で折り返した行（Claude Code 等）は、画面の行だけでは折り返しと確かめられない
-# ためつながない（Claude Code が出す URL は OSC 8 のリンクで、折り返しても全体を読める）。
-# 続きの行のクリックも前の行とはつながない
+# capture-pane -J（折り返しをつなぐ）で 1 回だけ読み、その最初の行（= クリックした行から
+# 始まる論理行）を使う。つなぐのは、クリックした行が pane の幅いっぱいまで埋まっていて
+# （端末が折り返すのはその時だけ）、読んだ論理行がその行で始まる時だけ（待つ間に行が書き換わって
+# いればつながない。画面を 2 回に分けて読むと、その間の書き換えを取り込んでしまう）。
+# 改行で折り返した行（Claude Code 等）は、画面の行だけでは折り返しと確かめられないため
+# つながない（Claude Code が出す URL は OSC 8 のリンクで、折り返しても全体を読める）。
+# 続きの行のクリックも前の行とはつながない（tmux の書式では続きの行かどうか分からない）
 url_click() {
     case $1 in *://*) ;; *) return 1 ;; esac
     logical=$1
     pane=${cpane:-} y=${cy:-}
     case $y in ''|*[!0-9]*) y="" ;; esac
     if [ -n "$pane" ] && [ -n "$y" ]; then
-        # shellcheck disable=SC2046  # 「モード 高さ」を 2 つに分ける
-        set -- "$1" "$2" $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height}' 2>/dev/null)
+        # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
+        set -- "$1" "$2" $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height} #{pane_width}' 2>/dev/null)
         # コピーモード中は capture-pane（通常の画面）と表示中の行が一致しないため見ない。
         # 範囲外の行は tmux が端の行に丸めるため、最下行より下は読まない
-        if [ "${3:-1}" = 0 ] && digits "${4:-}" && [ "$y" -lt "$4" ]; then
-            # 待つ間に画面の行が書き換わっていれば（出力が続く pane 等）、つながない
-            row=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$y" 2>/dev/null)
-            if [ "$(rtrim "$row")" = "$(rtrim "$1")" ]; then
-                last=$((y + 3))
-                [ "$last" -lt "$4" ] || last=$(($4 - 1))
-                joined=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$last" -J 2>/dev/null | head -n 1)
-                case $joined in "$row"*) logical=$joined ;; esac
-            fi
+        if [ "${3:-1}" = 0 ] && digits "${4:-}" && digits "${5:-}" && [ "$y" -lt "$4" ] &&
+            [ "$(dwidth "$1")" -eq "$5" ]; then
+            last=$((y + 3))
+            [ "$last" -lt "$4" ] || last=$(($4 - 1))
+            joined=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$last" -J 2>/dev/null | head -n 1)
+            case $joined in "$1"?*) logical=$joined ;; esac
         fi
     fi
     url_at "$logical" "$2"
 }
 
-# rtrim <文字列>: 末尾の空白を除く
-rtrim() {
-    printf '%s' "${1%"${1##*[! ]}"}"
+# dwidth <文字列>: 表示桁数（CJK・全角形・絵文字 = 2 桁）
+dwidth() {
+    printf '%s\n' "$1" | OPEN_PATH_WIDE=$WIDE_RANGES LC_ALL=C awk "$TEXT_AWK"'
+    { k = chars($0, ch); w = 0; for (j = 1; j <= k; j++) w += width(cp(ch[j])); print w }'
 }
 
 click() {
