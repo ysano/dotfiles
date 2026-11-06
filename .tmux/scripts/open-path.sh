@@ -5,6 +5,9 @@
 # keybindings.conf の Option + クリックから呼ばれる（値は @open_path_* ユーザーオプション経由）:
 #   open-path.sh click        プレビュー（ポップアップ）
 #   open-path.sh click open   既定アプリで開く（右クリックメニューの "Open in Default App"）
+#   open-path.sh click link [<通し番号>]  普通のクリック: URL・PR / Issue の参照をブラウザで開く
+#                             （それ以外は何もしない。通し番号が今の @open_path_seq と違えば何もしない）
+# GitHub 以外の URL は、どの click でもブラウザで開く（プレビューできないため）
 # 段階ごとのサブコマンド（テスト・デバッグ用）:
 #   extract <行> <桁>        クリック位置（0 起点の表示桁）のパス候補を切り出す
 #   parse <候補>             末尾の記号を落とし「パス<TAB>行番号」に分ける
@@ -15,6 +18,7 @@
 #   context <名前> <cwd> <行の番号> <折り返し桁>  標準入力の画面の行のディレクトリから探す
 #   commit_repo <SHA> <ディレクトリ...>  そのコミットを持つリポジトリ
 #   gh_ref <行> <桁> / gh_url <URL>  PR / Issue の参照（#番号・owner/repo#番号・URL）
+#   url_at <行> <桁> [<次の行> <端の桁>]  クリック位置の http(s) の URL
 #   gh_nwo <remote の URL> / gh_repo <ディレクトリ...>  GitHub の owner/repo
 #   gh_kind <owner/repo> <番号>   pr か issue か（gh api で問い合わせる）
 #   render gh <owner/repo> <番号> <pr|issue> [body|diff]  PR / Issue の本文・差分を標準出力へ
@@ -384,6 +388,13 @@ opt() {
     tmux show -gv "@open_path_$1" 2>/dev/null
 }
 
+# ctx <名前>: クリックした位置の値（client・link・line・x・y・pane・cwd）。普通のクリック
+# （click link）は、待つ間に Option + クリック・右クリックが共通の @open_path_* を書き換えても
+# 混ざらないよう、別の @open_path_up_* を読む（OPEN_CTX=up_）
+ctx() {
+    opt "${OPEN_CTX:-}$1"
+}
+
 # display-popup -T は tmux 3.3+
 popup_title_supported() {
     tmux display -p '#{version}' 2>/dev/null | awk -F. '{
@@ -429,7 +440,7 @@ popup_size() {
 # wrapped <行> <桁> <cwd>: 改行で折り返されたパスを、クリックした pane の前後の行を
 # つないで探し直す（画面上の #{mouse_y} 行目の前後。コピーモード中は探さない）
 wrapped() {
-    pane=$(opt pane) y=$(opt y)
+    pane=${cpane:-} y=${cy:-}
     case $y in ''|*[!0-9]*) return 1 ;; esac
     [ -n "$pane" ] || return 1
     # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
@@ -659,6 +670,70 @@ gh_url() {
     }'
 }
 
+# url_at <行> <桁>: クリック位置の http(s) の URL を出す。
+# 前後の括弧・引用符・句読点は含めない（URL の中で対になる丸括弧は残す）。別の URL の中
+# （?next=https://…）のクリックは外側の URL として読み、区切りの後に続く別の URL
+# （https://a,https://b）の手前で止める
+url_at() {
+    printf '%s\n' "$1" | OPEN_PATH_WIDE=$WIDE_RANGES LC_ALL=C awk -v x="$2" "$TEXT_AWK"'
+    # URL の文字（RFC 3986 の非予約文字・予約文字と %。角括弧と引用符は Markdown や文の
+    # 区切りに使われるため除く。端末に出る URL は % で符号化されているものとし、空白なしで
+    # 続く和文（https://…を見る）を含めないよう、多バイト文字は区切りにする）
+    function urlchar(c) {
+        return c < "\200" && c ~ /[A-Za-z0-9._~:\/?#@!$&()*+,;=%-]/
+    }
+    # a[i] から http:// か https:// に 1 文字以上続く並びが始まるか（a = chars の結果、k = 文字数）
+    function scheme(a, k, i,    t, m) {
+        t = ""
+        for (m = i; m <= i + 8 && m <= k; m++) t = t a[m]
+        return t ~ /^https?:\/\/./
+    }
+    # a[i] から、別の URL の中ではない URL が始まるか（直前が無いか、URL の続きに使う文字で
+    # ない。区切りの括弧・カンマ・引用符は URL の続きとみなさない）
+    function own(a, k, i) {
+        return scheme(a, k, i) && (i == 1 || a[i - 1] !~ /^[A-Za-z0-9\/:=?&%.@#_+~!$*;-]$/)
+    }
+    # a[from..to] のうち URL が始まる位置: 後ろから見て最初の own。無ければ最も前の http(s)://
+    function start(a, k, from, to,    j, first) {
+        first = 0
+        for (j = to; j >= from; j--) {
+            if (!scheme(a, k, j)) continue
+            first = j
+            if (j == from || own(a, k, j)) return j
+        }
+        return first
+    }
+    function count(s, c,    n, i) {
+        n = 0
+        for (i = 1; i <= length(s); i++) if (substr(s, i, 1) == c) n++
+        return n
+    }
+    {
+        k = chars($0, ch); col = 0; hit = 0; x += 0
+        for (j = 1; j <= k; j++) {
+            w = width(cp(ch[j]))
+            if (x >= col && x < col + w) hit = j
+            col += w
+        }
+        if (!hit || !urlchar(ch[hit])) exit 1
+        l = hit
+        while (l > 1 && urlchar(ch[l - 1])) l--
+        if (!(us = start(ch, k, l, hit))) exit 1
+        r = hit
+        while (r < k && urlchar(ch[r + 1]) && !own(ch, k, r + 1)) r++
+        url = ""
+        for (j = us; j <= r; j++) url = url ch[j]
+        # 末尾の句読点と、対にならない閉じ括弧は URL に含めない
+        while (url != "") {
+            c = substr(url, length(url), 1)
+            if (c ~ /[.,;:!?*]/ || (c == ")" && count(url, "(") < count(url, ")"))) url = substr(url, 1, length(url) - 1)
+            else break
+        }
+        if (url !~ /^https?:\/\/./) exit 1
+        print url
+    }'
+}
+
 # gh_nwo <remote の URL>: github.com の remote（https・scp 形式・ssh://）の owner/repo
 gh_nwo() {
     printf '%s\n' "$1" | awk "$GH_REF_AWK"'
@@ -786,7 +861,7 @@ open_ref() {
 # near_lines: クリックした pane の前後（上 15 行・下 5 行）を出し、OPEN_NEAR_IDX に
 # クリックした行の番号、OPEN_NEAR_WRAP に折り返し桁を入れる（コピーモード中は失敗）
 near_lines() {
-    pane=$(opt pane) y=$(opt y)
+    pane=${cpane:-} y=${cy:-}
     case $y in ''|*[!0-9]*) return 1 ;; esac
     [ -n "$pane" ] || return 1
     # shellcheck disable=SC2046  # 「モード 高さ 幅 履歴」を 4 つに分ける
@@ -803,9 +878,75 @@ near_lines() {
     near=$(tmux capture-pane -p -t "$pane" -S "$start" -E "$end" 2>/dev/null) || return 1
 }
 
+# digits <文字列>: 1 文字以上の数字だけか
+digits() {
+    case $1 in ''|*[!0-9]*) return 1 ;; esac
+}
+
+# web_url <URL>: ブラウザに渡してよい URL か（http / https だけ。空白・制御文字は含めない）
+web_url() {
+    case $1 in http://?*|https://?*) ;; *) return 1 ;; esac
+    case $1 in *[[:space:]]*) return 1 ;; esac
+    no_cntrl "$1"
+}
+
+# open_url <URL>: ブラウザ（既定アプリ）で開く。応答しない場合に run-shell が残らないよう打ち切る
+open_url() {
+    web_url "$1" || return 1
+    bounded 5 open_default "$1" >/dev/null 2>&1 ||
+        tmux display-message -c "$client" "open-path: ブラウザで開けません"
+}
+
+# url_click <行> <桁>: クリック位置の URL（url_at）。端末の幅で自動的に折り返された行
+# （tmux が折り返しとして記録した行）の続きはつなぐ。クリックした画面の行から下の数行を
+# capture-pane -J（折り返しをつなぐ）で 1 回だけ読み、その最初の行（= クリックした行から
+# 始まる論理行）を使う。つなぐのは、クリックした行が pane の幅いっぱいまで埋まっていて
+# （端末が折り返すのはその時だけ）、読んだ論理行がその行で始まる時だけ（待つ間に行が書き換わって
+# いればつながない。画面を 2 回に分けて読むと、その間の書き換えを取り込んでしまう）。
+# 改行で折り返した行（Claude Code 等）は、画面の行だけでは折り返しと確かめられないため
+# つながない（Claude Code が出す URL は OSC 8 のリンクで、折り返しても全体を読める）。
+# 続きの行のクリックも前の行とはつながない（tmux の書式では続きの行かどうか分からない）
+url_click() {
+    case $1 in *://*) ;; *) return 1 ;; esac
+    logical=$1
+    pane=${cpane:-} y=${cy:-}
+    case $y in ''|*[!0-9]*) y="" ;; esac
+    if [ -n "$pane" ] && [ -n "$y" ]; then
+        # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
+        set -- "$1" "$2" $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height} #{pane_width}' 2>/dev/null)
+        # コピーモード中は capture-pane（通常の画面）と表示中の行が一致しないため見ない。
+        # 範囲外の行は tmux が端の行に丸めるため、最下行より下は読まない
+        if [ "${3:-1}" = 0 ] && digits "${4:-}" && digits "${5:-}" && [ "$y" -lt "$4" ] &&
+            [ "$(dwidth "$1")" -eq "$5" ]; then
+            last=$((y + 3))
+            [ "$last" -lt "$4" ] || last=$(($4 - 1))
+            joined=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$last" -J 2>/dev/null | head -n 1)
+            case $joined in "$1"?*) logical=$joined ;; esac
+        fi
+    fi
+    url_at "$logical" "$2"
+}
+
+# dwidth <文字列>: 表示桁数（CJK・全角形・絵文字 = 2 桁）
+dwidth() {
+    printf '%s\n' "$1" | OPEN_PATH_WIDE=$WIDE_RANGES LC_ALL=C awk "$TEXT_AWK"'
+    { k = chars($0, ch); w = 0; for (j = 1; j <= k; j++) w += width(cp(ch[j])); print w }'
+}
+
 click() {
     mode=${1:-preview}
-    client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
+    # 普通のクリックは、ボタンを離した時の押下の通し番号（@open_path_seq）を受け取る。
+    # 待つ間に次の押下（ダブルクリック等）があって番号が進んでいたら、何もしない
+    if [ "$mode" = link ] && [ -n "${2:-}" ] && [ "$2" != "$(opt seq)" ]; then
+        return 0
+    fi
+    [ "$mode" = link ] && OPEN_CTX=up_
+    # クリックした位置はここで一度に読み、以降（wrapped・near_lines・url_click も）この値だけを使う
+    client=$(ctx client) link=$(ctx link) line=$(ctx line) x=$(ctx x) cwd=$(ctx cwd) cpane=$(ctx pane) cy=$(ctx y)
+    # 読む間に次のクリックが来て書き換えた値かもしれないため、読んだ後にも通し番号を確かめる
+    if [ "$mode" = link ] && [ -n "${2:-}" ] && [ "$2" != "$(opt seq)" ]; then
+        return 0
+    fi
     # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
     roots=$(opt roots)
     if [ -n "$roots" ]; then OPEN_PATH_ROOTS=$roots; export OPEN_PATH_ROOTS; fi
@@ -813,11 +954,24 @@ click() {
     # set -g @open_path_gh_alias "bp=owner/repo int=owner/repo2"
     gh_alias=$(opt gh_alias)
     if [ -n "$gh_alias" ]; then OPEN_PATH_GH_ALIAS=$gh_alias; export OPEN_PATH_GH_ALIAS; fi
-    res="" ref="" tok=""
+    res="" ref="" tok="" url=""
     case $link in
         file://*) res=$(resolve "$link" "$cwd") ;;
-        http://*|https://*) ref=$(gh_url "$link") ;;
+        http://*|https://*) web_url "$link" && url=$link ;;
     esac
+    if [ -z "$res$url" ]; then
+        url=$(url_click "$line" "$x") || url=""
+    fi
+    # URL: PR / Issue の URL はプレビューでは gh の本文を開く。それ以外（普通のクリック・既定アプリ・
+    # GitHub 以外の URL）は、クリックした URL をそのまま（#issuecomment 等の続きも）ブラウザで開く
+    if [ -n "$url" ]; then
+        if [ "$mode" = preview ] && ref=$(gh_url "$url"); then
+            open_ref preview
+        else
+            open_url "$url"
+        fi
+        return 0
+    fi
     # PR / Issue の参照（#番号・owner/repo#番号・URL）はファイルより先に見る。ただし
     # owner/repo#番号（URL・省略形は除く）の全体か owner/repo が cwd → git ルートの配下に実在する
     # ファイルなら、ファイルとして開く（docs/README.md#123 等。ディレクトリは除く: ghq の
@@ -835,12 +989,15 @@ click() {
                 fi ;;
         esac
     fi
-    if [ -z "$res$ref" ]; then
-        tok=$(extract "$line" "$x") && res=$(resolve "$tok" "$cwd")
-    fi
     if [ -n "$ref" ]; then
-        open_ref "$mode"
+        # 普通のクリックは、PR / Issue をブラウザで開く
+        if [ "$mode" = link ]; then open_ref open; else open_ref "$mode"; fi
         return 0
+    fi
+    # 普通のクリックは URL・PR / Issue だけを扱う（ファイル・SHA・ただの語では何もしない）
+    [ "$mode" = link ] && return 0
+    if [ -z "$res" ]; then
+        tok=$(extract "$line" "$x") && res=$(resolve "$tok" "$cwd")
     fi
     if [ -z "$res" ] && [ -n "${tok:-}" ]; then
         res=$(wrapped "$line" "$x" "$cwd")
@@ -1299,11 +1456,12 @@ case $cmd in
     commit_repo) commit_repo "$@" ;;
     gh_ref) gh_ref "$@" ;;
     gh_url) gh_url "$@" ;;
+    url_at) url_at "$@" ;;
     gh_nwo) gh_nwo "$@" ;;
     gh_repo) gh_repo "$@" ;;
     gh_kind) gh_kind "$@" ;;
     claude_text) claude_text "$@" ;;
     claude_ancestors) claude_ancestors ;;
     to_claude) to_claude "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|gh_nwo|gh_repo|gh_kind|claude_text|claude_ancestors|to_claude|view|mark|action|lesskey_ok|md_renderer|is_markdown|glow_dir|popup_size|render} ..." >&2; exit 2 ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|url_at|gh_nwo|gh_repo|gh_kind|claude_text|claude_ancestors|to_claude|view|mark|action|lesskey_ok|md_renderer|is_markdown|glow_dir|popup_size|render} ..." >&2; exit 2 ;;
 esac

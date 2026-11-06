@@ -425,6 +425,19 @@ check "commit: 数字だけで該当なし"   ""        sh "$SCRIPT" commit_repo
 check "commit: 6 桁以下は対象外"     ""        sh "$SCRIPT" commit_repo "$(printf '%s' "$sha" | cut -c1-6)" "$crepo"
 check "commit: 差分を表示"           "1"       sh -c 'sh "$1" render commit "$2" "$3" | grep -c "init commit"' _ "$SCRIPT" "$crepo" "$short"
 
+# --- url_at <行> <桁>: クリック位置の http(s) の URL（click の分岐と切り分けて直接確かめる） ---
+check "url: URL の上"                "https://example.com/a?b=1"         sh "$SCRIPT" url_at "see https://example.com/a?b=1 ok" 10
+check "url: スキームの上"            "https://example.com/a"             sh "$SCRIPT" url_at "see https://example.com/a ok" 4
+check "url: URL の外"                ""                                  sh "$SCRIPT" url_at "see https://example.com/a ok" 1
+check "url: 全角の後ろの桁を補正"    "https://example.com/a"             sh "$SCRIPT" url_at "日本語 https://example.com/a です" 10
+check "url: 隣接する URL の前"       "https://one.example/a"             sh "$SCRIPT" url_at "https://one.example/a,https://two.example/b" 10
+check "url: 隣接する URL の後ろ"     "https://two.example/b"             sh "$SCRIPT" url_at "https://one.example/a,https://two.example/b" 30
+check "url: クエリの中の URL は外側" "https://x.example/?next=https://y.example/z" sh "$SCRIPT" url_at "https://x.example/?next=https://y.example/z" 30
+check "url: 文末の句読点を除く"      "https://example.com/a"             sh "$SCRIPT" url_at "see https://example.com/a.," 6
+check "url: 対になる括弧は残す"      "https://e.org/wiki/Foo_(bar)"      sh "$SCRIPT" url_at "(https://e.org/wiki/Foo_(bar))" 5
+check "url: 対にならない閉じ括弧"    "https://e.org/a"                   sh "$SCRIPT" url_at "[x](https://e.org/a)" 6
+check "url: http(s) 以外は対象外"    ""                                  sh "$SCRIPT" url_at "see ftp://example.com/a ok" 6
+
 # --- gh_ref <行> <桁>: クリック位置の PR / Issue の参照（#N・owner/repo#N）を「owner/repo<TAB>番号」で ---
 check "gh: #番号"                    "${TAB}78"                sh "$SCRIPT" gh_ref "PR #78 を見る" 4
 check "gh: # の上"                   "${TAB}78"                sh "$SCRIPT" gh_ref "PR #78 を見る" 3
@@ -563,13 +576,32 @@ stub="$work/stub"; mkdir -p "$stub"
 cat > "$stub/tmux" <<'STUB'
 #!/bin/sh
 case $1 in
-    show) eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\"" ;;
+    # STUB_SEQ_FILE があれば、@open_path_seq は読むたびにその先頭行を出して次の行へ進む
+    # （最後の行は残す。処理の途中で次のクリックが来て通し番号が進んだ状態を作る）
+    show) if [ "$3" = @open_path_seq ] && [ -n "${STUB_SEQ_FILE:-}" ]; then
+              head -n 1 "$STUB_SEQ_FILE"
+              if [ "$(wc -l < "$STUB_SEQ_FILE")" -gt 1 ]; then tail -n +2 "$STUB_SEQ_FILE" > "$STUB_SEQ_FILE.t" && mv "$STUB_SEQ_FILE.t" "$STUB_SEQ_FILE"; fi
+          else
+              eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\""
+          fi ;;
     display) case $* in *pane_in_mode*) printf '%s\n' "${STUB_pstate:-0 24 40}" ;; *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
     display-popup|display-message|set|set-buffer|paste-buffer|select-pane|send-keys) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
     list-panes) printf '%s\n' "${STUB_panes:-}" ;;
-    # capture-pane -p -t <pane> -S <行> -E <行> → STUB_row_<行> を順に（pane が違えば空）
-    capture-pane) [ "$4" = "${STUB_pane:-}" ] || exit 0
-                  i=$6; while [ "$i" -le "$8" ]; do eval "printf '%s\n' \"\${STUB_row_$i:-}\""; i=$((i + 1)); done ;;
+    # capture-pane -p -t <pane> -S <行> -E <行> [-J] → STUB_row_<行> を順に（pane が違えば空）。
+    # -J なら、STUB_wrap_<行> がある行（端末の幅で折り返した行）を次の行とつなぐ
+    # STUB_CAPS（ディレクトリ）があれば、n 回目の capture-pane はその中のファイル n を出す
+    # （読み取りの間に画面が書き換わった状態を作る）
+    capture-pane) if [ -n "${STUB_CAPS:-}" ]; then
+                      n=$(( $(cat "$STUB_CAPS/n" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$STUB_CAPS/n"
+                      [ -f "$STUB_CAPS/$n" ] && cat "$STUB_CAPS/$n"
+                      exit 0
+                  fi
+                  [ "$4" = "${STUB_pane:-}" ] || exit 0
+                  i=$6; while [ "$i" -le "$8" ]; do
+                      eval "row=\${STUB_row_$i:-} wrap=\${STUB_wrap_$i:-}"
+                      if [ "${9:-}" = -J ] && [ -n "$wrap" ]; then printf '%s' "$row"; else printf '%s\n' "$row"; fi
+                      i=$((i + 1))
+                  done ;;
 esac
 STUB
 chmod +x "$stub/tmux"
@@ -664,6 +696,103 @@ case $log in *"[$repo/docs] <- open"*) echo "ok   click open はディレクト�
 log=$(click_open "foo bar" 3 "$repo")
 case $log in *"<- open"*) echo "FAIL click open: 見つからなければ開かない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   click open: 見つからなければメッセージ" ;; *) echo "FAIL click open: 見つからなければメッセージ: $log"; fail=1 ;; esac
 
+# --- click link（普通のクリック）: URL・PR / Issue の参照だけをブラウザで開き、それ以外は何もしない ---
+# click_link <行> <桁> <cwd> [<通し番号>]: 普通のクリックは @open_path_up_* から読む
+# （STUB_pane / STUB_y は up_ にも渡す）
+click_link() {
+    : > "$work/log"
+    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_up_client=c1 STUB_up_link="${CLICK_LINK:-}" \
+        STUB_up_line="$1" STUB_up_x="$2" STUB_up_cwd="$3" STUB_up_pane="${STUB_pane:-}" STUB_up_y="${STUB_y:-}" \
+        sh "$SCRIPT" click link ${4:+"$4"} >/dev/null 2>&1
+    cat "$work/log"
+}
+# opened <名前> <URL> <ログ>: その URL だけをブラウザで開き、ポップアップもメッセージも出さない
+opened() {
+    if [ "$3" = "[$2] <- open" ]; then echo "ok   $1"; else echo "FAIL $1: $3"; fail=1; fi
+}
+# silent <名前> <ログ>: 何もしない（開かない・ポップアップもメッセージも出さない）
+silent() {
+    if [ -z "$2" ]; then echo "ok   $1"; else echo "FAIL $1: $2"; fail=1; fi
+}
+opened "link: URL"                         "https://example.com/a?b=1&c=2" "$(click_link "see https://example.com/a?b=1&c=2 ok" 10 /)"
+opened "link: PR の URL はそのまま（# の続きも）" "https://github.com/acme/widget/pull/9#issuecomment-1" \
+    "$(click_link "see https://github.com/acme/widget/pull/9#issuecomment-1 ok" 10 "$grepo")"
+opened "link: ハイパーリンク（OSC 8）の URL" "https://example.com/docs" "$(CLICK_LINK="https://example.com/docs" click_link "the docs here" 5 /)"
+opened "link: #番号は cwd のリポジトリ"     "https://github.com/acme/widget/issues/78" "$(click_link "PR #78 を見る" 4 "$grepo/sub")"
+opened "link: owner/repo#番号"              "https://github.com/o/r/issues/5" "$(click_link "see o/r#5 now" 6 /)"
+opened "link: 登録した省略形"               "https://github.com/acme/blueprint/issues/12" "$(STUB_gh_alias="bp=acme/blueprint" click_link "see bp#12 now" 5 "$grepo")"
+opened "link: 別の URL の中の URL は外側を開く" "https://login.example.com/?next=https://github.com/acme/widget/pull/9" \
+    "$(click_link "go https://login.example.com/?next=https://github.com/acme/widget/pull/9 now" 40 /)"
+# 文の中の URL: 前後の括弧・引用符・句読点は URL に含めない（URL の中で対になる括弧は残す）
+opened "link: 和文の括弧に挟まれた URL"     "https://example.com/a" "$(click_link "（https://example.com/a）を見る" 5 /)"
+opened "link: 文末の句点"                   "https://example.com/a" "$(click_link "see https://example.com/a." 6 /)"
+opened "link: URL の中で対になる括弧"       "https://en.wikipedia.org/wiki/Foo_(bar)" "$(click_link "(see https://en.wikipedia.org/wiki/Foo_(bar))" 10 /)"
+opened "link: Markdown のリンク"            "https://example.com/a" "$(click_link "[docs](https://example.com/a)" 10 /)"
+opened "link: 山括弧"                       "https://example.com/a" "$(click_link "<https://example.com/a>" 5 /)"
+opened "link: 引用符"                       "https://example.com/a" "$(click_link "href=\"https://example.com/a\" x" 10 /)"
+silent "link: URL の後ろの和文は開かない"   "$(click_link "https://example.com/a）を見る" 23 /)"
+opened "link: 空白なしで続く和文は含めない" "https://example.com/a" "$(click_link "https://example.com/aを見る" 5 /)"
+opened "link: カンマで続く URL の前"        "https://one.example/a" "$(click_link "https://one.example/a,https://two.example/b" 10 /)"
+opened "link: カンマで続く URL の後ろ"      "https://two.example/b" "$(click_link "https://one.example/a,https://two.example/b" 30 /)"
+# 端末の幅で折り返した行（tmux が折り返しとして記録した行。capture-pane -J でつながる）だけ
+# 次の行をつなぐ。改行で折り返した行は、右端まで埋まっていても字下げしていてもつながない
+# （pane の幅は 40。端末の幅で折り返すのは幅いっぱいまで埋まった行だけ）
+r40="see https://example.com/very/long/pathxx"
+opened "link: 端末の幅で折り返した URL"     "https://example.com/very/long/pathxxyy?q=1" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="$r40" STUB_wrap_4=1 STUB_row_5="yy?q=1 end" click_link "$r40" 10 /)"
+opened "link: 折り返していない次の行はつながない" "https://example.com/very/long/path" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/path" STUB_row_5="    Next steps" \
+        click_link "see https://example.com/very/long/path" 10 /)"
+opened "link: 折り返した先の別の URL の手前で止める" "https://example.com/very/long/pathxxth" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="$r40" STUB_wrap_4=1 STUB_row_5="th,https://b.example x" click_link "$r40" 10 /)"
+opened "link: コピーモード中は折り返しをつながない" "https://example.com/very/long/pathxx" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24 40" STUB_row_4="$r40" STUB_wrap_4=1 STUB_row_5="yy?q=1 end" click_link "$r40" 10 /)"
+# 続きの行は前の行とつながない（OSC 8 のリンクなら開く）
+silent "link: 折り返した URL の続きの行は開かない" \
+    "$(STUB_pane=%7 STUB_y=5 STUB_row_4="$r40" STUB_wrap_4=1 click_link "yy?q=1 end" 5 /)"
+# 普通のクリックは @open_path_up_* を読む（待つ間に Option + クリック等が書き換える共通の値は使わない）
+opened "link: 共通の @open_path_* は読まない" "https://up.example/y" \
+    "$(STUB_line="see https://shared.example/x ok" STUB_x=6 STUB_link="https://shared.example/l" click_link "see https://up.example/y ok" 6 /)"
+# 待つ間に次の押下（ダブルクリック等）で通し番号が進んでいたら開かない
+silent "link: 通し番号が進んでいたら開かない" "$(STUB_seq=5 click_link "see https://example.com/a ok" 6 / 4)"
+opened "link: 通し番号が同じなら開く"       "https://example.com/a" "$(STUB_seq=5 click_link "see https://example.com/a ok" 6 / 5)"
+# クリックした位置を読み取る間に次のクリックが来た（通し番号が進んだ）なら、読んだ値は使わない
+printf '5\n6\n' > "$work/seq"
+silent "link: 読み取る間に通し番号が進んだら開かない" "$(STUB_SEQ_FILE="$work/seq" click_link "see https://example.com/a ok" 6 / 5)"
+printf '5\n5\n' > "$work/seq"
+opened "link: 読み取る間も通し番号が同じなら開く" "https://example.com/a" "$(STUB_SEQ_FILE="$work/seq" click_link "see https://example.com/a ok" 6 / 5)"
+# 待つ間に画面の行が書き換わっていたら、折り返しをつながず、クリックした時の行だけを使う
+opened "link: 書き換わった行はつながない"   "https://example.com/a" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/ab" STUB_wrap_4=1 STUB_row_5="cd x" click_link "see https://example.com/a" 10 /)"
+opened "link: 書き換わった幅いっぱいの行もつながない" "https://example.com/very/long/pathxx" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/pathzz" STUB_wrap_4=1 STUB_row_5="yy x" click_link "$r40" 10 /)"
+# 画面は 1 回だけ読む（2 回に分けると、その間に書き換わった行の URL を開いてしまう）
+caps="$work/caps"; rm -rf "$caps"; mkdir -p "$caps"
+printf '%s\n' "see https://example.com/a" > "$caps/1"
+printf '%s\n' "see https://example.com/attacker/new-page" > "$caps/2"
+opened "link: 画面は 1 回だけ読む"          "https://example.com/a" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_CAPS="$caps" click_link "see https://example.com/a" 10 /)"
+# URL・参照でなければ何もしない（ファイル・SHA・ただの語。メッセージも出さない）
+silent "link: ファイルは開かない"           "$(click_link "see link.sh:3 here" 5 "$repo")"
+silent "link: SHA は開かない"               "$(click_link "see $short here" 6 "$crepo")"
+silent "link: ただの語"                     "$(click_link "foo bar" 3 "$repo")"
+silent "link: file:// のハイパーリンクは開かない" "$(CLICK_LINK="file://$repo/link.sh" click_link "link.sh" 2 "$repo")"
+# http(s) 以外・空白や制御文字を含むリンクはブラウザに渡さない
+silent "link: http(s) 以外のスキーム"       "$(CLICK_LINK="javascript:alert(1)" click_link "click me" 2 /)"
+silent "link: 空白を含むリンク"             "$(CLICK_LINK="https://example.com/a b" click_link "click me" 2 /)"
+silent "link: 制御文字を含むリンク"         "$(CLICK_LINK="$(printf 'https://example.com/\033x')" click_link "click me" 2 /)"
+log=$(click_link "PR #78 を見る" 4 "$lrepo")
+case $log in *"<- open"*) echo "FAIL link: リポジトリが分からなければ開かない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   link: リポジトリが分からなければメッセージ" ;; *) echo "FAIL link: リポジトリが分からなければメッセージ: $log"; fail=1 ;; esac
+# 右クリックの「Open in Default App」「Preview Path」も、GitHub 以外の URL はブラウザで開く
+opened "click open: URL"                    "https://example.com/a" "$(click_open "see https://example.com/a ok" 6 /)"
+opened "click open: PR の URL はそのまま"   "https://github.com/acme/widget/pull/9#discussion_r1" \
+    "$(click_open "see https://github.com/acme/widget/pull/9#discussion_r1 ok" 6 /)"
+opened "click: GitHub 以外の URL はブラウザ" "https://example.com/a" "$(click_run 3.7c "see https://example.com/a ok" 6 /)"
+opened "click: GitHub 以外のハイパーリンクはブラウザ" "https://example.com/docs" "$(CLICK_LINK="https://example.com/docs" click_run 3.7c "the docs here" 5 /)"
+# 前の行が URL で終わっていても、字下げした行のファイルはこれまでどおりファイルとして開く
+log=$(STUB_pane=%7 STUB_y=5 STUB_row_4="https://example.com/reference" click_run 3.7c "    link.sh" 6 "$repo")
+case $log in *"<- open"*) echo "FAIL click: URL の次の行のファイル: $log"; fail=1 ;; *"[@open_path_view_path][$repo/link.sh]"*) echo "ok   click: URL の次の行のファイル" ;; *) echo "FAIL click: URL の次の行のファイル: $log"; fail=1 ;; esac
+
 # フォーマット展開される display-popup の -d / コマンド文字列に画面由来の値を載せない
 fmtdir="$work/#(touch pwned5)"; mkdir -p "$fmtdir"; echo x > "$fmtdir/a.txt"
 log=$(click_run 3.7c "a.txt" 0 "$fmtdir")
@@ -717,6 +846,25 @@ case $optblock in
     *mouse_any_flag*|*"send-keys -M"*) echo "FAIL Option + クリックをアプリへ渡さない: $optblock"; fail=1 ;;
     *"open-path.sh click"*) echo "ok   Option + クリックをアプリへ渡さない" ;;
     *) echo "FAIL Option + クリックの割り当てが無い"; fail=1 ;;
+esac
+# 普通のクリックは 1 回目の押下を離して待ち、次の押下が無ければ開く（ドラッグの範囲選択は
+# MouseDragEnd で別）。マウスを使うアプリ・コピーモードへはそのまま渡し、行に URL か #数字 が
+# ある時だけ open-path を起動する。押下は既定どおり pane を選んでアプリへ渡し、通し番号を進める
+kb="$(dirname "$SCRIPT")/../keybindings.conf"
+downblock=$(sed -n '/^bind -n MouseDown1Pane/,/^}/p' "$kb")
+case $downblock in
+    *"select-pane -t ="*"send-keys -M"*"@open_path_press 1"*"@open_path_down '#{pane_id}:#{mouse_x}:#{mouse_y}'"*"@open_path_seq '#{e|+:#{@open_path_seq},1}'"*) echo "ok   押下は既定の動きに位置と通し番号を足す" ;;
+    *) echo "FAIL 押下の割り当て: $downblock"; fail=1 ;;
+esac
+secondblock=$(sed -n '/^bind -n SecondClick1Pane/,/^}/p' "$kb")
+case $secondblock in
+    *"send-keys -M"*"@open_path_press 2"*"@open_path_seq '#{e|+:#{@open_path_seq},1}'"*) echo "ok   2 回目の押下も pane へ渡し、通し番号を進める" ;;
+    *) echo "FAIL 2 回目の押下の割り当て: $secondblock"; fail=1 ;;
+esac
+upblock=$(sed -n '/^bind -n MouseUp1Pane/,/^}/p' "$kb")
+case $upblock in
+    *"#{||:#{mouse_any_flag},#{pane_in_mode}}"*"send-keys -M"*"@open_path_press 0"*"#{==:#{@open_path_press},1}"*"#{==:#{@open_path_down},#{pane_id}:#{mouse_x}:#{mouse_y}}"*"#{m/r:(://|[#][0-9]),#{mouse_line}}"*"@open_path_up_line '#{mouse_line}'"*"run-shell -b -d 0.35 '~/.tmux/scripts/open-path.sh click link #{@open_path_seq}'"*"@open_path_press 0"*"@open_path_press 0"*) echo "ok   普通のクリックは 1 回目の押下・URL・#番号の行だけ、待ってから open-path へ（押下は離すたびに消す）" ;;
+    *) echo "FAIL 普通のクリックの割り当て: $upblock"; fail=1 ;;
 esac
 
 # --- open-path-menu.sh: 既定の右クリックメニューへ「Preview Path」を差し込む ---
