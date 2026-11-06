@@ -18,7 +18,9 @@
 #   gh_nwo <remote の URL> / gh_repo <ディレクトリ...>  GitHub の owner/repo
 #   gh_kind <owner/repo> <番号>   pr か issue か（gh api で問い合わせる）
 #   render gh <owner/repo> <番号> <pr|issue> [body|diff]  PR / Issue の本文・差分を標準出力へ
+#   glow_dir <ディレクトリ>  ls -la の代わりに glow の一覧で開くか（yes / 失敗）
 #   view [<パス> [行番号]]   ポップアップ内でプレビューし、Emacs / 既定アプリで開ける
+#                            （Markdown を含むディレクトリは glow の一覧で開く）
 #
 # 画面上の文字列は信用しない入力として扱う: eval・シェルへの埋め込みはせず、
 # 引数として渡し、実在確認を通ったパスだけを表示する。
@@ -391,7 +393,8 @@ popup_title_supported() {
 
 # popup_size <パス> <端末の幅> <高さ>: 中身に合わせたポップアップの「幅 高さ」を返す。
 # パスの代わりに --doc を渡すと、整形した文書（gh の PR / Issue 等）として Markdown と同じにする。
-# 幅: Markdown は glow が読みやすい行長（約 100 桁）、ディレクトリは ls -la 程度、それ以外は
+# 幅: Markdown は glow が読みやすい行長（約 100 桁）、ディレクトリは ls -la 程度（glow の一覧で
+# 開くものは Markdown と同じ）、それ以外は
 # 最長行（タブは bat と同じ 4 桁、全角はバイト数で多めに数える）＋行番号・目印・枠の分。
 # 高さ: 行数＋枠とプロンプトの分（Markdown・ディレクトリは整形後の行数が読めないので上限）。
 # どれも最小 80x12、最大は端末の 85%。端末の大きさが分からなければ 85% のまま
@@ -403,6 +406,7 @@ popup_size() {
     max_w=$(( $2 * 85 / 100 )) max_h=$(( $3 * 85 / 100 ))
     if [ -d "$1" ]; then
         w=100 h=$max_h
+        glow_dir "$1" >/dev/null && w=108
     elif [ "$1" = --doc ] || is_markdown "$1" >/dev/null; then
         w=108 h=$max_h
     else
@@ -949,11 +953,52 @@ is_markdown() {
     esac
 }
 
+# glow_dir <ディレクトリ>: ls -la の代わりに glow の一覧（glow -t）で開くか。glow が一覧に出す
+# Markdown（拡張子は glow と同じ。隠し・node_modules の中は glow も出さない）があるときだけ yes。
+# 一覧の起点そのものが隠しディレクトリ（.claude 等）だと glow は 1 件も出さないため対象外にする。
+# git 管理下は、glow と同じく追跡しているかに関わらず .gitignore で無視されるものを数えない
+# （check-ignore --no-index）。-z の出力は 1 件ごとに「規則のファイル・行番号・規則・パス」の
+# 4 つで、どの規則にも合わなければ規則が空、否定（!）の規則で含め直されていれば ! 始まり。
+# 名前の改行で 4 つの区切りがずれないよう、改行を ? に替えてから NUL を改行にする。
+# 管理外は 1 件見つけたら find を止める（-quit。読むのをやめても find は次の書き込みまで
+# 走り続ける）
+glow_dir() {
+    [ -d "$1" ] && command -v glow >/dev/null 2>&1 || return 1
+    base=${1%/}
+    case ${base##*/} in .*) return 1 ;; esac
+    # glow は ~/Library（macOS だけ）と $GOPATH も起点にすると 1 件も出さない（その下は出す）
+    [ -n "${HOME:-}" ] && [ "$base" = "${HOME%/}/Library" ] && [ "$(uname -s 2>/dev/null)" = Darwin ] &&
+        return 1
+    [ -n "${GOPATH:-}" ] && [ "$base" = "${GOPATH%/}" ] && return 1
+    if [ "$(git -C "$1" rev-parse --is-inside-work-tree 2>/dev/null)" = true ]; then
+        found=$(md_files "$1" -print0 | git -C "$1" check-ignore --no-index --stdin -z -v -n 2>/dev/null |
+            tr '\n\000' '?\n' | awk 'NR % 4 == 3 && (/^$/ || /^!/) { print "yes"; exit }')
+    else
+        found=$(md_files "$1" -print -quit | head -n 1)
+    fi
+    [ -n "$found" ] || return 1
+    echo yes
+}
+
+# md_files <ディレクトリ> <find の出力の指定...>: glow が一覧に出しうる Markdown（拡張子は glow と
+# 同じく大文字・小文字を区別しない。隠し・node_modules の中は glow も出さない）を、そのディレクトリ
+# からの相対パス（./ 始まり）で出す。大きな木で待たされないよう深さ 4・3 秒で打ち切る
+md_files() {
+    mdir=$1
+    shift
+    (cd -- "$mdir" 2>/dev/null && bounded 3 find . -maxdepth 4 \
+        -type d \( -name '.?*' -o -name node_modules \) -prune \
+        -o -type f ! -name '.*' \( -iname '*.md' -o -iname '*.mdown' -o -iname '*.mkdn' -o -iname '*.mkd' \
+            -o -iname '*.markdown' \) "$@" 2>/dev/null)
+}
+
 # 端末（ポップアップ）の桁数。render は less へのパイプの中で動くため、tput は stdout から
-# 幅を取れず terminfo の既定の 80 を返す。制御端末から読み、読めなければ tput に任せる
+# 幅を取れず terminfo の既定の 80 を返す。制御端末から読み、読めなければ tput に任せる。
+# 呼び出し側は算術展開に使うため、空・0・先頭 0（8 進として失敗する）・数字以外は 100 にする
 term_cols() {
     tc=$(stty size 2>/dev/null </dev/tty | awk '{ print $2 }')
-    case $tc in ""|0|*[!0-9]*) tc=$(tput cols 2>/dev/null || echo 100) ;; esac
+    case $tc in ""|0*|*[!0-9]*) tc=$(tput cols 2>/dev/null) ;; esac
+    case $tc in ""|0*|*[!0-9]*) tc=100 ;; esac
     echo "$tc"
 }
 
@@ -1177,6 +1222,15 @@ view() {
     fi
     case $lineno in *[!0-9]*) lineno="" ;; esac
     [ -f "$path" ] || [ -d "$path" ] || { printf 'open-path: 見つかりません: %s\n' "$path"; sleep 2; return 1; }
+    # Markdown を含むディレクトリは ls -la の代わりに glow の一覧で開く（Enter で読む・Esc で
+    # 一覧へ・q で閉じる。一覧から開いた文書はファイルの変更に追従する）。幅は Markdown の整形と
+    # そろえ、ホイールで動かせるようにする（マウスは隠しオプションのため、廃止されても起動が
+    # 止まらない環境変数で渡す）。起動に失敗したら ls -la の一覧に戻る。
+    # Markdown ファイルは渡さない: glow 3.0 の TUI はファイルを直接渡すと最初の描画が折り返されない
+    if [ -d "$path" ] && glow_dir "$path" >/dev/null &&
+        GLOW_MOUSE=true glow -t -s dark -w "$(( $(term_cols) - 2 ))" "$path"; then
+        return 0
+    fi
     # 利用者の LESS（-F は 1 画面に収まると即終了してポップアップが閉じる、-M は -Ps の
     # プロンプトを無視させる等）に左右されないよう、必要なオプションは引数で渡す
     LESS=""
@@ -1236,6 +1290,7 @@ case $cmd in
     action) action "$@" ;;
     md_renderer) md_renderer "$@" ;;
     is_markdown) is_markdown "$@" ;;
+    glow_dir) glow_dir "$@" ;;
     lesskey_ok) lesskey_ok "$@" ;;
     popup_size) popup_size "$@" ;;
     render) mode=${1:-raw} path=${2:-} lineno=${3:-} sha=${3:-} nwo=${2:-} num=${3:-} kind=${4:-} part=${5:-body}
@@ -1250,5 +1305,5 @@ case $cmd in
     claude_text) claude_text "$@" ;;
     claude_ancestors) claude_ancestors ;;
     to_claude) to_claude "$@" ;;
-    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|gh_nwo|gh_repo|gh_kind|claude_text|claude_ancestors|to_claude|view|mark|action|lesskey_ok|md_renderer|is_markdown|popup_size|render} ..." >&2; exit 2 ;;
+    *) echo "usage: open-path.sh {click|extract|parse|resolve|context|commit_repo|gh_ref|gh_url|gh_nwo|gh_repo|gh_kind|claude_text|claude_ancestors|to_claude|view|mark|action|lesskey_ok|md_renderer|is_markdown|glow_dir|popup_size|render} ..." >&2; exit 2 ;;
 esac
