@@ -664,6 +664,68 @@ case $log in *"[$repo/docs] <- open"*) echo "ok   click open はディレクト�
 log=$(click_open "foo bar" 3 "$repo")
 case $log in *"<- open"*) echo "FAIL click open: 見つからなければ開かない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   click open: 見つからなければメッセージ" ;; *) echo "FAIL click open: 見つからなければメッセージ: $log"; fail=1 ;; esac
 
+# --- click link（普通のクリック）: URL・PR / Issue の参照だけをブラウザで開き、それ以外は何もしない ---
+click_link() {
+    : > "$work/log"
+    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_client=c1 STUB_link="${CLICK_LINK:-}" \
+        STUB_line="$1" STUB_x="$2" STUB_cwd="$3" sh "$SCRIPT" click link >/dev/null 2>&1
+    cat "$work/log"
+}
+# opened <名前> <URL> <ログ>: その URL だけをブラウザで開き、ポップアップもメッセージも出さない
+opened() {
+    if [ "$3" = "[$2] <- open" ]; then echo "ok   $1"; else echo "FAIL $1: $3"; fail=1; fi
+}
+# silent <名前> <ログ>: 何もしない（開かない・ポップアップもメッセージも出さない）
+silent() {
+    if [ -z "$2" ]; then echo "ok   $1"; else echo "FAIL $1: $2"; fail=1; fi
+}
+opened "link: URL"                         "https://example.com/a?b=1&c=2" "$(click_link "see https://example.com/a?b=1&c=2 ok" 10 /)"
+opened "link: PR の URL はそのまま（# の続きも）" "https://github.com/acme/widget/pull/9#issuecomment-1" \
+    "$(click_link "see https://github.com/acme/widget/pull/9#issuecomment-1 ok" 10 "$grepo")"
+opened "link: ハイパーリンク（OSC 8）の URL" "https://example.com/docs" "$(CLICK_LINK="https://example.com/docs" click_link "the docs here" 5 /)"
+opened "link: #番号は cwd のリポジトリ"     "https://github.com/acme/widget/issues/78" "$(click_link "PR #78 を見る" 4 "$grepo/sub")"
+opened "link: owner/repo#番号"              "https://github.com/o/r/issues/5" "$(click_link "see o/r#5 now" 6 /)"
+opened "link: 登録した省略形"               "https://github.com/acme/blueprint/issues/12" "$(STUB_gh_alias="bp=acme/blueprint" click_link "see bp#12 now" 5 "$grepo")"
+opened "link: 別の URL の中の URL は外側を開く" "https://login.example.com/?next=https://github.com/acme/widget/pull/9" \
+    "$(click_link "go https://login.example.com/?next=https://github.com/acme/widget/pull/9 now" 40 /)"
+# 文の中の URL: 前後の括弧・引用符・句読点は URL に含めない（URL の中で対になる括弧は残す）
+opened "link: 和文の括弧に挟まれた URL"     "https://example.com/a" "$(click_link "（https://example.com/a）を見る" 5 /)"
+opened "link: 文末の句点"                   "https://example.com/a" "$(click_link "see https://example.com/a." 6 /)"
+opened "link: URL の中で対になる括弧"       "https://en.wikipedia.org/wiki/Foo_(bar)" "$(click_link "(see https://en.wikipedia.org/wiki/Foo_(bar))" 10 /)"
+opened "link: Markdown のリンク"            "https://example.com/a" "$(click_link "[docs](https://example.com/a)" 10 /)"
+opened "link: 山括弧"                       "https://example.com/a" "$(click_link "<https://example.com/a>" 5 /)"
+opened "link: 引用符"                       "https://example.com/a" "$(click_link "href=\"https://example.com/a\" x" 10 /)"
+silent "link: URL の後ろの和文は開かない"   "$(click_link "https://example.com/a）を見る" 23 /)"
+opened "link: 空白なしで続く和文は含めない" "https://example.com/a" "$(click_link "https://example.com/aを見る" 5 /)"
+# Claude Code が改行で折り返し、続きを字下げした URL は前後の行をつなぐ（pane の幅 40 → 20 桁以上の行）
+opened "link: 次の行へ折り返した URL"       "https://example.com/very/long/path?q=1" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_5="    th?q=1 end" click_link "see https://example.com/very/long/pa" 10 /)"
+opened "link: 前の行から折り返した URL"     "https://example.com/very/long/path?q=1" \
+    "$(STUB_pane=%7 STUB_y=5 STUB_row_4="see https://example.com/very/long/pa" click_link "    th?q=1 end" 5 /)"
+opened "link: 字下げの無い次の行はつながない" "https://example.com/very/long/pa" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_5="th?q=1 end" click_link "see https://example.com/very/long/pa" 10 /)"
+opened "link: 短い行は次の行とつながない"   "https://e.com/a" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_5="    th?q=1 end" click_link "x https://e.com/a" 5 /)"
+opened "link: コピーモード中は前後の行をつながない" "https://example.com/very/long/pa" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24 40" STUB_row_5="    th?q=1 end" click_link "see https://example.com/very/long/pa" 10 /)"
+# URL・参照でなければ何もしない（ファイル・SHA・ただの語。メッセージも出さない）
+silent "link: ファイルは開かない"           "$(click_link "see link.sh:3 here" 5 "$repo")"
+silent "link: SHA は開かない"               "$(click_link "see $short here" 6 "$crepo")"
+silent "link: ただの語"                     "$(click_link "foo bar" 3 "$repo")"
+silent "link: file:// のハイパーリンクは開かない" "$(CLICK_LINK="file://$repo/link.sh" click_link "link.sh" 2 "$repo")"
+# http(s) 以外・空白や制御文字を含むリンクはブラウザに渡さない
+silent "link: http(s) 以外のスキーム"       "$(CLICK_LINK="javascript:alert(1)" click_link "click me" 2 /)"
+silent "link: 空白を含むリンク"             "$(CLICK_LINK="https://example.com/a b" click_link "click me" 2 /)"
+silent "link: 制御文字を含むリンク"         "$(CLICK_LINK="$(printf 'https://example.com/\033x')" click_link "click me" 2 /)"
+log=$(click_link "PR #78 を見る" 4 "$lrepo")
+case $log in *"<- open"*) echo "FAIL link: リポジトリが分からなければ開かない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   link: リポジトリが分からなければメッセージ" ;; *) echo "FAIL link: リポジトリが分からなければメッセージ: $log"; fail=1 ;; esac
+# 右クリックの「Open in Default App」「Preview Path」も、GitHub 以外の URL はブラウザで開く
+opened "click open: URL"                    "https://example.com/a" "$(click_open "see https://example.com/a ok" 6 /)"
+opened "click open: PR の URL はそのまま"   "https://github.com/acme/widget/pull/9#discussion_r1" \
+    "$(click_open "see https://github.com/acme/widget/pull/9#discussion_r1 ok" 6 /)"
+opened "click: GitHub 以外の URL はブラウザ" "https://example.com/a" "$(click_run 3.7c "see https://example.com/a ok" 6 /)"
+opened "click: GitHub 以外のハイパーリンクはブラウザ" "https://example.com/docs" "$(CLICK_LINK="https://example.com/docs" click_run 3.7c "the docs here" 5 /)"
+
 # フォーマット展開される display-popup の -d / コマンド文字列に画面由来の値を載せない
 fmtdir="$work/#(touch pwned5)"; mkdir -p "$fmtdir"; echo x > "$fmtdir/a.txt"
 log=$(click_run 3.7c "a.txt" 0 "$fmtdir")
@@ -717,6 +779,13 @@ case $optblock in
     *mouse_any_flag*|*"send-keys -M"*) echo "FAIL Option + クリックをアプリへ渡さない: $optblock"; fail=1 ;;
     *"open-path.sh click"*) echo "ok   Option + クリックをアプリへ渡さない" ;;
     *) echo "FAIL Option + クリックの割り当てが無い"; fail=1 ;;
+esac
+# 普通のクリックはボタンを離したとき（ドラッグの範囲選択は MouseDragEnd で別）。マウスを使う
+# アプリ・コピーモードへはそのまま渡し、行に URL か #数字 がある時だけ open-path を起動する
+upblock=$(sed -n '/^bind -n MouseUp1Pane/,/^}/p' "$(dirname "$SCRIPT")/../keybindings.conf")
+case $upblock in
+    *"#{||:#{mouse_any_flag},#{pane_in_mode}}"*"send-keys -M"*"#{m/r:"*"#{mouse_line}"*"open-path.sh click link"*) echo "ok   普通のクリックは URL・#番号の行だけ open-path へ" ;;
+    *) echo "FAIL 普通のクリックの割り当て: $upblock"; fail=1 ;;
 esac
 
 # --- open-path-menu.sh: 既定の右クリックメニューへ「Preview Path」を差し込む ---
