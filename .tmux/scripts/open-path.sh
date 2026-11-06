@@ -440,7 +440,7 @@ popup_size() {
 # wrapped <行> <桁> <cwd>: 改行で折り返されたパスを、クリックした pane の前後の行を
 # つないで探し直す（画面上の #{mouse_y} 行目の前後。コピーモード中は探さない）
 wrapped() {
-    pane=$(ctx pane) y=$(ctx y)
+    pane=${cpane:-} y=${cy:-}
     case $y in ''|*[!0-9]*) return 1 ;; esac
     [ -n "$pane" ] || return 1
     # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
@@ -861,7 +861,7 @@ open_ref() {
 # near_lines: クリックした pane の前後（上 15 行・下 5 行）を出し、OPEN_NEAR_IDX に
 # クリックした行の番号、OPEN_NEAR_WRAP に折り返し桁を入れる（コピーモード中は失敗）
 near_lines() {
-    pane=$(ctx pane) y=$(ctx y)
+    pane=${cpane:-} y=${cy:-}
     case $y in ''|*[!0-9]*) return 1 ;; esac
     [ -n "$pane" ] || return 1
     # shellcheck disable=SC2046  # 「モード 高さ 幅 履歴」を 4 つに分ける
@@ -906,7 +906,7 @@ open_url() {
 url_click() {
     case $1 in *://*) ;; *) return 1 ;; esac
     logical=$1
-    pane=$(ctx pane) y=$(ctx y)
+    pane=${cpane:-} y=${cy:-}
     case $y in ''|*[!0-9]*) y="" ;; esac
     if [ -n "$pane" ] && [ -n "$y" ]; then
         # shellcheck disable=SC2046  # 「モード 高さ」を 2 つに分ける
@@ -914,14 +914,22 @@ url_click() {
         # コピーモード中は capture-pane（通常の画面）と表示中の行が一致しないため見ない。
         # 範囲外の行は tmux が端の行に丸めるため、最下行より下は読まない
         if [ "${3:-1}" = 0 ] && digits "${4:-}" && [ "$y" -lt "$4" ]; then
-            last=$((y + 3))
-            [ "$last" -lt "$4" ] || last=$(($4 - 1))
-            joined=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$last" -J 2>/dev/null | head -n 1)
-            # 画面の行で始まっていなければ（読み違い）、画面の行だけを使う
-            case $joined in "$1"*) logical=$joined ;; esac
+            # 待つ間に画面の行が書き換わっていれば（出力が続く pane 等）、つながない
+            row=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$y" 2>/dev/null)
+            if [ "$(rtrim "$row")" = "$(rtrim "$1")" ]; then
+                last=$((y + 3))
+                [ "$last" -lt "$4" ] || last=$(($4 - 1))
+                joined=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$last" -J 2>/dev/null | head -n 1)
+                case $joined in "$row"*) logical=$joined ;; esac
+            fi
         fi
     fi
     url_at "$logical" "$2"
+}
+
+# rtrim <文字列>: 末尾の空白を除く
+rtrim() {
+    printf '%s' "${1%"${1##*[! ]}"}"
 }
 
 click() {
@@ -932,7 +940,12 @@ click() {
         return 0
     fi
     [ "$mode" = link ] && OPEN_CTX=up_
-    client=$(ctx client) link=$(ctx link) line=$(ctx line) x=$(ctx x) cwd=$(ctx cwd)
+    # クリックした位置はここで一度に読み、以降（wrapped・near_lines・url_click も）この値だけを使う
+    client=$(ctx client) link=$(ctx link) line=$(ctx line) x=$(ctx x) cwd=$(ctx cwd) cpane=$(ctx pane) cy=$(ctx y)
+    # 読む間に次のクリックが来て書き換えた値かもしれないため、読んだ後にも通し番号を確かめる
+    if [ "$mode" = link ] && [ -n "${2:-}" ] && [ "$2" != "$(opt seq)" ]; then
+        return 0
+    fi
     # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
     roots=$(opt roots)
     if [ -n "$roots" ]; then OPEN_PATH_ROOTS=$roots; export OPEN_PATH_ROOTS; fi

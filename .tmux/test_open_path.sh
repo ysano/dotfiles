@@ -563,7 +563,14 @@ stub="$work/stub"; mkdir -p "$stub"
 cat > "$stub/tmux" <<'STUB'
 #!/bin/sh
 case $1 in
-    show) eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\"" ;;
+    # STUB_SEQ_FILE があれば、@open_path_seq は読むたびにその先頭行を出して次の行へ進む
+    # （最後の行は残す。処理の途中で次のクリックが来て通し番号が進んだ状態を作る）
+    show) if [ "$3" = @open_path_seq ] && [ -n "${STUB_SEQ_FILE:-}" ]; then
+              head -n 1 "$STUB_SEQ_FILE"
+              if [ "$(wc -l < "$STUB_SEQ_FILE")" -gt 1 ]; then tail -n +2 "$STUB_SEQ_FILE" > "$STUB_SEQ_FILE.t" && mv "$STUB_SEQ_FILE.t" "$STUB_SEQ_FILE"; fi
+          else
+              eval "printf '%s\n' \"\$STUB_$(printf '%s' "$3" | sed 's/^@open_path_//')\""
+          fi ;;
     display) case $* in *pane_in_mode*) printf '%s\n' "${STUB_pstate:-0 24 40}" ;; *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
     display-popup|display-message|set|set-buffer|paste-buffer|select-pane|send-keys) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
     list-panes) printf '%s\n' "${STUB_panes:-}" ;;
@@ -730,6 +737,14 @@ opened "link: 共通の @open_path_* は読まない" "https://up.example/y" \
 # 待つ間に次の押下（ダブルクリック等）で通し番号が進んでいたら開かない
 silent "link: 通し番号が進んでいたら開かない" "$(STUB_seq=5 click_link "see https://example.com/a ok" 6 / 4)"
 opened "link: 通し番号が同じなら開く"       "https://example.com/a" "$(STUB_seq=5 click_link "see https://example.com/a ok" 6 / 5)"
+# クリックした位置を読み取る間に次のクリックが来た（通し番号が進んだ）なら、読んだ値は使わない
+printf '5\n6\n' > "$work/seq"
+silent "link: 読み取る間に通し番号が進んだら開かない" "$(STUB_SEQ_FILE="$work/seq" click_link "see https://example.com/a ok" 6 / 5)"
+printf '5\n5\n' > "$work/seq"
+opened "link: 読み取る間も通し番号が同じなら開く" "https://example.com/a" "$(STUB_SEQ_FILE="$work/seq" click_link "see https://example.com/a ok" 6 / 5)"
+# 待つ間に画面の行が書き換わっていたら、折り返しをつながず、クリックした時の行だけを使う
+opened "link: 書き換わった行はつながない"   "https://example.com/a" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/ab" STUB_wrap_4=1 STUB_row_5="cd x" click_link "see https://example.com/a" 10 /)"
 # URL・参照でなければ何もしない（ファイル・SHA・ただの語。メッセージも出さない）
 silent "link: ファイルは開かない"           "$(click_link "see link.sh:3 here" 5 "$repo")"
 silent "link: SHA は開かない"               "$(click_link "see $short here" 6 "$crepo")"
@@ -811,7 +826,7 @@ esac
 kb="$(dirname "$SCRIPT")/../keybindings.conf"
 downblock=$(sed -n '/^bind -n MouseDown1Pane/,/^}/p' "$kb")
 case $downblock in
-    *"select-pane -t ="*"send-keys -M"*"@open_path_press 1"*"@open_path_seq '#{e|+:#{@open_path_seq},1}'"*) echo "ok   押下は既定の動きに通し番号を足す" ;;
+    *"select-pane -t ="*"send-keys -M"*"@open_path_press 1"*"@open_path_down '#{pane_id}:#{mouse_x}:#{mouse_y}'"*"@open_path_seq '#{e|+:#{@open_path_seq},1}'"*) echo "ok   押下は既定の動きに位置と通し番号を足す" ;;
     *) echo "FAIL 押下の割り当て: $downblock"; fail=1 ;;
 esac
 secondblock=$(sed -n '/^bind -n SecondClick1Pane/,/^}/p' "$kb")
@@ -821,7 +836,7 @@ case $secondblock in
 esac
 upblock=$(sed -n '/^bind -n MouseUp1Pane/,/^}/p' "$kb")
 case $upblock in
-    *"#{||:#{mouse_any_flag},#{pane_in_mode}}"*"send-keys -M"*"@open_path_press 0"*"#{==:#{@open_path_press},1}"*"#{m/r:(://|[#][0-9]),#{mouse_line}}"*"@open_path_up_line '#{mouse_line}'"*"run-shell -b -d 0.35 '~/.tmux/scripts/open-path.sh click link #{@open_path_seq}'"*"@open_path_press 0"*"@open_path_press 0"*) echo "ok   普通のクリックは 1 回目の押下・URL・#番号の行だけ、待ってから open-path へ（押下は離すたびに消す）" ;;
+    *"#{||:#{mouse_any_flag},#{pane_in_mode}}"*"send-keys -M"*"@open_path_press 0"*"#{==:#{@open_path_press},1}"*"#{==:#{@open_path_down},#{pane_id}:#{mouse_x}:#{mouse_y}}"*"#{m/r:(://|[#][0-9]),#{mouse_line}}"*"@open_path_up_line '#{mouse_line}'"*"run-shell -b -d 0.35 '~/.tmux/scripts/open-path.sh click link #{@open_path_seq}'"*"@open_path_press 0"*"@open_path_press 0"*) echo "ok   普通のクリックは 1 回目の押下・URL・#番号の行だけ、待ってから open-path へ（押下は離すたびに消す）" ;;
     *) echo "FAIL 普通のクリックの割り当て: $upblock"; fail=1 ;;
 esac
 
