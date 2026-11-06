@@ -567,9 +567,14 @@ case $1 in
     display) case $* in *pane_in_mode*) printf '%s\n' "${STUB_pstate:-0 24 40}" ;; *client_width*) printf '%s\n' "${STUB_size:-310 56}" ;; *) printf '%s\n' "$STUB_version" ;; esac ;;
     display-popup|display-message|set|set-buffer|paste-buffer|select-pane|send-keys) for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo >> "$STUB_LOG" ;;
     list-panes) printf '%s\n' "${STUB_panes:-}" ;;
-    # capture-pane -p -t <pane> -S <行> -E <行> → STUB_row_<行> を順に（pane が違えば空）
+    # capture-pane -p -t <pane> -S <行> -E <行> [-J] → STUB_row_<行> を順に（pane が違えば空）。
+    # -J なら、STUB_wrap_<行> がある行（端末の幅で折り返した行）を次の行とつなぐ
     capture-pane) [ "$4" = "${STUB_pane:-}" ] || exit 0
-                  i=$6; while [ "$i" -le "$8" ]; do eval "printf '%s\n' \"\${STUB_row_$i:-}\""; i=$((i + 1)); done ;;
+                  i=$6; while [ "$i" -le "$8" ]; do
+                      eval "row=\${STUB_row_$i:-} wrap=\${STUB_wrap_$i:-}"
+                      if [ "${9:-}" = -J ] && [ -n "$wrap" ]; then printf '%s' "$row"; else printf '%s\n' "$row"; fi
+                      i=$((i + 1))
+                  done ;;
 esac
 STUB
 chmod +x "$stub/tmux"
@@ -665,11 +670,13 @@ log=$(click_open "foo bar" 3 "$repo")
 case $log in *"<- open"*) echo "FAIL click open: 見つからなければ開かない: $log"; fail=1 ;; *"[display-message]"*) echo "ok   click open: 見つからなければメッセージ" ;; *) echo "FAIL click open: 見つからなければメッセージ: $log"; fail=1 ;; esac
 
 # --- click link（普通のクリック）: URL・PR / Issue の参照だけをブラウザで開き、それ以外は何もしない ---
-# click_link <行> <桁> <cwd> [<通し番号>]
+# click_link <行> <桁> <cwd> [<通し番号>]: 普通のクリックは @open_path_up_* から読む
+# （STUB_pane / STUB_y は up_ にも渡す）
 click_link() {
     : > "$work/log"
-    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_client=c1 STUB_link="${CLICK_LINK:-}" \
-        STUB_line="$1" STUB_x="$2" STUB_cwd="$3" sh "$SCRIPT" click link ${4:+"$4"} >/dev/null 2>&1
+    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_up_client=c1 STUB_up_link="${CLICK_LINK:-}" \
+        STUB_up_line="$1" STUB_up_x="$2" STUB_up_cwd="$3" STUB_up_pane="${STUB_pane:-}" STUB_up_y="${STUB_y:-}" \
+        sh "$SCRIPT" click link ${4:+"$4"} >/dev/null 2>&1
     cat "$work/log"
 }
 # opened <名前> <URL> <ログ>: その URL だけをブラウザで開き、ポップアップもメッセージも出さない
@@ -700,18 +707,26 @@ silent "link: URL の後ろの和文は開かない"   "$(click_link "https://ex
 opened "link: 空白なしで続く和文は含めない" "https://example.com/a" "$(click_link "https://example.com/aを見る" 5 /)"
 opened "link: カンマで続く URL の前"        "https://one.example/a" "$(click_link "https://one.example/a,https://two.example/b" 10 /)"
 opened "link: カンマで続く URL の後ろ"      "https://two.example/b" "$(click_link "https://one.example/a,https://two.example/b" 30 /)"
-# 長い URL を端で折り返し、続きを字下げした行は次の行をつなぐ（pane の幅 40 → 端の桁 36 まで埋まった行）
-opened "link: 次の行へ折り返した URL"       "https://example.com/very/long/path?q=1" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_row_5="    th?q=1 end" click_link "see https://example.com/very/long/pa" 10 /)"
-opened "link: 端まで埋まっていない行はつながない" "https://example.com/abcdef/ghij" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_row_5="    Next steps" click_link "see https://example.com/abcdef/ghij" 10 /)"
-opened "link: 字下げの無い次の行はつながない" "https://example.com/very/long/pa" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_row_5="th?q=1 end" click_link "see https://example.com/very/long/pa" 10 /)"
-opened "link: コピーモード中は次の行をつながない" "https://example.com/very/long/pa" \
-    "$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24 40" STUB_row_5="    th?q=1 end" click_link "see https://example.com/very/long/pa" 10 /)"
-# 続きの行は、行だけでは折り返しと確かめられないため前の行とつながない（OSC 8 のリンクなら開く）
+# 端末の幅で折り返した行（tmux が折り返しとして記録した行。capture-pane -J でつながる）だけ
+# 次の行をつなぐ。改行で折り返した行は、右端まで埋まっていても字下げしていてもつながない
+opened "link: 端末の幅で折り返した URL"     "https://example.com/very/long/path?q=1" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 STUB_row_5="th?q=1 end" \
+        click_link "see https://example.com/very/long/pa" 10 /)"
+opened "link: 折り返していない次の行はつながない" "https://example.com/very/long/path" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/path" STUB_row_5="    Next steps" \
+        click_link "see https://example.com/very/long/path" 10 /)"
+opened "link: 折り返した先の別の URL の手前で止める" "https://example.com/very/long/path" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 STUB_row_5="th,https://b.example x" \
+        click_link "see https://example.com/very/long/pa" 10 /)"
+opened "link: コピーモード中は折り返しをつながない" "https://example.com/very/long/pa" \
+    "$(STUB_pane=%7 STUB_y=4 STUB_pstate="1 24" STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 STUB_row_5="th?q=1 end" \
+        click_link "see https://example.com/very/long/pa" 10 /)"
+# 続きの行は前の行とつながない（OSC 8 のリンクなら開く）
 silent "link: 折り返した URL の続きの行は開かない" \
-    "$(STUB_pane=%7 STUB_y=5 STUB_row_4="see https://example.com/very/long/pa" click_link "    th?q=1 end" 5 /)"
+    "$(STUB_pane=%7 STUB_y=5 STUB_row_4="see https://example.com/very/long/pa" STUB_wrap_4=1 click_link "th?q=1 end" 5 /)"
+# 普通のクリックは @open_path_up_* を読む（待つ間に Option + クリック等が書き換える共通の値は使わない）
+opened "link: 共通の @open_path_* は読まない" "https://up.example/y" \
+    "$(STUB_line="see https://shared.example/x ok" STUB_x=6 STUB_link="https://shared.example/l" click_link "see https://up.example/y ok" 6 /)"
 # 待つ間に次の押下（ダブルクリック等）で通し番号が進んでいたら開かない
 silent "link: 通し番号が進んでいたら開かない" "$(STUB_seq=5 click_link "see https://example.com/a ok" 6 / 4)"
 opened "link: 通し番号が同じなら開く"       "https://example.com/a" "$(STUB_seq=5 click_link "see https://example.com/a ok" 6 / 5)"
@@ -806,7 +821,7 @@ case $secondblock in
 esac
 upblock=$(sed -n '/^bind -n MouseUp1Pane/,/^}/p' "$kb")
 case $upblock in
-    *"#{||:#{mouse_any_flag},#{pane_in_mode}}"*"send-keys -M"*"#{==:#{@open_path_press},1}"*"#{m/r:(://|[#][0-9]),#{mouse_line}}"*"run-shell -b -d 0.35 '~/.tmux/scripts/open-path.sh click link #{@open_path_seq}'"*) echo "ok   普通のクリックは 1 回目の押下・URL・#番号の行だけ、待ってから open-path へ" ;;
+    *"#{||:#{mouse_any_flag},#{pane_in_mode}}"*"send-keys -M"*"@open_path_press 0"*"#{==:#{@open_path_press},1}"*"#{m/r:(://|[#][0-9]),#{mouse_line}}"*"@open_path_up_line '#{mouse_line}'"*"run-shell -b -d 0.35 '~/.tmux/scripts/open-path.sh click link #{@open_path_seq}'"*"@open_path_press 0"*"@open_path_press 0"*) echo "ok   普通のクリックは 1 回目の押下・URL・#番号の行だけ、待ってから open-path へ（押下は離すたびに消す）" ;;
     *) echo "FAIL 普通のクリックの割り当て: $upblock"; fail=1 ;;
 esac
 

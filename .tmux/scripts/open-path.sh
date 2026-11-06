@@ -388,6 +388,13 @@ opt() {
     tmux show -gv "@open_path_$1" 2>/dev/null
 }
 
+# ctx <名前>: クリックした位置の値（client・link・line・x・y・pane・cwd）。普通のクリック
+# （click link）は、待つ間に Option + クリック・右クリックが共通の @open_path_* を書き換えても
+# 混ざらないよう、別の @open_path_up_* を読む（OPEN_CTX=up_）
+ctx() {
+    opt "${OPEN_CTX:-}$1"
+}
+
 # display-popup -T は tmux 3.3+
 popup_title_supported() {
     tmux display -p '#{version}' 2>/dev/null | awk -F. '{
@@ -433,7 +440,7 @@ popup_size() {
 # wrapped <行> <桁> <cwd>: 改行で折り返されたパスを、クリックした pane の前後の行を
 # つないで探し直す（画面上の #{mouse_y} 行目の前後。コピーモード中は探さない）
 wrapped() {
-    pane=$(opt pane) y=$(opt y)
+    pane=$(ctx pane) y=$(ctx y)
     case $y in ''|*[!0-9]*) return 1 ;; esac
     [ -n "$pane" ] || return 1
     # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
@@ -663,14 +670,12 @@ gh_url() {
     }'
 }
 
-# url_at <行> <桁> [<次の行> <端の桁>]: クリック位置の http(s) の URL を出す。
+# url_at <行> <桁>: クリック位置の http(s) の URL を出す。
 # 前後の括弧・引用符・句読点は含めない（URL の中で対になる丸括弧は残す）。別の URL の中
 # （?next=https://…）のクリックは外側の URL として読み、区切りの後に続く別の URL
-# （https://a,https://b）の手前で止める。URL が行末にあり、行が <端の桁> まで埋まって
-# いれば（長い URL を端で折り返した行）、字下げした次の行の続きをつなぐ
+# （https://a,https://b）の手前で止める
 url_at() {
-    printf '%s\n' "$1" | OPEN_PATH_NEXT=${3:-} OPEN_PATH_WIDE=$WIDE_RANGES \
-        LC_ALL=C awk -v x="$2" -v edge="${4:-0}" "$TEXT_AWK"'
+    printf '%s\n' "$1" | OPEN_PATH_WIDE=$WIDE_RANGES LC_ALL=C awk -v x="$2" "$TEXT_AWK"'
     # URL の文字（RFC 3986 の非予約文字・予約文字と %。角括弧と引用符は Markdown や文の
     # 区切りに使われるため除く。端末に出る URL は % で符号化されているものとし、空白なしで
     # 続く和文（https://…を見る）を含めないよう、多バイト文字は区切りにする）
@@ -703,21 +708,12 @@ url_at() {
         for (i = 1; i <= length(s); i++) if (substr(s, i, 1) == c) n++
         return n
     }
-    # 次の行が字下げされていれば、その空白に続く URL の文字の並び
-    function urlhead(s,    a, k, i, t) {
-        k = chars(s, a); i = 1; t = ""
-        while (i <= k && a[i] == " ") i++
-        if (i == 1) return ""
-        while (i <= k && urlchar(a[i])) t = t a[i++]
-        return t
-    }
     {
-        k = chars($0, ch); col = 0; hit = 0; x += 0; edge += 0
+        k = chars($0, ch); col = 0; hit = 0; x += 0
         for (j = 1; j <= k; j++) {
             w = width(cp(ch[j]))
             if (x >= col && x < col + w) hit = j
             col += w
-            end[j] = col
         }
         if (!hit || !urlchar(ch[hit])) exit 1
         l = hit
@@ -727,9 +723,6 @@ url_at() {
         while (r < k && urlchar(ch[r + 1]) && !own(ch, k, r + 1)) r++
         url = ""
         for (j = us; j <= r; j++) url = url ch[j]
-        # 端まで埋まった行の末尾なら、字下げした次の行の続きをつなぐ
-        for (j = r + 1; j <= k && ch[j] == " "; j++) ;
-        if (j > k && edge > 0 && end[r] >= edge) url = url urlhead(ENVIRON["OPEN_PATH_NEXT"])
         # 末尾の句読点と、対にならない閉じ括弧は URL に含めない
         while (url != "") {
             c = substr(url, length(url), 1)
@@ -868,7 +861,7 @@ open_ref() {
 # near_lines: クリックした pane の前後（上 15 行・下 5 行）を出し、OPEN_NEAR_IDX に
 # クリックした行の番号、OPEN_NEAR_WRAP に折り返し桁を入れる（コピーモード中は失敗）
 near_lines() {
-    pane=$(opt pane) y=$(opt y)
+    pane=$(ctx pane) y=$(ctx y)
     case $y in ''|*[!0-9]*) return 1 ;; esac
     [ -n "$pane" ] || return 1
     # shellcheck disable=SC2046  # 「モード 高さ 幅 履歴」を 4 つに分ける
@@ -904,27 +897,31 @@ open_url() {
         tmux display-message -c "$client" "open-path: ブラウザで開けません"
 }
 
-# url_click <行> <桁>: クリック位置の URL（url_at）。コピーモード中でなければ、端で
-# 折り返した長い URL をつなぐよう、クリックした pane の次の行と端の桁も渡す。端の桁は
-# pane の幅 − 4（Claude Code は右端の数桁手前で折り返すことがある。半幅等の緩い条件だと、
-# 字下げした無関係な次の行をつないでしまう）。続きの行のクリックは前の行とつながない
-# （行だけでは折り返しと確かめられない。OSC 8 のリンクなら折り返しても全体を読める）
+# url_click <行> <桁>: クリック位置の URL（url_at）。端末の幅で自動的に折り返された行
+# （tmux が折り返しとして記録した行）の続きはつなぐ。クリックした画面の行から下の数行を
+# capture-pane -J（折り返しをつなぐ）で読み、その最初の行（= クリックした行から始まる論理行）
+# を使う。改行で折り返した行（Claude Code 等）は、画面の行だけでは折り返しと確かめられない
+# ためつながない（Claude Code が出す URL は OSC 8 のリンクで、折り返しても全体を読める）。
+# 続きの行のクリックも前の行とはつながない
 url_click() {
     case $1 in *://*) ;; *) return 1 ;; esac
-    next="" edge=0
-    pane=$(opt pane) y=$(opt y)
+    logical=$1
+    pane=$(ctx pane) y=$(ctx y)
     case $y in ''|*[!0-9]*) y="" ;; esac
     if [ -n "$pane" ] && [ -n "$y" ]; then
-        # shellcheck disable=SC2046  # 「モード 高さ 幅」を 3 つに分ける
-        set -- "$1" "$2" $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height} #{pane_width}' 2>/dev/null)
+        # shellcheck disable=SC2046  # 「モード 高さ」を 2 つに分ける
+        set -- "$1" "$2" $(tmux display -p -t "$pane" '#{pane_in_mode} #{pane_height}' 2>/dev/null)
         # コピーモード中は capture-pane（通常の画面）と表示中の行が一致しないため見ない。
-        # 範囲外の行は tmux が端の行（= クリックした行自身）を返すため、画面の外は見ない
-        if [ "${3:-1}" = 0 ] && digits "${4:-}" && digits "${5:-}"; then
-            [ $((y + 1)) -lt "$4" ] && next=$(tmux capture-pane -p -t "$pane" -S $((y + 1)) -E $((y + 1)) 2>/dev/null)
-            edge=$(($5 - 4))
+        # 範囲外の行は tmux が端の行に丸めるため、最下行より下は読まない
+        if [ "${3:-1}" = 0 ] && digits "${4:-}" && [ "$y" -lt "$4" ]; then
+            last=$((y + 3))
+            [ "$last" -lt "$4" ] || last=$(($4 - 1))
+            joined=$(tmux capture-pane -p -t "$pane" -S "$y" -E "$last" -J 2>/dev/null | head -n 1)
+            # 画面の行で始まっていなければ（読み違い）、画面の行だけを使う
+            case $joined in "$1"*) logical=$joined ;; esac
         fi
     fi
-    url_at "$1" "$2" "$next" "$edge"
+    url_at "$logical" "$2"
 }
 
 click() {
@@ -934,7 +931,8 @@ click() {
     if [ "$mode" = link ] && [ -n "${2:-}" ] && [ "$2" != "$(opt seq)" ]; then
         return 0
     fi
-    client=$(opt client) link=$(opt link) line=$(opt line) x=$(opt x) cwd=$(opt cwd)
+    [ "$mode" = link ] && OPEN_CTX=up_
+    client=$(ctx client) link=$(ctx link) line=$(ctx line) x=$(ctx x) cwd=$(ctx cwd)
     # 追加の探索ルート（任意）: set -g @open_path_roots "$HOME/work:$HOME/src"
     roots=$(opt roots)
     if [ -n "$roots" ]; then OPEN_PATH_ROOTS=$roots; export OPEN_PATH_ROOTS; fi
