@@ -143,11 +143,15 @@ PATH="$_profile_tmp:$PATH" WT_OPEN_LOG="$_profile_log" TMUX_WORKTREE_ORIGIN=%42 
 assert_contains "$(tr '\n' '|' < "$_profile_log")" "|-e|CLAUDE_CONFIG_DIR=$_profile_dir|" "open: 同じリポジトリのプロファイルで claude -c を起動"
 claude_profile_env() { :; }
 export WT_DRY_RUN=1
-assert_not_contains "$(wt_spawn supervised login)" "CLAUDE_CONFIG_DIR" "spawn: プロファイルが決まらなければ素の claude"
+_pn="$(wt_spawn supervised login)"
+assert_not_contains "$_pn" "-e CLAUDE_CONFIG_DIR" "spawn: プロファイルが決まらなければ素の claude"
+assert_contains "$_pn" "unset\\ CLAUDE_CONFIG_DIR\\;\\ claude" "spawn: tmux の環境に残ったプロファイルも外す"
+assert_contains "$(wt_spawn unsupervised login 'fix tests')" "-P -F '#{pane_id}' env -u CLAUDE_CONFIG_DIR claude -p" "spawn 監視なし: tmux の環境に残ったプロファイルも外す"
 unset WT_DRY_RUN
 : > "$_profile_log"
 PATH="$_profile_tmp:$PATH" WT_OPEN_LOG="$_profile_log" TMUX_WORKTREE_ORIGIN=%42 wt_open login
-assert_not_contains "$(tr '\n' '|' < "$_profile_log")" "CLAUDE_CONFIG_DIR" "open: プロファイルが決まらなければ素の claude"
+assert_not_contains "$(tr '\n' '|' < "$_profile_log")" "|-e|CLAUDE_CONFIG_DIR" "open: プロファイルが決まらなければ素の claude"
+assert_contains "$(tr '\n' '|' < "$_profile_log")" "|unset CLAUDE_CONFIG_DIR; claude -c ; exec " "open: tmux の環境に残ったプロファイルも外す"
 # 実物: worktrees.py に worktree と起動元の pane を渡し、その出力を使う
 unset -f claude_profile_env
 eval "$(sed -n '/^claude_profile_env() {/,/^}/p' "$SCRIPT_DIR/worktree_launch.sh")"

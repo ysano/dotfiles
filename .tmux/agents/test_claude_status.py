@@ -179,6 +179,15 @@ class ClaudeTmuxTests(unittest.TestCase):
         state = json.loads(self.tmux('show-option', '-pqv', '-t', '%0', '@claude_state'))
         self.assertEqual(state['config_dir'], '')
 
+    def test_late_event_of_previous_session_keeps_current_profile(self):
+        self.env.pop('CLAUDE_CONFIG_DIR', None)
+        self.hook('SessionStart', session_id='plain-session')
+        self.env['CLAUDE_CONFIG_DIR'] = str(Path(self.temp.name) / 'profile karin')
+        self.hook('Stop', session_id='claude-session')
+        state = json.loads(self.tmux('show-option', '-pqv', '-t', '%0', '@claude_state'))
+        self.assertEqual(state['session_id'], 'plain-session')
+        self.assertEqual(state['config_dir'], '')
+
     def test_claude_exe_is_detected(self):
         self.assertEqual(self.shell('detect_claude_panes'), 'probe:0.0')
 

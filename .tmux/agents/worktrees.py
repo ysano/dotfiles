@@ -835,15 +835,21 @@ def _process_config_dir(pid):
                 return os.fsdecode(item[len(b"CLAUDE_CONFIG_DIR="):])
         return ""
     try:
-        output = _run(["ps", "eww", "-o", "command=", "-p", pid])  # macOS: 引数の後に環境変数が続く
+        # macOS: e を付けると引数の後に環境変数が続く。引数だけの出力を取り除いて
+        # 環境変数の部分だけを見る（引数に CLAUDE_CONFIG_DIR= があっても読まない）。
+        args = _run(["ps", "ww", "-o", "command=", "-p", pid]).strip()
+        output = _run(["ps", "eww", "-o", "command=", "-p", pid]).strip()
     except GIT_ERRORS:
         return None
+    if not args or not output.startswith(args):
+        return None
+    environment = output[len(args):]
     # 環境変数が見えないとき（権限・OS の違い）に「未設定」と取り違えない。
-    if not re.search(r"(?:^|\s)(?:PATH|HOME)=", output):
+    if not re.search(r"(?:^|\s)(?:PATH|HOME)=", environment):
         return None
     # 空白区切りなので、次の NAME= の手前までを値とみなす。誤って読んでも、
     # 実在しないパスになり呼び出し側で捨てられる。
-    found = re.findall(r"(?:^|\s)CLAUDE_CONFIG_DIR=(.*?)(?=\s[A-Za-z_][A-Za-z0-9_]*=|\s*$)", output.strip())
+    found = re.findall(r"(?:^|\s)CLAUDE_CONFIG_DIR=(.*?)(?=\s[A-Za-z_][A-Za-z0-9_]*=|\s*$)", environment)
     return found[-1] if found else ""
 
 
@@ -858,8 +864,9 @@ def _usable_config_dir(value):
 def _pane_config_dir(pane, table):
     """pane の claude が使うプロファイル。claude でない・決められないときは None。
 
-    フックが @claude_state に残した config_dir を優先し、まだ記録のない
-    セッション（フックの更新前から動いているもの）はプロセスの環境変数を読む。"""
+    動いている claude のプロセスの環境変数を優先する（記録が古くても取り違えない）。
+    プロセスが見つからない・環境変数が読めない（npm 版でプロセス名が node 等）
+    ときは、フックが @claude_state に残した config_dir を使う。"""
     raw = pane.get("claude_state") or ""
     try:
         state = json.loads(raw) if raw else {}
@@ -867,10 +874,6 @@ def _pane_config_dir(pane, table):
         state = {}
     if not isinstance(state, dict):
         state = {}
-    if "config_dir" in state:
-        recorded = _usable_config_dir(state["config_dir"])
-        if recorded is not None:
-            return recorded
     if not state and not re.fullmatch(r"claude(?:\.exe)?", pane.get("command") or ""):
         return None
     if table[0] is None:
@@ -879,9 +882,21 @@ def _pane_config_dir(pane, table):
         except GIT_ERRORS:
             table[0] = ({}, {})
     pid = _claude_process(pane.get("pid") or "", table[0])
-    if pid is None:
-        return None
-    return _usable_config_dir(_process_config_dir(pid))
+    if pid is not None:
+        live = _usable_config_dir(_process_config_dir(pid))
+        if live is not None:
+            return live
+    if "config_dir" in state:
+        return _usable_config_dir(state["config_dir"])
+    return None
+
+
+def _same_repository(pane, repo):
+    """pane の cwd が同じリポジトリか。worktree の中に置いた別の clone を除く。"""
+    try:
+        return _common_git_dir(pane.get("cwd") or "", timeout=GIT_INVENTORY_TIMEOUT) == repo
+    except GIT_ERRORS:
+        return False
 
 
 def claude_config_dir(path: str, origin: str) -> str:
@@ -901,7 +916,7 @@ def claude_config_dir(path: str, origin: str) -> str:
         for row in ordered:
             for pane_id in row["panes"]:
                 value = _pane_config_dir(by_id[pane_id], table)
-                if value is not None:
+                if value is not None and _same_repository(by_id[pane_id], target["repo"]):
                     return value
     if origin in by_id:
         value = _pane_config_dir(by_id[origin], table)
@@ -939,6 +954,9 @@ def open_worktree(path: str, session: str, origin: str, provider: str = "shell")
         config_dir = claude_config_dir(canonical, origin)
         if config_dir:
             env = ["-e", "CLAUDE_CONFIG_DIR=" + config_dir]
+        else:
+            # 既定のプロファイル: tmux の環境に残った CLAUDE_CONFIG_DIR を引き継がない
+            command = "unset CLAUDE_CONFIG_DIR; " + command
     return _tmux(
         "split-window", "-t", origin, *env, "-c", canonical,
         "-P", "-F", "#{pane_id}", command,

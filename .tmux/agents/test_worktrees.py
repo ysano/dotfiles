@@ -824,24 +824,76 @@ class TmuxAutoPaneTests(unittest.TestCase):
         self.open_claude(missing, fake_bin)
         self.assertEqual(self.launched_profile(record), ysano)
 
+    def claude_process_pane(self, cwd, env_profile=None, args=(), recorded=None):
+        """名前が claude の実プロセスを pane で動かす。env_profile=None は環境変数なし。"""
+        named = self.base / "process bin"
+        if not (named / "claude").exists():
+            named.mkdir(exist_ok=True)
+            # macOS は署名済みのシステムのコマンド（sleep 等）の環境変数を ps に見せない。
+            # 実物の claude と同じく、自前でビルドした実行ファイルにする。
+            source = named / "sleep.c"
+            source.write_text("#include <unistd.h>\nint main(void) { sleep(300); return 0; }\n")
+            subprocess.run(["cc", str(source), "-o", str(named / "claude")], check=True, capture_output=True)
+        quote = __import__("shlex").quote
+        env = "-u CLAUDE_CONFIG_DIR" if env_profile is None else "CLAUDE_CONFIG_DIR=" + quote(env_profile)
+        command = " ".join(["exec env", env, quote(str(named / "claude")), *map(quote, args)])
+        pane = self.tmux(
+            "new-window", "-d", "-t", self.session, "-c", str(cwd), "-P", "-F", "#{pane_id}", command,
+        )
+        state = {"session_id": "p", "actors": {}, "provider": "claude", "cwd": str(cwd)}
+        if recorded is not None:
+            state["config_dir"] = recorded
+        self.tmux("set-option", "-p", "-t", pane, "@claude_state", json.dumps(state))
+        return pane
+
+    @unittest.skipUnless(shutil.which("cc"), "C compiler required")
+    def test_open_claude_prefers_live_process_profile_over_stale_record(self):
+        fake_bin, record = self.profile_launcher()
+        # karin の claude が SessionEnd なしで落ち、同じ pane で素の claude を起動した直後
+        self.claude_process_pane(self.repo, None, recorded=self.profile_dir("karin"))
+        linked = self.add_manual("stale-record")
+
+        self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), "unset")
+
+    @unittest.skipUnless(shutil.which("cc"), "C compiler required")
+    def test_open_claude_does_not_read_profile_from_process_arguments(self):
+        fake_bin, record = self.profile_launcher()
+        self.claude_process_pane(self.repo, None, args=["CLAUDE_CONFIG_DIR=" + self.profile_dir("karin")])
+        linked = self.add_manual("argument-profile")
+
+        self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), "unset")
+
+    def test_open_claude_default_profile_drops_profile_from_tmux_environment(self):
+        fake_bin, record = self.profile_launcher()
+        self.tmux("set-environment", "-g", "CLAUDE_CONFIG_DIR", self.profile_dir("ysano"))
+        self.claude_pane(self.repo, "")
+        linked = self.add_manual("drop-tmux-env")
+
+        self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), "unset")
+
+    def test_open_claude_ignores_nested_clone_of_another_repository(self):
+        fake_bin, record = self.profile_launcher()
+        nested = self.repo / "nested clone"
+        nested.mkdir()
+        self.git("init", "-q", "-b", "main", cwd=nested)
+        self.claude_pane(nested, self.profile_dir("karin"))
+        linked = self.add_manual("nested-clone")
+
+        self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), "unset")
+
     @unittest.skipUnless(shutil.which("cc"), "C compiler required")
     def test_open_claude_reads_profile_of_claude_process_without_recorded_profile(self):
         fake_bin, record = self.profile_launcher()
         karin = self.profile_dir("karin")
-        named = self.base / "process bin"
-        named.mkdir()
-        # macOS は署名済みのシステムのコマンド（sleep 等）の環境変数を ps に見せない。
-        # 実物の claude と同じく、自前でビルドした実行ファイルにする。
-        source = named / "sleep.c"
-        source.write_text("#include <unistd.h>\nint main(void) { sleep(300); return 0; }\n")
-        subprocess.run(["cc", str(source), "-o", str(named / "claude")], check=True, capture_output=True)
-        pane = self.tmux(
-            "new-window", "-d", "-t", self.session, "-c", str(self.repo), "-P", "-F", "#{pane_id}",
-            "exec env CLAUDE_CONFIG_DIR=" + __import__("shlex").quote(karin) + " "
-            + __import__("shlex").quote(str(named / "claude")),
-        )
-        state = {"session_id": "p", "actors": {}, "provider": "claude", "cwd": str(self.repo)}
-        self.tmux("set-option", "-p", "-t", pane, "@claude_state", json.dumps(state))
+        self.claude_process_pane(self.repo, karin)
         linked = self.add_manual("process-profile")
 
         self.open_claude(linked, fake_bin)

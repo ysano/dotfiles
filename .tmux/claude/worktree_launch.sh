@@ -127,7 +127,14 @@ wt_spawn() {
     path="$(worktree_path "$name")"
     cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
     profile="$(claude_profile_env "$path")"
-    [[ -n "$profile" ]] && envopt="-e $(printf '%q' "CLAUDE_CONFIG_DIR=$profile") "
+    if [[ -n "$profile" ]]; then
+        envopt="-e $(printf '%q' "CLAUDE_CONFIG_DIR=$profile") "
+    elif [[ "$mode" == "unsupervised" ]]; then
+        # 既定のプロファイル: tmux の環境に残った CLAUDE_CONFIG_DIR を引き継がない
+        cmd="env -u CLAUDE_CONFIG_DIR $cmd"
+    else
+        cmd="unset CLAUDE_CONFIG_DIR; $cmd"
+    fi
     if [[ -n "${TMUX_WORKTREE_ORIGIN:-}" ]]; then
         [[ "$TMUX_WORKTREE_ORIGIN" =~ ^%[0-9]+$ ]] || return 1
         target="-t $(printf '%q' "$TMUX_WORKTREE_ORIGIN")"
@@ -210,7 +217,7 @@ _list_worktrees() {
 # 既存 worktree に対応する pane があれば前面化、無ければ split-window で claude -c。
 # pane を id で捕捉し -p -t で @cc_worktree を確実に付与する。
 wt_open() {
-    local name="$1" path pane profile
+    local name="$1" path pane profile start
     local -a target=() env=()
     path="$(worktree_path "$name")"
     if [[ -n "${TMUX_WORKTREE_ORIGIN:-}" ]]; then
@@ -224,8 +231,12 @@ wt_open() {
         tmux select-pane -t "$pane"
     else
         profile="$(claude_profile_env "$path")"
-        [[ -n "$profile" ]] && env=(-e "CLAUDE_CONFIG_DIR=$profile")
-        pane="$(tmux split-window ${target[@]+"${target[@]}"} ${env[@]+"${env[@]}"} -c "$path" -P -F '#{pane_id}' "claude -c ; exec ${SHELL:-/bin/sh}")"
+        if [[ -n "$profile" ]]; then
+            env=(-e "CLAUDE_CONFIG_DIR=$profile") start=""
+        else
+            env=() start="unset CLAUDE_CONFIG_DIR; "  # tmux の環境に残った値を引き継がない
+        fi
+        pane="$(tmux split-window ${target[@]+"${target[@]}"} ${env[@]+"${env[@]}"} -c "$path" -P -F '#{pane_id}' "${start}claude -c ; exec ${SHELL:-/bin/sh}")"
         tmux set-option -p -t "$pane" @cc_worktree "$path"
     fi
 }
