@@ -11,6 +11,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 
@@ -26,6 +27,7 @@ MIN_HEIGHT = 16
 PROVIDERS = {"shell", "claude", "codex"}
 SUCCESS_EVENTS = {"posttooluse", "aftertooluse", "toolcompleted"}
 SHELL_TOOLS = {"bash", "execcommand"}
+SHELL_COMMANDS = {"sh", "bash", "zsh", "dash", "fish", "ksh", "tcsh", "csh", "-zsh", "-bash", "-sh"}
 MAX_GIT_WORKERS = 8
 # dashboard の応答性のため、snapshot 内の git は短い timeout で打ち切る。
 GIT_INVENTORY_TIMEOUT = 5
@@ -777,6 +779,160 @@ def _session_panes(session):
     return panes
 
 
+def _claude_panes():
+    """全 session の pane を、claude のプロファイル判定に要る列つきで返す。"""
+    output = _tmux(
+        "list-panes", "-a", "-F",
+        "#{pane_id}\t#{pane_pid}\t#{pane_current_path}\t#{@claude_state}\t#{pane_current_command}",
+    )
+    panes = []
+    for line in output.splitlines():
+        parts = line.split("\t", 4)
+        parts += [""] * (5 - len(parts))
+        panes.append({
+            "pane_id": parts[0], "pid": parts[1], "cwd": parts[2],
+            "claude_state": parts[3], "command": parts[4],
+        })
+    return panes
+
+
+def _process_table():
+    output = _run(["ps", "-A", "-o", "pid=,ppid=,comm="])
+    children, names = {}, {}
+    for line in output.splitlines():
+        parts = line.split(None, 2)
+        if len(parts) < 3:
+            continue
+        pid, ppid, comm = parts
+        children.setdefault(ppid, []).append(pid)
+        names[pid] = os.path.basename(comm.strip())
+    return children, names
+
+
+def _claude_process(pane_pid, table):
+    """pane の中で動く claude のプロセスのうち、最も浅いものの pid。"""
+    children, names = table
+    queue, seen = [pane_pid], set()
+    while queue:
+        pid = queue.pop(0)
+        if pid in seen:
+            continue
+        seen.add(pid)
+        if re.fullmatch(r"claude(?:\.exe)?", names.get(pid, "")):
+            return pid
+        queue.extend(children.get(pid, []))
+    return None
+
+
+def _process_config_dir(pid):
+    """プロセスの CLAUDE_CONFIG_DIR。環境変数が読めなければ None、未設定なら空文字。"""
+    try:
+        environ = Path("/proc", pid, "environ").read_bytes()  # Linux: NUL 区切りで正確に読める
+    except OSError:
+        environ = None
+    if environ:
+        for item in environ.split(b"\0"):
+            if item.startswith(b"CLAUDE_CONFIG_DIR="):
+                return os.fsdecode(item[len(b"CLAUDE_CONFIG_DIR="):])
+        return ""
+    try:
+        # /proc がない macOS 向け（Linux でも /proc を読めないときは procps の同じ書式で通る）。
+        # e を付けると引数の後に環境変数が続く。引数だけの出力を取り除いて
+        # 環境変数の部分だけを見る（引数に CLAUDE_CONFIG_DIR= があっても読まない）。
+        args = _run(["ps", "ww", "-o", "command=", "-p", pid]).strip()
+        output = _run(["ps", "eww", "-o", "command=", "-p", pid]).strip()
+    except GIT_ERRORS:
+        return None
+    if not args or not output.startswith(args):
+        return None
+    environment = output[len(args):]
+    # 環境変数が見えないとき（権限・OS の違い）に「未設定」と取り違えない。
+    if not re.search(r"(?:^|\s)(?:PATH|HOME)=", environment):
+        return None
+    # 空白区切りなので、次の NAME= の手前までを値とみなす。誤って読んでも、
+    # 実在しないパスになり呼び出し側で捨てられる。
+    found = re.findall(r"(?:^|\s)CLAUDE_CONFIG_DIR=(.*?)(?=\s[A-Za-z_][A-Za-z0-9_]*=|\s*$)", environment)
+    return found[-1] if found else ""
+
+
+def _usable_config_dir(value):
+    if value == "":
+        return value
+    if isinstance(value, str) and os.path.isabs(value) and os.path.isdir(value):
+        return value
+    return None
+
+
+def _pane_config_dir(pane, table):
+    """pane の claude が使うプロファイル。claude でない・決められないときは None。
+
+    動いている claude のプロセスの環境変数を優先する（記録が古くても取り違えない）。
+    プロセスが見つからない・環境変数が読めない（npm 版でプロセス名が node 等）
+    ときは、フックが @claude_state に残した config_dir を使う。"""
+    raw = pane.get("claude_state") or ""
+    try:
+        state = json.loads(raw) if raw else {}
+    except ValueError:
+        state = {}
+    if not isinstance(state, dict):
+        state = {}
+    if not state and not re.fullmatch(r"claude(?:\.exe)?", pane.get("command") or ""):
+        return None
+    if table[0] is None:
+        try:
+            table[0] = _process_table()
+        except GIT_ERRORS:
+            table[0] = ({}, {})
+            table[1] = False  # 子プロセスの有無は分からない
+    pid = _claude_process(pane.get("pid") or "", table[0])
+    if pid is not None:
+        live = _usable_config_dir(_process_config_dir(pid))
+        if live is not None:
+            return live
+    # 前面がシェルで子プロセスもない pane は、claude が落ちて poll が消す前の古い
+    # 記録とみなす（`claude … ; exec $SHELL` で動く npm 版は node が子に残る）。
+    if (pid is None and table[1] and (pane.get("command") or "") in SHELL_COMMANDS
+            and not table[0][0].get(pane.get("pid") or "")):
+        return None
+    if "config_dir" in state:
+        return _usable_config_dir(state["config_dir"])
+    return None
+
+
+def _same_repository(pane, repo):
+    """pane の cwd が同じリポジトリか。worktree の中に置いた別の clone を除く。"""
+    try:
+        return _common_git_dir(pane.get("cwd") or "", timeout=GIT_INVENTORY_TIMEOUT) == repo
+    except GIT_ERRORS:
+        return False
+
+
+def claude_config_dir(path: str, origin: str) -> str:
+    """worktree に起動する claude の CLAUDE_CONFIG_DIR を決める。空文字は既定のプロファイル。
+
+    1. 同じリポジトリで動いている claude（対象の worktree、main、他の worktree の順）
+    2. 起動元の pane の claude
+    3. どちらもなければ既定（素の claude）"""
+    canonical = _canonical(path)
+    panes = _claude_panes()
+    rows = _inventory([canonical], panes)
+    target = next((row for row in rows if row["path"] == canonical), None)
+    by_id = {pane["pane_id"]: pane for pane in panes}
+    table = [None, True]  # [ps の表（遅延取得）, 取得できたか]
+    if target is not None:
+        ordered = [target] + [row for row in rows if row is not target and row["repo"] == target["repo"]]
+        for row in ordered:
+            for pane_id in row["panes"]:
+                value = _pane_config_dir(by_id[pane_id], table)
+                if value is not None and _same_repository(by_id[pane_id], target["repo"]):
+                    return value
+    if origin in by_id:
+        value = _pane_config_dir(by_id[origin], table)
+        if value is not None:
+            return value
+    return ""
+
+
 def open_worktree(path: str, session: str, origin: str, provider: str = "shell") -> str:
     """Focus an existing pane or explicitly launch a provider in a new pane."""
     if provider not in PROVIDERS:
@@ -801,7 +957,27 @@ def open_worktree(path: str, session: str, origin: str, provider: str = "shell")
     if resolved is None:
         raise RuntimeError(f"{provider} executable not found: {executable}")
     command = "exec " + shlex.join([resolved])
+    env = []
+    if provider == "claude":
+        config_dir = claude_config_dir(canonical, origin)
+        if config_dir:
+            env = ["-e", "CLAUDE_CONFIG_DIR=" + config_dir]
+        else:
+            # 既定のプロファイル: tmux の環境に残った CLAUDE_CONFIG_DIR を引き継がない
+            command = "unset CLAUDE_CONFIG_DIR; " + command
     return _tmux(
-        "split-window", "-t", origin, "-c", canonical,
+        "split-window", "-t", origin, *env, "-c", canonical,
         "-P", "-F", "#{pane_id}", command,
     )
+
+
+def _main(argv):
+    if len(argv) == 3 and argv[0] == "claude-config-dir":
+        sys.stdout.write(claude_config_dir(argv[1], argv[2]))
+        return 0
+    sys.stderr.write("usage: worktrees.py claude-config-dir <worktree> <origin-pane>\n")
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(_main(sys.argv[1:]))

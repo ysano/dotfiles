@@ -111,6 +111,13 @@ def process_hook(event):
         before = pane_option(pane, '@claude_status')
         previous = read_json(pane, '@claude_state')
         state = reduce_event(previous, event)
+        # worktree に claude を起動するとき、同じリポジトリの claude と同じ
+        # プロファイル（CLAUDE_CONFIG_DIR。空文字は既定）を選べるよう残す。
+        # 別のセッション（落ちた前の claude 等）から遅れて届いたイベントでは書き換えない。
+        config_dir = os.environ.get('CLAUDE_CONFIG_DIR', '')
+        if (state and state.get('session_id') == event.get('session_id')
+                and state.get('config_dir') != config_dir):
+            state = dict(state, config_dir=config_dir)
         if state != previous:
             evidence = read_json(pane, '@claude_evidence')
             # A fresh root prompt invalidates previous terminal observations.
