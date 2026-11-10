@@ -168,6 +168,17 @@ class ClaudeTmuxTests(unittest.TestCase):
         self.assertEqual(self.tmux('show-option', '-pqv', '-t', '%0', '@claude_status'), 'Idle')
         self.assertEqual(self.tmux('show-option', '-pqv', '-t', '%0', '@claude_evidence'), '')
 
+    def test_hook_records_claude_config_dir_for_profile_selection(self):
+        profile = str(Path(self.temp.name) / 'profile karin')
+        self.env['CLAUDE_CONFIG_DIR'] = profile
+        self.hook('UserPromptSubmit')
+        state = json.loads(self.tmux('show-option', '-pqv', '-t', '%0', '@claude_state'))
+        self.assertEqual(state['config_dir'], profile)
+        del self.env['CLAUDE_CONFIG_DIR']
+        self.hook('Stop')
+        state = json.loads(self.tmux('show-option', '-pqv', '-t', '%0', '@claude_state'))
+        self.assertEqual(state['config_dir'], '')
+
     def test_claude_exe_is_detected(self):
         self.assertEqual(self.shell('detect_claude_panes'), 'probe:0.0')
 

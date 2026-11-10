@@ -8,6 +8,9 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=worktree_launch.sh
 source "$SCRIPT_DIR/worktree_launch.sh"
+# 稼働中の tmux（karin 等のプロファイル）に結果が左右されないよう、既定は「決まらない」。
+# 実物は「claude のプロファイル」の節で確かめる。
+claude_profile_env() { :; }
 
 fails=0
 
@@ -117,6 +120,51 @@ PATH="$_open_tmp:$PATH" WT_OPEN_LOG="$_open_log" TMUX_WORKTREE_ORIGIN=%42 wt_ope
 _open_call="$(tr '\n' ' ' < "$_open_log")"
 assert_contains "$_open_call" "split-window -t %42" "open: 渡されたorigin paneを明示targetにする"
 rm -rf "$_open_tmp"
+
+echo ""
+echo "=== claude のプロファイル (CLAUDE_CONFIG_DIR) ==="
+_profile_tmp="$(mktemp -d)"
+_profile_dir="$_profile_tmp/profile karin"
+claude_profile_env() { printf '%s' "$_profile_dir"; }
+export WT_DRY_RUN=1
+_ps="$(wt_spawn supervised login)"
+assert_contains "$_ps" "split-window -e $(printf '%q' "CLAUDE_CONFIG_DIR=$_profile_dir")" "spawn 監視あり: 同じリポジトリのプロファイルを pane の環境に渡す"
+_pu="$(wt_spawn unsupervised login 'fix tests')"
+assert_contains "$_pu" "new-window -d -e $(printf '%q' "CLAUDE_CONFIG_DIR=$_profile_dir")" "spawn 監視なし: 同じリポジトリのプロファイルを渡す"
+unset WT_DRY_RUN
+_profile_log="$_profile_tmp/tmux.log"
+cat > "$_profile_tmp/tmux" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@" >> "$WT_OPEN_LOG"
+if [ "$1" = "split-window" ]; then printf '%%99\n'; fi
+EOF
+chmod +x "$_profile_tmp/tmux"
+PATH="$_profile_tmp:$PATH" WT_OPEN_LOG="$_profile_log" TMUX_WORKTREE_ORIGIN=%42 wt_open login
+assert_contains "$(tr '\n' '|' < "$_profile_log")" "|-e|CLAUDE_CONFIG_DIR=$_profile_dir|" "open: 同じリポジトリのプロファイルで claude -c を起動"
+claude_profile_env() { :; }
+export WT_DRY_RUN=1
+assert_not_contains "$(wt_spawn supervised login)" "CLAUDE_CONFIG_DIR" "spawn: プロファイルが決まらなければ素の claude"
+unset WT_DRY_RUN
+: > "$_profile_log"
+PATH="$_profile_tmp:$PATH" WT_OPEN_LOG="$_profile_log" TMUX_WORKTREE_ORIGIN=%42 wt_open login
+assert_not_contains "$(tr '\n' '|' < "$_profile_log")" "CLAUDE_CONFIG_DIR" "open: プロファイルが決まらなければ素の claude"
+# 実物: worktrees.py に worktree と起動元の pane を渡し、その出力を使う
+unset -f claude_profile_env
+eval "$(sed -n '/^claude_profile_env() {/,/^}/p' "$SCRIPT_DIR/worktree_launch.sh")"
+cat > "$_profile_tmp/python3" <<'EOF'
+#!/bin/sh
+printf '%s|' "$@" > "$WT_PY_LOG"
+printf '/p/karin'
+EOF
+chmod +x "$_profile_tmp/python3"
+_py_out="$(PATH="$_profile_tmp:$PATH" WT_PY_LOG="$_profile_tmp/py.log" TMUX_WORKTREE_ORIGIN=%42 claude_profile_env "/w/a b")"
+assert_eq "$_py_out" "/p/karin" "profile: worktrees.py の出力をそのまま使う"
+assert_contains "$(cat "$_profile_tmp/py.log")" "worktrees.py|claude-config-dir|/w/a b|%42|" "profile: worktree と起動元の pane を渡す"
+printf '#!/bin/sh\nexit 1\n' > "$_profile_tmp/python3"
+_py_out="$(PATH="$_profile_tmp:$PATH" claude_profile_env "/w/a b")"; _py_rc=$?
+assert_eq "$_py_out|$_py_rc" "|0" "profile: worktrees.py が失敗しても素の claude で続ける"
+claude_profile_env() { :; }
+rm -rf "$_profile_tmp"
 
 echo ""
 echo "=== classify_pick (fzf --print-query の解釈) ==="

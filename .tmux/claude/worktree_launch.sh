@@ -108,27 +108,38 @@ wt_create() {
     fi
 }
 
+# 同じリポジトリで動いている claude のプロファイル（CLAUDE_CONFIG_DIR）を stdout に出す。
+# 選び方は worktrees.py の claude_config_dir（同じリポジトリ → 起動元の pane → 既定）。
+# 決められないとき・Python がないときは何も出さない（素の claude で起動する）。
+claude_profile_env() {
+    local origin="${TMUX_WORKTREE_ORIGIN:-${TMUX_PANE:-}}"
+    command -v python3 >/dev/null 2>&1 || return 0
+    python3 "$SCRIPT_DIR/../agents/worktrees.py" claude-config-dir "$1" "$origin" 2>/dev/null || true
+}
+
 # claude を起動し、@cc_worktree(pane オプション)に worktree パスを記録。
 #   supervised   : 現 window を split-window で分割した pane（向きは tmux 既定）
 #   unsupervised : new-window -d（detached, headless。視界を奪わない背景実行）
 # どちらも新 pane の id を -P -F '#{pane_id}' で捕捉し、-p -t でその pane へ
 # オプションを付ける（識別は pane 単位に統一。wt_open は list-panes で探索）。
 wt_spawn() {
-    local mode="$1" name="$2" task="${3:-}" path cmd panecmd target=""
+    local mode="$1" name="$2" task="${3:-}" path cmd panecmd target="" profile envopt=""
     path="$(worktree_path "$name")"
     cmd="$(build_claude_cmd "$mode" "$name" "$task")" || return 1
+    profile="$(claude_profile_env "$path")"
+    [[ -n "$profile" ]] && envopt="-e $(printf '%q' "CLAUDE_CONFIG_DIR=$profile") "
     if [[ -n "${TMUX_WORKTREE_ORIGIN:-}" ]]; then
         [[ "$TMUX_WORKTREE_ORIGIN" =~ ^%[0-9]+$ ]] || return 1
         target="-t $(printf '%q' "$TMUX_WORKTREE_ORIGIN")"
     fi
     if [[ "$mode" == "unsupervised" ]]; then
-        _emit "_wt_p=\$(tmux new-window -d -c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
+        _emit "_wt_p=\$(tmux new-window -d ${envopt}-c $(printf '%q' "$path") -n $(printf '%q' "$name") -P -F '#{pane_id}' $cmd) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     else
         # claude 終了後は worktree の cwd でシェルに落として pane を残す
         # （オプションを付け直して claude -c で再起動できるように）。
         # pane コマンド全体を 1 トークンとして tmux に渡し sh -c 実行させる。
         panecmd="$cmd ; exec $(printf '%q' "${SHELL:-/bin/sh}")"
-        _emit "_wt_p=\$(tmux split-window $target -c $(printf '%q' "$path") -P -F '#{pane_id}' $(printf '%q' "$panecmd")) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
+        _emit "_wt_p=\$(tmux split-window ${envopt}$target -c $(printf '%q' "$path") -P -F '#{pane_id}' $(printf '%q' "$panecmd")) ; tmux set-option -p -t \"\$_wt_p\" @cc_worktree $(printf '%q' "$path")"
     fi
 }
 
@@ -199,8 +210,8 @@ _list_worktrees() {
 # 既存 worktree に対応する pane があれば前面化、無ければ split-window で claude -c。
 # pane を id で捕捉し -p -t で @cc_worktree を確実に付与する。
 wt_open() {
-    local name="$1" path pane
-    local -a target=()
+    local name="$1" path pane profile
+    local -a target=() env=()
     path="$(worktree_path "$name")"
     if [[ -n "${TMUX_WORKTREE_ORIGIN:-}" ]]; then
         [[ "$TMUX_WORKTREE_ORIGIN" =~ ^%[0-9]+$ ]] || return 1
@@ -212,7 +223,9 @@ wt_open() {
         tmux select-window -t "$pane"
         tmux select-pane -t "$pane"
     else
-        pane="$(tmux split-window "${target[@]}" -c "$path" -P -F '#{pane_id}' "claude -c ; exec ${SHELL:-/bin/sh}")"
+        profile="$(claude_profile_env "$path")"
+        [[ -n "$profile" ]] && env=(-e "CLAUDE_CONFIG_DIR=$profile")
+        pane="$(tmux split-window ${target[@]+"${target[@]}"} ${env[@]+"${env[@]}"} -c "$path" -P -F '#{pane_id}' "claude -c ; exec ${SHELL:-/bin/sh}")"
         tmux set-option -p -t "$pane" @cc_worktree "$path"
     fi
 }
