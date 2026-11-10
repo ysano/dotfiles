@@ -130,7 +130,9 @@ wt_spawn() {
     if [[ -n "$profile" ]]; then
         envopt="-e $(printf '%q' "CLAUDE_CONFIG_DIR=$profile") "
     elif [[ "$mode" == "unsupervised" ]]; then
-        # 既定のプロファイル: tmux の環境に残った CLAUDE_CONFIG_DIR を引き継がない
+        # 既定のプロファイル: tmux の環境に残った CLAUDE_CONFIG_DIR を引き継がない。
+        # 監視なしは $cmd を引用せずに _emit の文字列へ埋め込むので `unset …;` は使えない
+        # （`;` が eval で区切りになり、claude が pane でなくランチャー側で動く）。
         cmd="env -u CLAUDE_CONFIG_DIR $cmd"
     else
         cmd="unset CLAUDE_CONFIG_DIR; $cmd"
