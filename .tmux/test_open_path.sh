@@ -527,10 +527,19 @@ check "gh: gh repo set-default を優先" "me/widget"             sh "$SCRIPT" g
 ghstub="$work/ghstub"; mkdir -p "$ghstub"
 cat > "$ghstub/gh" <<'STUB'
 #!/bin/sh
-for a in "$@"; do printf '[%s]' "$a"; done >> "$STUB_LOG"; echo " <- gh${GH_FORCE_TTY:+ tty}" >> "$STUB_LOG"
+log=${STUB_GH_LOG:-$STUB_LOG}
+for a in "$@"; do printf '[%s]' "$a"; done >> "$log"; echo " <- gh${GH_FORCE_TTY:+ tty}" >> "$log"
 [ -z "${STUB_gh_sleep:-}" ] || exec sleep "$STUB_gh_sleep"
 case $1 in
-    api) [ -z "${STUB_gh_fail:-}" ] || { echo "HTTP 404: Not Found" >&2; exit 1; }; echo "${STUB_gh_kind:-pr}" ;;
+    api)
+        [ -z "${STUB_gh_fail:-}" ] || { echo "HTTP 404: Not Found" >&2; exit 1; }
+        # Discussion は番号を Issue と共有するが、Issue の API は 404 を返す（本物と同じく本文の JSON も出す）
+        case $2 in
+            */issues/*) [ "${STUB_gh_kind:-}" != discussion ] || { echo '{"message":"Not Found"}'; echo "gh: Not Found (HTTP 404)" >&2; exit 1; } ;;
+            */discussions/*) [ "${STUB_gh_kind:-}" = discussion ] || { echo "gh: Not Found (HTTP 404)" >&2; exit 1; } ;;
+            graphql) echo "# discussion"; exit 0 ;;
+        esac
+        echo "${STUB_gh_kind:-pr}" ;;
     *) echo "body" ;;
 esac
 STUB
@@ -544,12 +553,20 @@ t0=$(date +%s)
 check "gh: 応答しなければ失敗"       ""                        env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_sleep=8 OPEN_PATH_GH_TIMEOUT=1 sh "$SCRIPT" gh_kind acme/widget 3
 if [ $(( $(date +%s) - t0 )) -le 4 ]; then echo "ok   gh: 応答しなければ打ち切る"; else echo "FAIL gh: 応答しなければ打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
 check "gh: 想定外の応答は失敗"       ""                        env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_kind=x sh "$SCRIPT" gh_kind acme/widget 3
+check "gh: Discussion か"            "discussion"              env PATH="$ghstub:$PATH" STUB_LOG=/dev/null STUB_gh_kind=discussion sh "$SCRIPT" gh_kind acme/widget 879
+log=$(STUB_gh_kind=issue ghrun sh "$SCRIPT" gh_kind acme/widget 3)
+case $log in *discussions*) echo "FAIL gh: Issue が取れれば Discussion は聞かない: $log"; fail=1 ;; *) echo "ok   gh: Issue が取れれば Discussion は聞かない" ;; esac
+log=$(STUB_gh_sleep=8 OPEN_PATH_GH_TIMEOUT=1 ghrun sh "$SCRIPT" gh_kind acme/widget 3)
+case $log in *discussions*) echo "FAIL gh: 打ち切ったら Discussion は聞かない: $log"; fail=1 ;; *) echo "ok   gh: 打ち切ったら Discussion は聞かない" ;; esac
 log=$(ghrun sh "$SCRIPT" gh_kind "o/.." 3)
 case $log in "") echo "ok   gh: 不正な owner/repo では gh を呼ばない" ;; *) echo "FAIL gh: 不正な owner/repo では gh を呼ばない: $log"; fail=1 ;; esac
 check "gh: PR の本文"   "[pr][view][78][-R][acme/widget][--comments] <- gh tty"     ghrun sh "$SCRIPT" render gh acme/widget 78 pr body
 check "gh: PR の差分"   "[pr][diff][78][-R][acme/widget][--color=always] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 78 pr diff
 check "gh: Issue の本文" "[issue][view][3][-R][acme/widget][--comments] <- gh tty"  ghrun sh "$SCRIPT" render gh acme/widget 3 issue body
 check "gh: Issue に差分は無い" "[issue][view][3][-R][acme/widget][--comments] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 3 issue diff
+# Discussion は gh に表示のコマンドが無いため、GraphQL で本文・コメント・返信を取る
+log=$(ghrun sh "$SCRIPT" render gh acme/widget 879 discussion body)
+case $log in *"[api][graphql]"*"[owner=acme]"*"[name=widget]"*"[number=879]"*"discussion(number:"*) echo "ok   gh: Discussion の本文" ;; *) echo "FAIL gh: Discussion の本文: $log"; fail=1 ;; esac
 # 本文・差分の取得も打ち切る（止まった gh を待ち続けると、less を抜けてもポップアップが閉じない）
 for part in body diff; do
     t0=$(date +%s)
@@ -679,7 +696,7 @@ case $log in *"[display-message]"*) echo "ok   見つからなければメッセ
 for t in open xdg-open; do printf '#!/bin/sh\nfor a in "$@"; do printf "[%%s]" "$a"; done >> "$STUB_LOG"; echo " <- %s" >> "$STUB_LOG"\n' "$t" > "$stub/$t"; chmod +x "$stub/$t"; done
 click_open() {
     : > "$work/log"
-    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_client=c1 STUB_link="" \
+    env PATH="$stub:$ghstub:$PATH" STUB_LOG="$work/log" STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" STUB_version=3.7c STUB_client=c1 STUB_link="" \
         STUB_line="$1" STUB_x="$2" STUB_cwd="$3" sh "$SCRIPT" click open >/dev/null 2>&1
     cat "$work/log"
 }
@@ -689,7 +706,7 @@ case $log in
     *"[$repo/link.sh] <- open"*) echo "ok   click open は既定アプリで開く" ;;
     *) echo "FAIL click open は既定アプリで開く: $log"; fail=1 ;;
 esac
-log=$(click_open "PR #78 を見る" 4 "$grepo")
+log=$(STUB_gh_kind=issue click_open "PR #78 を見る" 4 "$grepo")
 case $log in *"[https://github.com/acme/widget/issues/78] <- open"*) echo "ok   click open: #番号はブラウザで開く" ;; *) echo "FAIL click open: #番号はブラウザで開く: $log"; fail=1 ;; esac
 log=$(click_open "see docs/ here" 6 "$repo")
 case $log in *"[$repo/docs] <- open"*) echo "ok   click open はディレクトリも開く" ;; *) echo "FAIL click open はディレクトリも開く: $log"; fail=1 ;; esac
@@ -701,7 +718,7 @@ case $log in *"<- open"*) echo "FAIL click open: 見つからなければ開か�
 # （STUB_pane / STUB_y は up_ にも渡す）
 click_link() {
     : > "$work/log"
-    env PATH="$stub:$PATH" STUB_LOG="$work/log" STUB_version=3.7c STUB_up_client=c1 STUB_up_link="${CLICK_LINK:-}" \
+    env PATH="$stub:$ghstub:$PATH" STUB_LOG="$work/log" STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" STUB_version=3.7c STUB_up_client=c1 STUB_up_link="${CLICK_LINK:-}" \
         STUB_up_line="$1" STUB_up_x="$2" STUB_up_cwd="$3" STUB_up_pane="${STUB_pane:-}" STUB_up_y="${STUB_y:-}" \
         sh "$SCRIPT" click link ${4:+"$4"} >/dev/null 2>&1
     cat "$work/log"
@@ -718,9 +735,18 @@ opened "link: URL"                         "https://example.com/a?b=1&c=2" "$(cl
 opened "link: PR の URL はそのまま（# の続きも）" "https://github.com/acme/widget/pull/9#issuecomment-1" \
     "$(click_link "see https://github.com/acme/widget/pull/9#issuecomment-1 ok" 10 "$grepo")"
 opened "link: ハイパーリンク（OSC 8）の URL" "https://example.com/docs" "$(CLICK_LINK="https://example.com/docs" click_link "the docs here" 5 /)"
-opened "link: #番号は cwd のリポジトリ"     "https://github.com/acme/widget/issues/78" "$(click_link "PR #78 を見る" 4 "$grepo/sub")"
-opened "link: owner/repo#番号"              "https://github.com/o/r/issues/5" "$(click_link "see o/r#5 now" 6 /)"
-opened "link: 登録した省略形"               "https://github.com/acme/blueprint/issues/12" "$(STUB_gh_alias="bp=acme/blueprint" click_link "see bp#12 now" 5 "$grepo")"
+opened "link: #番号は cwd のリポジトリ"     "https://github.com/acme/widget/issues/78" "$(STUB_gh_kind=issue click_link "PR #78 を見る" 4 "$grepo/sub")"
+opened "link: owner/repo#番号"              "https://github.com/o/r/issues/5" "$(STUB_gh_kind=issue click_link "see o/r#5 now" 6 /)"
+opened "link: 登録した省略形"               "https://github.com/acme/blueprint/issues/12" "$(STUB_gh_kind=issue STUB_gh_alias="bp=acme/blueprint" click_link "see bp#12 now" 5 "$grepo")"
+# 種類（PR / Discussion）は gh で調べて URL を決める。Discussion は Issue の URL では開けないことがある
+opened "link: PR は pull の URL"            "https://github.com/o/r/pull/5" "$(STUB_gh_kind="pr" click_link "see o/r#5 now" 6 /)"
+opened "link: Discussion は discussions の URL" "https://github.com/acme/blueprint/discussions/879" \
+    "$(STUB_gh_kind=discussion STUB_gh_alias="int=acme/blueprint" click_link "see int#879 now" 5 "$grepo")"
+opened "link: gh で調べられなければ Issue の URL" "https://github.com/o/r/issues/5" "$(STUB_gh_fail=1 click_link "see o/r#5 now" 6 /)"
+# 応答しない gh はクリックでは 3 秒で打ち切る（OPEN_PATH_GH_TIMEOUT の既定 15 秒は待たない）
+t0=$(date +%s)
+opened "link: gh が応答しなければ Issue の URL" "https://github.com/o/r/issues/5" "$(STUB_gh_sleep=8 click_link "see o/r#5 now" 6 /)"
+if [ $(( $(date +%s) - t0 )) -le 5 ]; then echo "ok   link: 応答しない gh は短く打ち切る"; else echo "FAIL link: 応答しない gh は短く打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
 opened "link: 別の URL の中の URL は外側を開く" "https://login.example.com/?next=https://github.com/acme/widget/pull/9" \
     "$(click_link "go https://login.example.com/?next=https://github.com/acme/widget/pull/9 now" 40 /)"
 # 文の中の URL: 前後の括弧・引用符・句読点は URL に含めない（URL の中で対になる括弧は残す）
@@ -818,6 +844,7 @@ check "claude: 制御文字を含むリポジトリ" ""                         
 check "claude: PR"                   "https://github.com/o/r/pull/78 " sh "$SCRIPT" claude_text gh o/r 78 pr
 check "claude: Issue"                "https://github.com/o/r/issues/3 " sh "$SCRIPT" claude_text gh o/r 3 issue
 check "claude: 種類不明の参照"       "https://github.com/o/r/issues/3 " sh "$SCRIPT" claude_text gh o/r 3 ""
+check "claude: Discussion"           "https://github.com/o/r/discussions/879 " sh "$SCRIPT" claude_text gh o/r 879 discussion
 check "claude: コミット"             "commit abc1234 (/repo) "         sh "$SCRIPT" claude_text commit /repo abc1234
 # claude_ancestors: ps の表（pid ppid 実行ファイル）から、claude / claude.exe とその祖先の pid
 pstab=$(printf '%s\n' "1 0 launchd" "100 1 -zsh" "101 100 node" "102 101 /opt/bin/claude" "200 1 zsh" "201 200 vim" "300 1 zsh" "301 300 claude.exe" "400 1 zsh" "401 400 claude-helper" "  500   1 /bin/zsh" "501 500 /Users/Jane Doe/.local/bin/claude")

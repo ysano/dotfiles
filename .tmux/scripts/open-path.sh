@@ -799,16 +799,35 @@ gh_secs() {
     case $secs in ""|0*|*[!0-9]*) secs=15 ;; esac
 }
 
-# gh_kind <owner/repo> <番号>: PR なら pr、Issue なら issue（Issue の API は PR にも答え、
-# PR には pull_request が付く）。OPEN_PATH_GH_TIMEOUT 秒（既定 15）で打ち切る
+# gh_kind <owner/repo> <番号>: PR なら pr、Issue なら issue、Discussion なら discussion（Issue の
+# API は PR にも答え、PR には pull_request が付く。Discussion は番号を共有するが Issue の API は
+# 404 を返すため、Discussion の API に聞き直す）。OPEN_PATH_GH_TIMEOUT 秒（既定 15）で打ち切る
 gh_kind() {
     valid_ref "$1" "$2" || return 1
     gh_secs
     gh_env
     # bounded には gh を直接渡す（関数を渡すと打ち切られるのはサブシェルだけで、gh が
-    # 出力を開いたまま残り $(...) が待ち続ける）
-    k=$(bounded "$secs" gh api "repos/$1/issues/$2" --jq 'if .pull_request then "pr" else "issue" end') || return 1
-    case $k in pr|issue) echo "$k" ;; *) return 1 ;; esac
+    # 出力を開いたまま残り $(...) が待ち続ける）。失敗の理由は聞き直した方の stderr で見せる
+    k=$(bounded "$secs" gh api "repos/$1/issues/$2" --jq 'if .pull_request then "pr" else "issue" end' 2>/dev/null)
+    st=$?
+    if [ "$st" -eq 0 ]; then
+        case $k in pr|issue) echo "$k"; return 0 ;; *) return 1 ;; esac
+    fi
+    # 打ち切った（kill による 128 以上）ときは聞き直さない（応答しない gh を 2 度待たない）
+    [ "$st" -lt 128 ] || return 1
+    k=$(bounded "$secs" gh api "repos/$1/discussions/$2" --jq '"discussion"') || return 1
+    [ "$k" = discussion ] || return 1
+    echo discussion
+}
+
+# gh_web_url <owner/repo> <番号> <pr|issue|discussion|空>: ブラウザで開く URL。種類が分からなければ
+# Issue の URL にする（PR へは GitHub が転送するが、Discussion へは転送されないことがある）
+gh_web_url() {
+    case $3 in
+        pr) printf 'https://github.com/%s/pull/%s\n' "$1" "$2" ;;
+        discussion) printf 'https://github.com/%s/discussions/%s\n' "$1" "$2" ;;
+        *) printf 'https://github.com/%s/issues/%s\n' "$1" "$2" ;;
+    esac
 }
 
 # local_file <相対パス> <cwd>: cwd → git ルートの順に、実在する通常のファイルの実体パス
@@ -819,8 +838,9 @@ local_file() {
     return 1
 }
 
-# open_ref [open]: click が見つけた PR / Issue（$ref = owner/repo<TAB>番号）を開く。owner/repo が
-# 無ければ cwd → 前後の行のディレクトリのリポジトリから決める。click では通信しない
+# open_ref [open]: click が見つけた PR / Issue / Discussion（$ref = owner/repo<TAB>番号）を開く。
+# owner/repo が無ければ cwd → 前後の行のディレクトリのリポジトリから決める。プレビューの click では
+# 通信しない（open は URL を決めるために種類だけを gh で調べる）
 open_ref() {
     tab=$(printf '\t')
     nwo=${ref%%"$tab"*} num=${ref#*"$tab"}
@@ -838,8 +858,16 @@ open_ref() {
         return 0
     fi
     if [ "$1" = open ]; then
-        # Issue の URL は PR でも GitHub が PR へ転送する（gh を使わず、未認証でも開ける）
-        bounded 5 open_default "https://github.com/$nwo/issues/$num" >/dev/null 2>&1 ||
+        # 種類（PR / Issue / Discussion）を gh で調べて URL を決める（Discussion は Issue の URL では
+        # 開けないことがある）。クリックで待たせないよう 3 秒（OPEN_PATH_GH_TIMEOUT が短ければそれ）で
+        # 打ち切り、gh が無い・未認証・応答しないときは Issue の URL で開く（PR へは GitHub が転送する）
+        kind=""
+        if command -v gh >/dev/null 2>&1; then
+            gh_secs
+            [ "$secs" -le 3 ] || secs=3
+            kind=$(OPEN_PATH_GH_TIMEOUT=$secs gh_kind "$nwo" "$num" 2>/dev/null) || kind=""
+        fi
+        bounded 5 open_default "$(gh_web_url "$nwo" "$num" "$kind")" >/dev/null 2>&1 ||
             tmux display-message -c "$client" "open-path: ブラウザで開けません"
         return 0
     fi
@@ -1189,6 +1217,11 @@ render() {
         case $kind$part in
             prdiff) bounded "$secs" env GH_FORCE_TTY="$cols" gh pr diff "$num" -R "$nwo" --color=always | pretty_diff "$cols" ;;
             pr*|issue*) bounded "$secs" env GH_FORCE_TTY="$cols" gh "$kind" view "$num" -R "$nwo" --comments ;;
+            # gh に Discussion を表示するコマンドは無いため、本文・コメント・返信を GraphQL で取り、
+            # Markdown にして整形する（コメント・返信は先頭の 100 件まで。残りはブラウザで見る）
+            discussion*)
+                bounded "$secs" gh api graphql -F owner="${nwo%%/*}" -F name="${nwo#*/}" -F number="$num" \
+                    -f query="$DISCUSSION_QUERY" --jq "$DISCUSSION_JQ" | md_stdin "$cols" ;;
             *) return 1 ;;
         esac
         return
@@ -1213,10 +1246,41 @@ render() {
     fi | if [ -n "$lineno" ]; then mark "$lineno"; else cat; fi
 }
 
+# Discussion の本文・コメント・返信を取る GraphQL と、それを Markdown にする jq（render gh）
+# shellcheck disable=SC2016  # $owner 等は GraphQL / jq の変数（シェルで展開しない）
+DISCUSSION_QUERY='query($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    discussion(number: $number) {
+      title url body createdAt author { login }
+      comments(first: 100) {
+        totalCount
+        nodes { body createdAt author { login } replies(first: 100) { totalCount nodes { body createdAt author { login } } } }
+      }
+    }
+  }
+}'
+# shellcheck disable=SC2016  # $d は jq の変数
+DISCUSSION_JQ='.data.repository.discussion as $d |
+"# \($d.title)\n\n\($d.author.login // "ghost") · \($d.createdAt[:10]) · \($d.url)\n\n\($d.body)\n",
+($d.comments.nodes[] |
+  "\n---\n\n**\(.author.login // "ghost")** · \(.createdAt[:10])\n\n\(.body)\n",
+  (.replies.nodes[] | "\n> **\(.author.login // "ghost")** · \(.createdAt[:10])\n>\n\(.body | split("\n") | map("> " + .) | join("\n"))\n"),
+  (if .replies.totalCount > (.replies.nodes | length) then "\n> （ほかの返信はブラウザで）\n" else empty end)),
+(if $d.comments.totalCount > ($d.comments.nodes | length) then "\n---\n\n（ほかのコメントはブラウザで: \($d.url)）\n" else empty end)'
+
+# md_stdin <桁>: 標準入力の Markdown を、端末の幅に合わせて整形する（整形できなければそのまま）
+md_stdin() {
+    case $(md_renderer) in
+        glow) glow -s dark -w "$(( $1 - 2 ))" - ;;
+        mdcat) mdcat --ansi --columns "$(( $1 - 2 ))" - ;;
+        *) cat ;;
+    esac
+}
+
 # claude_text <file|gh|commit> ...: Claude Code の入力欄に入れる、文書を指す文字列（後ろに空白）。
 #   file <パス> [行番号]: @パス（行番号は (L42) と添える。@ の行指定は文書化されていないため）。
 #     空白を含むパスは @ の書き方が文書化されていないため、引用符で囲むだけにする
-#   gh <owner/repo> <番号> <pr|issue|空>: URL / commit <リポジトリ> <SHA>: commit <SHA> (<リポジトリ>)
+#   gh <owner/repo> <番号> <pr|issue|discussion|空>: URL / commit <リポジトリ> <SHA>: commit <SHA> (<リポジトリ>)
 # 改行等の制御文字を含むものは渡さない（入力欄で送信されうるため）
 claude_text() {
     no_cntrl "$*" || return 1
@@ -1227,8 +1291,7 @@ claude_text() {
                 *) printf '@%s %s' "$2" "${3:+(L$3) }" ;;
             esac ;;
         gh)
-            if [ "$4" = pr ]; then printf 'https://github.com/%s/pull/%s ' "$2" "$3"
-            else printf 'https://github.com/%s/issues/%s ' "$2" "$3"; fi ;;
+            printf '%s ' "$(gh_web_url "$2" "$3" "$4")" ;;
         commit) printf 'commit %s (%s) ' "$3" "$2" ;;
         *) return 1 ;;
     esac
@@ -1320,13 +1383,12 @@ view_commit() {
     done
 }
 
-# PR / Issue を less で見る（o でブラウザ、c で Claude Code に渡す、PR は r で本文・コメントと
+# PR / Issue / Discussion を less で見る（o でブラウザ、c で Claude Code に渡す、PR は r で本文・コメントと
 # 差分を切り替える）
 view_gh() {
     if ! valid_ref "$nwo" "$num"; then
         printf 'open-path: PR / Issue の参照ではありません: %s#%s\n' "$nwo" "$num"; sleep 2; return 1
     fi
-    url="https://github.com/$nwo/issues/$num"
     LESS=""
     export LESS
     printf '読み込み中: %s#%s\n' "$nwo" "$num"
@@ -1337,6 +1399,7 @@ view_gh() {
         # 失敗の理由（未認証・404 等）を見せるため、もう一度だけ stderr を取る
         kind="" err=$(gh_kind "$nwo" "$num" 2>&1 >/dev/null)
     fi
+    url=$(gh_web_url "$nwo" "$num" "$kind")
     keys="$(cd "$(dirname "$0")" && pwd)/open-path.lesskey"
     if ! [ -f "$keys" ] || ! lesskey_ok "$(less --version 2>/dev/null | head -n 1)" >/dev/null; then
         if [ -n "$kind" ]; then render gh; else printf '%s\n\n%s\n' "${err:-取得できません}" "$url"; fi | less -R
