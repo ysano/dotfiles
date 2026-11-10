@@ -754,6 +754,22 @@ class LoopRefreshTests(unittest.TestCase):
         module.delete_branch.assert_called_once()
         self.assertFalse(module.create_worktree.call_args.kwargs.get("reuse", False))
 
+    def test_delete_confirmation_keeps_the_key_line_short(self):
+        module = self.leftover()
+        confirm = mock.Mock(return_value=False)
+        done = threading.Event()
+        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        with mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
+                mock.patch.object(dashboard, "_ask_key", return_value="d"), \
+                mock.patch.object(dashboard, "_confirm", confirm), \
+                mock.patch.object(dashboard, "tmux_panes", return_value=[]):
+            dashboard._run_dashboard(screen, cached_snapshot(), None, module,
+                                     "$1", "%1", source=source)
+        text, details = confirm.call_args.args[1], confirm.call_args.args[2]
+        self.assertNotIn("worktree-topic", text)  # 長い名前で [y/N] が切れないよう、名前は説明の側
+        self.assertTrue(any("worktree-topic" in line and "2 件" in line for line in details))
+
     def test_leftover_branch_is_kept_when_deletion_is_not_confirmed(self):
         module = self.leftover()
         self.run_create(module, "d", confirm=False)

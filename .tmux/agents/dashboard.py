@@ -1017,8 +1017,8 @@ def _ask_key(screen, text, details=()):
         screen.timeout(100)
 
 
-def _confirm(screen, text):
-    return _ask_key(screen, text + " [y/N]") in {"y", "Y"}
+def _confirm(screen, text, details=()):
+    return _ask_key(screen, text + " [y/N]", details) in {"y", "Y"}
 
 
 def _details(screen, row, snapshot=None):
@@ -1210,8 +1210,10 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
                 if answer in {"r", "R"}:
                     reuse = True
                 elif answer in {"d", "D"}:
-                    if not _confirm(screen, "{} を消す？（commit {} 件を失う）".format(
-                            leftover["branch"], leftover["unmerged"])):
+                    # 名前の長さに関わらず [y/N] が見えるよう、説明は折り返す側に渡す
+                    if not _confirm(screen, "消して作り直しますか？", (
+                            "{} を消すと、HEAD に無い commit {} 件を失います".format(
+                                leftover["branch"], leftover["unmerged"]),)):
                         message = "作成を中止しました"
                         message_until = time.monotonic() + 2
                         continue
