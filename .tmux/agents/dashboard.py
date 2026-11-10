@@ -1177,9 +1177,10 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
                 continue
             if leftover:
                 if leftover.get("checked_out"):
-                    message = "ブランチ {} は別の worktree で使われています: {}".format(
-                        leftover["branch"], leftover["checked_out"])
-                    message_until = time.monotonic() + 6
+                    # 場所は長いので、最下行の通知ではなく 1 項目 1 行で出し、キーを待つ
+                    _ask_key(screen, "何かキーを押すと戻ります",
+                             ("ブランチ {} は別の worktree で使われています:".format(leftover["branch"]),
+                              "  " + leftover["checked_out"]))
                     continue
                 answer = _ask_key(
                     screen, "r: このブランチで作る / d: 消して作り直す / 他: 中止",

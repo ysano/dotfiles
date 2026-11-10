@@ -804,7 +804,7 @@ class LoopRefreshTests(unittest.TestCase):
         self.assertEqual((lines[21], lines[22], lines[23]), ("a", "b", "choices"))
 
     def test_notice_after_slow_name_input_is_still_shown(self):
-        module = self.leftover(checked_out="/elsewhere/repo-topic")
+        module = self.leftover()
         clock = [100.0]
 
         def slow_prompt(*args, **kwargs):
@@ -816,18 +816,29 @@ class LoopRefreshTests(unittest.TestCase):
         with mock.patch.object(dashboard.time, "monotonic", side_effect=lambda: clock[0]), \
                 mock.patch.object(dashboard, "_prompt", side_effect=slow_prompt), \
                 mock.patch.object(dashboard, "_draw", return_value=0) as draw, \
+                mock.patch.object(dashboard, "_ask_key", return_value="q"), \
                 mock.patch.object(dashboard, "focus_pane", return_value=False), \
                 mock.patch.object(dashboard, "tmux_panes", return_value=[]):
             dashboard._run_dashboard(screen, cached_snapshot(), None, module,
                                      "$1", "%1", source=source)
         shown = [call.args[2] for call in draw.call_args_list]
-        self.assertTrue(any("/elsewhere/repo-topic" in value for value in shown), shown)
+        self.assertIn("作成を中止しました", shown)
 
     def test_branch_used_by_another_worktree_is_not_touched(self):
         module = self.leftover(checked_out="/elsewhere/repo-topic")
-        self.run_create(module, "r")
+        ask = mock.Mock(return_value="r")
+        with mock.patch.object(dashboard, "_ask_key", ask):
+            done = threading.Event()
+            source, screen = FakeSource(done), FakeScreen(["n"], done)
+            with mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                    mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
+                    mock.patch.object(dashboard, "tmux_panes", return_value=[]):
+                dashboard._run_dashboard(screen, cached_snapshot(), None, module,
+                                         "$1", "%1", source=source)
         module.delete_branch.assert_not_called()
         module.create_worktree.assert_not_called()
+        # 場所は長いので最下行の通知に詰めず、独立した行に出す
+        self.assertIn("  /elsewhere/repo-topic", ask.call_args.args[2])
 
     def test_removing_a_worktree_requests_a_slow_fetch_at_once(self):
         module = mock.Mock()
