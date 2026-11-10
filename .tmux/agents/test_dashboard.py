@@ -777,10 +777,31 @@ class LoopRefreshTests(unittest.TestCase):
                 mock.patch.object(dashboard, "tmux_panes", return_value=[]):
             dashboard._run_dashboard(screen, cached_snapshot(), None, module,
                                      "$1", "%1", source=source)
-        choices, detail = ask.call_args.args[1], ask.call_args.args[2]
+        choices, details = ask.call_args.args[1], ask.call_args.args[2]
         self.assertIn("r:", choices)
         self.assertNotIn("abc1234", choices)  # 長い説明で選択肢が切れないよう、説明は別の行
-        self.assertIn("abc1234 wip", detail)
+        # ブランチ名が長くても先頭の commit が切れないよう、説明も 1 項目 1 行にする
+        self.assertTrue(any(line.strip().endswith("abc1234 wip") and "worktree-topic" not in line
+                            for line in details), details)
+
+    def test_ask_key_draws_each_detail_on_its_own_line_above_the_choices(self):
+        lines = {}
+
+        class Screen:
+            def getmaxyx(self):
+                return (24, 80)
+
+            def addstr(self, y, x, value, attribute=0):
+                lines[y] = value
+
+            def get_wch(self):
+                return "q"
+
+            def __getattr__(self, name):
+                return lambda *args, **kwargs: None
+
+        self.assertEqual(dashboard._ask_key(Screen(), "choices", ("a", "b")), "q")
+        self.assertEqual((lines[21], lines[22], lines[23]), ("a", "b", "choices"))
 
     def test_notice_after_slow_name_input_is_still_shown(self):
         module = self.leftover(checked_out="/elsewhere/repo-topic")

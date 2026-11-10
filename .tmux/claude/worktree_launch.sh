@@ -116,12 +116,16 @@ wt_create() {
 # branch_state <ブランチ>: none（無い）/ free（どの worktree でも使っていない）/
 # checked-out<TAB><worktree のパス>（使用中。ディレクトリを消しただけの worktree も含む）
 branch_state() {
-    local br="$1" root used
+    local br="$1" root used="" field place=""
     root="$(_repo_root)" || return 1
     git -C "$root" show-ref --verify --quiet "refs/heads/$br" || { printf 'none'; return 0; }
-    # -z で区切り、パスに含まれうる空白・日本語等をそのまま受け取る
-    used="$(git -C "$root" worktree list --porcelain -z | tr '\0' '\n' \
-        | awk -v ref="refs/heads/$br" '/^worktree /{p=substr($0, 10)} $0=="branch " ref {print p; exit}')"
+    # NUL 区切りのまま読む（パスに改行・空白・日本語等を含んでも区切りを誤らない）
+    while IFS= read -r -d '' field; do
+        case "$field" in
+            "worktree "*) place="${field#worktree }" ;;
+            "branch refs/heads/$br") used="$place"; break ;;
+        esac
+    done < <(git -C "$root" worktree list --porcelain -z)
     if [[ -n "$used" ]]; then printf 'checked-out\t%s' "$used"; else printf 'free'; fi
 }
 

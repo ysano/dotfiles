@@ -972,14 +972,14 @@ def _prompt(screen, label, default=""):
     return value or default
 
 
-def _ask_key(screen, text, detail=""):
-    """最下行に text（選択肢）、その上の行に detail（説明）を出し、押されたキーを 1 つ返す
-    （読めなければ空文字）。説明を別の行にするのは、狭い幅でも選択肢が切れないようにするため。"""
+def _ask_key(screen, text, details=()):
+    """最下行に text（選択肢）、その上の行に details（説明。1 項目 1 行）を出し、押されたキーを
+    1 つ返す（読めなければ空文字）。説明を別の行にするのは、狭い幅でも選択肢や説明が切れないため。"""
     import curses
     height, _ = screen.getmaxyx()
-    lines = [(height - 1, text, curses.A_BOLD)]
-    if detail and height >= 2:
-        lines.insert(0, (height - 2, detail, 0))
+    details = [value for value in details if value][-max(height - 1, 0):]
+    lines = [(height - 1 - len(details) + index, value, 0) for index, value in enumerate(details)]
+    lines.append((height - 1, text, curses.A_BOLD))
     for y, value, attribute in lines:
         try:
             screen.move(y, 0)
@@ -1183,8 +1183,9 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
                     continue
                 answer = _ask_key(
                     screen, "r: このブランチで作る / d: 消して作り直す / 他: 中止",
-                    "{} が残っています（HEAD に無い commit {} 件）: {}".format(
-                        leftover["branch"], leftover["unmerged"], leftover["summary"]))
+                    ("ブランチが残っています: " + leftover["branch"],
+                     "  先頭: " + leftover["summary"],
+                     "  HEAD に無い commit: {} 件".format(leftover["unmerged"])))
                 if answer in {"r", "R"}:
                     reuse = True
                 elif answer in {"d", "D"}:

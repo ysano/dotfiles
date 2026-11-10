@@ -216,6 +216,12 @@ _err="$(_PICKED="このブランチで作る" resolve_existing worktree-foo 2>&1
 assert_rc "$_rc" "1" "resolve: 別の worktree で使用中なら作らない"
 assert_contains "$_err" "$(cd "$_ep" && pwd -P)" "resolve: 使用中の場所を見せる"
 wt_remove_force foo >/dev/null 2>&1
+# 改行を含む場所の worktree でも、場所を途中で切らない
+_nl="$_er/a
+b"; mkdir -p "$_nl"
+git -C "$_erepo" worktree add -q -b worktree-nl "$_nl/w" 2>/dev/null
+assert_eq "$(branch_state worktree-nl)" "$(printf 'checked-out\t%s' "$(cd "$_nl/w" && pwd -P)")" "branch_state: 改行を含む場所も切らない"
+git -C "$_erepo" worktree remove --force "$_nl/w" >/dev/null 2>&1
 unset -f _pick
 cd "$_back" || exit 1
 rm -rf "$_er"
