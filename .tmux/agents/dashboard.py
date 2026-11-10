@@ -339,6 +339,23 @@ def cell_width(text):
     return width
 
 
+def wrap_cells(text, width):
+    """text を端末セル幅 width ごとの行に分ける（切り捨てずに折り返す）。"""
+    text = str(text)
+    if width <= 0:
+        return [text]
+    lines, current, used = [], [], 0
+    for char in text:
+        char_width = cell_width(char)
+        if current and used + char_width > width:
+            lines.append("".join(current))
+            current, used = [], 0
+        current.append(char)
+        used += char_width
+    lines.append("".join(current))
+    return lines
+
+
 def clip_text(text, width):
     text = str(text)
     if width <= 0:
@@ -973,11 +990,14 @@ def _prompt(screen, label, default=""):
 
 
 def _ask_key(screen, text, details=()):
-    """最下行に text（選択肢）、その上の行に details（説明。1 項目 1 行）を出し、押されたキーを
-    1 つ返す（読めなければ空文字）。説明を別の行にするのは、狭い幅でも選択肢や説明が切れないため。"""
+    """最下行に text（選択肢）、その上の行に details（説明。1 項目 1 行、幅を超えれば折り返す）を
+    出し、押されたキーを 1 つ返す（読めなければ空文字）。説明を別の行にするのは、狭い幅でも
+    選択肢や説明が切れないため。"""
     import curses
-    height, _ = screen.getmaxyx()
-    details = [value for value in details if value][-max(height - 1, 0):]
+    height, width = screen.getmaxyx()
+    # 長い説明（worktree の場所等）は切らずに折り返す
+    details = [line for value in details if value for line in wrap_cells(value, width - 1)]
+    details = details[-max(height - 1, 0):]
     lines = [(height - 1 - len(details) + index, value, 0) for index, value in enumerate(details)]
     lines.append((height - 1, text, curses.A_BOLD))
     for y, value, attribute in lines:

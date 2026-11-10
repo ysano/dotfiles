@@ -803,6 +803,28 @@ class LoopRefreshTests(unittest.TestCase):
         self.assertEqual(dashboard._ask_key(Screen(), "choices", ("a", "b")), "q")
         self.assertEqual((lines[21], lines[22], lines[23]), ("a", "b", "choices"))
 
+    def test_ask_key_wraps_a_long_detail_instead_of_clipping_it(self):
+        lines = {}
+
+        class Screen:
+            def getmaxyx(self):
+                return (24, 20)
+
+            def addstr(self, y, x, value, attribute=0):
+                lines[y] = value
+
+            def get_wch(self):
+                return "q"
+
+            def __getattr__(self, name):
+                return lambda *args, **kwargs: None
+
+        place = "/Users/me/projects/customer/backend/worktrees/backend-long-topic"
+        dashboard._ask_key(Screen(), "keys", ("used in:", place))
+        shown = [lines[y] for y in sorted(lines) if y < 23]
+        self.assertEqual("".join(shown[1:]), place)
+        self.assertTrue(all("…" not in line for line in shown))
+
     def test_notice_after_slow_name_input_is_still_shown(self):
         module = self.leftover()
         clock = [100.0]
