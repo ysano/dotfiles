@@ -877,6 +877,52 @@ class TmuxAutoPaneTests(unittest.TestCase):
 
         self.assertEqual(self.launched_profile(record), "unset")
 
+    def test_open_claude_ignores_record_of_pane_back_at_shell(self):
+        fake_bin, record = self.profile_launcher()
+        # karin の claude が落ち、poll が記録を消す前に pane がシェルへ戻った状態
+        pane = self.tmux(
+            "new-window", "-d", "-t", self.session, "-c", str(self.repo), "-P", "-F", "#{pane_id}", "exec sh",
+        )
+        state = {"session_id": "s", "actors": {}, "provider": "claude", "cwd": str(self.repo),
+                 "config_dir": self.profile_dir("karin")}
+        self.tmux("set-option", "-p", "-t", pane, "@claude_state", json.dumps(state))
+        linked = self.add_manual("back-at-shell")
+
+        self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), "unset")
+
+    def test_open_claude_keeps_record_when_process_table_is_unavailable(self):
+        fake_bin, record = self.profile_launcher()
+        karin = self.profile_dir("karin")
+        pane = self.tmux(
+            "new-window", "-d", "-t", self.session, "-c", str(self.repo), "-P", "-F", "#{pane_id}", "exec sh",
+        )
+        state = {"session_id": "s", "actors": {}, "provider": "claude", "cwd": str(self.repo), "config_dir": karin}
+        self.tmux("set-option", "-p", "-t", pane, "@claude_state", json.dumps(state))
+        linked = self.add_manual("no-process-table")
+
+        with mock.patch.object(module, "_process_table", side_effect=RuntimeError("ps: failed")):
+            self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), karin)
+
+    def test_open_claude_keeps_record_while_shell_pane_runs_a_child(self):
+        fake_bin, record = self.profile_launcher()
+        karin = self.profile_dir("karin")
+        # `claude … ; exec $SHELL` の形で動く npm 版（プロセス名 node）: 前面はシェルに見える
+        pane = self.tmux(
+            "new-window", "-d", "-t", self.session, "-c", str(self.repo), "-P", "-F", "#{pane_id}",
+            "sleep 300; exec sh",
+        )
+        state = {"session_id": "s", "actors": {}, "provider": "claude", "cwd": str(self.repo), "config_dir": karin}
+        self.tmux("set-option", "-p", "-t", pane, "@claude_state", json.dumps(state))
+        linked = self.add_manual("shell-with-child")
+
+        self.open_claude(linked, fake_bin)
+
+        self.assertEqual(self.launched_profile(record), karin)
+
     def test_open_claude_ignores_nested_clone_of_another_repository(self):
         fake_bin, record = self.profile_launcher()
         nested = self.repo / "nested clone"

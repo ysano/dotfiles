@@ -27,6 +27,7 @@ MIN_HEIGHT = 16
 PROVIDERS = {"shell", "claude", "codex"}
 SUCCESS_EVENTS = {"posttooluse", "aftertooluse", "toolcompleted"}
 SHELL_TOOLS = {"bash", "execcommand"}
+SHELL_COMMANDS = {"sh", "bash", "zsh", "dash", "fish", "ksh", "tcsh", "csh", "-zsh", "-bash", "-sh"}
 MAX_GIT_WORKERS = 8
 # dashboard の応答性のため、snapshot 内の git は短い timeout で打ち切る。
 GIT_INVENTORY_TIMEOUT = 5
@@ -835,7 +836,8 @@ def _process_config_dir(pid):
                 return os.fsdecode(item[len(b"CLAUDE_CONFIG_DIR="):])
         return ""
     try:
-        # macOS: e を付けると引数の後に環境変数が続く。引数だけの出力を取り除いて
+        # /proc がない macOS 向け（Linux でも /proc を読めないときは procps の同じ書式で通る）。
+        # e を付けると引数の後に環境変数が続く。引数だけの出力を取り除いて
         # 環境変数の部分だけを見る（引数に CLAUDE_CONFIG_DIR= があっても読まない）。
         args = _run(["ps", "ww", "-o", "command=", "-p", pid]).strip()
         output = _run(["ps", "eww", "-o", "command=", "-p", pid]).strip()
@@ -881,11 +883,17 @@ def _pane_config_dir(pane, table):
             table[0] = _process_table()
         except GIT_ERRORS:
             table[0] = ({}, {})
+            table[1] = False  # 子プロセスの有無は分からない
     pid = _claude_process(pane.get("pid") or "", table[0])
     if pid is not None:
         live = _usable_config_dir(_process_config_dir(pid))
         if live is not None:
             return live
+    # 前面がシェルで子プロセスもない pane は、claude が落ちて poll が消す前の古い
+    # 記録とみなす（`claude … ; exec $SHELL` で動く npm 版は node が子に残る）。
+    if (pid is None and table[1] and (pane.get("command") or "") in SHELL_COMMANDS
+            and not table[0][0].get(pane.get("pid") or "")):
+        return None
     if "config_dir" in state:
         return _usable_config_dir(state["config_dir"])
     return None
@@ -910,7 +918,7 @@ def claude_config_dir(path: str, origin: str) -> str:
     rows = _inventory([canonical], panes)
     target = next((row for row in rows if row["path"] == canonical), None)
     by_id = {pane["pane_id"]: pane for pane in panes}
-    table = [None]
+    table = [None, True]  # [ps の表（遅延取得）, 取得できたか]
     if target is not None:
         ordered = [target] + [row for row in rows if row is not target and row["repo"] == target["repo"]]
         for row in ordered:
