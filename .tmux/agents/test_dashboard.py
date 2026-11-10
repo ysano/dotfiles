@@ -766,6 +766,42 @@ class LoopRefreshTests(unittest.TestCase):
         module.delete_branch.assert_not_called()
         module.create_worktree.assert_not_called()
 
+    def test_leftover_choices_stay_on_their_own_line(self):
+        module = self.leftover()
+        ask = mock.Mock(return_value="q")
+        done = threading.Event()
+        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        with mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
+                mock.patch.object(dashboard, "_ask_key", ask), \
+                mock.patch.object(dashboard, "tmux_panes", return_value=[]):
+            dashboard._run_dashboard(screen, cached_snapshot(), None, module,
+                                     "$1", "%1", source=source)
+        choices, detail = ask.call_args.args[1], ask.call_args.args[2]
+        self.assertIn("r:", choices)
+        self.assertNotIn("abc1234", choices)  # 長い説明で選択肢が切れないよう、説明は別の行
+        self.assertIn("abc1234 wip", detail)
+
+    def test_notice_after_slow_name_input_is_still_shown(self):
+        module = self.leftover(checked_out="/elsewhere/repo-topic")
+        clock = [100.0]
+
+        def slow_prompt(*args, **kwargs):
+            clock[0] += 30  # 名前の入力に 30 秒かかる
+            return "topic"
+
+        done = threading.Event()
+        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        with mock.patch.object(dashboard.time, "monotonic", side_effect=lambda: clock[0]), \
+                mock.patch.object(dashboard, "_prompt", side_effect=slow_prompt), \
+                mock.patch.object(dashboard, "_draw", return_value=0) as draw, \
+                mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                mock.patch.object(dashboard, "tmux_panes", return_value=[]):
+            dashboard._run_dashboard(screen, cached_snapshot(), None, module,
+                                     "$1", "%1", source=source)
+        shown = [call.args[2] for call in draw.call_args_list]
+        self.assertTrue(any("/elsewhere/repo-topic" in value for value in shown), shown)
+
     def test_branch_used_by_another_worktree_is_not_touched(self):
         module = self.leftover(checked_out="/elsewhere/repo-topic")
         self.run_create(module, "r")

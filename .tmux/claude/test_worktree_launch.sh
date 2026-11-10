@@ -127,6 +127,13 @@ assert_eq "$(classify_pick 130 "$(printf 'tf')")" "abort" "rc130(ESC): abort"
 assert_eq "$(classify_pick 0 "$(printf 'tf')")" "abort" "rc0+選択行なし: abort"
 
 echo ""
+echo "=== _pick: fzf が無ければ番号で選ぶ（番号は端末から読む） ==="
+_nofzf="/usr/bin:/bin"
+assert_eq "$(printf 'a\nb\nc\n' | PATH="$_nofzf" WT_TTY=<(printf '2\n') _pick 'x>' 2>/dev/null)" "b" "pick: 番号の選択肢を返す（先頭行に決め打ちしない）"
+assert_eq "$(printf 'a\nb\n' | PATH="$_nofzf" WT_TTY=<(printf '9\n') _pick 'x>' 2>/dev/null)" "" "pick: 範囲外の番号は選ばない"
+assert_eq "$(printf 'a\nb\n' | PATH="$_nofzf" WT_TTY=<(printf 'a\n') _pick 'x>' 2>/dev/null)" "" "pick: 数字以外は選ばない"
+
+echo ""
 echo "=== worktree_path: リンク worktree 内から呼んでも main 基準で配置 ==="
 _mroot="$_root"
 _probe="$(dirname "$_mroot")/worktrees/$(basename "$_mroot")-_axisprobe"
@@ -166,7 +173,9 @@ rm -rf "$_csrc" "$_cdst"
 
 echo ""
 echo "=== 前に消した worktree のブランチが残っているとき（実リポジトリ） ==="
-_er="$(mktemp -d)"; _erepo="$_er/repo"
+# 空白・日本語を含む場所でも、使用中の worktree を見つける
+_er="$(mktemp -d)"
+_erepo="$_er/作業 dir/repo"
 git init -q -b main "$_erepo"
 git -C "$_erepo" config user.email test@example.invalid; git -C "$_erepo" config user.name Test
 git -C "$_erepo" commit -q --allow-empty -m init

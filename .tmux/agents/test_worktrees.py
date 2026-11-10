@@ -146,6 +146,14 @@ class GitWorktreeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "name"):
             module.existing_branch(str(self.repo), "--force")
 
+    def test_existing_branch_finds_a_worktree_under_a_non_ascii_path(self):
+        self.require_module()
+        place = self.base / "日本語 の場所" / "wt"
+        place.parent.mkdir()
+        self.git("worktree", "add", "-qb", "worktree-jp", str(place), "HEAD")
+        info = module.existing_branch(str(self.repo), "jp")
+        self.assertEqual(info["checked_out"], str(place.resolve()))
+
 
 class GitInventoryTests(unittest.TestCase):
     """snapshot 1 回分の git 問い合わせメモ。"""

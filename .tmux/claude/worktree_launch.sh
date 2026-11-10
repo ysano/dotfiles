@@ -119,7 +119,8 @@ branch_state() {
     local br="$1" root used
     root="$(_repo_root)" || return 1
     git -C "$root" show-ref --verify --quiet "refs/heads/$br" || { printf 'none'; return 0; }
-    used="$(git -C "$root" worktree list --porcelain \
+    # -z で区切り、パスに含まれうる空白・日本語等をそのまま受け取る
+    used="$(git -C "$root" worktree list --porcelain -z | tr '\0' '\n' \
         | awk -v ref="refs/heads/$br" '/^worktree /{p=substr($0, 10)} $0=="branch " ref {print p; exit}')"
     if [[ -n "$used" ]]; then printf 'checked-out\t%s' "$used"; else printf 'free'; fi
 }
@@ -227,15 +228,24 @@ wt_remove_force() {
     _emit "git -C $(printf '%q' "$root") branch -D $(printf '%q' "$br")" || true
 }
 
-# 行選択 UI。fzf があれば fzf、無ければ read にフォールバック（グレースフル劣化）。
+# 行選択 UI。fzf があれば fzf、無ければ番号で選ぶ（グレースフル劣化）。選択肢は標準入力
+# （パイプ）で受けるため、番号は端末（WT_TTY、既定 /dev/tty）から読む。標準入力から読むと
+# 選択肢の先頭行を読んでしまい、常に 1 つ目になる
 _pick() {
-    local prompt="$1"
+    local prompt="$1" line n i=0
+    local -a items=()
     if command -v fzf >/dev/null 2>&1; then
         fzf --prompt="$prompt " --height=40% --reverse
-    else
-        printf '%s' "$prompt" >&2
-        local line; IFS= read -r line; printf '%s' "$line"
+        return
     fi
+    while IFS= read -r line; do items+=("$line"); done
+    for line in ${items[@]+"${items[@]}"}; do
+        i=$((i + 1)); printf '%d) %s\n' "$i" "$line" >&2
+    done
+    printf '%s ' "$prompt" >&2
+    IFS= read -r n < "${WT_TTY:-/dev/tty}" || return 0
+    case "$n" in ''|*[!0-9]*) return 0 ;; esac
+    if [[ "$n" -ge 1 && "$n" -le "${#items[@]}" ]]; then printf '%s' "${items[$((n - 1))]}"; fi
 }
 
 # fzf --print-query の結果を解釈する。

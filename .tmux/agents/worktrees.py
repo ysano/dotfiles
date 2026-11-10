@@ -709,12 +709,11 @@ def existing_branch(root: str, name: str):
     ref = f"refs/heads/{branch}"
     if not _git(root, "for-each-ref", "--format=%(objectname)", ref).strip():
         return None
-    checked_out, path = "", ""
-    for line in _git(root, "worktree", "list", "--porcelain").splitlines():
-        if line.startswith("worktree "):
-            path = line[len("worktree "):]
-        elif line == f"branch {ref}":
-            checked_out = str(Path(path).resolve(strict=False))
+    checked_out = ""
+    # -z: パスに改行等を含んでも区切りを誤らない（一覧と同じ _parse_porcelain_z で読む）
+    for record in _parse_porcelain_z(_git(root, "worktree", "list", "--porcelain", "-z")):
+        if record.get("branch") == ref and isinstance(record.get("worktree"), str):
+            checked_out = str(Path(record["worktree"]).resolve(strict=False))
             break
     summary = _git(root, "log", "-1", "--format=%h %s", ref, "--").strip()
     unmerged = int(_git(root, "rev-list", "--count", f"HEAD..{ref}", "--").strip() or 0)
