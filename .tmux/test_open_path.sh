@@ -530,6 +530,8 @@ cat > "$ghstub/gh" <<'STUB'
 log=${STUB_GH_LOG:-$STUB_LOG}
 for a in "$@"; do printf '[%s]' "$a"; done >> "$log"; echo " <- gh${GH_FORCE_TTY:+ tty}" >> "$log"
 [ -z "${STUB_gh_sleep:-}" ] || exec sleep "$STUB_gh_sleep"
+# 応答までの遅れ（出力を開いたままの子を残さない。打ち切られれば $(...) もすぐ戻る）
+[ -z "${STUB_gh_delay:-}" ] || sleep "$STUB_gh_delay" >/dev/null 2>&1
 case $1 in
     api)
         [ -z "${STUB_gh_fail:-}" ] || { echo "HTTP 404: Not Found" >&2; exit 1; }
@@ -566,7 +568,7 @@ check "gh: Issue の本文" "[issue][view][3][-R][acme/widget][--comments] <- gh
 check "gh: Issue に差分は無い" "[issue][view][3][-R][acme/widget][--comments] <- gh tty" ghrun sh "$SCRIPT" render gh acme/widget 3 issue diff
 # Discussion は gh に表示のコマンドが無いため、GraphQL で本文・コメント・返信を取る
 log=$(ghrun sh "$SCRIPT" render gh acme/widget 879 discussion body)
-case $log in *"[api][graphql]"*"[owner=acme]"*"[name=widget]"*"[number=879]"*"discussion(number:"*) echo "ok   gh: Discussion の本文" ;; *) echo "FAIL gh: Discussion の本文: $log"; fail=1 ;; esac
+case $log in *"[api][graphql]"*"[-f][owner=acme]"*"[-f][name=widget]"*"[-F][number=879]"*"discussion(number:"*) echo "ok   gh: Discussion の本文" ;; *) echo "FAIL gh: Discussion の本文: $log"; fail=1 ;; esac
 # 本文・差分の取得も打ち切る（止まった gh を待ち続けると、less を抜けてもポップアップが閉じない）
 for part in body diff; do
     t0=$(date +%s)
@@ -747,6 +749,10 @@ opened "link: gh で調べられなければ Issue の URL" "https://github.com/
 t0=$(date +%s)
 opened "link: gh が応答しなければ Issue の URL" "https://github.com/o/r/issues/5" "$(STUB_gh_sleep=8 click_link "see o/r#5 now" 6 /)"
 if [ $(( $(date +%s) - t0 )) -le 5 ]; then echo "ok   link: 応答しない gh は短く打ち切る"; else echo "FAIL link: 応答しない gh は短く打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
+# 聞き直し（Discussion）も含めて 3 秒: Issue の API が 2 秒で 404 なら、残り 1 秒しか待たない
+t0=$(date +%s)
+opened "link: 聞き直しが間に合わなければ Issue の URL" "https://github.com/o/r/issues/5" "$(STUB_gh_delay=2 STUB_gh_kind=discussion click_link "see o/r#5 now" 6 /)"
+if [ $(( $(date +%s) - t0 )) -le 4 ]; then echo "ok   link: 聞き直しも含めて短く打ち切る"; else echo "FAIL link: 聞き直しも含めて短く打ち切る: $(( $(date +%s) - t0 )) 秒"; fail=1; fi
 opened "link: 別の URL の中の URL は外側を開く" "https://login.example.com/?next=https://github.com/acme/widget/pull/9" \
     "$(click_link "go https://login.example.com/?next=https://github.com/acme/widget/pull/9 now" 40 /)"
 # 文の中の URL: 前後の括弧・引用符・句読点は URL に含めない（URL の中で対になる括弧は残す）

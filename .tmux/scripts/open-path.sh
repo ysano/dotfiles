@@ -801,11 +801,13 @@ gh_secs() {
 
 # gh_kind <owner/repo> <番号>: PR なら pr、Issue なら issue、Discussion なら discussion（Issue の
 # API は PR にも答え、PR には pull_request が付く。Discussion は番号を共有するが Issue の API は
-# 404 を返すため、Discussion の API に聞き直す）。OPEN_PATH_GH_TIMEOUT 秒（既定 15）で打ち切る
+# 404 を返すため、Discussion の API に聞き直す）。聞き直しも含めて OPEN_PATH_GH_TIMEOUT 秒（既定 15）で
+# 打ち切る
 gh_kind() {
     valid_ref "$1" "$2" || return 1
     gh_secs
     gh_env
+    t0=$(date +%s)
     # bounded には gh を直接渡す（関数を渡すと打ち切られるのはサブシェルだけで、gh が
     # 出力を開いたまま残り $(...) が待ち続ける）。失敗の理由は聞き直した方の stderr で見せる
     k=$(bounded "$secs" gh api "repos/$1/issues/$2" --jq 'if .pull_request then "pr" else "issue" end' 2>/dev/null)
@@ -815,7 +817,10 @@ gh_kind() {
     fi
     # 打ち切った（kill による 128 以上）ときは聞き直さない（応答しない gh を 2 度待たない）
     [ "$st" -lt 128 ] || return 1
-    k=$(bounded "$secs" gh api "repos/$1/discussions/$2" --jq '"discussion"') || return 1
+    # 聞き直しには残りの秒数だけを渡す（クリックで待たせる上限を守る）
+    rest=$(( secs - ($(date +%s) - t0) ))
+    [ "$rest" -ge 1 ] || return 1
+    k=$(bounded "$rest" gh api "repos/$1/discussions/$2" --jq '"discussion"') || return 1
     [ "$k" = discussion ] || return 1
     echo discussion
 }
@@ -1220,7 +1225,8 @@ render() {
             # gh に Discussion を表示するコマンドは無いため、本文・コメント・返信を GraphQL で取り、
             # Markdown にして整形する（コメント・返信は先頭の 100 件まで。残りはブラウザで見る）
             discussion*)
-                bounded "$secs" gh api graphql -F owner="${nwo%%/*}" -F name="${nwo#*/}" -F number="$num" \
+                # owner / name は -f（文字列のまま）で渡す。-F は 123・true 等を数値・真偽値に変える
+                bounded "$secs" gh api graphql -f owner="${nwo%%/*}" -f name="${nwo#*/}" -F number="$num" \
                     -f query="$DISCUSSION_QUERY" --jq "$DISCUSSION_JQ" | md_stdin "$cols" ;;
             *) return 1 ;;
         esac
