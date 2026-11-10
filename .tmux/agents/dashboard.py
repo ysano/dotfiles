@@ -972,19 +972,28 @@ def _prompt(screen, label, default=""):
     return value or default
 
 
-def _confirm(screen, text):
+def _ask_key(screen, text):
+    """最下行に text を出し、押されたキーを 1 つ返す（読めなければ空文字）。"""
     import curses
     height, _ = screen.getmaxyx()
-    _safe_addstr(screen, height - 1, 0, text + " [y/N]", curses.A_BOLD)
+    try:
+        screen.move(height - 1, 0)
+        screen.clrtoeol()
+    except curses.error:
+        pass
+    _safe_addstr(screen, height - 1, 0, text, curses.A_BOLD)
     try:
         screen.timeout(-1)
         screen.refresh()
-        key = screen.get_wch()
+        return screen.get_wch()
     except curses.error:
-        return False
+        return ""
     finally:
         screen.timeout(100)
-    return key in {"y", "Y"}
+
+
+def _confirm(screen, text):
+    return _ask_key(screen, text + " [y/N]") in {"y", "Y"}
 
 
 def _details(screen, row, snapshot=None):
@@ -1151,11 +1160,47 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
             name = _prompt(screen, "worktree名")
             if not name:
                 continue
-            base = _prompt(screen, "起点", "HEAD")
+            # 前に消した worktree のブランチ（worktree-<名前>）が残っていれば、作り方を選ばせる。
+            # 残ったブランチで作るなら、その続きから始めるため起点は聞かない
+            reuse = False
+            try:
+                leftover = worktrees.existing_branch(root, name)
+            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+                message = "作成失敗: " + str(exc)
+                message_until = now + 5
+                continue
+            if leftover:
+                if leftover.get("checked_out"):
+                    message = "ブランチ {} は別の worktree で使われています: {}".format(
+                        leftover["branch"], leftover["checked_out"])
+                    message_until = now + 6
+                    continue
+                answer = _ask_key(screen, "{} が残っています（{}・HEAD に無い commit {} 件） "
+                                  "r: このブランチで作る / d: 消して作り直す / 他: 中止".format(
+                                      leftover["branch"], leftover["summary"], leftover["unmerged"]))
+                if answer in {"r", "R"}:
+                    reuse = True
+                elif answer in {"d", "D"}:
+                    if not _confirm(screen, "{} を消しますか？ HEAD に無い commit {} 件は失われます".format(
+                            leftover["branch"], leftover["unmerged"])):
+                        message = "作成を中止しました"
+                        message_until = now + 2
+                        continue
+                    try:
+                        worktrees.delete_branch(root, name)
+                    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+                        message = "ブランチの削除失敗: " + str(exc)
+                        message_until = now + 5
+                        continue
+                else:
+                    message = "作成を中止しました"
+                    message_until = now + 2
+                    continue
+            base = "HEAD" if reuse else _prompt(screen, "起点", "HEAD")
             if not base:
                 continue
             try:
-                created = worktrees.create_worktree(root, name, base, session, origin)
+                created = worktrees.create_worktree(root, name, base, session, origin, reuse=reuse)
                 message = "作成しました: " + created
                 message_until = time.monotonic() + 5
                 schedule.request_slow(time.monotonic())
@@ -1174,7 +1219,8 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
                 continue
             try:
                 worktrees.remove_worktree(path)
-                message = "削除しました: " + path
+                # ブランチは消さない（同じ名前で作るときに、残ったブランチで作るか選べる）
+                message = "削除しました（ブランチは残しています）: " + path
                 message_until = time.monotonic() + 4
                 schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:

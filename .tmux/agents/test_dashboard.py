@@ -713,10 +713,64 @@ class LoopRefreshTests(unittest.TestCase):
 
     def test_creating_a_worktree_requests_a_slow_fetch_at_once(self):
         module = mock.Mock()
+        module.existing_branch.return_value = None
         module.create_worktree.return_value = "/repo/a-topic"
         kinds = self.run_loop(["n"], module)
         module.create_worktree.assert_called_once()
         self.assertEqual(kinds[0], "slow")
+
+    def run_create(self, module, answer, confirm=True):
+        """n で作るときに、同じ名前のブランチが残っていたら 1 キーで作り方を選ぶ。"""
+        done = threading.Event()
+        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        prompt = mock.Mock(side_effect=["topic", "HEAD"])
+        with mock.patch.object(dashboard, "focus_pane", return_value=False), \
+                mock.patch.object(dashboard, "_prompt", prompt), \
+                mock.patch.object(dashboard, "_ask_key", return_value=answer), \
+                mock.patch.object(dashboard, "_confirm", return_value=confirm), \
+                mock.patch.object(dashboard, "tmux_panes", return_value=[]):
+            dashboard._run_dashboard(screen, cached_snapshot(), None, module,
+                                     "$1", "%1", source=source)
+        return prompt
+
+    def leftover(self, checked_out=""):
+        module = mock.Mock()
+        module.existing_branch.return_value = {
+            "branch": "worktree-topic", "summary": "abc1234 wip", "unmerged": 2,
+            "checked_out": checked_out}
+        module.create_worktree.return_value = "/repo/a-topic"
+        return module
+
+    def test_leftover_branch_can_be_reused_without_asking_the_base(self):
+        module = self.leftover()
+        prompt = self.run_create(module, "r")
+        self.assertEqual(module.create_worktree.call_args.kwargs.get("reuse"), True)
+        self.assertEqual(prompt.call_count, 1)  # 起点は聞かない（既存のブランチの続きから）
+        module.delete_branch.assert_not_called()
+
+    def test_leftover_branch_can_be_deleted_and_recreated_after_confirmation(self):
+        module = self.leftover()
+        self.run_create(module, "d")
+        module.delete_branch.assert_called_once()
+        self.assertFalse(module.create_worktree.call_args.kwargs.get("reuse", False))
+
+    def test_leftover_branch_is_kept_when_deletion_is_not_confirmed(self):
+        module = self.leftover()
+        self.run_create(module, "d", confirm=False)
+        module.delete_branch.assert_not_called()
+        module.create_worktree.assert_not_called()
+
+    def test_leftover_branch_other_keys_cancel(self):
+        module = self.leftover()
+        self.run_create(module, "q")
+        module.delete_branch.assert_not_called()
+        module.create_worktree.assert_not_called()
+
+    def test_branch_used_by_another_worktree_is_not_touched(self):
+        module = self.leftover(checked_out="/elsewhere/repo-topic")
+        self.run_create(module, "r")
+        module.delete_branch.assert_not_called()
+        module.create_worktree.assert_not_called()
 
     def test_removing_a_worktree_requests_a_slow_fetch_at_once(self):
         module = mock.Mock()

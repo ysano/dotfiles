@@ -165,5 +165,52 @@ _copy_local_files "$_csrc" "$_cdst"
 rm -rf "$_csrc" "$_cdst"
 
 echo ""
+echo "=== 前に消した worktree のブランチが残っているとき（実リポジトリ） ==="
+_er="$(mktemp -d)"; _erepo="$_er/repo"
+git init -q -b main "$_erepo"
+git -C "$_erepo" config user.email test@example.invalid; git -C "$_erepo" config user.name Test
+git -C "$_erepo" commit -q --allow-empty -m init
+_back="$PWD"; cd "$_erepo" || exit 1
+_ep="$(worktree_path foo)"
+assert_eq "$(branch_state worktree-foo)" "none" "branch_state: 無ければ none"
+wt_create foo >/dev/null 2>&1; assert_rc "$?" "0" "existing: 最初の作成"
+assert_eq "$(branch_state worktree-foo)" "$(printf 'checked-out\t%s' "$(cd "$_ep" && pwd -P)")" "branch_state: worktree で使用中なら checked-out と場所"
+git -C "$_ep" commit -q --allow-empty -m "wip on foo"
+WT_NOTICE=""
+wt_remove foo >/dev/null 2>&1; assert_rc "$?" "0" "existing: worktree は消せる（未 merge のブランチは残る）"
+if [ -d "$_ep" ]; then _rc=0; else _rc=1; fi; assert_rc "$_rc" "1" "existing: worktree のディレクトリは消えている"
+assert_contains "$WT_NOTICE" "worktree-foo" "remove: 残したブランチの名前を知らせる"
+assert_contains "$WT_NOTICE" "残しました" "remove: ブランチを残したことを黙らない"
+assert_eq "$(branch_state worktree-foo)" "free" "branch_state: 残ったブランチは free"
+_sum="$(branch_summary worktree-foo)"
+assert_contains "$_sum" "wip on foo" "summary: 先頭の commit を見せる"
+assert_contains "$_sum" "1 件" "summary: HEAD に無い commit の件数を見せる"
+wt_create foo >/dev/null 2>&1; assert_rc "$?" "1" "existing: -b では作れない（git が断る）"
+wt_create foo "" reuse >/dev/null 2>&1; assert_rc "$?" "0" "existing: 既存のブランチで作れる"
+assert_eq "$(git -C "$_ep" symbolic-ref --short HEAD 2>/dev/null)" "worktree-foo" "reuse: 既存のブランチを使う"
+assert_eq "$(git -C "$_ep" log -1 --format=%s 2>/dev/null)" "wip on foo" "reuse: 残っていた commit から続ける"
+wt_remove_force foo >/dev/null 2>&1
+# resolve_existing: 選択（_pick）と確認（標準入力）で、作り方を決める
+# shellcheck disable=SC2329  # resolve_existing の中から呼ばれる
+_pick() { cat >/dev/null; printf '%s' "$_PICKED"; }
+assert_eq "$(resolve_existing worktree-foo 2>/dev/null </dev/null)" "new" "resolve: ブランチが無ければ new"
+git -C "$_erepo" branch worktree-foo HEAD; git -C "$_erepo" commit -q --allow-empty -m other
+git -C "$_erepo" branch -f worktree-foo HEAD; git -C "$_erepo" reset -q --hard HEAD~1
+assert_eq "$(_PICKED="このブランチで作る" resolve_existing worktree-foo 2>/dev/null </dev/null)" "reuse" "resolve: このブランチで作る"
+_out="$(_PICKED="中止" resolve_existing worktree-foo 2>/dev/null </dev/null)"; assert_rc "$?" "2" "resolve: 中止（rc 2）"
+_out="$(_PICKED="消して作り直す" resolve_existing worktree-foo 2>/dev/null <<< "n")"; assert_rc "$?" "2" "resolve: 消す確認で n なら中止（rc 2）"
+assert_eq "$(branch_state worktree-foo)" "free" "resolve: n ならブランチは残る"
+assert_eq "$(_PICKED="消して作り直す" resolve_existing worktree-foo 2>/dev/null <<< "y")" "new" "resolve: 消す確認で y なら new"
+assert_eq "$(branch_state worktree-foo)" "none" "resolve: y ならブランチを消す"
+wt_create foo >/dev/null 2>&1
+_err="$(_PICKED="このブランチで作る" resolve_existing worktree-foo 2>&1 >/dev/null </dev/null)"; _rc=$?
+assert_rc "$_rc" "1" "resolve: 別の worktree で使用中なら作らない"
+assert_contains "$_err" "$(cd "$_ep" && pwd -P)" "resolve: 使用中の場所を見せる"
+wt_remove_force foo >/dev/null 2>&1
+unset -f _pick
+cd "$_back" || exit 1
+rm -rf "$_er"
+
+echo ""
 echo "=== 結果: ${fails} 失敗 ==="
 [[ "$fails" -eq 0 ]] && exit 0 || exit 1

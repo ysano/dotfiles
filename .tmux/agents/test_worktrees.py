@@ -109,6 +109,43 @@ class GitWorktreeTests(unittest.TestCase):
                 self.assertFalse(expected.exists())
 
 
+    def test_branch_left_by_removed_worktree_can_be_reused_or_recreated(self):
+        self.require_module()
+        self.assertIsNone(module.existing_branch(str(self.repo), "again"))
+        created = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none"))
+        self.git("commit", "-q", "--allow-empty", "-m", "wip on again", cwd=created)
+        tip = self.git("rev-parse", "HEAD", cwd=created).stdout.strip()
+        module.remove_worktree(str(created))
+
+        info = module.existing_branch(str(self.repo), "again")
+        self.assertEqual(info["branch"], "worktree-again")
+        self.assertEqual(info["checked_out"], "")
+        self.assertEqual(info["unmerged"], 1)
+        self.assertIn("wip on again", info["summary"])
+        with self.assertRaisesRegex(RuntimeError, "worktree-again"):
+            module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none")
+
+        reused = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none", reuse=True))
+        self.assertEqual(self.git("rev-parse", "HEAD", cwd=reused).stdout.strip(), tip)
+        self.assertEqual(self.git("symbolic-ref", "--short", "HEAD", cwd=reused).stdout.strip(), "worktree-again")
+        module.remove_worktree(str(reused))
+
+        module.delete_branch(str(self.repo), "again")
+        self.assertIsNone(module.existing_branch(str(self.repo), "again"))
+        fresh = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none"))
+        main_head = self.git("rev-parse", "HEAD").stdout.strip()
+        self.assertEqual(self.git("rev-parse", "HEAD", cwd=fresh).stdout.strip(), main_head)
+
+    def test_existing_branch_reports_the_worktree_using_it(self):
+        self.require_module()
+        created = module.create_worktree(str(self.repo), "busy", "HEAD", "$none", "%none")
+        info = module.existing_branch(str(self.repo), "busy")
+        self.assertEqual(info["checked_out"], str(Path(created).resolve()))
+        with self.assertRaisesRegex(RuntimeError, "busy"):
+            module.delete_branch(str(self.repo), "busy")
+        with self.assertRaisesRegex(ValueError, "name"):
+            module.existing_branch(str(self.repo), "--force")
+
 
 class GitInventoryTests(unittest.TestCase):
     """snapshot 1 回分の git 問い合わせメモ。"""
