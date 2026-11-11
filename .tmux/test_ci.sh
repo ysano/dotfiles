@@ -85,12 +85,13 @@ done
 [ "$interleaved" = 0 ] && ok "suite の出力は混ざらない" || bad "suite の出力は混ざらない"
 
 # --- 同時に回す -------------------------------------------------------------------
+# 全部が始まってから、最初の 1 つが終わる（所要時間でなく、開始・終了の記録の重なりで見る）
 STUB_SLEEP=2 run
-# 順に回すと 9 × 2 = 18 秒。同時なら 2 秒程度
-[ "$rc" = 0 ] && [ "$secs" -le 6 ] && ok "同時に回す（${secs}s）" || bad "同時に回す: rc=$rc ${secs}s"
+overlap=$(awk '$1 == "end" { ended = 1 } $1 == "start" && ended { late = 1 } END { print late ? "no" : "yes" }' "$work/log")
+[ "$rc" = 0 ] && [ "$overlap" = yes ] && ok "同時に回す（${secs}s）" || bad "同時に回す: rc=$rc overlap=$overlap ${secs}s"
 
-# --serial は 1 つずつ（開始・終了が交互に並ぶ）
-STUB_SLEEP=0 run --serial
+# --serial は 1 つずつ（開始・終了が交互に並ぶ）。待ちを入れて、同時なら必ず重なるようにする
+STUB_SLEEP=0.3 run --serial
 pairs=$(awk '{ if ($1 == "start") { if (open != "") bad = 1; open = $2 } else { if (open != $2) bad = 1; open = "" } } END { print bad ? "no" : "yes" }' "$work/log")
 [ "$rc" = 0 ] && [ "$pairs" = yes ] && [ "$(ran)" = "$ALL_SORTED" ] && ok "--serial は 1 つずつ回す" || bad "--serial は 1 つずつ回す: rc=$rc pairs=$pairs"
 
@@ -126,6 +127,38 @@ printf '#!/bin/sh\n:\n' > "$tm/scripts/noexec.sh"
 run functions
 [ "$rc" = 1 ] && echo "$out" | grep -q 'errors: 1' && ok "静的チェックの失敗も数える" || bad "静的チェックの失敗も数える: rc=$rc"
 rm -f "$tm/scripts/noexec.sh"
+
+# --- 割り込み -----------------------------------------------------------------------
+# ci.sh を止めたら、回っている suite（その子プロセスまで）も止める。
+# 呼び出し元しだいで SIGINT が無視されたまま引き継がれるので、python で既定に戻して起動する
+interrupt() { # interrupt <INT|TERM> → "<ci.sh の終了コード> <止まるまでの秒数> <止めた後に終わった suite の数>"
+    : > "$work/log"
+    STUB_LOG="$work/log" STUB_SLEEP=2 python3 - "$1" "$CI_BASH" "$tm" "$work/log" <<'EOF'
+import signal, subprocess, sys, time
+sig, shell, cwd, log = sys.argv[1:]
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+proc = subprocess.Popen([shell, "ci.sh"], cwd=cwd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+for _ in range(100):  # 全部が始まるまで待つ
+    if open(log).read().count("start ") >= 9:
+        break
+    time.sleep(0.05)
+proc.send_signal(getattr(signal, "SIG" + sig))
+t0 = time.monotonic()
+try:
+    rc = proc.wait(timeout=10)
+except subprocess.TimeoutExpired:
+    proc.kill(); rc = "timeout"
+stopped = time.monotonic() - t0
+time.sleep(3)  # 止まっていなければ、この間に suite が終わって end を記録する
+print(rc, int(stopped), open(log).read().count("end "))
+EOF
+}
+for sig in INT TERM; do
+    read -r irc isecs iends <<< "$(interrupt "$sig")"
+    [ "$irc" != 0 ] && [ "$irc" != timeout ] && [ "$isecs" -le 2 ] && [ "$iends" = 0 ] &&
+        ok "$sig で止めると回っている suite も止める" ||
+        bad "$sig で止めると回っている suite も止める: rc=$irc ${isecs}s ends=$iends"
+done
 
 if [ "$fail" = 0 ]; then echo "test_ci: all ok"; else echo "test_ci: FAILED"; fi
 exit "$fail"

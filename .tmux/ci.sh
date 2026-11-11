@@ -118,6 +118,20 @@ echo ""
 out_dir=$(mktemp -d)
 trap 'rm -rf "$out_dir"' EXIT
 
+# 各 suite を自分のプロセスグループで回し（set -m）、止められたら suite の子プロセスまで止める。
+# 裏で回す suite には端末の Ctrl-C が届かないため、受けた信号をグループごとに渡す。
+# --serial では使わない（前面の suite が別グループになり、Ctrl-C がその suite だけを止めて先へ進むため）
+[ "$serial" = 1 ] || set -m
+pids=()
+stop_suites() { # stop_suites <INT|TERM> <終了コード>
+  trap - INT TERM
+  for pid in ${pids[@]+"${pids[@]}"}; do kill -"$1" -- "-$pid" 2>/dev/null || true; done
+  wait 2>/dev/null || true
+  exit "$2"
+}
+trap 'stop_suites INT 130' INT
+trap 'stop_suites TERM 143' TERM
+
 run_suite() { # run_suite <番号> <行>: 出力・終了コード・秒数を out_dir に残す
   local start=$SECONDS rc=0
   # shellcheck disable=SC2086 # コマンドは空白で区切る（引数に空白を含まない）
@@ -140,7 +154,6 @@ report_suite() { # report_suite <番号> <行>
   echo ""
 }
 
-pids=()
 for i in "${!runs[@]}"; do
   if [ "$serial" = 1 ]; then
     run_suite "$i" "${runs[$i]}"
