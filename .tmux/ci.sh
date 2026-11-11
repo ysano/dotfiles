@@ -71,6 +71,43 @@ else
   done
 fi
 
+out_dir=$(mktemp -d)
+
+# 割り込みの扱い（静的チェックの間に届いた信号も取りこぼさないよう、最初に置く）。
+# 同時に回す suite は、それぞれ自分のプロセスグループで起動する（起動の瞬間だけ set -m）。
+# 裏の suite には端末の Ctrl-C が届かないため、受けた信号をグループごとに渡して止める。
+# trap では印を付けるだけにし、起動したグループを記録し終えてから止める（記録前の割り込みを取りこぼさない）。
+# 待つ間も短い間隔で印を確かめる
+pids=()
+stopping=""
+kill_suites() { # kill_suites <INT|TERM>: まだ回っている suite を、子プロセスごと止める
+  local pid n=0 alive
+  [ ${#pids[@]} -gt 0 ] || return 0
+  for pid in "${pids[@]}"; do kill -"$1" -- "-$pid" 2>/dev/null || true; done
+  # テストの後片付け（EXIT の trap）を待つ。グループが空になるまで、最大 5 秒
+  while [ "$n" -lt 50 ]; do
+    alive=0
+    for pid in "${pids[@]}"; do kill -0 -- "-$pid" 2>/dev/null && alive=1; done
+    [ "$alive" = 0 ] && break
+    sleep 0.1 || true
+    n=$((n + 1))
+  done
+  # 信号を無視して残ったものは KILL で片付ける
+  for pid in "${pids[@]}"; do kill -KILL -- "-$pid" 2>/dev/null || true; done
+  wait 2>/dev/null || true
+  pids=()
+}
+stop_if_asked() {
+  [ -n "$stopping" ] || return 0
+  trap - INT TERM
+  kill_suites "$stopping"
+  if [ "$stopping" = INT ]; then exit 130; fi
+  exit 143
+}
+trap 'stopping=INT' INT
+trap 'stopping=TERM' TERM
+trap 'kill_suites TERM; rm -rf "$out_dir"' EXIT
+
 echo "=== tmux CI Check ==="
 echo ""
 
@@ -113,35 +150,10 @@ for script in "$SCRIPT_DIR"/scripts/*.sh; do
 done
 echo ""
 
+stop_if_asked
+
 # 4. Tests: 同時に回し、出力は suite ごとにまとめて決まった順に出す
 #    （各テストは自分専用の一時ディレクトリと tmux のソケットを使うので、同時でも干渉しない）
-out_dir=$(mktemp -d)
-
-# 同時に回す suite は、それぞれ自分のプロセスグループで起動する（起動の瞬間だけ set -m）。
-# 裏の suite には端末の Ctrl-C が届かないため、受けた信号をグループごとに渡して止める。
-# trap では印を付けるだけにし、起動したグループを記録し終えてから止める（記録前の割り込みを取りこぼさない）。
-# 待つ間も短い間隔で印を確かめる
-pids=()
-stopping=""
-kill_suites() { # kill_suites <INT|TERM>: まだ回っている suite を、子プロセスごと止める
-  local pid
-  for pid in ${pids[@]+"${pids[@]}"}; do kill -"$1" -- "-$pid" 2>/dev/null || true; done
-  wait 2>/dev/null || true
-  # 信号を無視して残った子（グループの残り）を片付ける
-  for pid in ${pids[@]+"${pids[@]}"}; do kill -KILL -- "-$pid" 2>/dev/null || true; done
-  pids=()
-}
-stop_if_asked() {
-  [ -n "$stopping" ] || return 0
-  trap - INT TERM
-  kill_suites "$stopping"
-  if [ "$stopping" = INT ]; then exit 130; fi
-  exit 143
-}
-trap 'stopping=INT' INT
-trap 'stopping=TERM' TERM
-trap 'kill_suites TERM; rm -rf "$out_dir"' EXIT
-
 run_suite() { # run_suite <番号> <行>: 出力・終了コード・秒数を out_dir に残す
   local start=$SECONDS rc=0
   # shellcheck disable=SC2086 # コマンドは空白で区切る（引数に空白を含まない）
@@ -170,6 +182,7 @@ if [ "$serial" = 1 ]; then
     run_suite "$i" "${runs[$i]}"
     stop_if_asked
     report_suite "$i" "${runs[$i]}"
+    stop_if_asked
   done
 else
   for i in "${!runs[@]}"; do
@@ -188,6 +201,7 @@ else
     stop_if_asked
     wait "${pids[$i]}" || true
     report_suite "$i" "${runs[$i]}"
+    stop_if_asked
   done
   pids=()
 fi

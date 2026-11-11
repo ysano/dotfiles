@@ -25,6 +25,9 @@ printf '#!/bin/sh\n:\n' > "$tm/scripts/ok.sh"; chmod +x "$tm/scripts/ok.sh"
 # 名前 NAME の偽物: 開始と終了を記録し、STUB_SLEEP 秒待つ。STUB_FAIL に名前があれば失敗
 stub_body() {
     cat <<EOF
+# STUB_IGNORE: INT / TERM を無視する。STUB_CLEANUP: 止められたら 1 秒かけて後片付けし、記録する
+[ -z "\${STUB_IGNORE:-}" ] || trap '' INT TERM
+[ -z "\${STUB_CLEANUP:-}" ] || trap 'sleep 1; echo "cleaned $1" >> "\$STUB_LOG"; exit 1' INT TERM
 echo "start $1" >> "\$STUB_LOG"
 echo "$1: first line"
 sleep "\${STUB_SLEEP:-0}"
@@ -48,10 +51,17 @@ mkstub conflicts       "$root/.claude/skills/tmux-config/scripts/check_conflicts
 mkstub ci              "$tm/test_ci.sh"
 # Python のテストは unittest から呼ばれる偽物
 cat > "$tm/agents/test_stub.py" <<'EOF'
-import os, subprocess, unittest
+import os, signal, subprocess, unittest
 class Stub(unittest.TestCase):
     def test_stub(self):
-        result = subprocess.run(["bash", "-c", os.environ["STUB_AGENTS"]])
+        # Ctrl-C は子の bash（偽物の本体）に任せ、後片付けを終えるまで待つ
+        # （subprocess.run は KeyboardInterrupt で子を強制終了するため）
+        previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+        try:
+            result = subprocess.run(["bash", "-c", os.environ["STUB_AGENTS"]],
+                                    preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
+        finally:
+            signal.signal(signal.SIGINT, previous)
         self.assertEqual(result.returncode, 0)
 EOF
 export STUB_AGENTS
@@ -133,7 +143,7 @@ rm -f "$tm/scripts/noexec.sh"
 # --- 割り込み -----------------------------------------------------------------------
 # ci.sh を止めたら、回っている suite（その子プロセスまで）も止める。
 # 呼び出し元しだいで SIGINT が無視されたまま引き継がれるので、python で既定に戻して起動する
-interrupt() { # interrupt <INT|TERM> → "<ci.sh の終了コード> <止まるまでの秒数> <止めた後に終わった suite の数>"
+interrupt() { # interrupt <INT|TERM> → "<ci.sh の終了コード> <止まるまでの秒数> <止めた後に終わった suite の数> <後片付けを終えた数>"
     : > "$work/log"
     rm -f "$work/release"
     STUB_LOG="$work/log" STUB_HOLD="$work/release" python3 - "$1" "$CI_BASH" "$tm" "$work/log" "$work/release" <<'EOF'
@@ -154,14 +164,26 @@ except subprocess.TimeoutExpired:
 stopped = time.monotonic() - t0
 open(release, "w").close()  # 止まっていない suite は、これで終わって end を記録する
 time.sleep(1)
-print(rc, int(stopped), open(log).read().count("end "))
+print(rc, int(stopped), open(log).read().count("end "), open(log).read().count("cleaned "))
 EOF
 }
 for sig in INT TERM; do
-    read -r irc isecs iends <<< "$(interrupt "$sig")"
+    read -r irc isecs iends _ <<< "$(interrupt "$sig")"
     [ "$irc" != 0 ] && [ "$irc" != timeout ] && [ "$isecs" -le 2 ] && [ "$iends" = 0 ] &&
         ok "$sig で止めると回っている suite も止める" ||
         bad "$sig で止めると回っている suite も止める: rc=$irc ${isecs}s ends=$iends"
+done
+# 信号を無視する suite も、期限を過ぎたら KILL で止める
+read -r irc isecs iends _ <<< "$(STUB_IGNORE=1 interrupt INT)"
+[ "$irc" != 0 ] && [ "$irc" != timeout ] && [ "$isecs" -le 8 ] && [ "$iends" = 0 ] &&
+    ok "信号を無視する suite も期限で止める（${isecs}s）" ||
+    bad "信号を無視する suite も期限で止める: rc=$irc ${isecs}s ends=$iends"
+# 止める前に、テストの後片付けが終わるのを待つ（TERM で起動役が先に終わっても）
+for sig in INT TERM; do
+    read -r irc isecs iends icleaned <<< "$(STUB_CLEANUP=1 interrupt "$sig")"
+    [ "$irc" != 0 ] && [ "$irc" != timeout ] && [ "$iends" = 0 ] && [ "$icleaned" = 9 ] &&
+        ok "$sig: テストの後片付けを待ってから終わる" ||
+        bad "$sig: テストの後片付けを待ってから終わる: rc=$irc ${isecs}s ends=$iends cleaned=$icleaned"
 done
 
 if [ "$fail" = 0 ]; then echo "test_ci: all ok"; else echo "test_ci: FAILED"; fi
