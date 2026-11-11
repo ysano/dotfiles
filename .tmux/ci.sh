@@ -1,10 +1,75 @@
 #!/bin/bash
 # ci.sh - tmux CI validation script
 # Called from .github/workflows/ci.yml
+#
+# 使い方:
+#   bash ci.sh                         全部のテストを同時に回す（CI と同じ）
+#   bash ci.sh open-path balance-panes 選んだテストだけを回す（静的チェックは常に回す）
+#   bash ci.sh --serial [名前...]      1 つずつ順に回す（原因を追うとき）
+#   bash ci.sh --list                  選べる名前を並べる
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DOTFILES_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# 名前・説明・実行するコマンド（SCRIPT_DIR から見たパス）。出力はこの順に並べる
+SUITES=(
+  "worktree-launch|worktree launcher tests|bash claude/test_worktree_launch.sh"
+  "logging-utils|logging utils tests (set -u/-e, ADR 0002)|bash claude/test_logging_utils.sh"
+  "ollama-utils|ollama utils tests (sanitize_summary_for_speech)|bash claude/test_ollama_utils.sh"
+  "functions|functions tests (format_pane_label 等)|bash claude/test_functions.sh"
+  "open-path|open-path tests|bash test_open_path.sh"
+  "balance-panes|balance-panes tests|bash test_balance_panes.sh"
+  "agents|agent workspace tests (python unittest)|python3 -m unittest discover -s agents -p test_*.py"
+  "ci|ci.sh tests|bash test_ci.sh"
+  "conflicts|conflict check (check_conflicts.sh)|bash ../.claude/skills/tmux-config/scripts/check_conflicts.sh"
+)
+
+suite_field() { # suite_field <行> <1=名前|2=説明|3=コマンド>
+  local name desc cmd
+  IFS='|' read -r name desc cmd <<< "$1"
+  case $2 in 1) echo "$name" ;; 2) echo "$desc" ;; 3) echo "$cmd" ;; esac
+}
+
+usage() {
+  echo "usage: bash ci.sh [--serial] [--list] [name...]" >&2
+  echo "names:" >&2
+  for s in "${SUITES[@]}"; do echo "  $(suite_field "$s" 1)" >&2; done
+}
+
+serial=0
+selected=()
+while [ $# -gt 0 ]; do
+  case $1 in
+    --serial) serial=1 ;;
+    --list)
+      for s in "${SUITES[@]}"; do printf '%-16s %s\n' "$(suite_field "$s" 1)" "$(suite_field "$s" 2)"; done
+      exit 0 ;;
+    -h|--help) usage; exit 0 ;;
+    -*) echo "ci.sh: unknown option: $1" >&2; usage; exit 2 ;;
+    *) selected+=("$1") ;;
+  esac
+  shift
+done
+
+# 選んだ名前を確かめてから回す（知らない名前があれば何も回さない）
+runs=()
+if [ ${#selected[@]} -eq 0 ]; then
+  runs=("${SUITES[@]}")
+else
+  for name in "${selected[@]}"; do
+    found=""
+    for s in "${SUITES[@]}"; do [ "$(suite_field "$s" 1)" = "$name" ] && found=$s; done
+    if [ -z "$found" ]; then
+      echo "ci.sh: unknown suite: $name" >&2; usage; exit 2
+    fi
+  done
+  # 指定の順でなく、決まった順に並べる
+  for s in "${SUITES[@]}"; do
+    for name in "${selected[@]}"; do
+      if [ "$(suite_field "$s" 1)" = "$name" ]; then runs+=("$s"); break; fi
+    done
+  done
+fi
 
 echo "=== tmux CI Check ==="
 echo ""
@@ -48,98 +113,48 @@ for script in "$SCRIPT_DIR"/scripts/*.sh; do
 done
 echo ""
 
-# 3.5 Worktree launcher unit tests
-TEST_SCRIPT="$SCRIPT_DIR/claude/test_worktree_launch.sh"
-if [ -f "$TEST_SCRIPT" ]; then
-  echo "--- Worktree Launcher Tests ---"
-  if bash "$TEST_SCRIPT"; then
-    echo "[PASS] worktree launcher tests"
+# 4. Tests: 同時に回し、出力は suite ごとにまとめて決まった順に出す
+#    （各テストは自分専用の一時ディレクトリと tmux のソケットを使うので、同時でも干渉しない）
+out_dir=$(mktemp -d)
+trap 'rm -rf "$out_dir"' EXIT
+
+run_suite() { # run_suite <番号> <行>: 出力・終了コード・秒数を out_dir に残す
+  local start=$SECONDS rc=0
+  # shellcheck disable=SC2086 # コマンドは空白で区切る（引数に空白を含まない）
+  (cd "$SCRIPT_DIR" && set -f && exec $(suite_field "$2" 3)) > "$out_dir/$1.log" 2>&1 < /dev/null || rc=$?
+  echo "$rc $((SECONDS - start))" > "$out_dir/$1.rc"
+}
+
+report_suite() { # report_suite <番号> <行>
+  local name rc secs
+  name=$(suite_field "$2" 1)
+  echo "--- $name ($(suite_field "$2" 2)) ---"
+  cat "$out_dir/$1.log"
+  read -r rc secs < "$out_dir/$1.rc"
+  if [ "$rc" = 0 ]; then
+    echo "[PASS] $name (${secs}s)"
   else
-    echo "[FAIL] worktree launcher tests"
+    echo "[FAIL] $name (exit $rc, ${secs}s)"
     errors=$((errors + 1))
   fi
   echo ""
-fi
+}
 
-# 3.6 Logging utils set -u/-e 互換性テスト（ADR 0002 回帰防止）
-LOG_TEST_SCRIPT="$SCRIPT_DIR/claude/test_logging_utils.sh"
-if [ -f "$LOG_TEST_SCRIPT" ]; then
-  echo "--- Logging Utils Tests ---"
-  if bash "$LOG_TEST_SCRIPT"; then
-    echo "[PASS] logging utils tests"
+pids=()
+for i in "${!runs[@]}"; do
+  if [ "$serial" = 1 ]; then
+    run_suite "$i" "${runs[$i]}"
+    report_suite "$i" "${runs[$i]}"
   else
-    echo "[FAIL] logging utils tests"
-    errors=$((errors + 1))
+    run_suite "$i" "${runs[$i]}" &
+    pids[i]=$!
   fi
-  echo ""
-fi
-
-# 3.7 Ollama 要約整形（sanitize_summary_for_speech）テスト
-OLLAMA_TEST_SCRIPT="$SCRIPT_DIR/claude/test_ollama_utils.sh"
-if [ -f "$OLLAMA_TEST_SCRIPT" ]; then
-  echo "--- Ollama Utils Tests ---"
-  if bash "$OLLAMA_TEST_SCRIPT"; then
-    echo "[PASS] ollama utils tests"
-  else
-    echo "[FAIL] ollama utils tests"
-    errors=$((errors + 1))
-  fi
-  echo ""
-fi
-
-# 3.8 共通関数（format_pane_label 等）テスト
-FUNC_TEST_SCRIPT="$SCRIPT_DIR/claude/test_functions.sh"
-if [ -f "$FUNC_TEST_SCRIPT" ]; then
-  echo "--- Functions Tests ---"
-  if bash "$FUNC_TEST_SCRIPT"; then
-    echo "[PASS] functions tests"
-  else
-    echo "[FAIL] functions tests"
-    errors=$((errors + 1))
-  fi
-  echo ""
-fi
-
-# 3.9 クリックしたファイルパスのプレビュー（open-path.sh）テスト
-OPEN_PATH_TEST_SCRIPT="$SCRIPT_DIR/test_open_path.sh"
-if [ -f "$OPEN_PATH_TEST_SCRIPT" ]; then
-  echo "--- Open Path Tests ---"
-  if bash "$OPEN_PATH_TEST_SCRIPT"; then
-    echo "[PASS] open-path tests"
-  else
-    echo "[FAIL] open-path tests"
-    errors=$((errors + 1))
-  fi
-  echo ""
-fi
-
-# 3.10 pane の大きさの自動調整（balance-panes.sh）テスト
-BALANCE_TEST_SCRIPT="$SCRIPT_DIR/test_balance_panes.sh"
-if [ -f "$BALANCE_TEST_SCRIPT" ]; then
-  echo "--- Balance Panes Tests ---"
-  if bash "$BALANCE_TEST_SCRIPT"; then
-    echo "[PASS] balance-panes tests"
-  else
-    echo "[FAIL] balance-panes tests"
-    errors=$((errors + 1))
-  fi
-  echo ""
-fi
-
-# Agent lifecycle, workspace UI, worktree operations and setup (no API access)
-echo "--- Agent Workspace Tests ---"
-if python3 -m unittest discover -s "$SCRIPT_DIR/agents" -p 'test_*.py'; then
-  echo "[PASS] Agent workspace tests"
-else
-  errors=$((errors + 1))
-fi
-
-# 4. Run conflict check if available
-CONFLICT_SCRIPT="$DOTFILES_ROOT/.claude/skills/tmux-config/scripts/check_conflicts.sh"
-if [ -f "$CONFLICT_SCRIPT" ]; then
-  echo "--- Conflict Check ---"
-  bash "$CONFLICT_SCRIPT"
-  echo ""
+done
+if [ "$serial" = 0 ]; then
+  for i in "${!runs[@]}"; do
+    wait "${pids[$i]}" || true
+    report_suite "$i" "${runs[$i]}"
+  done
 fi
 
 echo "=== CI Complete (errors: $errors) ==="

@@ -114,7 +114,7 @@ tmux set-option -g @codex_enabled false
 
 ```sh
 python3 -m unittest discover -s .tmux/agents -p 'test_*.py'
-bash .tmux/ci.sh
+bash .tmux/ci.sh agents   # この節のテストだけ（引数なしで tmux の全テスト）
 ```
 
 `python3 bench_dashboard.py` で起動時間・snapshot 1 回の所要と外部コマンド数・描画 1 回の所要を同じ手順で測れる（表示速度の回帰確認用）。`--steady 60` を付けると、開いたままにしたときの外部コマンド数（回/秒）と CPU 使用率も測る（`--fast` / `--slow` で周期を変えて比較できる）。
