@@ -31,6 +31,12 @@ class GitWorktreeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="worktrees git test ")
         self.base = Path(self.temp.name)
+        # Git-only tests: never reach the user's live tmux server (CI has none either).
+        isolated = {key: value for key, value in os.environ.items() if key not in ("TMUX", "TMUX_PANE")}
+        isolated["TMUX_TMPDIR"] = str(self.base)
+        env_patch = mock.patch.dict(os.environ, isolated, clear=True)
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
         self.repo = self.base / "repo with space"
         self.repo.mkdir()
         self.git("init", "-q", "-b", "main")
