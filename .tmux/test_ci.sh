@@ -119,6 +119,16 @@ run open-path no-such-suite
 [ "$rc" = 2 ] && [ -z "$(ran)" ] && ok "知らない名前は何も回さない" || bad "知らない名前は何も回さない: rc=$rc got '$(ran)'"
 echo "$out" | grep -q 'no-such-suite' && echo "$out" | grep -q 'balance-panes' && ok "知らない名前と選べる名前を出す" || bad "知らない名前と選べる名前を出す: $out"
 
+# 同じ名前を重ねて渡しても 1 回だけ回す
+run open-path open-path
+[ "$rc" = 0 ] && [ "$(grep -c '^start open-path$' "$work/log")" = 1 ] && ok "同じ名前は 1 回だけ回す" || bad "同じ名前は 1 回だけ回す: rc=$rc"
+
+# --help は使い方を標準出力に出して 0 で終わる（誤った指定のときは標準エラーに出して 2）
+help_out=$(cd "$tm" && "$CI_BASH" ci.sh --help 2>/dev/null); help_rc=$?
+[ "$help_rc" = 0 ] && echo "$help_out" | grep -q '^usage: ' && ok "--help は標準出力に出す" || bad "--help は標準出力に出す: rc=$help_rc"
+err_out=$(cd "$tm" && "$CI_BASH" ci.sh --nope 2>&1 >/dev/null); err_rc=$?
+[ "$err_rc" = 2 ] && echo "$err_out" | grep -q '^usage: ' && ok "誤った指定の使い方は標準エラーに出す" || bad "誤った指定の使い方は標準エラーに出す: rc=$err_rc"
+
 run --list
 listed=$(echo "$out" | awk '{print $1}' | tr '\n' ' ' | sed 's/ $//')
 [ "$rc" = 0 ] && [ "$listed" = "$ALL" ] && [ -z "$(ran)" ] && ok "--list は名前を並べるだけ" || bad "--list は名前を並べるだけ: rc=$rc got '$listed'"

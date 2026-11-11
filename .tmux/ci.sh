@@ -30,10 +30,10 @@ suite_field() { # suite_field <行> <1=名前|2=説明|3=コマンド>
   case $2 in 1) echo "$name" ;; 2) echo "$desc" ;; 3) echo "$cmd" ;; esac
 }
 
-usage() {
-  echo "usage: bash ci.sh [--serial] [--list] [name...]" >&2
-  echo "names:" >&2
-  for s in "${SUITES[@]}"; do echo "  $(suite_field "$s" 1)" >&2; done
+usage() { # 標準出力に出す（誤った指定のときは呼ぶ側で標準エラーへ回す）
+  echo "usage: bash ci.sh [--serial] [--list] [name...]"
+  echo "names:"
+  for s in "${SUITES[@]}"; do echo "  $(suite_field "$s" 1)"; done
 }
 
 serial=0
@@ -45,7 +45,7 @@ while [ $# -gt 0 ]; do
       for s in "${SUITES[@]}"; do printf '%-16s %s\n' "$(suite_field "$s" 1)" "$(suite_field "$s" 2)"; done
       exit 0 ;;
     -h|--help) usage; exit 0 ;;
-    -*) echo "ci.sh: unknown option: $1" >&2; usage; exit 2 ;;
+    -*) echo "ci.sh: unknown option: $1" >&2; usage >&2; exit 2 ;;
     *) selected+=("$1") ;;
   esac
   shift
@@ -60,7 +60,7 @@ else
     found=""
     for s in "${SUITES[@]}"; do [ "$(suite_field "$s" 1)" = "$name" ] && found=$s; done
     if [ -z "$found" ]; then
-      echo "ci.sh: unknown suite: $name" >&2; usage; exit 2
+      echo "ci.sh: unknown suite: $name" >&2; usage >&2; exit 2
     fi
   done
   # 指定の順でなく、決まった順に並べる
@@ -92,8 +92,10 @@ kill_suites() { # kill_suites <INT|TERM>: まだ回っている suite を、子�
     sleep 0.1 || true
     n=$((n + 1))
   done
-  # 信号を無視して残ったものは KILL で片付ける
-  for pid in "${pids[@]}"; do kill -KILL -- "-$pid" 2>/dev/null || true; done
+  # 期限を過ぎても残っていたら KILL で片付ける（空になったグループには送らない。番号の再利用を避ける）
+  if [ "$alive" = 1 ]; then
+    for pid in "${pids[@]}"; do kill -KILL -- "-$pid" 2>/dev/null || true; done
+  fi
   wait 2>/dev/null || true
   pids=()
 }
