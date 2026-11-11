@@ -116,34 +116,45 @@ echo ""
 # 4. Tests: 同時に回し、出力は suite ごとにまとめて決まった順に出す
 #    （各テストは自分専用の一時ディレクトリと tmux のソケットを使うので、同時でも干渉しない）
 out_dir=$(mktemp -d)
-trap 'rm -rf "$out_dir"' EXIT
 
-# 各 suite を自分のプロセスグループで回し（set -m）、止められたら suite の子プロセスまで止める。
-# 裏で回す suite には端末の Ctrl-C が届かないため、受けた信号をグループごとに渡す。
-# --serial では使わない（前面の suite が別グループになり、Ctrl-C がその suite だけを止めて先へ進むため）
-[ "$serial" = 1 ] || set -m
+# 同時に回す suite は、それぞれ自分のプロセスグループで起動する（起動の瞬間だけ set -m）。
+# 裏の suite には端末の Ctrl-C が届かないため、受けた信号をグループごとに渡して止める。
+# trap では印を付けるだけにし、起動したグループを記録し終えてから止める（記録前の割り込みを取りこぼさない）。
+# 待つ間も短い間隔で印を確かめる
 pids=()
-stop_suites() { # stop_suites <INT|TERM> <終了コード>
-  trap - INT TERM
+stopping=""
+kill_suites() { # kill_suites <INT|TERM>: まだ回っている suite を、子プロセスごと止める
+  local pid
   for pid in ${pids[@]+"${pids[@]}"}; do kill -"$1" -- "-$pid" 2>/dev/null || true; done
   wait 2>/dev/null || true
-  exit "$2"
+  # 信号を無視して残った子（グループの残り）を片付ける
+  for pid in ${pids[@]+"${pids[@]}"}; do kill -KILL -- "-$pid" 2>/dev/null || true; done
+  pids=()
 }
-trap 'stop_suites INT 130' INT
-trap 'stop_suites TERM 143' TERM
+stop_if_asked() {
+  [ -n "$stopping" ] || return 0
+  trap - INT TERM
+  kill_suites "$stopping"
+  if [ "$stopping" = INT ]; then exit 130; fi
+  exit 143
+}
+trap 'stopping=INT' INT
+trap 'stopping=TERM' TERM
+trap 'kill_suites TERM; rm -rf "$out_dir"' EXIT
 
 run_suite() { # run_suite <番号> <行>: 出力・終了コード・秒数を out_dir に残す
   local start=$SECONDS rc=0
   # shellcheck disable=SC2086 # コマンドは空白で区切る（引数に空白を含まない）
   (cd "$SCRIPT_DIR" && set -f && exec $(suite_field "$2" 3)) > "$out_dir/$1.log" 2>&1 < /dev/null || rc=$?
-  echo "$rc $((SECONDS - start))" > "$out_dir/$1.rc"
+  # 書き終えてから置く（終わったかどうかを、このファイルがあるかで見るため）
+  echo "$rc $((SECONDS - start))" > "$out_dir/$1.rc.tmp" && mv "$out_dir/$1.rc.tmp" "$out_dir/$1.rc"
 }
 
 report_suite() { # report_suite <番号> <行>
   local name rc secs
   name=$(suite_field "$2" 1)
   echo "--- $name ($(suite_field "$2" 2)) ---"
-  cat "$out_dir/$1.log"
+  cat "$out_dir/$1.log" || true
   read -r rc secs < "$out_dir/$1.rc"
   if [ "$rc" = 0 ]; then
     echo "[PASS] $name (${secs}s)"
@@ -154,20 +165,31 @@ report_suite() { # report_suite <番号> <行>
   echo ""
 }
 
-for i in "${!runs[@]}"; do
-  if [ "$serial" = 1 ]; then
+if [ "$serial" = 1 ]; then
+  for i in "${!runs[@]}"; do
     run_suite "$i" "${runs[$i]}"
+    stop_if_asked
     report_suite "$i" "${runs[$i]}"
-  else
+  done
+else
+  for i in "${!runs[@]}"; do
+    set -m
     run_suite "$i" "${runs[$i]}" &
     pids[i]=$!
-  fi
-done
-if [ "$serial" = 0 ]; then
+    set +m
+    stop_if_asked
+  done
   for i in "${!runs[@]}"; do
+    # wait で待ち続けると、印を確かめた直後に届いた信号を取りこぼす。短い間隔で確かめる
+    while [ ! -e "$out_dir/$i.rc" ]; do
+      stop_if_asked
+      sleep 0.1 || true
+    done
+    stop_if_asked
     wait "${pids[$i]}" || true
     report_suite "$i" "${runs[$i]}"
   done
+  pids=()
 fi
 
 echo "=== CI Complete (errors: $errors) ==="

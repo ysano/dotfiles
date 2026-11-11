@@ -28,6 +28,8 @@ stub_body() {
 echo "start $1" >> "\$STUB_LOG"
 echo "$1: first line"
 sleep "\${STUB_SLEEP:-0}"
+# STUB_HOLD のファイルができるまで待つ（割り込みのテストで、止める前に終わらないように）
+if [ -n "\${STUB_HOLD:-}" ]; then n=0; while [ ! -e "\$STUB_HOLD" ] && [ "\$n" -lt 300 ]; do sleep 0.1; n=\$((n + 1)); done; fi
 echo "$1: last line"
 echo "end $1" >> "\$STUB_LOG"
 case " \${STUB_FAIL:-} " in *" $1 "*) exit 1 ;; esac
@@ -133,9 +135,10 @@ rm -f "$tm/scripts/noexec.sh"
 # 呼び出し元しだいで SIGINT が無視されたまま引き継がれるので、python で既定に戻して起動する
 interrupt() { # interrupt <INT|TERM> → "<ci.sh の終了コード> <止まるまでの秒数> <止めた後に終わった suite の数>"
     : > "$work/log"
-    STUB_LOG="$work/log" STUB_SLEEP=2 python3 - "$1" "$CI_BASH" "$tm" "$work/log" <<'EOF'
+    rm -f "$work/release"
+    STUB_LOG="$work/log" STUB_HOLD="$work/release" python3 - "$1" "$CI_BASH" "$tm" "$work/log" "$work/release" <<'EOF'
 import signal, subprocess, sys, time
-sig, shell, cwd, log = sys.argv[1:]
+sig, shell, cwd, log, release = sys.argv[1:]
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 proc = subprocess.Popen([shell, "ci.sh"], cwd=cwd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 for _ in range(100):  # 全部が始まるまで待つ
@@ -149,7 +152,8 @@ try:
 except subprocess.TimeoutExpired:
     proc.kill(); rc = "timeout"
 stopped = time.monotonic() - t0
-time.sleep(3)  # 止まっていなければ、この間に suite が終わって end を記録する
+open(release, "w").close()  # 止まっていない suite は、これで終わって end を記録する
+time.sleep(1)
 print(rc, int(stopped), open(log).read().count("end "))
 EOF
 }
