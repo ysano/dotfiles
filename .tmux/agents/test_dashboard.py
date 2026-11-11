@@ -722,7 +722,7 @@ class LoopRefreshTests(unittest.TestCase):
     def run_create(self, module, answer, confirm=True):
         """n で作るときに、同じ名前のブランチが残っていたら 1 キーで作り方を選ぶ。"""
         done = threading.Event()
-        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        source, screen = FakeSource(done), FakeScreen(["n", "q"], done)
         prompt = mock.Mock(side_effect=["topic", "HEAD"])
         with mock.patch.object(dashboard, "focus_pane", return_value=False), \
                 mock.patch.object(dashboard, "_prompt", prompt), \
@@ -758,7 +758,7 @@ class LoopRefreshTests(unittest.TestCase):
         module = self.leftover()
         confirm = mock.Mock(return_value=False)
         done = threading.Event()
-        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        source, screen = FakeSource(done), FakeScreen(["n", "q"], done)
         with mock.patch.object(dashboard, "focus_pane", return_value=False), \
                 mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
                 mock.patch.object(dashboard, "_ask_key", return_value="d"), \
@@ -786,7 +786,7 @@ class LoopRefreshTests(unittest.TestCase):
         module = self.leftover()
         ask = mock.Mock(return_value="q")
         done = threading.Event()
-        source, screen = FakeSource(done), FakeScreen(["n"], done)
+        source, screen = FakeSource(done), FakeScreen(["n", "q"], done)
         with mock.patch.object(dashboard, "focus_pane", return_value=False), \
                 mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
                 mock.patch.object(dashboard, "_ask_key", ask), \
@@ -867,7 +867,7 @@ class LoopRefreshTests(unittest.TestCase):
         ask = mock.Mock(return_value="r")
         with mock.patch.object(dashboard, "_ask_key", ask):
             done = threading.Event()
-            source, screen = FakeSource(done), FakeScreen(["n"], done)
+            source, screen = FakeSource(done), FakeScreen(["n", "q"], done)
             with mock.patch.object(dashboard, "focus_pane", return_value=False), \
                     mock.patch.object(dashboard, "_prompt", side_effect=["topic", "HEAD"]), \
                     mock.patch.object(dashboard, "tmux_panes", return_value=[]):

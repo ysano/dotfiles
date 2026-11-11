@@ -111,6 +111,10 @@ class GitWorktreeTests(unittest.TestCase):
 
     def test_branch_left_by_removed_worktree_can_be_reused_or_recreated(self):
         self.require_module()
+        # No tmux server here: remove_worktree must not reach the user's real server.
+        no_panes = mock.patch.object(module, "_all_tmux_locations", return_value=[])
+        no_panes.start()
+        self.addCleanup(no_panes.stop)
         self.assertIsNone(module.existing_branch(str(self.repo), "again"))
         created = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none"))
         self.git("commit", "-q", "--allow-empty", "-m", "wip on again", cwd=created)
