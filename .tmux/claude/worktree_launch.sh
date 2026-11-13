@@ -96,16 +96,85 @@ _copy_local_files() {
 }
 
 # worktree を外部配置に作成（base 既定 HEAD）。パス/ベースは %q でエスケープ。
+# 3 つ目の引数が reuse なら、残っている同名のブランチで作る（-b なし・base は使わない）。
 # 作成後、現作業ツリーの *.local.md / *.local.json を新 worktree に複製（dry-run では行わない）。
 wt_create() {
     local name="$1" base path br src
     base="$(resolve_base "${2:-}")"
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
-    _emit "git worktree add -b $(printf '%q' "$br") $(printf '%q' "$path") $(printf '%q' "$base")" || return 1
+    if [[ "${3:-}" == "reuse" ]]; then
+        _emit "git worktree add $(printf '%q' "$path") $(printf '%q' "$br")" || return 1
+    else
+        _emit "git worktree add -b $(printf '%q' "$br") $(printf '%q' "$path") $(printf '%q' "$base")" || return 1
+    fi
     if [[ -z "${WT_DRY_RUN:-}" ]]; then
         src="$(git rev-parse --show-toplevel 2>/dev/null)" && _copy_local_files "$src" "$path"
     fi
+}
+
+# branch_state <ブランチ>: none（無い）/ free（どの worktree でも使っていない）/
+# checked-out<TAB><worktree のパス>（使用中。ディレクトリを消しただけの worktree も含む）
+branch_state() {
+    local br="$1" root used="" field place=""
+    root="$(_repo_root)" || return 1
+    git -C "$root" show-ref --verify --quiet "refs/heads/$br" || { printf 'none'; return 0; }
+    # NUL 区切りのまま読む（パスに改行・空白・日本語等を含んでも区切りを誤らない）
+    while IFS= read -r -d '' field; do
+        case "$field" in
+            "worktree "*) place="${field#worktree }" ;;
+            "branch refs/heads/$br") used="$place"; break ;;
+        esac
+    done < <(git -C "$root" worktree list --porcelain -z)
+    if [[ -n "$used" ]]; then printf 'checked-out\t%s' "$used"; else printf 'free'; fi
+}
+
+# branch_summary <ブランチ>: 先頭の commit と、HEAD に無い commit の件数（消すと失うもの）
+branch_summary() {
+    local br="$1" head count
+    head="$(git log -1 --format='%h %s' "refs/heads/$br" -- 2>/dev/null)"
+    count="$(git rev-list --count "HEAD..refs/heads/$br" -- 2>/dev/null)"
+    printf '%s（HEAD に無い commit: %s 件）' "$head" "${count:-?}"
+}
+
+# resolve_existing <ブランチ>: 新しく作る worktree のブランチが残っていたら、作り方を選ばせる。
+#   stdout: new（-b で新しく作る）/ reuse（残っているブランチで作る）。作れないときは rc 1、
+#   中止を選んだときは rc 2
+#   消して作り直すときは y/N で確かめてから branch -D する（既定は消さない）
+resolve_existing() {
+    local br="$1" state choice yn root
+    state="$(branch_state "$br")" || return 1
+    case "$state" in
+        none) printf 'new'; return 0 ;;
+        checked-out*)
+            echo "ブランチ $br は別の worktree で使われています: ${state#*$'\t'}" >&2
+            echo "（ディレクトリが無ければ git worktree prune で記録を消せます）" >&2
+            return 1 ;;
+    esac
+    echo "ブランチ $br が残っています（前に消した worktree のものかもしれません）" >&2
+    echo "  $(branch_summary "$br")" >&2
+    choice="$(printf '%s\n' "このブランチで作る" "消して作り直す" "中止" | _pick "既存のブランチ>")"
+    case "$choice" in
+        このブランチで作る) printf 'reuse'; return 0 ;;
+        消して作り直す)
+            printf '%s を消します。HEAD に無い commit は失われます。消しますか？ [y/N]: ' "$br" >&2
+            IFS= read -r yn || yn=""
+            case "$yn" in
+                [yY]*)
+                    root="$(_repo_root)" || return 1
+                    git -C "$root" branch -D "$br" >&2 || return 1
+                    printf 'new'; return 0 ;;
+            esac
+            echo "中止しました" >&2; return 2 ;;
+    esac
+    echo "中止しました" >&2
+    return 2
+}
+
+# Enter を待つ（git のエラー等を読んでからポップアップを閉じる）
+_pause() {
+    printf '%s' "${1:-Enter で閉じます}" >&2
+    local _x; IFS= read -r _x || true
 }
 
 # claude を起動し、@cc_worktree(pane オプション)に worktree パスを記録。
@@ -136,14 +205,20 @@ wt_spawn() {
 # git -C <main-root> で操作するため、対象 worktree 内が cwd でも安全に消せ、
 # 削除後に cwd 消滅で次コマンドが落ちる問題も起きない。ブランチは安全側 -d
 # （未マージなら残す）。worktree 削除に失敗したら rc 1 を返す（呼び出し側が強制を提示）。
+# ブランチを残したときは WT_NOTICE に知らせる文を入れる（黙って残すと、同じ名前で作り直すときに
+# git に断られて理由が分からない）。
 wt_remove() {
     local name root path br
     name="$1"
+    WT_NOTICE=""
     root="$(_repo_root)" || return 1
     path="$(worktree_path "$name")"
     br="$(branch_name "$name")"
     _emit "git -C $(printf '%q' "$root") worktree remove $(printf '%q' "$path")" || return 1
-    _emit "git -C $(printf '%q' "$root") branch -d $(printf '%q' "$br")" || true
+    if ! _emit "git -C $(printf '%q' "$root") branch -d $(printf '%q' "$br") 2>/dev/null" &&
+        git -C "$root" show-ref --verify --quiet "refs/heads/$br"; then
+        WT_NOTICE="ブランチ $br はマージされていない commit があるため残しました（消すなら: git branch -D ${br}）"
+    fi
 }
 
 # worktree を強制削除（未コミット変更を破棄）。ブランチも強制削除 -D。
@@ -157,15 +232,24 @@ wt_remove_force() {
     _emit "git -C $(printf '%q' "$root") branch -D $(printf '%q' "$br")" || true
 }
 
-# 行選択 UI。fzf があれば fzf、無ければ read にフォールバック（グレースフル劣化）。
+# 行選択 UI。fzf があれば fzf、無ければ番号で選ぶ（グレースフル劣化）。選択肢は標準入力
+# （パイプ）で受けるため、番号は端末（WT_TTY、既定 /dev/tty）から読む。標準入力から読むと
+# 選択肢の先頭行を読んでしまい、常に 1 つ目になる
 _pick() {
-    local prompt="$1"
+    local prompt="$1" line n i=0
+    local -a items=()
     if command -v fzf >/dev/null 2>&1; then
         fzf --prompt="$prompt " --height=40% --reverse
-    else
-        printf '%s' "$prompt" >&2
-        local line; IFS= read -r line; printf '%s' "$line"
+        return
     fi
+    while IFS= read -r line; do items+=("$line"); done
+    for line in ${items[@]+"${items[@]}"}; do
+        i=$((i + 1)); printf '%d) %s\n' "$i" "$line" >&2
+    done
+    printf '%s ' "$prompt" >&2
+    IFS= read -r n < "${WT_TTY:-/dev/tty}" || return 0
+    case "$n" in ''|*[!0-9]*) return 0 ;; esac
+    if [[ "$n" -ge 1 && "$n" -le "${#items[@]}" ]]; then printf '%s' "${items[$((n - 1))]}"; fi
 }
 
 # fzf --print-query の結果を解釈する。
@@ -249,13 +333,14 @@ cmd_popup() {
             開く*) wt_open "$name" ;;
             削除)
                 if wt_remove "$name"; then
-                    echo "削除しました: $name"; sleep 1
+                    echo "削除しました: $name"
+                    if [[ -n "${WT_NOTICE:-}" ]]; then echo "$WT_NOTICE"; _pause; else sleep 1; fi
                 else
                     echo "削除できません（未コミット/未追跡の変更がある可能性）" >&2
                     printf '強制削除しますか？ 変更は失われます [y/N]: ' >&2
                     local yn; IFS= read -r yn
                     case "$yn" in
-                        [yY]*) if wt_remove_force "$name"; then echo "強制削除しました: $name"; else echo "強制削除に失敗しました"; fi; sleep 2 ;;
+                        [yY]*) if wt_remove_force "$name"; then echo "強制削除しました: $name"; sleep 2; else echo "強制削除に失敗しました"; _pause; fi ;;
                         *) echo "中止しました"; sleep 1 ;;
                     esac
                 fi
@@ -265,10 +350,22 @@ cmd_popup() {
     fi
 
     # 新規作成 (verb == new): 入力語を sanitize してブランチ名にする。
-    local branch base mode task
+    # 同じ名前のブランチが残っていれば、先に作り方を選ばせる（残ったブランチで作るなら base は聞かない）
+    local branch base="" mode task how
     branch="$(validate_name "$name")" || { echo "名前が不正です"; sleep 1; return 1; }
-    printf 'base ref [HEAD]: ' >&2; IFS= read -r base
-    wt_create "$branch" "$base" || { echo "worktree 作成に失敗"; sleep 1; return 1; }
+    how="$(resolve_existing "$(branch_name "$branch")")"
+    case $? in
+        0) ;;
+        2) sleep 1; return 0 ;;
+        *) _pause; return 1 ;;
+    esac
+    if [[ "$how" == "new" ]]; then
+        printf 'base ref [HEAD]: ' >&2; IFS= read -r base
+    fi
+    if ! wt_create "$branch" "$base" "${how/new/}"; then
+        echo "worktree 作成に失敗しました（上の git のメッセージを確認してください）"
+        _pause; return 1
+    fi
     mode="$(printf '%s\n' "監視あり (supervised)" "監視なし (unsupervised)" | _pick "mode>")"
     case "$mode" in
         *unsupervised*) printf 'タスク: ' >&2; IFS= read -r task

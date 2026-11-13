@@ -692,30 +692,85 @@ def observe_hook(event: dict, pane: str) -> None:
     _record_candidate(session, path, pane, git_cwd, "hook")
 
 
-def create_worktree(root: str, name: str, base: str, session: str, origin: str) -> str:
-    """Create an external linked worktree and attribute it to the requesting UI."""
+def _worktree_branch(name):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name or ""):
         raise ValueError("worktree name must contain only letters, digits, dot, underscore, or hyphen")
-    if not isinstance(base, str) or not base:
-        raise ValueError("base revision is required")
+    return f"worktree-{name}"
+
+
+def existing_branch(root: str, name: str):
+    """Describe a leftover `worktree-<name>` branch, or return None when there is none.
+
+    Removing a worktree keeps its branch, so creating one with the same name again
+    must reuse or delete that branch. ``checked_out`` names the worktree that still
+    uses it (then neither works); ``unmerged`` counts commits that HEAD lacks.
+    """
+    branch = _worktree_branch(name)
+    ref = f"refs/heads/{branch}"
+    if not _git(root, "for-each-ref", "--format=%(objectname)", ref).strip():
+        return None
+    checked_out = ""
+    # -z: パスに改行等を含んでも区切りを誤らない（一覧と同じ _parse_porcelain_z で読む）
+    for record in _parse_porcelain_z(_git(root, "worktree", "list", "--porcelain", "-z")):
+        if record.get("branch") == ref and isinstance(record.get("worktree"), str):
+            checked_out = str(Path(record["worktree"]).resolve(strict=False))
+            break
+    summary = _git(root, "log", "-1", "--format=%h %s", ref, "--").strip()
+    unmerged = int(_git(root, "rev-list", "--count", f"HEAD..{ref}", "--").strip() or 0)
+    return {"branch": branch, "summary": summary, "unmerged": unmerged, "checked_out": checked_out}
+
+
+def delete_branch(root: str, name: str) -> None:
+    """Force-delete a leftover `worktree-<name>` branch that no worktree uses."""
+    info = existing_branch(root, name)
+    if info is None:
+        return
+    if info["checked_out"]:
+        raise RuntimeError(f"branch {info['branch']} is checked out in {info['checked_out']}")
+    _git(root, "branch", "-D", info["branch"])
+
+
+def create_worktree(root: str, name: str, base: str, session: str, origin: str,
+                    reuse: bool = False) -> str:
+    """Create an external linked worktree and attribute it to the requesting UI.
+
+    With ``reuse`` the leftover `worktree-<name>` branch is checked out as is and
+    ``base`` is ignored; otherwise a leftover branch is reported instead of
+    letting `git worktree add -b` fail with a bare git message.
+    """
+    branch = _worktree_branch(name)
     rows = _inventory([root], [])
     if not rows:
         raise RuntimeError(f"not a git worktree: {root}")
-    try:
-        commit = _git(
-            root, "rev-parse", "--verify", "--end-of-options",
-            f"{base}^{{commit}}",
-        ).strip()
-    except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
-        raise ValueError(f"invalid base revision: {base}") from exc
-    if not re.fullmatch(r"[0-9a-fA-F]{40,64}", commit):
-        raise ValueError(f"invalid base revision: {base}")
+    info = existing_branch(root, name)
+    if reuse:
+        if info is None:
+            raise RuntimeError(f"branch {branch} does not exist")
+        if info["checked_out"]:
+            raise RuntimeError(f"branch {branch} is checked out in {info['checked_out']}")
+    else:
+        if not isinstance(base, str) or not base:
+            raise ValueError("base revision is required")
+        try:
+            commit = _git(
+                root, "rev-parse", "--verify", "--end-of-options",
+                f"{base}^{{commit}}",
+            ).strip()
+        except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            raise ValueError(f"invalid base revision: {base}") from exc
+        if not re.fullmatch(r"[0-9a-fA-F]{40,64}", commit):
+            raise ValueError(f"invalid base revision: {base}")
+        if info is not None:
+            raise RuntimeError(f"branch {branch} already exists (reuse or delete it first)")
     main = Path(rows[0]["path"])
     destination = (main.parent / "worktrees" / f"{main.name}-{name}").resolve(strict=False)
     if destination.exists():
         raise RuntimeError(f"worktree path already exists: {destination}")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    _git(root, "worktree", "add", "-b", f"worktree-{name}", str(destination), commit, timeout=60)
+    if reuse:
+        _git(root, "worktree", "add", str(destination), branch, timeout=60)
+    else:
+        _git(root, "worktree", "add", "-b", branch, str(destination), commit, timeout=60)
     try:
         _record_candidate(session, str(destination), origin, str(Path(root).resolve()), "ui")
     except (OSError, RuntimeError, subprocess.TimeoutExpired):

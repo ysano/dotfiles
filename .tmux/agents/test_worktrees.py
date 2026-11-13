@@ -31,6 +31,12 @@ class GitWorktreeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="worktrees git test ")
         self.base = Path(self.temp.name)
+        # Git-only tests: never reach the user's live tmux server (CI has none either).
+        isolated = {key: value for key, value in os.environ.items() if key not in ("TMUX", "TMUX_PANE")}
+        isolated["TMUX_TMPDIR"] = str(self.base)
+        env_patch = mock.patch.dict(os.environ, isolated, clear=True)
+        env_patch.start()
+        self.addCleanup(env_patch.stop)
         self.repo = self.base / "repo with space"
         self.repo.mkdir()
         self.git("init", "-q", "-b", "main")
@@ -108,6 +114,55 @@ class GitWorktreeTests(unittest.TestCase):
                 expected = self.base / "worktrees" / f"{self.repo.name}-{name}"
                 self.assertFalse(expected.exists())
 
+
+    def test_branch_left_by_removed_worktree_can_be_reused_or_recreated(self):
+        self.require_module()
+        # No tmux server here: remove_worktree must not reach the user's real server.
+        no_panes = mock.patch.object(module, "_all_tmux_locations", return_value=[])
+        no_panes.start()
+        self.addCleanup(no_panes.stop)
+        self.assertIsNone(module.existing_branch(str(self.repo), "again"))
+        created = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none"))
+        self.git("commit", "-q", "--allow-empty", "-m", "wip on again", cwd=created)
+        tip = self.git("rev-parse", "HEAD", cwd=created).stdout.strip()
+        module.remove_worktree(str(created))
+
+        info = module.existing_branch(str(self.repo), "again")
+        self.assertEqual(info["branch"], "worktree-again")
+        self.assertEqual(info["checked_out"], "")
+        self.assertEqual(info["unmerged"], 1)
+        self.assertIn("wip on again", info["summary"])
+        with self.assertRaisesRegex(RuntimeError, "worktree-again"):
+            module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none")
+
+        reused = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none", reuse=True))
+        self.assertEqual(self.git("rev-parse", "HEAD", cwd=reused).stdout.strip(), tip)
+        self.assertEqual(self.git("symbolic-ref", "--short", "HEAD", cwd=reused).stdout.strip(), "worktree-again")
+        module.remove_worktree(str(reused))
+
+        module.delete_branch(str(self.repo), "again")
+        self.assertIsNone(module.existing_branch(str(self.repo), "again"))
+        fresh = Path(module.create_worktree(str(self.repo), "again", "HEAD", "$none", "%none"))
+        main_head = self.git("rev-parse", "HEAD").stdout.strip()
+        self.assertEqual(self.git("rev-parse", "HEAD", cwd=fresh).stdout.strip(), main_head)
+
+    def test_existing_branch_reports_the_worktree_using_it(self):
+        self.require_module()
+        created = module.create_worktree(str(self.repo), "busy", "HEAD", "$none", "%none")
+        info = module.existing_branch(str(self.repo), "busy")
+        self.assertEqual(info["checked_out"], str(Path(created).resolve()))
+        with self.assertRaisesRegex(RuntimeError, "busy"):
+            module.delete_branch(str(self.repo), "busy")
+        with self.assertRaisesRegex(ValueError, "name"):
+            module.existing_branch(str(self.repo), "--force")
+
+    def test_existing_branch_finds_a_worktree_under_a_non_ascii_path(self):
+        self.require_module()
+        place = self.base / "日本語 の場所" / "wt"
+        place.parent.mkdir()
+        self.git("worktree", "add", "-qb", "worktree-jp", str(place), "HEAD")
+        info = module.existing_branch(str(self.repo), "jp")
+        self.assertEqual(info["checked_out"], str(place.resolve()))
 
 
 class GitInventoryTests(unittest.TestCase):

@@ -339,6 +339,23 @@ def cell_width(text):
     return width
 
 
+def wrap_cells(text, width):
+    """text を端末セル幅 width ごとの行に分ける（切り捨てずに折り返す）。"""
+    text = str(text)
+    if width <= 0:
+        return [text]
+    lines, current, used = [], [], 0
+    for char in text:
+        char_width = cell_width(char)
+        if current and used + char_width > width:
+            lines.append("".join(current))
+            current, used = [], 0
+        current.append(char)
+        used += char_width
+    lines.append("".join(current))
+    return lines
+
+
 def clip_text(text, width):
     text = str(text)
     if width <= 0:
@@ -972,19 +989,36 @@ def _prompt(screen, label, default=""):
     return value or default
 
 
-def _confirm(screen, text):
+def _ask_key(screen, text, details=()):
+    """最下行に text（選択肢）、その上の行に details（説明。1 項目 1 行、幅を超えれば折り返す）を
+    出し、押されたキーを 1 つ返す（読めなければ空文字）。説明を別の行にするのは、狭い幅でも
+    選択肢や説明が切れないため。"""
     import curses
-    height, _ = screen.getmaxyx()
-    _safe_addstr(screen, height - 1, 0, text + " [y/N]", curses.A_BOLD)
+    height, width = screen.getmaxyx()
+    # 長い説明（worktree の場所等）は切らずに折り返す
+    details = [line for value in details if value for line in wrap_cells(value, width - 1)]
+    details = details[-max(height - 1, 0):]
+    lines = [(height - 1 - len(details) + index, value, 0) for index, value in enumerate(details)]
+    lines.append((height - 1, text, curses.A_BOLD))
+    for y, value, attribute in lines:
+        try:
+            screen.move(y, 0)
+            screen.clrtoeol()
+        except curses.error:
+            pass
+        _safe_addstr(screen, y, 0, value, attribute)
     try:
         screen.timeout(-1)
         screen.refresh()
-        key = screen.get_wch()
+        return screen.get_wch()
     except curses.error:
-        return False
+        return ""
     finally:
         screen.timeout(100)
-    return key in {"y", "Y"}
+
+
+def _confirm(screen, text, details=()):
+    return _ask_key(screen, text + " [y/N]", details) in {"y", "Y"}
 
 
 def _details(screen, row, snapshot=None):
@@ -1151,11 +1185,53 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
             name = _prompt(screen, "worktree名")
             if not name:
                 continue
-            base = _prompt(screen, "起点", "HEAD")
+            # 前に消した worktree のブランチ（worktree-<名前>）が残っていれば、作り方を選ばせる。
+            # 残ったブランチで作るなら、その続きから始めるため起点は聞かない。入力を待った後の
+            # 通知の期限は、待つ前の now ではなく今の時刻から数える
+            reuse = False
+            try:
+                leftover = worktrees.existing_branch(root, name)
+            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+                message = "作成失敗: " + str(exc)
+                message_until = time.monotonic() + 5
+                continue
+            if leftover:
+                if leftover.get("checked_out"):
+                    # 場所は長いので、最下行の通知ではなく 1 項目 1 行で出し、キーを待つ
+                    _ask_key(screen, "何かキーを押すと戻ります",
+                             ("ブランチ {} は別の worktree で使われています:".format(leftover["branch"]),
+                              "  " + leftover["checked_out"]))
+                    continue
+                answer = _ask_key(
+                    screen, "r: このブランチで作る / d: 消して作り直す / 他: 中止",
+                    ("ブランチが残っています: " + leftover["branch"],
+                     "  先頭: " + leftover["summary"],
+                     "  HEAD に無い commit: {} 件".format(leftover["unmerged"])))
+                if answer in {"r", "R"}:
+                    reuse = True
+                elif answer in {"d", "D"}:
+                    # 名前の長さに関わらず [y/N] が見えるよう、説明は折り返す側に渡す
+                    if not _confirm(screen, "消して作り直しますか？", (
+                            "{} を消すと、HEAD に無い commit {} 件を失います".format(
+                                leftover["branch"], leftover["unmerged"]),)):
+                        message = "作成を中止しました"
+                        message_until = time.monotonic() + 2
+                        continue
+                    try:
+                        worktrees.delete_branch(root, name)
+                    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+                        message = "ブランチの削除失敗: " + str(exc)
+                        message_until = time.monotonic() + 5
+                        continue
+                else:
+                    message = "作成を中止しました"
+                    message_until = time.monotonic() + 2
+                    continue
+            base = "HEAD" if reuse else _prompt(screen, "起点", "HEAD")
             if not base:
                 continue
             try:
-                created = worktrees.create_worktree(root, name, base, session, origin)
+                created = worktrees.create_worktree(root, name, base, session, origin, reuse=reuse)
                 message = "作成しました: " + created
                 message_until = time.monotonic() + 5
                 schedule.request_slow(time.monotonic())
@@ -1174,7 +1250,8 @@ def _run_dashboard(screen, initial, registry, worktrees, session, origin, source
                 continue
             try:
                 worktrees.remove_worktree(path)
-                message = "削除しました: " + path
+                # ブランチは消さない（同じ名前で作るときに、残ったブランチで作るか選べる）
+                message = "削除しました（ブランチは残しています）: " + path
                 message_until = time.monotonic() + 4
                 schedule.request_slow(time.monotonic())
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
