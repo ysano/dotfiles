@@ -14,7 +14,8 @@
 ```bash
 ./link.sh                # シンボリックリンク作成・デプロイ（$HOME を変更する）
 ./test_aliases_claude.zsh && ./test_git_worktree.zsh  # Zsh エイリアス・gwt の検証
-(cd .tmux && bash ci.sh) # tmux 設定・スクリプトの検証（CI と同じ入口）
+(cd .tmux && bash ci.sh) # tmux 設定・スクリプトの検証（CI と同じ入口。テストは同時に回す）
+(cd .tmux && bash ci.sh open-path balance-panes)  # 触ったテストだけ回す（名前は --list）
 make test                # 上記と bin のテストをまとめて実行
 ```
 
